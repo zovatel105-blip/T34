@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://active-quests.preview.emergentagent.com/api"
+BACKEND_URL = "https://navigation-error.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "test@example.com",
     "password": "test123"
