@@ -140,26 +140,8 @@ const ActiveChallengesPage = () => {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
-      {/* Header con botón de volver */}
-      <div className="absolute top-0 left-0 right-0 z-40 px-4 py-3 bg-gradient-to-b from-black/90 to-transparent">
-        <div className="flex items-center justify-between mb-3">
-          <button 
-            onClick={() => navigate('/explore')}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </button>
-          <h1 className="text-white text-lg font-bold flex items-center gap-2">
-            <Swords className="w-5 h-5 text-red-500" />
-            Retos Activos
-          </h1>
-          <div className="w-20" /> {/* Spacer for alignment */}
-        </div>
-      </div>
-
       {/* Barra de avatares de battles/streams */}
-      <div className="absolute top-14 left-0 right-0 z-30 px-3 pt-2 pb-3 bg-gradient-to-b from-black/60 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-30 px-3 pt-4 pb-3 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2">
           {battles.map((battle, index) => {
             const isSelected = index === selectedBattleIndex;
