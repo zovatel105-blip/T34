@@ -146,7 +146,7 @@ const ActiveChallengesPage = () => {
              style={{ 
                paddingLeft: 'max(0.75rem, env(safe-area-inset-left))', 
                paddingRight: 'max(0.75rem, env(safe-area-inset-right))' 
-             }}
+             }}>
           {battles.map((battle, index) => {
             const isSelected = index === selectedBattleIndex;
             const isBattle = battle.type === 'battle' && battle.participants.length > 1;
