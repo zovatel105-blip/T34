@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Swords, Plus, Inbox, User, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Trophy, ArrowLeft } from 'lucide-react';
+import { Home, Swords, Plus, Inbox, User, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Trophy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import AppConfig from '../config/config';
