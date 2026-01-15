@@ -1092,6 +1092,7 @@ const TikTokScrollView = ({
   const [sharedPolls, setSharedPolls] = useState(new Set());
   const { user: currentUser } = useAuth();
   const [lastActiveIndex, setLastActiveIndex] = useState(initialIndex);
+  const navigate = useNavigate();
   const controls = useAnimation();
   
   // 🔒 Estado para bloquear el swipe cuando un modal está abierto
