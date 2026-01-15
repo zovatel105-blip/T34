@@ -141,8 +141,12 @@ const ActiveChallengesPage = () => {
   return (
     <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
       {/* Barra de avatares de battles/streams */}
-      <div className="absolute top-0 left-0 right-0 z-30 px-3 pt-4 pb-3 bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2">
+      <div className="absolute top-0 left-0 right-0 z-30 pt-4 pb-3 bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 px-3"
+             style={{ 
+               paddingLeft: 'max(0.75rem, env(safe-area-inset-left))', 
+               paddingRight: 'max(0.75rem, env(safe-area-inset-right))' 
+             }}
           {battles.map((battle, index) => {
             const isSelected = index === selectedBattleIndex;
             const isBattle = battle.type === 'battle' && battle.participants.length > 1;
