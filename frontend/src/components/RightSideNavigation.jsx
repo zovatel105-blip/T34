@@ -151,7 +151,7 @@ const RightSideNavigation = () => {
       <button
         onClick={() => navigate('/new')}
         className={cn(
-          "rounded-full transition-all duration-300 relative",
+          "rounded-full transition-all duration-300 relative overflow-hidden",
           (location.pathname === '/create' || location.pathname === '/new')
             ? "w-5 h-12 shadow-2xl"
             : "hover:scale-110 w-5 h-12 shadow-xl hover:opacity-90",
@@ -159,8 +159,11 @@ const RightSideNavigation = () => {
         )}
         title="Crear"
         style={{
-          background: `linear-gradient(black, black) padding-box, linear-gradient(to bottom, #A855F7 0%, #A855F7 45%, #3B82F6 55%, #3B82F6 100%) border-box`,
+          background: 'linear-gradient(180deg, #000 0%, #000 100%)',
           border: '2px solid transparent',
+          backgroundImage: 'linear-gradient(#000, #000), linear-gradient(180deg, #A855F7 0%, #3B82F6 100%)',
+          backgroundOrigin: 'border-box',
+          backgroundClip: 'padding-box, border-box',
           minWidth: '1.25rem',
           maxWidth: '1.25rem',
           minHeight: '3rem',
