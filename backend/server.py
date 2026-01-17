@@ -6203,6 +6203,131 @@ async def get_feed_analytics(
         print(f"❌ Analytics error: {str(e)}")
         return {"error": "Analytics temporarily unavailable"}
 
+@api_router.get("/polls/battles", response_model=List[PollResponse])
+async def get_battle_polls(
+    limit: int = 20,
+    offset: int = 0,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get VS/Battle polls (polls with layout='vs' or type='vs')"""
+    
+    # Build filter query for VS battles
+    filter_query = {
+        "is_active": True,
+        "$or": [
+            {"layout": "vs"},
+            {"type": "vs"}
+        ]
+    }
+    
+    # Get polls sorted by most recent
+    polls_cursor = db.polls.find(filter_query).sort("created_at", -1).skip(offset).limit(limit)
+    polls = await polls_cursor.to_list(limit)
+    
+    if not polls:
+        return []
+    
+    # Get all author IDs
+    author_ids = list(set(poll["author_id"] for poll in polls))
+    authors_cursor = db.users.find({"id": {"$in": author_ids}})
+    authors_list = await authors_cursor.to_list(len(author_ids))
+    authors_dict = {user["id"]: UserResponse(**user) for user in authors_list}
+    
+    # Batch get follow status for all authors
+    follow_relationships_cursor = db.follows.find({
+        "follower_id": current_user.id,
+        "following_id": {"$in": author_ids}
+    })
+    follow_relationships = await follow_relationships_cursor.to_list(len(author_ids))
+    following_dict = {rel["following_id"]: rel for rel in follow_relationships}
+    
+    # Get user votes and likes
+    poll_ids = [poll["id"] for poll in polls]
+    
+    user_votes_cursor = db.votes.find({
+        "poll_id": {"$in": poll_ids},
+        "user_id": current_user.id
+    })
+    user_votes = await user_votes_cursor.to_list(len(poll_ids))
+    user_votes_dict = {vote["poll_id"]: vote["option_id"] for vote in user_votes}
+    
+    user_likes_cursor = db.poll_likes.find({
+        "poll_id": {"$in": poll_ids},
+        "user_id": current_user.id
+    })
+    user_likes = await user_likes_cursor.to_list(len(poll_ids))
+    liked_poll_ids = set(like["poll_id"] for like in user_likes)
+    
+    # Build response
+    result = []
+    for poll_data in polls:
+        # Get option users
+        option_user_ids = [option["user_id"] for option in poll_data.get("options", []) if "user_id" in option]
+        if option_user_ids:
+            option_users_cursor = db.users.find({"id": {"$in": option_user_ids}})
+            option_users_list = await option_users_cursor.to_list(len(option_user_ids))
+            option_users_dict = {user["id"]: user for user in option_users_list}
+        else:
+            option_users_dict = {}
+        
+        # Process options - determine winner based on votes
+        options = []
+        max_votes = 0
+        for option in poll_data.get("options", []):
+            if option.get("votes", 0) > max_votes:
+                max_votes = option.get("votes", 0)
+        
+        for option in poll_data.get("options", []):
+            option_user = option_users_dict.get(option.get("user_id")) if option.get("user_id") else None
+            processed_option = {
+                "id": option.get("id"),
+                "text": option.get("text"),
+                "votes": option.get("votes", 0),
+                "media": option.get("media"),
+                "isWinner": option.get("votes", 0) == max_votes and max_votes > 0
+            }
+            if option_user:
+                processed_option["user"] = {
+                    "id": option_user["id"],
+                    "username": option_user["username"],
+                    "display_name": option_user.get("display_name"),
+                    "avatar": option_user.get("avatar_url"),
+                    "verified": option_user.get("is_verified", False)
+                }
+            options.append(processed_option)
+        
+        author = authors_dict.get(poll_data["author_id"])
+        is_following_author = poll_data["author_id"] in following_dict
+        
+        poll_response = PollResponse(
+            id=poll_data["id"],
+            title=poll_data["title"],
+            author=author,
+            description=poll_data.get("description"),
+            options=options,
+            total_votes=poll_data.get("total_votes", 0),
+            likes=poll_data.get("likes", 0),
+            shares=poll_data.get("shares", 0),
+            comments_count=poll_data.get("comments_count", 0),
+            saves_count=poll_data.get("saves_count", 0),
+            music_id=poll_data.get("music_id"),
+            is_active=poll_data.get("is_active", True),
+            created_at=poll_data.get("created_at", datetime.utcnow()),
+            tags=poll_data.get("tags", []),
+            category=poll_data.get("category"),
+            is_featured=poll_data.get("is_featured", False),
+            mentioned_users=[],
+            user_vote=user_votes_dict.get(poll_data["id"]),
+            is_liked=poll_data["id"] in liked_poll_ids,
+            is_following_author=is_following_author,
+            layout=poll_data.get("layout", "vs"),
+            type=poll_data.get("type", "vs"),
+            views=poll_data.get("views", 0)
+        )
+        result.append(poll_response)
+    
+    return result
+
 @api_router.get("/polls/following", response_model=List[PollResponse])
 async def get_following_polls(
     limit: int = 20,
