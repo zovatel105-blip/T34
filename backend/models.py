@@ -454,6 +454,7 @@ class Poll(BaseModel):
     mentioned_users: List[str] = []  # List of user IDs mentioned in the poll
     video_playback_settings: Optional[dict] = None  # Video playback configuration
     layout: Optional[str] = None  # Layout configuration (e.g., 'grid-3x2', 'vertical', etc.)
+    challenge_id: Optional[str] = None  # ID del challenge si este poll es parte de uno
     # Post settings
     comments_enabled: bool = True  # Allow comments on this post
     show_vote_count: bool = True  # Show vote count to users
@@ -474,6 +475,7 @@ class PollCreate(BaseModel):
     mentioned_users: List[str] = []  # List of user IDs mentioned in the poll
     video_playback_settings: Optional[dict] = None  # Video playback configuration
     layout: Optional[str] = None  # Layout configuration (e.g., 'grid-3x2', 'vertical', etc.)
+    challenge_id: Optional[str] = None  # ID del challenge si este poll es parte de uno
     # Post settings
     comments_enabled: bool = True  # Allow comments on this post
     show_vote_count: bool = True  # Show vote count to users
