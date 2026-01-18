@@ -518,6 +518,7 @@ class PollResponse(BaseModel):
     category: Optional[str]
     mentioned_users: List[MentionedUser] = []  # List of mentioned users with details
     layout: Optional[str] = None  # Layout configuration
+    challenge_id: Optional[str] = None  # ID del challenge si este poll es parte de uno
     # VS Experience fields - for multi-question VS polls
     vs_id: Optional[str] = None  # Reference to VS experience
     vs_questions: List[dict] = []  # All questions for VS experience
