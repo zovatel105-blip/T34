@@ -542,6 +542,103 @@ class PollLike(BaseModel):
     user_id: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
+# =============  CHALLENGE MODELS =============
+
+class ChallengeStatus(str, Enum):
+    PENDING = "pending"  # Creado, esperando aceptación de participantes
+    ACTIVE = "active"  # Al menos 2 usuarios aceptaron, creando contenido
+    COMPLETED = "completed"  # Todos crearon contenido, listo para publicar
+    PUBLISHED = "published"  # Publicado en el feed
+    CANCELLED = "cancelled"  # Cancelado por el creador
+
+class ParticipantStatus(str, Enum):
+    INVITED = "invited"  # Invitado, aún no respondió
+    ACCEPTED = "accepted"  # Aceptó participar
+    REJECTED = "rejected"  # Rechazó participar
+    CONTENT_SUBMITTED = "content_submitted"  # Ya envió su contenido
+
+class ChallengeParticipant(BaseModel):
+    user_id: str
+    username: str  # Para mostrar en UI
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    status: ParticipantStatus = ParticipantStatus.INVITED
+    poll_id: Optional[str] = None  # ID del poll que creó para el challenge
+    votes_received: int = 0  # Votos recibidos de usuarios
+    joined_at: Optional[datetime] = None  # Cuándo aceptó
+    submitted_at: Optional[datetime] = None  # Cuándo envió contenido
+
+class Challenge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str  # Título del challenge (ej: "Challenge de Baile 💃")
+    description: Optional[str] = None  # Descripción del reto
+    creator_id: str  # Usuario que creó el challenge
+    creator_username: str
+    creator_display_name: Optional[str] = None
+    creator_avatar_url: Optional[str] = None
+    participants: List[ChallengeParticipant] = []  # Lista de participantes
+    max_participants: int = 6  # Máximo 6 participantes
+    min_participants: int = 2  # Mínimo 2 para que se active
+    status: ChallengeStatus = ChallengeStatus.PENDING
+    challenge_type: Optional[str] = None  # dance, art, cooking, etc.
+    deadline: Optional[datetime] = None  # Fecha límite (opcional)
+    published_poll_id: Optional[str] = None  # ID del poll final publicado
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    published_at: Optional[datetime] = None
+    total_votes: int = 0  # Total de votos en el challenge publicado
+    total_views: int = 0  # Vistas del challenge publicado
+
+class ChallengeCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    participant_ids: List[str]  # Lista de user IDs a invitar (máx 6)
+    challenge_type: Optional[str] = None
+    deadline: Optional[datetime] = None
+    creator_poll_id: str  # ID del poll que el creador ya subió
+    
+    @validator('participant_ids')
+    def validate_participants(cls, v):
+        if len(v) < 1:
+            raise ValueError('Debe invitar al menos 1 participante')
+        if len(v) > 6:
+            raise ValueError('Máximo 6 participantes permitidos')
+        if len(v) != len(set(v)):
+            raise ValueError('No puede invitar al mismo usuario más de una vez')
+        return v
+
+class ChallengeResponse(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    creator_id: str
+    creator_username: str
+    creator_display_name: Optional[str] = None
+    creator_avatar_url: Optional[str] = None
+    participants: List[ChallengeParticipant]
+    status: ChallengeStatus
+    challenge_type: Optional[str] = None
+    deadline: Optional[datetime] = None
+    published_poll_id: Optional[str] = None
+    created_at: datetime
+    published_at: Optional[datetime] = None
+    total_votes: int = 0
+    total_views: int = 0
+    # Campos calculados
+    accepted_count: int = 0  # Cuántos aceptaron
+    submitted_count: int = 0  # Cuántos enviaron contenido
+    is_ready_to_publish: bool = False  # Todos completaron?
+
+class ChallengeVote(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    challenge_id: str
+    voter_id: str  # Usuario que vota
+    participant_id: str  # Usuario por quien vota
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChallengeVoteCreate(BaseModel):
+    participant_id: str  # ID del participante por quien votar
+
 # =============  MUSIC MODELS =============
 
 class Music(BaseModel):
