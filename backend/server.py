@@ -9887,6 +9887,609 @@ async def delete_recent_search(
 
 
 
+
+# =============  CHALLENGE ENDPOINTS =============
+
+@api_router.post("/challenges", response_model=ChallengeResponse)
+async def create_challenge(
+    challenge_data: ChallengeCreate,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Crear un nuevo challenge mencionando hasta 6 usuarios
+    El creador debe haber subido ya su contenido (poll)
+    """
+    try:
+        # Verificar que el poll del creador existe
+        creator_poll = await db.polls.find_one({"id": challenge_data.creator_poll_id})
+        if not creator_poll:
+            raise HTTPException(status_code=404, detail="Poll del creador no encontrado")
+        
+        # Verificar que el creador es el autor del poll
+        if creator_poll.get("author_id") != current_user.id:
+            raise HTTPException(status_code=403, detail="No eres el autor de este poll")
+        
+        # Verificar que no se menciona a sí mismo
+        if current_user.id in challenge_data.participant_ids:
+            raise HTTPException(status_code=400, detail="No puedes mencionarte a ti mismo en un challenge")
+        
+        # Obtener información de los participantes
+        participants = []
+        for participant_id in challenge_data.participant_ids:
+            user = await db.users.find_one({"id": participant_id})
+            if not user:
+                raise HTTPException(status_code=404, detail=f"Usuario {participant_id} no encontrado")
+            
+            participants.append(ChallengeParticipant(
+                user_id=user["id"],
+                username=user["username"],
+                display_name=user.get("display_name"),
+                avatar_url=user.get("avatar_url"),
+                status=ParticipantStatus.INVITED
+            ))
+        
+        # Agregar al creador como primer participante (ya tiene contenido)
+        creator_participant = ChallengeParticipant(
+            user_id=current_user.id,
+            username=current_user.username,
+            display_name=current_user.display_name,
+            avatar_url=current_user.avatar_url,
+            status=ParticipantStatus.CONTENT_SUBMITTED,
+            poll_id=challenge_data.creator_poll_id,
+            joined_at=datetime.utcnow(),
+            submitted_at=datetime.utcnow()
+        )
+        
+        # Insertar creador al inicio de la lista
+        all_participants = [creator_participant] + participants
+        
+        # Crear el challenge
+        challenge = Challenge(
+            title=challenge_data.title,
+            description=challenge_data.description,
+            creator_id=current_user.id,
+            creator_username=current_user.username,
+            creator_display_name=current_user.display_name,
+            creator_avatar_url=current_user.avatar_url,
+            participants=all_participants,
+            challenge_type=challenge_data.challenge_type,
+            deadline=challenge_data.deadline,
+            status=ChallengeStatus.PENDING
+        )
+        
+        # Guardar en la base de datos
+        await db.challenges.insert_one(challenge.model_dump())
+        
+        # Actualizar el poll del creador con el challenge_id
+        await db.polls.update_one(
+            {"id": challenge_data.creator_poll_id},
+            {"$set": {"challenge_id": challenge.id}}
+        )
+        
+        logger.info(f"✅ Challenge {challenge.id} creado por {current_user.username} con {len(participants)} participantes")
+        
+        # Preparar respuesta
+        response = ChallengeResponse(
+            **challenge.model_dump(),
+            accepted_count=0,
+            submitted_count=1,  # Solo el creador
+            is_ready_to_publish=False
+        )
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error creando challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al crear el challenge")
+
+
+@api_router.get("/challenges/my-invitations", response_model=List[ChallengeResponse])
+async def get_my_challenge_invitations(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Obtener challenges donde el usuario fue mencionado/invitado
+    Estos aparecen en la sección "Activos" de Explore
+    """
+    try:
+        # Buscar challenges donde el usuario es participante y está en estado INVITED
+        challenges_cursor = db.challenges.find({
+            "participants.user_id": current_user.id,
+            "participants.status": ParticipantStatus.INVITED,
+            "status": {"$in": [ChallengeStatus.PENDING, ChallengeStatus.ACTIVE]}
+        }).sort("created_at", -1)
+        
+        challenges = await challenges_cursor.to_list(length=100)
+        
+        # Transformar a respuesta
+        responses = []
+        for challenge in challenges:
+            accepted_count = sum(1 for p in challenge.get("participants", []) 
+                               if p["status"] in [ParticipantStatus.ACCEPTED, ParticipantStatus.CONTENT_SUBMITTED])
+            submitted_count = sum(1 for p in challenge.get("participants", []) 
+                                if p["status"] == ParticipantStatus.CONTENT_SUBMITTED)
+            total_participants = len(challenge.get("participants", []))
+            
+            response = ChallengeResponse(
+                **challenge,
+                accepted_count=accepted_count,
+                submitted_count=submitted_count,
+                is_ready_to_publish=(submitted_count == total_participants)
+            )
+            responses.append(response)
+        
+        logger.info(f"📩 Usuario {current_user.username} tiene {len(responses)} invitaciones de challenges")
+        return responses
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo invitaciones de challenges: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener invitaciones")
+
+
+@api_router.get("/challenges/active", response_model=List[ChallengeResponse])
+async def get_active_challenges(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Obtener challenges activos (en progreso)
+    Estos aparecen en Explore > Activos
+    """
+    try:
+        # Buscar challenges en estado PENDING o ACTIVE
+        challenges_cursor = db.challenges.find({
+            "status": {"$in": [ChallengeStatus.PENDING, ChallengeStatus.ACTIVE]}
+        }).sort("created_at", -1).limit(50)
+        
+        challenges = await challenges_cursor.to_list(length=50)
+        
+        responses = []
+        for challenge in challenges:
+            accepted_count = sum(1 for p in challenge.get("participants", []) 
+                               if p["status"] in [ParticipantStatus.ACCEPTED, ParticipantStatus.CONTENT_SUBMITTED])
+            submitted_count = sum(1 for p in challenge.get("participants", []) 
+                                if p["status"] == ParticipantStatus.CONTENT_SUBMITTED)
+            total_participants = len(challenge.get("participants", []))
+            
+            response = ChallengeResponse(
+                **challenge,
+                accepted_count=accepted_count,
+                submitted_count=submitted_count,
+                is_ready_to_publish=(submitted_count == total_participants)
+            )
+            responses.append(response)
+        
+        return responses
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo challenges activos: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener challenges activos")
+
+
+@api_router.get("/challenges/completed", response_model=List[ChallengeResponse])
+async def get_completed_challenges(
+    limit: int = 20,
+    skip: int = 0
+):
+    """
+    Obtener challenges completados y publicados
+    Estos aparecen en la página principal de Explore
+    No requiere autenticación
+    """
+    try:
+        # Buscar challenges publicados
+        challenges_cursor = db.challenges.find({
+            "status": ChallengeStatus.PUBLISHED
+        }).sort("published_at", -1).skip(skip).limit(limit)
+        
+        challenges = await challenges_cursor.to_list(length=limit)
+        
+        responses = []
+        for challenge in challenges:
+            total_participants = len(challenge.get("participants", []))
+            
+            response = ChallengeResponse(
+                **challenge,
+                accepted_count=total_participants,
+                submitted_count=total_participants,
+                is_ready_to_publish=True
+            )
+            responses.append(response)
+        
+        return responses
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo challenges completados: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener challenges completados")
+
+
+@api_router.get("/challenges/{challenge_id}", response_model=ChallengeResponse)
+async def get_challenge_details(
+    challenge_id: str,
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
+):
+    """Obtener detalles de un challenge específico"""
+    try:
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        accepted_count = sum(1 for p in challenge.get("participants", []) 
+                           if p["status"] in [ParticipantStatus.ACCEPTED, ParticipantStatus.CONTENT_SUBMITTED])
+        submitted_count = sum(1 for p in challenge.get("participants", []) 
+                            if p["status"] == ParticipantStatus.CONTENT_SUBMITTED)
+        total_participants = len(challenge.get("participants", []))
+        
+        response = ChallengeResponse(
+            **challenge,
+            accepted_count=accepted_count,
+            submitted_count=submitted_count,
+            is_ready_to_publish=(submitted_count == total_participants)
+        )
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo detalles del challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener challenge")
+
+
+@api_router.post("/challenges/{challenge_id}/accept")
+async def accept_challenge(
+    challenge_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Aceptar participación en un challenge"""
+    try:
+        # Buscar el challenge
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        # Verificar que el usuario es un participante
+        participant_index = None
+        for i, p in enumerate(challenge.get("participants", [])):
+            if p["user_id"] == current_user.id:
+                participant_index = i
+                break
+        
+        if participant_index is None:
+            raise HTTPException(status_code=403, detail="No estás invitado a este challenge")
+        
+        participant = challenge["participants"][participant_index]
+        
+        # Verificar que aún no ha aceptado
+        if participant["status"] != ParticipantStatus.INVITED:
+            return {"success": True, "message": "Ya has respondido a este challenge", "status": participant["status"]}
+        
+        # Actualizar estado del participante
+        await db.challenges.update_one(
+            {"id": challenge_id, "participants.user_id": current_user.id},
+            {
+                "$set": {
+                    f"participants.$.status": ParticipantStatus.ACCEPTED,
+                    f"participants.$.joined_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Verificar si hay suficientes participantes aceptados para activar
+        updated_challenge = await db.challenges.find_one({"id": challenge_id})
+        accepted_count = sum(1 for p in updated_challenge.get("participants", []) 
+                           if p["status"] in [ParticipantStatus.ACCEPTED, ParticipantStatus.CONTENT_SUBMITTED])
+        
+        # Activar challenge si al menos 2 han aceptado (incluyendo creador)
+        if accepted_count >= 2 and updated_challenge["status"] == ChallengeStatus.PENDING:
+            await db.challenges.update_one(
+                {"id": challenge_id},
+                {"$set": {"status": ChallengeStatus.ACTIVE}}
+            )
+            logger.info(f"🎯 Challenge {challenge_id} activado - {accepted_count} participantes aceptaron")
+        
+        logger.info(f"✅ Usuario {current_user.username} aceptó el challenge {challenge_id}")
+        
+        return {
+            "success": True,
+            "message": "Challenge aceptado exitosamente",
+            "status": ParticipantStatus.ACCEPTED
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error aceptando challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al aceptar challenge")
+
+
+@api_router.post("/challenges/{challenge_id}/reject")
+async def reject_challenge(
+    challenge_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Rechazar participación en un challenge"""
+    try:
+        # Buscar el challenge
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        # Verificar que el usuario es un participante
+        participant_index = None
+        for i, p in enumerate(challenge.get("participants", [])):
+            if p["user_id"] == current_user.id:
+                participant_index = i
+                break
+        
+        if participant_index is None:
+            raise HTTPException(status_code=403, detail="No estás invitado a este challenge")
+        
+        participant = challenge["participants"][participant_index]
+        
+        # Verificar que aún no ha respondido
+        if participant["status"] != ParticipantStatus.INVITED:
+            return {"success": True, "message": "Ya has respondido a este challenge"}
+        
+        # Actualizar estado del participante
+        await db.challenges.update_one(
+            {"id": challenge_id, "participants.user_id": current_user.id},
+            {"$set": {f"participants.$.status": ParticipantStatus.REJECTED}}
+        )
+        
+        logger.info(f"❌ Usuario {current_user.username} rechazó el challenge {challenge_id}")
+        
+        return {
+            "success": True,
+            "message": "Challenge rechazado",
+            "status": ParticipantStatus.REJECTED
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error rechazando challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al rechazar challenge")
+
+
+@api_router.post("/challenges/{challenge_id}/submit-content")
+async def submit_challenge_content(
+    challenge_id: str,
+    poll_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Enviar contenido (poll) para un challenge
+    Cuando todos los participantes envían contenido, se publica automáticamente
+    """
+    try:
+        # Verificar que el poll existe y pertenece al usuario
+        poll = await db.polls.find_one({"id": poll_id})
+        if not poll:
+            raise HTTPException(status_code=404, detail="Poll no encontrado")
+        
+        if poll.get("author_id") != current_user.id:
+            raise HTTPException(status_code=403, detail="No eres el autor de este poll")
+        
+        # Buscar el challenge
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        # Verificar que el usuario es participante y ha aceptado
+        participant_index = None
+        for i, p in enumerate(challenge.get("participants", [])):
+            if p["user_id"] == current_user.id:
+                participant_index = i
+                break
+        
+        if participant_index is None:
+            raise HTTPException(status_code=403, detail="No eres participante de este challenge")
+        
+        participant = challenge["participants"][participant_index]
+        
+        if participant["status"] == ParticipantStatus.INVITED:
+            raise HTTPException(status_code=400, detail="Debes aceptar el challenge primero")
+        
+        if participant["status"] == ParticipantStatus.REJECTED:
+            raise HTTPException(status_code=400, detail="Has rechazado este challenge")
+        
+        if participant["status"] == ParticipantStatus.CONTENT_SUBMITTED:
+            return {"success": True, "message": "Ya has enviado tu contenido para este challenge"}
+        
+        # Actualizar el participante con el poll_id
+        await db.challenges.update_one(
+            {"id": challenge_id, "participants.user_id": current_user.id},
+            {
+                "$set": {
+                    f"participants.$.status": ParticipantStatus.CONTENT_SUBMITTED,
+                    f"participants.$.poll_id": poll_id,
+                    f"participants.$.submitted_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Actualizar el poll con el challenge_id
+        await db.polls.update_one(
+            {"id": poll_id},
+            {"$set": {"challenge_id": challenge_id}}
+        )
+        
+        # Verificar si todos los participantes han enviado contenido
+        updated_challenge = await db.challenges.find_one({"id": challenge_id})
+        participants = updated_challenge.get("participants", [])
+        total_participants = len(participants)
+        submitted_count = sum(1 for p in participants if p["status"] == ParticipantStatus.CONTENT_SUBMITTED)
+        
+        logger.info(f"📊 Challenge {challenge_id}: {submitted_count}/{total_participants} participantes completaron")
+        
+        # Si todos completaron, publicar automáticamente
+        if submitted_count == total_participants:
+            await publish_challenge(challenge_id)
+            logger.info(f"🎉 Challenge {challenge_id} publicado automáticamente!")
+            return {
+                "success": True,
+                "message": "Contenido enviado. ¡Challenge completado y publicado!",
+                "challenge_published": True
+            }
+        
+        logger.info(f"✅ Usuario {current_user.username} envió contenido para challenge {challenge_id}")
+        
+        return {
+            "success": True,
+            "message": f"Contenido enviado exitosamente ({submitted_count}/{total_participants})",
+            "challenge_published": False,
+            "submitted_count": submitted_count,
+            "total_participants": total_participants
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error enviando contenido del challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al enviar contenido")
+
+
+async def publish_challenge(challenge_id: str):
+    """
+    Función helper para publicar un challenge cuando todos han completado
+    Actualiza el estado del challenge a PUBLISHED
+    """
+    try:
+        await db.challenges.update_one(
+            {"id": challenge_id},
+            {
+                "$set": {
+                    "status": ChallengeStatus.PUBLISHED,
+                    "published_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Aquí podrías agregar lógica adicional:
+        # - Notificar a todos los participantes
+        # - Crear una entrada en el feed
+        # - Enviar notificaciones push
+        
+        logger.info(f"🎊 Challenge {challenge_id} publicado exitosamente")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error publicando challenge {challenge_id}: {str(e)}")
+        return False
+
+
+@api_router.post("/challenges/{challenge_id}/vote")
+async def vote_challenge(
+    challenge_id: str,
+    vote_data: ChallengeVoteCreate,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Votar por el participante ganador de un challenge publicado
+    """
+    try:
+        # Verificar que el challenge existe y está publicado
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        if challenge["status"] != ChallengeStatus.PUBLISHED:
+            raise HTTPException(status_code=400, detail="Solo puedes votar en challenges publicados")
+        
+        # Verificar que el participante existe
+        participant_exists = any(p["user_id"] == vote_data.participant_id 
+                                for p in challenge.get("participants", []))
+        if not participant_exists:
+            raise HTTPException(status_code=404, detail="Participante no encontrado")
+        
+        # Verificar si el usuario ya votó
+        existing_vote = await db.challenge_votes.find_one({
+            "challenge_id": challenge_id,
+            "voter_id": current_user.id
+        })
+        
+        if existing_vote:
+            # Actualizar voto existente
+            old_participant_id = existing_vote["participant_id"]
+            
+            # Decrementar voto anterior
+            await db.challenges.update_one(
+                {"id": challenge_id, "participants.user_id": old_participant_id},
+                {"$inc": {f"participants.$.votes_received": -1}}
+            )
+            
+            # Incrementar nuevo voto
+            await db.challenges.update_one(
+                {"id": challenge_id, "participants.user_id": vote_data.participant_id},
+                {"$inc": {f"participants.$.votes_received": 1}}
+            )
+            
+            # Actualizar registro de voto
+            await db.challenge_votes.update_one(
+                {"id": existing_vote["id"]},
+                {"$set": {"participant_id": vote_data.participant_id, "created_at": datetime.utcnow()}}
+            )
+            
+            message = "Voto actualizado exitosamente"
+        else:
+            # Crear nuevo voto
+            vote = ChallengeVote(
+                challenge_id=challenge_id,
+                voter_id=current_user.id,
+                participant_id=vote_data.participant_id
+            )
+            
+            await db.challenge_votes.insert_one(vote.model_dump())
+            
+            # Incrementar contador de votos del participante
+            await db.challenges.update_one(
+                {"id": challenge_id, "participants.user_id": vote_data.participant_id},
+                {"$inc": {f"participants.$.votes_received": 1, "total_votes": 1}}
+            )
+            
+            message = "Voto registrado exitosamente"
+        
+        logger.info(f"🗳️ Usuario {current_user.username} votó por {vote_data.participant_id} en challenge {challenge_id}")
+        
+        return {
+            "success": True,
+            "message": message
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error votando en challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al votar")
+
+
+@api_router.get("/challenges/{challenge_id}/my-vote")
+async def get_my_challenge_vote(
+    challenge_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Obtener el voto del usuario actual en un challenge"""
+    try:
+        vote = await db.challenge_votes.find_one({
+            "challenge_id": challenge_id,
+            "voter_id": current_user.id
+        })
+        
+        if not vote:
+            return {"voted": False, "participant_id": None}
+        
+        return {
+            "voted": True,
+            "participant_id": vote["participant_id"]
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo voto del challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener voto")
+
+
 # =============  STORY ENDPOINTS =============
 
 @api_router.post("/stories", response_model=StoryResponse, tags=["Stories"])
