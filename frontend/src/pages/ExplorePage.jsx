@@ -522,34 +522,98 @@ const ExplorePage = () => {
 
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
-      {/* Header fijo con título */}
-      <div className="absolute top-0 left-0 right-0 z-40 px-4 py-3 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none">
-        <div className="flex items-center pointer-events-auto">
-          <h1 className="text-white text-lg font-bold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            Retos Completados
+      {/* Header fijo con tabs */}
+      <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black via-black/95 to-transparent">
+        <div className="px-4 py-3">
+          <h1 className="text-white text-xl font-bold flex items-center gap-2 mb-3">
+            <Trophy className="w-6 h-6 text-yellow-500" />
+            Challenges
           </h1>
+          
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={cn(
+                "flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all duration-200",
+                activeTab === 'completed'
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              )}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Trophy className="w-4 h-4" />
+                <span>Completados</span>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('active')}
+              className={cn(
+                "flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all duration-200",
+                activeTab === 'active'
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              )}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Zap className="w-4 h-4" />
+                <span>Activos</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* TikTokScrollView con los retos completados */}
-      <TikTokScrollView
-        polls={battles}
-        onVote={handleVote}
-        onLike={handleLike}
-        onShare={handleShare}
-        onComment={handleComment}
-        onSave={handleSave}
-        onCreatePoll={handleCreatePoll}
-        showLogo={false}
-        showActiveChallengesButton={true}
-        savedPolls={savedPolls}
-        setSavedPolls={setSavedPolls}
-        commentedPolls={commentedPolls}
-        setCommentedPolls={setCommentedPolls}
-        sharedPolls={sharedPolls}
-        setSharedPolls={setSharedPolls}
-      />
+      {/* Contenido según tab seleccionado */}
+      <div className="pt-32">
+        {loading ? (
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
+          </div>
+        ) : activeTab === 'completed' ? (
+          <TikTokScrollView
+            polls={battles}
+            onVote={handleVote}
+            onLike={handleLike}
+            onShare={handleShare}
+            onComment={handleComment}
+            onSave={handleSave}
+            onCreatePoll={handleCreatePoll}
+            showLogo={false}
+            showActiveChallengesButton={false}
+            savedPolls={savedPolls}
+            setSavedPolls={setSavedPolls}
+            commentedPolls={commentedPolls}
+            setCommentedPolls={setCommentedPolls}
+            sharedPolls={sharedPolls}
+            setSharedPolls={setSharedPolls}
+          />
+        ) : (
+          /* Tab de challenges activos */
+          <div className="px-4 space-y-4 pb-20 overflow-y-auto h-full">
+            {activeChallenges.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Zap className="w-16 h-16 text-zinc-600 mb-4" />
+                <h3 className="text-white text-lg font-semibold mb-2">
+                  No hay challenges activos
+                </h3>
+                <p className="text-zinc-400 text-sm">
+                  ¡Crea un nuevo challenge y reta a tus amigos!
+                </p>
+              </div>
+            ) : (
+              activeChallenges.map((challenge) => (
+                <ChallengeCard
+                  key={challenge.id}
+                  challenge={challenge}
+                  onClick={() => navigate(`/challenge/${challenge.id}`)}
+                />
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
