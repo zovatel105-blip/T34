@@ -427,11 +427,63 @@ const mockCompletedBattles = [
 
 const ExplorePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('completed'); // 'active' o 'completed'
   const [battles, setBattles] = useState(mockCompletedBattles);
+  const [activeChallenges, setActiveChallenges] = useState([]);
+  const [completedChallenges, setCompletedChallenges] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [savedPolls, setSavedPolls] = useState(new Set());
   const [commentedPolls, setCommentedPolls] = useState(new Set());
   const [sharedPolls, setSharedPolls] = useState(new Set());
+
+  // Cargar challenges activos
+  useEffect(() => {
+    if (activeTab === 'active' && token) {
+      loadActiveChallenges();
+    }
+  }, [activeTab, token]);
+
+  // Cargar challenges completados
+  useEffect(() => {
+    if (activeTab === 'completed') {
+      loadCompletedChallenges();
+    }
+  }, [activeTab]);
+
+  const loadActiveChallenges = async () => {
+    try {
+      setLoading(true);
+      const challenges = await challengeService.getActiveChallenges(token);
+      setActiveChallenges(challenges);
+    } catch (error) {
+      console.error('Error loading active challenges:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los challenges activos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCompletedChallenges = async () => {
+    try {
+      setLoading(true);
+      const challenges = await challengeService.getCompletedChallenges(20, 0);
+      setCompletedChallenges(challenges);
+      // También mantener los mock battles para testing
+      setBattles([...mockCompletedBattles]);
+    } catch (error) {
+      console.error('Error loading completed challenges:', error);
+      // Si falla, usar mock data
+      setBattles([...mockCompletedBattles]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handlers para interacciones
   const handleVote = useCallback((pollId, optionId) => {
