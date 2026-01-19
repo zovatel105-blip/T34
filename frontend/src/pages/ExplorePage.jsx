@@ -425,6 +425,107 @@ const mockCompletedBattles = [
   }
 ];
 
+// Componente para mostrar una tarjeta de challenge activo
+const ChallengeCard = ({ challenge, onClick }) => {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'text-yellow-500 bg-yellow-500/10';
+      case 'active':
+        return 'text-green-500 bg-green-500/10';
+      case 'completed':
+        return 'text-blue-500 bg-blue-500/10';
+      default:
+        return 'text-zinc-500 bg-zinc-500/10';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Pendiente';
+      case 'active':
+        return 'Activo';
+      case 'completed':
+        return 'Completado';
+      default:
+        return status;
+    }
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-zinc-900 rounded-xl p-4 cursor-pointer hover:bg-zinc-800 transition-all"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <h3 className="text-white font-bold text-lg mb-1">{challenge.title}</h3>
+          {challenge.description && (
+            <p className="text-zinc-400 text-sm line-clamp-2">{challenge.description}</p>
+          )}
+        </div>
+        <div className={cn(
+          "px-3 py-1 rounded-full text-xs font-semibold ml-2",
+          getStatusColor(challenge.status)
+        )}>
+          {getStatusText(challenge.status)}
+        </div>
+      </div>
+
+      {/* Participantes */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex -space-x-2">
+          {challenge.participants.slice(0, 5).map((participant) => (
+            <Avatar key={participant.user_id} className="w-8 h-8 border-2 border-zinc-900">
+              <AvatarImage src={participant.avatar_url} alt={participant.username} />
+              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                <User className="w-4 h-4" />
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </div>
+        <span className="text-zinc-400 text-sm">
+          {challenge.participants.length} participantes
+        </span>
+      </div>
+
+      {/* Progreso */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-zinc-400">Progreso</span>
+          <span className="text-white font-semibold">
+            {challenge.submitted_count}/{challenge.participants.length}
+          </span>
+        </div>
+        <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${(challenge.submitted_count / challenge.participants.length) * 100}%`
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      {challenge.status === 'published' && (
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-800">
+          <div className="flex items-center gap-1 text-zinc-400 text-sm">
+            <Trophy className="w-4 h-4" />
+            <span>{challenge.total_votes || 0}</span>
+          </div>
+          <div className="flex items-center gap-1 text-zinc-400 text-sm">
+            <Eye className="w-4 h-4" />
+            <span>{challenge.total_views || 0}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
