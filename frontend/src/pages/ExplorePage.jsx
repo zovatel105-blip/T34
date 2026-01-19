@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Swords, Crown, Medal, Eye, User, Play, CheckCircle } from 'lucide-react';
+import { Trophy, Swords, Crown, Medal, Eye, User, Play, CheckCircle, Zap } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import TikTokScrollView from '../components/TikTokScrollView';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import challengeService from '../services/challengeService';
+import { useToast } from '../hooks/use-toast';
 
 // Datos de ejemplo para retos completados - convertidos al formato de poll para TikTokScrollView
 const mockCompletedBattles = [
