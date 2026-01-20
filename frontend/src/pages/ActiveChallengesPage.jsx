@@ -105,8 +105,10 @@ const mockBattles = [
 
 const ActiveChallengesPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, token } = useAuth();
   const [battles, setBattles] = useState(mockBattles);
+  const [activeChallenges, setActiveChallenges] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedBattleIndex, setSelectedBattleIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -114,6 +116,26 @@ const ActiveChallengesPage = () => {
   const containerRef = useRef(null);
 
   const selectedBattle = battles[selectedBattleIndex];
+
+  // Cargar challenges activos del backend
+  useEffect(() => {
+    const loadActiveChallenges = async () => {
+      if (!token) return;
+      
+      try {
+        setLoading(true);
+        const challenges = await challengeService.getActiveChallenges(token);
+        setActiveChallenges(challenges);
+        console.log('✅ Challenges activos cargados:', challenges.length);
+      } catch (error) {
+        console.error('Error loading active challenges:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadActiveChallenges();
+  }, [token]);
 
   // Formatear número de seguidores
   const formatFollowers = (num) => {
