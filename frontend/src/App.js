@@ -27,6 +27,7 @@ import StoryCapturePage from './pages/StoryCapturePage';
 import StoryEditPage from './pages/StoryEditPage';
 import CompletedBattlesPage from './pages/CompletedBattlesPage';
 import ActiveChallengesPage from './pages/ActiveChallengesPage';
+import ChallengeCreationPage from './pages/ChallengeCreationPage';
 import { Toaster } from './components/ui/toaster';
 // Mock data imports removed - using real backend services
 import { useToast } from './hooks/use-toast';
