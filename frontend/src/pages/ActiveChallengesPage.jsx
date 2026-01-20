@@ -249,12 +249,12 @@ const ActiveChallengesPage = () => {
             );
           })}
           
-          {/* Botón de ver más */}
+          {/* Botón para crear nuevo challenge */}
           <button
-            onClick={() => {/* Cargar más battles */}}
-            className="flex-shrink-0 w-14 h-14 rounded-full bg-gray-800/50 border-2 border-dashed border-gray-600 flex items-center justify-center hover:bg-gray-700/50 transition-colors"
+            onClick={() => navigate('/new')}
+            className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 flex items-center justify-center hover:shadow-lg hover:scale-105 transition-all"
           >
-            <Plus className="w-6 h-6 text-gray-400" />
+            <Plus className="w-6 h-6 text-white" />
           </button>
         </div>
       </div>
