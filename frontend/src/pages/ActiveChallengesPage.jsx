@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import AppConfig from '../config/config';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import challengeService from '../services/challengeService';
 
 // Datos de ejemplo para los battles/streams activos
 const mockBattles = [
