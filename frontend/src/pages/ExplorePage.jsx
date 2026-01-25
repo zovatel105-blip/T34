@@ -427,7 +427,8 @@ const mockCompletedBattles = [
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
-  const [battles, setBattles] = useState(mockCompletedBattles);
+  const [battles, setBattles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [savedPolls, setSavedPolls] = useState(new Set());
   const [commentedPolls, setCommentedPolls] = useState(new Set());
   const [sharedPolls, setSharedPolls] = useState(new Set());
@@ -436,12 +437,71 @@ const ExplorePage = () => {
   useEffect(() => {
     const loadCompletedChallenges = async () => {
       try {
+        setLoading(true);
         const challenges = await challengeService.getCompletedChallenges(20, 0);
         console.log('✅ Challenges completados cargados:', challenges);
-        // Aquí podrías transformar los challenges a formato de polls si es necesario
-        // Por ahora usar mock data
+        
+        // Transformar challenges al formato de TikTokScrollView
+        const transformedChallenges = challenges.map(challenge => {
+          // Obtener los participantes con contenido
+          const participantsWithContent = challenge.participants?.filter(
+            p => p.status === 'content_submitted'
+          ) || [];
+          
+          // Construir opciones del challenge (cada participante es una opción)
+          const options = participantsWithContent.map((participant, idx) => ({
+            id: participant.poll_id || `opt_${idx}`,
+            text: participant.username || '',
+            votes: 0, // Se podría agregar votos del challenge
+            participant_id: participant.user_id,
+            participant_username: participant.username,
+            participant_avatar: participant.avatar_url,
+            media: {
+              type: 'image',
+              url: participant.poll_thumbnail || null, // Si tenemos thumbnail
+            }
+          }));
+          
+          return {
+            id: `challenge_${challenge.id}`,
+            challenge_id: challenge.id,
+            title: challenge.title || 'Challenge',
+            type: 'vs',
+            layout: challenge.final_layout || 'vs-horizontal',
+            is_challenge: true,
+            isCompleted: true,
+            category: 'Challenge',
+            totalVotes: 0,
+            total_votes: 0,
+            views: 0,
+            likes_count: 0,
+            comments_count: 0,
+            created_at: challenge.published_at || challenge.created_at,
+            author: {
+              id: challenge.creator_id,
+              username: challenge.creator_username,
+              display_name: challenge.creator_display_name || challenge.creator_username,
+              avatar_url: challenge.creator_avatar_url,
+              is_verified: false
+            },
+            options: options,
+            participants: participantsWithContent.map(p => ({
+              id: p.user_id,
+              username: p.username,
+              display_name: p.display_name,
+              avatar_url: p.avatar_url
+            }))
+          };
+        });
+        
+        console.log('🔄 Challenges transformados:', transformedChallenges);
+        setBattles(transformedChallenges);
       } catch (error) {
         console.error('Error loading completed challenges:', error);
+        // Si falla, usar array vacío
+        setBattles([]);
+      } finally {
+        setLoading(false);
       }
     };
 
