@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, Hash, AtSign } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Hash, AtSign, Search, X, Users, Trophy } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import pollService from '../services/pollService';
 import uploadService from '../services/uploadService';  // ⚡ Import upload service
+import challengeService from '../services/challengeService';  // ⚡ Import challenge service
+import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
+import AppConfig from '../config/config';
+
+const API_BASE_URL = AppConfig.API_BASE_URL;
 
 // CSS para ocultar scrollbar
 const scrollableOptionsStyle = `
