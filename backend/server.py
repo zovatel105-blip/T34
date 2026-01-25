@@ -9899,8 +9899,13 @@ async def create_challenge(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
-    Crear un nuevo challenge mencionando hasta 6 usuarios
+    Crear un nuevo challenge mencionando hasta 5 usuarios (máximo 6 total con creador)
     El creador debe haber subido ya su contenido (poll)
+    
+    REGLAS DE VISIBILIDAD:
+    - El poll del creador se marca como challenge_pending=True
+    - El poll NO aparece en feeds públicos hasta que el challenge esté publicado
+    - Solo los participantes del challenge pueden ver el contenido mientras está pendiente
     """
     try:
         # Verificar que el poll del creador existe
@@ -9915,6 +9920,10 @@ async def create_challenge(
         # Verificar que no se menciona a sí mismo
         if current_user.id in challenge_data.participant_ids:
             raise HTTPException(status_code=400, detail="No puedes mencionarte a ti mismo en un challenge")
+        
+        # Validar número máximo de participantes (5 invitados + 1 creador = 6 máximo)
+        if len(challenge_data.participant_ids) > 5:
+            raise HTTPException(status_code=400, detail="Máximo 5 usuarios invitados permitidos (6 total con creador)")
         
         # Obtener información de los participantes
         participants = []
@@ -9963,13 +9972,18 @@ async def create_challenge(
         # Guardar en la base de datos
         await db.challenges.insert_one(challenge.model_dump())
         
-        # Actualizar el poll del creador con el challenge_id
+        # 🔒 CRITICAL: Marcar el poll del creador como pendiente de challenge
+        # Esto lo oculta del feed público hasta que el challenge esté publicado
         await db.polls.update_one(
             {"id": challenge_data.creator_poll_id},
-            {"$set": {"challenge_id": challenge.id}}
+            {"$set": {
+                "challenge_id": challenge.id,
+                "challenge_pending": True  # 🔒 Poll oculto del feed público
+            }}
         )
         
         logger.info(f"✅ Challenge {challenge.id} creado por {current_user.username} con {len(participants)} participantes")
+        logger.info(f"🔒 Poll {challenge_data.creator_poll_id} marcado como challenge_pending=True (oculto del feed)")
         
         # Preparar respuesta
         response = ChallengeResponse(
