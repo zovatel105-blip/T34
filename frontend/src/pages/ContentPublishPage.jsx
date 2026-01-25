@@ -83,6 +83,64 @@ const ContentPublishPage = () => {
     setIsChallengeMode(challengeMode);
   }, [location.state, navigate]);
 
+  // Search users for Challenge mode
+  useEffect(() => {
+    if (!isChallengeMode) return;
+    
+    const searchUsers = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        setSearching(true);
+        const response = await fetch(
+          `${API_BASE_URL}/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        if (response.ok) {
+          const users = await response.json();
+          // Filter out already selected users and current user
+          const filtered = users.filter(
+            u => u.id !== user?.id && !selectedUsers.find(s => s.id === u.id)
+          );
+          setSearchResults(filtered);
+        }
+      } catch (error) {
+        console.error('Error searching users:', error);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery, token, user?.id, selectedUsers, isChallengeMode]);
+
+  const handleSelectUser = (selectedUser) => {
+    if (selectedUsers.length >= 6) {
+      toast({
+        title: "Límite alcanzado",
+        description: "Máximo 6 participantes permitidos",
+        variant: "destructive"
+      });
+      return;
+    }
+    setSelectedUsers(prev => [...prev, selectedUser]);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleRemoveUser = (userId) => {
+    setSelectedUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
   const handleBack = () => {
     navigate('/content-creation');
   };
