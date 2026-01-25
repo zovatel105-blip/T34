@@ -672,7 +672,7 @@ const TikTokPollCard = ({
 
       </div>
 
-      {/* Main content - Layout Renderer */}
+      {/* Main content - Layout Renderer or Challenge Layout */}
       <div className="absolute inset-0 w-full h-full"
            style={{
              top: 0,
@@ -680,26 +680,148 @@ const TikTokPollCard = ({
              left: 'env(safe-area-inset-left, 0)',
              right: 'env(safe-area-inset-right, 0)'
            }}>
-        <LayoutRenderer 
-          poll={poll}
-          onVote={(optionId) => handleVote(optionId)}
-          isActive={isActive}
-          currentSlide={currentSlide}
-          onSlideChange={setCurrentSlide}
-          handleTouchStart={handleTouchStart}
-          handleTouchEnd={handleTouchEnd}
-          onThumbnailChange={handleCarouselThumbnailChange}
-          onAudioChange={handleCarouselAudioChange}
-          index={index}
-          showLogo={showLogo}
-          // 🚀 PERFORMANCE: Layout-specific optimization props
-          optimizeVideo={optimizeVideo}
-          renderPriority={renderPriority}
-          shouldPreload={shouldPreload}
-          isVisible={isVisible}
-          shouldUnload={shouldUnload}
-          layout={layout}
-        />
+        {/* 🏆 CHALLENGE LAYOUT - Muestra contenido de múltiples participantes */}
+        {poll.is_challenge ? (
+          <div className="w-full h-full flex flex-col">
+            {/* Header del Challenge */}
+            <div className="absolute top-16 left-0 right-0 z-40 flex justify-center">
+              <div className="bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
+                <Trophy className="w-4 h-4 text-white" />
+                <span className="text-white font-bold text-sm">CHALLENGE</span>
+              </div>
+            </div>
+            
+            {/* Contenido del Challenge - Layout VS */}
+            <div className="flex-1 flex">
+              {poll.options && poll.options.length === 2 ? (
+                // Layout 1vs1 - Dos contenidos lado a lado
+                <>
+                  {poll.options.map((option, optIdx) => (
+                    <div 
+                      key={option.id || optIdx}
+                      className={cn(
+                        "flex-1 relative overflow-hidden",
+                        optIdx === 0 ? "border-r-2 border-white/30" : ""
+                      )}
+                      onClick={() => handleVote(option.id)}
+                    >
+                      {/* Media del participante */}
+                      {option.media?.type?.includes('video') ? (
+                        <video
+                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        />
+                      ) : option.media?.url ? (
+                        <img
+                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                          alt={option.participant_username || ''}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
+                      )}
+                      
+                      {/* Overlay con info del participante */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-8 h-8 border-2 border-white">
+                            <AvatarImage src={option.participant_avatar} />
+                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                              {option.participant_username?.[0]?.toUpperCase() || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-white font-semibold text-sm">@{option.participant_username}</span>
+                        </div>
+                        <div className="mt-2 text-white/80 text-xs flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          <span>{option.votes || 0} votos</span>
+                        </div>
+                      </div>
+                      
+                      {/* VS Badge */}
+                      {optIdx === 0 && (
+                        <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 z-50">
+                          <div className="bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
+                            <span className="text-black font-black text-sm">VS</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                // Layout para más de 2 participantes - Grid
+                <div className="w-full h-full grid grid-cols-2 gap-1">
+                  {poll.options?.map((option, optIdx) => (
+                    <div 
+                      key={option.id || optIdx}
+                      className="relative overflow-hidden"
+                      onClick={() => handleVote(option.id)}
+                    >
+                      {option.media?.type?.includes('video') ? (
+                        <video
+                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        />
+                      ) : option.media?.url ? (
+                        <img
+                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                          alt={option.participant_username || ''}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
+                      )}
+                      
+                      {/* Info del participante */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                        <div className="flex items-center gap-1">
+                          <Avatar className="w-6 h-6 border border-white">
+                            <AvatarImage src={option.participant_avatar} />
+                            <AvatarFallback className="bg-purple-500 text-white text-[10px]">
+                              {option.participant_username?.[0]?.toUpperCase() || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-white font-medium text-xs">@{option.participant_username}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Layout normal para polls regulares */
+          <LayoutRenderer 
+            poll={poll}
+            onVote={(optionId) => handleVote(optionId)}
+            isActive={isActive}
+            currentSlide={currentSlide}
+            onSlideChange={setCurrentSlide}
+            handleTouchStart={handleTouchStart}
+            handleTouchEnd={handleTouchEnd}
+            onThumbnailChange={handleCarouselThumbnailChange}
+            onAudioChange={handleCarouselAudioChange}
+            index={index}
+            showLogo={showLogo}
+            // 🚀 PERFORMANCE: Layout-specific optimization props
+            optimizeVideo={optimizeVideo}
+            renderPriority={renderPriority}
+            shouldPreload={shouldPreload}
+            isVisible={isVisible}
+            shouldUnload={shouldUnload}
+            layout={layout}
+          />
+        )}
       </div>
 
       {/* Bottom info and actions - Enhanced with safe area */}
