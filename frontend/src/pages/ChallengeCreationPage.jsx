@@ -312,26 +312,37 @@ const ChallengeCreationPage = () => {
                 </div>
 
                 {/* Resultados de búsqueda */}
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700 rounded-lg max-h-60 overflow-y-auto z-50 shadow-xl">
-                    {searchResults.map((searchUser) => (
-                      <button
-                        key={searchUser.id}
-                        onClick={() => handleSelectUser(searchUser)}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors"
-                      >
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
-                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                            {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-left">
-                          <p className="text-white font-medium">{searchUser.display_name || searchUser.username}</p>
-                          <p className="text-zinc-500 text-sm">@{searchUser.username}</p>
-                        </div>
-                      </button>
-                    ))}
+                {searchQuery.trim().length >= 2 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700 rounded-lg max-h-60 overflow-y-auto z-[100] shadow-xl">
+                    {searching ? (
+                      <div className="p-4 text-center text-zinc-400">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500 mx-auto mb-2" />
+                        Buscando...
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((searchUser) => (
+                        <button
+                          key={searchUser.id}
+                          onClick={() => handleSelectUser(searchUser)}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors"
+                        >
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
+                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                              {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-left">
+                            <p className="text-white font-medium">{searchUser.display_name || searchUser.username}</p>
+                            <p className="text-zinc-500 text-sm">@{searchUser.username}</p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-zinc-400">
+                        No se encontraron usuarios con "{searchQuery}"
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
