@@ -281,7 +281,7 @@ const ChallengeCreationPage = () => {
             )}
 
             {/* Buscador de usuarios */}
-            {selectedUsers.length < 6 && (
+            {selectedUsers.length < 5 && (
               <div className="relative">
                 <div className="flex items-center gap-2 bg-zinc-900 px-4 py-3 rounded-lg border border-zinc-700 focus-within:border-yellow-500 transition-colors">
                   <Search className="w-5 h-5 text-zinc-500" />
