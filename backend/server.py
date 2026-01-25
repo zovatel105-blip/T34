@@ -6039,6 +6039,108 @@ async def get_ultra_fast_feed(
                 }
                 result.append(poll_response)
         
+        # 🏆 AGREGAR CHALLENGES PUBLICADOS AL FEED
+        # Los challenges publicados aparecen como una sola entrada unificada
+        published_challenges_cursor = db.challenges.find({
+            "status": ChallengeStatus.PUBLISHED
+        }).sort("published_at", -1).limit(10)
+        
+        published_challenges = await published_challenges_cursor.to_list(length=10)
+        
+        for challenge in published_challenges:
+            # Obtener los polls de este challenge
+            participant_poll_ids = [
+                p.get("poll_id") for p in challenge.get("participants", [])
+                if p.get("poll_id") and p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+            ]
+            
+            if not participant_poll_ids:
+                continue
+            
+            challenge_polls = await db.polls.find({"id": {"$in": participant_poll_ids}}).to_list(length=10)
+            
+            if not challenge_polls:
+                continue
+            
+            # Construir las opciones del challenge (cada poll es una opción)
+            challenge_options = []
+            for idx, poll in enumerate(challenge_polls):
+                # Obtener la primera opción del poll (el contenido)
+                poll_options = poll.get("options", [])
+                if poll_options:
+                    first_option = poll_options[0]
+                    # Buscar info del participante
+                    participant_info = next(
+                        (p for p in challenge.get("participants", []) if p.get("poll_id") == poll.get("id")),
+                        None
+                    )
+                    
+                    challenge_options.append({
+                        "id": poll.get("id"),
+                        "text": participant_info.get("username", "") if participant_info else "",
+                        "votes": poll.get("total_votes", 0),
+                        "participant_id": participant_info.get("user_id") if participant_info else None,
+                        "participant_username": participant_info.get("username") if participant_info else None,
+                        "participant_avatar": participant_info.get("avatar_url") if participant_info else None,
+                        "media": {
+                            "type": first_option.get("media_type"),
+                            "url": first_option.get("media_url"),
+                            "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
+                        } if first_option.get("media_url") else None
+                    })
+            
+            # Obtener info del creador
+            creator = authors_dict.get(challenge.get("creator_id"))
+            if not creator:
+                creator_doc = await db.users.find_one({"id": challenge.get("creator_id")})
+                if creator_doc:
+                    creator = {k: v for k, v in creator_doc.items() if k != "_id"}
+            
+            # Determinar layout según número de participantes
+            num_participants = len(challenge_options)
+            if num_participants == 2:
+                challenge_layout = "vs-horizontal"
+            elif num_participants == 3:
+                challenge_layout = "vs-stack"
+            elif num_participants == 4:
+                challenge_layout = "vs-grid-2x2"
+            else:
+                challenge_layout = "vs-grid"
+            
+            challenge_response = {
+                "id": f"challenge_{challenge.get('id')}",
+                "challenge_id": challenge.get("id"),
+                "title": challenge.get("title"),
+                "author": creator,
+                "authorUser": creator,
+                "options": challenge_options,
+                "created_at": challenge.get("published_at") or challenge.get("created_at"),
+                "total_votes": sum(opt.get("votes", 0) for opt in challenge_options),
+                "likes_count": 0,
+                "comments_count": 0,
+                "layout": challenge_layout,
+                "music": None,
+                "userVote": None,
+                "userLiked": False,
+                "comments_enabled": True,
+                "show_vote_count": True,
+                "is_challenge": True,
+                "challenge_status": "published",
+                "participants": [
+                    {
+                        "id": p.get("user_id"),
+                        "username": p.get("username"),
+                        "display_name": p.get("display_name"),
+                        "avatar_url": p.get("avatar_url")
+                    }
+                    for p in challenge.get("participants", [])
+                    if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+                ]
+            }
+            
+            # Insertar al inicio del feed para que los challenges destaquen
+            result.insert(0, challenge_response)
+        
         return {
             "polls": result,
             "total": len(result),
