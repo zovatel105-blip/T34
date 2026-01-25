@@ -196,7 +196,8 @@ const ContentPublishPage = () => {
   };
 
   const handleFinalPublish = async () => {
-    if (!title.trim()) {
+    // Para participantes de challenge, no requerir título
+    if (!joiningChallengeId && !title.trim()) {
       toast({
         title: "Error",
         description: "Necesitas escribir un título para tu publicación",
