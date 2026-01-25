@@ -316,28 +316,62 @@ const ContentPublishPage = () => {
 
       const newPoll = await pollService.createPoll(pollData);
       
-      setUploadProgress(100);
-      setUploadStatus('¡Publicado!');
+      // ⚡ PASO 5: Si es modo Challenge, crear el challenge también
+      if (isChallengeMode) {
+        setUploadStatus('Creando challenge...');
+        setUploadProgress(95);
+        
+        const challengeData = {
+          title: challengeTitle.trim(),
+          description: challengeDescription.trim() || null,
+          participant_ids: selectedUsers.map(u => u.id),
+          challenge_type: challengeType || null,
+          deadline: null,
+          creator_poll_id: newPoll.id
+        };
 
-      toast({
-        title: "🎉 ¡Publicación creada!",
-        description: isChallengeMode 
-          ? "Ahora crea tu challenge" 
-          : "Tu contenido ha sido publicado exitosamente",
-      });
+        console.log('🏆 Creating challenge:', challengeData);
+        
+        try {
+          const createdChallenge = await challengeService.createChallenge(challengeData, token);
+          console.log('✅ Challenge created:', createdChallenge);
+          
+          setUploadProgress(100);
+          setUploadStatus('¡Challenge publicado!');
 
-      // Navigate based on mode
-      setTimeout(() => {
-        if (isChallengeMode) {
-          // Navigate to challenge creation with poll ID
-          navigate('/challenge/create', { 
-            state: { pollId: newPoll.id } 
+          toast({
+            title: "🏆 ¡Challenge creado!",
+            description: `Se envió la invitación a ${selectedUsers.length} ${selectedUsers.length === 1 ? 'usuario' : 'usuarios'}`,
           });
-        } else {
-          // Navigate to feed
-          navigate('/feed');
+
+          // Navigate to explore
+          setTimeout(() => {
+            navigate('/explore');
+          }, 1000);
+          
+        } catch (challengeError) {
+          console.error('❌ Error creating challenge:', challengeError);
+          toast({
+            title: "Error al crear challenge",
+            description: challengeError.message || "El contenido se publicó pero no se pudo crear el challenge",
+            variant: "destructive"
+          });
+          setTimeout(() => navigate('/feed'), 1000);
         }
-      }, 1000);
+      } else {
+        setUploadProgress(100);
+        setUploadStatus('¡Publicado!');
+
+        toast({
+          title: "🎉 ¡Publicación creada!",
+          description: "Tu contenido ha sido publicado exitosamente",
+        });
+
+        // Navigate to feed
+        setTimeout(() => {
+          navigate('/feed');
+        }, 1000);
+      }
 
     } catch (error) {
       console.error('❌ Error creating content:', error);
