@@ -10050,13 +10050,23 @@ async def get_active_challenges(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
-    Obtener challenges activos (en progreso)
+    Obtener challenges activos (en progreso) donde el usuario es participante
     Estos aparecen en Explore > Activos
+    
+    REGLAS DE VISIBILIDAD:
+    - Solo muestra challenges donde el usuario actual es participante (creador o invitado)
+    - Challenges incompletos son 100% privados para no-participantes
+    - Estados incluidos: PENDING, ACTIVE
     """
     try:
-        # Buscar challenges en estado PENDING o ACTIVE
+        # 🔒 CRITICAL: Solo mostrar challenges donde el usuario es participante
+        # Buscar challenges en estado PENDING o ACTIVE donde el usuario es participante
         challenges_cursor = db.challenges.find({
-            "status": {"$in": [ChallengeStatus.PENDING, ChallengeStatus.ACTIVE]}
+            "status": {"$in": [ChallengeStatus.PENDING, ChallengeStatus.ACTIVE]},
+            "$or": [
+                {"creator_id": current_user.id},  # Es el creador
+                {"participants.user_id": current_user.id}  # Es un participante invitado
+            ]
         }).sort("created_at", -1).limit(50)
         
         challenges = await challenges_cursor.to_list(length=50)
@@ -10077,6 +10087,7 @@ async def get_active_challenges(
             )
             responses.append(response)
         
+        logger.info(f"📋 Usuario {current_user.username} tiene {len(responses)} challenges activos")
         return responses
         
     except Exception as e:
