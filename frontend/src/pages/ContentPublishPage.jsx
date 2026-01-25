@@ -338,8 +338,43 @@ const ContentPublishPage = () => {
 
       const newPoll = await pollService.createPoll(pollData);
       
-      // ⚡ PASO 5: Si es modo Challenge, crear el challenge también
-      if (isChallengeMode) {
+      // ⚡ PASO 5: Verificar si es unirse a challenge existente O crear nuevo challenge
+      if (joiningChallengeId) {
+        // CASO 1: Unirse a un challenge existente
+        setUploadStatus('Enviando contenido al challenge...');
+        setUploadProgress(95);
+        
+        try {
+          console.log('🎯 Enviando contenido al challenge:', joiningChallengeId);
+          const result = await challengeService.submitContent(joiningChallengeId, newPoll.id, token);
+          console.log('✅ Contenido enviado al challenge:', result);
+          
+          setUploadProgress(100);
+          setUploadStatus('¡Contenido enviado!');
+
+          toast({
+            title: "🏆 ¡Contenido enviado!",
+            description: result.is_ready_to_publish 
+              ? "¡El challenge está completo y se ha publicado!" 
+              : "Tu contenido ha sido añadido al challenge",
+          });
+
+          // Navigate to active challenges
+          setTimeout(() => {
+            navigate('/explore/active');
+          }, 1000);
+          
+        } catch (submitError) {
+          console.error('❌ Error enviando contenido al challenge:', submitError);
+          toast({
+            title: "Error al enviar contenido",
+            description: submitError.message || "El contenido se publicó pero no se pudo asociar al challenge",
+            variant: "destructive"
+          });
+          setTimeout(() => navigate('/feed'), 1000);
+        }
+      } else if (isChallengeMode) {
+        // CASO 2: Crear un nuevo challenge
         setUploadStatus('Creando challenge...');
         setUploadProgress(95);
         
