@@ -10237,7 +10237,14 @@ async def reject_challenge(
     challenge_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Rechazar participación en un challenge"""
+    """
+    Rechazar participación en un challenge
+    
+    REGLAS:
+    - Si todos los invitados rechazan → Challenge se cancela
+    - Si queda al menos 1 invitado que puede aceptar → Challenge continúa
+    - Si no se puede alcanzar el mínimo (2 participantes) → Challenge se cancela
+    """
     try:
         # Buscar el challenge
         challenge = await db.challenges.find_one({"id": challenge_id})
@@ -10256,7 +10263,7 @@ async def reject_challenge(
         
         participant = challenge["participants"][participant_index]
         
-        # Verificar que aún no ha respondido
+        # No permitir rechazar si ya no está en estado INVITED
         if participant["status"] != ParticipantStatus.INVITED:
             return {"success": True, "message": "Ya has respondido a este challenge"}
         
@@ -10268,10 +10275,61 @@ async def reject_challenge(
         
         logger.info(f"❌ Usuario {current_user.username} rechazó el challenge {challenge_id}")
         
+        # 🔒 Verificar si el challenge debe cancelarse
+        # Obtener challenge actualizado
+        updated_challenge = await db.challenges.find_one({"id": challenge_id})
+        participants = updated_challenge.get("participants", [])
+        
+        # Contar estados
+        submitted_count = sum(1 for p in participants if p["status"] == ParticipantStatus.CONTENT_SUBMITTED)
+        accepted_count = sum(1 for p in participants if p["status"] == ParticipantStatus.ACCEPTED)
+        pending_count = sum(1 for p in participants if p["status"] == ParticipantStatus.INVITED)
+        rejected_count = sum(1 for p in participants if p["status"] == ParticipantStatus.REJECTED)
+        
+        # Participantes activos = los que ya enviaron contenido + los que aceptaron
+        active_participants = submitted_count + accepted_count
+        # Participantes potenciales = activos + pendientes (que podrían aceptar)
+        potential_participants = active_participants + pending_count
+        
+        logger.info(f"📊 Challenge {challenge_id}: submitted={submitted_count}, accepted={accepted_count}, pending={pending_count}, rejected={rejected_count}")
+        logger.info(f"📊 Potencial máximo de participantes: {potential_participants}")
+        
+        # REGLA: Si no se puede alcanzar el mínimo de 2 participantes, cancelar
+        MIN_PARTICIPANTS = 2
+        
+        if potential_participants < MIN_PARTICIPANTS:
+            # Cancelar el challenge
+            await db.challenges.update_one(
+                {"id": challenge_id},
+                {"$set": {"status": ChallengeStatus.CANCELLED}}
+            )
+            
+            # 🗑️ Limpiar los polls asociados al challenge cancelado
+            # Quitar challenge_id y challenge_pending de los polls
+            poll_ids = [p.get("poll_id") for p in participants if p.get("poll_id")]
+            if poll_ids:
+                await db.polls.update_many(
+                    {"id": {"$in": poll_ids}},
+                    {
+                        "$unset": {"challenge_id": "", "challenge_pending": ""}
+                    }
+                )
+                logger.info(f"🗑️ Polls desvinculados del challenge cancelado: {poll_ids}")
+            
+            logger.info(f"🚫 Challenge {challenge_id} CANCELADO - No se puede alcanzar el mínimo de {MIN_PARTICIPANTS} participantes")
+            
+            return {
+                "success": True,
+                "message": "Challenge rechazado y cancelado (no hay suficientes participantes)",
+                "status": ParticipantStatus.REJECTED,
+                "challenge_cancelled": True
+            }
+        
         return {
             "success": True,
             "message": "Challenge rechazado",
-            "status": ParticipantStatus.REJECTED
+            "status": ParticipantStatus.REJECTED,
+            "challenge_cancelled": False
         }
         
     except HTTPException:
