@@ -10219,13 +10219,13 @@ async def get_active_challenges(
         raise HTTPException(status_code=500, detail="Error al obtener challenges activos")
 
 
-@api_router.get("/challenges/completed", response_model=List[ChallengeResponse])
+@api_router.get("/challenges/completed")
 async def get_completed_challenges(
     limit: int = 20,
     skip: int = 0
 ):
     """
-    Obtener challenges completados y publicados
+    Obtener challenges completados y publicados con información de media
     Estos aparecen en la página principal de Explore
     No requiere autenticación
     """
@@ -10239,16 +10239,62 @@ async def get_completed_challenges(
         
         responses = []
         for challenge in challenges:
-            total_participants = len(challenge.get("participants", []))
+            participants = challenge.get("participants", [])
+            total_participants = len(participants)
             
-            response = ChallengeResponse(
-                **challenge,
-                accepted_count=total_participants,
-                submitted_count=total_participants,
-                is_ready_to_publish=True
-            )
+            # Obtener los polls de este challenge para tener los thumbnails
+            participant_poll_ids = [
+                p.get("poll_id") for p in participants
+                if p.get("poll_id") and p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+            ]
+            
+            # Cargar polls para obtener media
+            polls_dict = {}
+            if participant_poll_ids:
+                polls_cursor = db.polls.find({"id": {"$in": participant_poll_ids}})
+                polls_list = await polls_cursor.to_list(length=len(participant_poll_ids))
+                polls_dict = {p.get("id"): p for p in polls_list}
+            
+            # Enriquecer participantes con info de media
+            enriched_participants = []
+            for p in participants:
+                poll = polls_dict.get(p.get("poll_id"))
+                poll_media = None
+                if poll and poll.get("options"):
+                    first_option = poll["options"][0]
+                    poll_media = {
+                        "type": first_option.get("media_type"),
+                        "url": first_option.get("media_url"),
+                        "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url")
+                    }
+                
+                enriched_participants.append({
+                    **p,
+                    "poll_media": poll_media
+                })
+            
+            response = {
+                "id": challenge.get("id"),
+                "title": challenge.get("title"),
+                "description": challenge.get("description"),
+                "creator_id": challenge.get("creator_id"),
+                "creator_username": challenge.get("creator_username"),
+                "creator_display_name": challenge.get("creator_display_name"),
+                "creator_avatar_url": challenge.get("creator_avatar_url"),
+                "participants": enriched_participants,
+                "challenge_type": challenge.get("challenge_type"),
+                "status": challenge.get("status"),
+                "created_at": challenge.get("created_at"),
+                "published_at": challenge.get("published_at"),
+                "final_layout": challenge.get("final_layout"),
+                "final_participant_count": challenge.get("final_participant_count"),
+                "accepted_count": total_participants,
+                "submitted_count": total_participants,
+                "is_ready_to_publish": True
+            }
             responses.append(response)
         
+        logger.info(f"📋 Retornando {len(responses)} challenges completados")
         return responses
         
     except Exception as e:
