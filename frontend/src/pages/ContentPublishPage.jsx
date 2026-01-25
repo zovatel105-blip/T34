@@ -473,6 +473,99 @@ const ContentPublishPage = () => {
     );
   }
 
+  // ========== VISTA SIMPLIFICADA PARA PARTICIPANTES DE CHALLENGE ==========
+  if (joiningChallengeId) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col">
+        {/* Header simple */}
+        <div className="flex items-center justify-between px-4 py-3 bg-black border-b border-gray-800">
+          <button
+            onClick={handleBack}
+            className="p-2 hover:bg-gray-900 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            <span className="text-yellow-500 font-semibold">Challenge</span>
+          </div>
+          <div className="w-9"></div>
+        </div>
+
+        {/* Contenido principal - Preview grande */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          {/* Preview del contenido */}
+          <div className="w-full max-w-sm aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden shadow-2xl mb-6">
+            {contentData && contentData.options && contentData.options.length > 0 ? (
+              <div className="relative w-full h-full">
+                {contentData.options[0]?.media_type?.startsWith('image') ? (
+                  <img
+                    src={contentData.options[0].media}
+                    alt="Tu contenido"
+                    className="w-full h-full object-cover"
+                  />
+                ) : contentData.options[0]?.media_type?.startsWith('video') ? (
+                  <video
+                    src={contentData.options[0].media}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : null}
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">
+                Sin contenido
+              </div>
+            )}
+          </div>
+
+          {/* Mensaje informativo */}
+          <div className="text-center mb-6 px-4">
+            <p className="text-white text-lg font-medium mb-2">¿Listo para enviar?</p>
+            <p className="text-gray-400 text-sm">
+              Tu contenido se añadirá al challenge. Cuando todos los participantes suban su contenido, el challenge se publicará automáticamente.
+            </p>
+          </div>
+        </div>
+
+        {/* Botón fijo abajo */}
+        <div className="p-4 bg-black border-t border-gray-800">
+          <button
+            onClick={handlePublish}
+            disabled={isPublishing}
+            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-700 rounded-full text-white font-bold text-lg transition-all flex items-center justify-center gap-2"
+          >
+            {isPublishing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>{uploadStatus || 'Enviando...'}</span>
+              </>
+            ) : (
+              <>
+                <Trophy className="w-5 h-5" />
+                <span>Enviar al Challenge</span>
+              </>
+            )}
+          </button>
+          
+          {/* Progress bar */}
+          {isPublishing && uploadProgress > 0 && (
+            <div className="mt-3 bg-gray-800 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 h-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  // ========== FIN VISTA SIMPLIFICADA ==========
+
   return (
     <div className="min-h-screen bg-black">
       {/* Inject CSS for hiding scrollbar */}
