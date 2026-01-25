@@ -5621,7 +5621,15 @@ async def get_polls(
     """Get polls with pagination and filters"""
     
     # Build filter query
-    filter_query = {"is_active": True}
+    # 🔒 CRITICAL: Excluir polls de challenges no publicados
+    filter_query = {
+        "is_active": True,
+        "$or": [
+            {"challenge_pending": {"$exists": False}},
+            {"challenge_pending": False},
+            {"challenge_pending": None}
+        ]
+    }
     if category:
         filter_query["category"] = category
     if featured is not None:
