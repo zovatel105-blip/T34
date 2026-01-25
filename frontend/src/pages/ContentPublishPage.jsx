@@ -719,8 +719,8 @@ const ContentPublishPage = () => {
               {/* Separator line */}
               <div className="border-t border-gray-800 mt-8 mb-3"></div>
 
-              {/* Challenge Section - Only shown in Challenge mode */}
-              {isChallengeMode && (
+              {/* Challenge Section - Only shown when CREATING a new challenge (not joining existing) */}
+              {isChallengeMode && !joiningChallengeId && (
                 <div className="px-5 md:px-2 mb-6">
                   {/* Challenge Header */}
                   <div className="flex items-center gap-2 mb-4">
