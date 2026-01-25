@@ -748,9 +748,9 @@ const ContentPublishPage = () => {
                     <label className="block text-gray-300 text-sm mb-2 flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Invitar Participantes * ({selectedUsers.length}/6)
+                        Invitar Participantes * ({selectedUsers.length}/5)
                       </span>
-                      {selectedUsers.length >= 6 && (
+                      {selectedUsers.length >= 5 && (
                         <span className="text-yellow-500 text-xs">Límite alcanzado</span>
                       )}
                     </label>
@@ -788,7 +788,7 @@ const ContentPublishPage = () => {
                     )}
 
                     {/* Search Users */}
-                    {selectedUsers.length < 6 && (
+                    {selectedUsers.length < 5 && (
                       <div className="relative">
                         <div className="flex items-center gap-2 bg-gray-900 px-3 py-2 rounded-lg border border-gray-700 focus-within:border-yellow-500 transition-colors">
                           <Search className="w-4 h-4 text-gray-500" />
@@ -796,36 +796,52 @@ const ContentPublishPage = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Buscar usuarios..."
+                            placeholder="Escribe al menos 2 caracteres..."
                             className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
                           />
                           {searching && (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500" />
                           )}
                         </div>
+                        
+                        {/* Ayuda si menos de 2 caracteres */}
+                        {searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
+                          <p className="text-gray-500 text-xs mt-1">Escribe al menos 2 caracteres para buscar</p>
+                        )}
 
                         {/* Search Results */}
-                        {searchResults.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg max-h-48 overflow-y-auto z-50 shadow-xl">
-                            {searchResults.map((searchUser) => (
-                              <button
-                                key={searchUser.id}
-                                type="button"
-                                onClick={() => handleSelectUser(searchUser)}
-                                className="w-full flex items-center gap-2 p-2 hover:bg-gray-800 transition-colors"
-                              >
-                                <Avatar className="w-8 h-8">
-                                  <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
-                                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
-                                    {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="text-left">
-                                  <p className="text-white text-sm font-medium">{searchUser.display_name || searchUser.username}</p>
-                                  <p className="text-gray-500 text-xs">@{searchUser.username}</p>
-                                </div>
-                              </button>
-                            ))}
+                        {searchQuery.trim().length >= 2 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg max-h-48 overflow-y-auto z-[100] shadow-xl">
+                            {searching ? (
+                              <div className="p-3 text-center text-gray-400">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-500 mx-auto mb-2" />
+                                Buscando...
+                              </div>
+                            ) : searchResults.length > 0 ? (
+                              searchResults.map((searchUser) => (
+                                <button
+                                  key={searchUser.id}
+                                  type="button"
+                                  onClick={() => handleSelectUser(searchUser)}
+                                  className="w-full flex items-center gap-2 p-2 hover:bg-gray-800 transition-colors"
+                                >
+                                  <Avatar className="w-8 h-8">
+                                    <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
+                                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                      {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="text-left">
+                                    <p className="text-white text-sm font-medium">{searchUser.display_name || searchUser.username}</p>
+                                    <p className="text-gray-500 text-xs">@{searchUser.username}</p>
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="p-3 text-center text-gray-400 text-sm">
+                                No se encontraron usuarios con "{searchQuery}"
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
