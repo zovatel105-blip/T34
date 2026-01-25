@@ -5938,7 +5938,15 @@ async def get_ultra_fast_feed(
     """
     try:
         # 🚀 SIMPLIFIED FAST QUERY - Just use the working endpoint logic
-        filter_query = {"is_active": True}
+        # 🔒 CRITICAL: Excluir polls que pertenecen a challenges no publicados
+        filter_query = {
+            "is_active": True,
+            "$or": [
+                {"challenge_pending": {"$exists": False}},  # No tiene el campo
+                {"challenge_pending": False},               # Campo existe pero es false
+                {"challenge_pending": None}                 # Campo es null
+            ]
+        }
         
         # Get polls with simple sort (fast and reliable)
         if algorithm == "trending":
