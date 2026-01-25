@@ -192,6 +192,26 @@ const ContentPublishPage = () => {
       return;
     }
 
+    // Challenge-specific validations
+    if (isChallengeMode) {
+      if (!challengeTitle.trim()) {
+        toast({
+          title: "Error",
+          description: "Necesitas escribir un título para el challenge",
+          variant: "destructive"
+        });
+        return;
+      }
+      if (selectedUsers.length < 1) {
+        toast({
+          title: "Error",
+          description: "Debes invitar al menos 1 participante al challenge",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setIsPublishing(true);
     setUploadProgress(0);
     setUploadStatus('Preparando archivos...');
