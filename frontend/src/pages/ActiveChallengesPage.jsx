@@ -370,49 +370,133 @@ const ActiveChallengesPage = () => {
         })()}
       </div>
 
-      {/* Información del battle/stream actual */}
+      {/* Información del challenge actual */}
       <div className="absolute bottom-24 left-4 right-20 z-20">
-        <div className="flex items-center gap-3 mb-3">
-          {selectedBattle?.participants.map((participant, index) => (
-            <button 
-              key={participant.id}
-              onClick={(e) => handleUserClick(participant.id, e)}
-              className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full pr-3 pl-1 py-1 hover:bg-black/60 transition-colors"
-            >
-              <Avatar className="w-8 h-8 border-2 border-white/20">
-                <AvatarImage src={participant.avatar} alt={participant.displayName} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
-                  <User className="w-4 h-4" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-white text-sm font-medium">@{participant.username}</span>
-              {index < selectedBattle.participants.length - 1 && (
-                <span className="text-white/60 text-sm ml-1">vs</span>
-              )}
-            </button>
-          ))}
-        </div>
-        
-        <h3 className="text-white text-lg font-bold mb-2 drop-shadow-lg">
-          {selectedBattle?.title}
-        </h3>
-        
-        <div className="flex items-center gap-4 text-white/80 text-sm">
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            {formatFollowers(selectedBattle?.viewers || 0)} viendo
-          </span>
-          {selectedBattle?.type === 'battle' && (
-            <span className="px-2 py-0.5 bg-purple-500/80 rounded-full text-xs font-semibold">
-              BATTLE
-            </span>
-          )}
-        </div>
+        {selectedBattle ? (
+          <>
+            {/* Avatares de participantes con anillo de estado */}
+            <div className="flex items-center gap-3 mb-3">
+              {selectedBattle?.participants.map((participant, index) => (
+                <button 
+                  key={participant.id}
+                  onClick={(e) => handleUserClick(participant.id, e)}
+                  className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full pr-3 pl-1 py-1 hover:bg-black/60 transition-colors"
+                >
+                  <div className={cn(
+                    "rounded-full p-0.5",
+                    participant.status === 'content_submitted' 
+                      ? "ring-2 ring-green-500" 
+                      : participant.status === 'accepted'
+                        ? "ring-2 ring-yellow-500"
+                        : "ring-2 ring-gray-500"
+                  )}>
+                    <Avatar className="w-8 h-8 border-2 border-black">
+                      <AvatarImage src={participant.avatar} alt={participant.displayName} className="object-cover" />
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                        {participant.displayName?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-white text-sm font-medium">@{participant.username}</span>
+                    <span className={cn(
+                      "text-[10px]",
+                      participant.status === 'content_submitted' ? "text-green-400" :
+                      participant.status === 'accepted' ? "text-yellow-400" :
+                      participant.status === 'invited' ? "text-blue-400" : "text-gray-400"
+                    )}>
+                      {participant.status === 'content_submitted' ? '✓ Listo' :
+                       participant.status === 'accepted' ? '⏳ Preparando' :
+                       participant.status === 'invited' ? '📩 Invitado' : participant.status}
+                    </span>
+                  </div>
+                  {index < selectedBattle.participants.length - 1 && (
+                    <span className="text-white/60 text-sm ml-1">vs</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <h3 className="text-white text-lg font-bold mb-2 drop-shadow-lg">
+              {selectedBattle?.title}
+            </h3>
+            
+            {selectedBattle?.description && (
+              <p className="text-white/70 text-sm mb-2">{selectedBattle.description}</p>
+            )}
+            
+            <div className="flex items-center gap-4 text-white/80 text-sm">
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-semibold",
+                selectedBattle?.status === 'pending' ? "bg-yellow-500/80" :
+                selectedBattle?.status === 'active' ? "bg-green-500/80" : "bg-purple-500/80"
+              )}>
+                {selectedBattle?.status === 'pending' ? '⏳ ESPERANDO' :
+                 selectedBattle?.status === 'active' ? '🔥 ACTIVO' : 'CHALLENGE'}
+              </span>
+              <span className="text-white/60 text-xs">
+                {selectedBattle?.participants?.filter(p => p.status === 'content_submitted').length || 0}/{selectedBattle?.participants?.length || 0} listos
+              </span>
+            </div>
 
-        {/* Botón de participar */}
-        <button className="mt-4 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg shadow-purple-500/30">
-          ¡Participar en el reto!
-        </button>
+            {/* Botón de acción según el estado del usuario */}
+            {(() => {
+              const myParticipation = selectedBattle?.participants?.find(p => p.id === user?.id);
+              if (!myParticipation) return null;
+              
+              if (myParticipation.status === 'invited') {
+                return (
+                  <div className="flex gap-2 mt-4">
+                    <button 
+                      onClick={() => handleAcceptChallenge(selectedBattle.id)}
+                      className="px-6 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
+                    >
+                      ✓ Aceptar
+                    </button>
+                    <button 
+                      onClick={() => handleRejectChallenge(selectedBattle.id)}
+                      className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-full text-white font-semibold text-sm transition-all"
+                    >
+                      ✗ Rechazar
+                    </button>
+                  </div>
+                );
+              } else if (myParticipation.status === 'accepted') {
+                return (
+                  <button 
+                    onClick={() => navigate('/new', { state: { challengeId: selectedBattle.id } })}
+                    className="mt-4 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg shadow-purple-500/30"
+                  >
+                    📸 Subir mi contenido
+                  </button>
+                );
+              } else if (myParticipation.status === 'content_submitted') {
+                return (
+                  <div className="mt-4 px-4 py-2 bg-green-500/20 rounded-full text-green-400 text-sm">
+                    ✓ Ya subiste tu contenido - Esperando a los demás
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </>
+        ) : loading ? (
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-2" />
+            <p>Cargando challenges...</p>
+          </div>
+        ) : (
+          <div className="text-white text-center">
+            <Trophy className="w-12 h-12 text-gray-500 mx-auto mb-2" />
+            <p className="text-gray-400">No tienes challenges activos</p>
+            <button 
+              onClick={() => navigate('/new')}
+              className="mt-4 px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white font-semibold text-sm"
+            >
+              Crear un Challenge
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Acciones sociales en el contenido */}
