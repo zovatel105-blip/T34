@@ -244,8 +244,8 @@ const ChallengeCreationPage = () => {
           {/* Participantes seleccionados */}
           <div>
             <label className="block text-white font-semibold mb-2 flex items-center justify-between">
-              <span>Participantes * ({selectedUsers.length}/6)</span>
-              {selectedUsers.length >= 6 && (
+              <span>Participantes * ({selectedUsers.length}/5)</span>
+              {selectedUsers.length >= 5 && (
                 <span className="text-yellow-500 text-xs">Límite alcanzado</span>
               )}
             </label>
