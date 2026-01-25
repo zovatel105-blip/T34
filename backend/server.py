@@ -6368,9 +6368,15 @@ async def get_following_polls(
     following_user_ids = [rel["following_id"] for rel in follow_relationships]
     
     # Build filter query to only include polls from followed users
+    # 🔒 CRITICAL: Excluir polls de challenges no publicados
     filter_query = {
         "is_active": True,
-        "author_id": {"$in": following_user_ids}
+        "author_id": {"$in": following_user_ids},
+        "$or": [
+            {"challenge_pending": {"$exists": False}},
+            {"challenge_pending": False},
+            {"challenge_pending": None}
+        ]
     }
     
     # Get polls from followed users only
