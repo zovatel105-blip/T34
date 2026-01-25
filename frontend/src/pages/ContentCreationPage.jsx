@@ -1113,10 +1113,11 @@ const ContentCreationPage = () => {
 
     // Specific validation for "off" layout (full screen images)
     if (selectedLayout.id === 'off') {
-      if (validOptions.length < 2) {
+      const minRequired = isChallengeMode ? 1 : 2;
+      if (validOptions.length < minRequired) {
         toast({
           title: "Error",
-          description: "Requiere al menos 2 imágenes",
+          description: isChallengeMode ? "Requiere al menos 1 imagen o video" : "Requiere al menos 2 imágenes",
           variant: "destructive"
         });
         return;
@@ -1124,7 +1125,7 @@ const ContentCreationPage = () => {
       
       // Validate that all options are images (not videos) for better fullscreen experience
       const hasVideos = validOptions.some(opt => opt.media.type.startsWith('video/'));
-      if (hasVideos) {
+      if (hasVideos && !isChallengeMode) {
         toast({
           title: "Recomendación",
           description: "Para mejor experiencia en pantalla completa, se recomienda usar solo imágenes",
@@ -1133,10 +1134,11 @@ const ContentCreationPage = () => {
       }
     } else {
       // Validate minimum options for other layouts
-      if (validOptions.length < 2) {
+      const minRequired = isChallengeMode ? 1 : 2;
+      if (validOptions.length < minRequired) {
         toast({
           title: "Error",
-          description: "Necesitas al menos 2 opciones para crear una votación",
+          description: isChallengeMode ? "Necesitas al menos 1 contenido para el challenge" : "Necesitas al menos 2 opciones para crear una votación",
           variant: "destructive"
         });
         return;
