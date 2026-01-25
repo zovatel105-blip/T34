@@ -10571,8 +10571,9 @@ async def publish_challenge(challenge_id: str):
     
     FUNCIONALIDADES:
     1. Actualiza el estado del challenge a PUBLISHED
-    2. Quita el flag challenge_pending de todos los polls del challenge
-    3. Calcula y asigna el layout adaptativo según número de participantes:
+    2. MANTIENE challenge_pending=True en los polls (NO aparecen individualmente)
+    3. El challenge aparece como entrada UNIFICADA en el feed
+    4. Calcula y asigna el layout adaptativo según número de participantes:
        - 2 participantes: layout "1vs1"
        - 3 participantes: layout "stack" 
        - 4 participantes: layout "grid-2x2"
@@ -10621,19 +10622,10 @@ async def publish_challenge(challenge_id: str):
             }
         )
         
-        # 🔓 CRITICAL: Quitar challenge_pending de todos los polls del challenge
-        # Esto hace que los polls sean visibles en el feed público
-        poll_ids = [p.get("poll_id") for p in active_participants if p.get("poll_id")]
-        
-        if poll_ids:
-            result = await db.polls.update_many(
-                {"id": {"$in": poll_ids}},
-                {
-                    "$set": {"challenge_pending": False},
-                    "$unset": {"challenge_pending": ""}  # También eliminar el campo completamente
-                }
-            )
-            logger.info(f"🔓 {result.modified_count} polls del challenge ahora visibles en feed público")
+        # 🔒 IMPORTANTE: Los polls MANTIENEN challenge_pending=True
+        # Esto evita que aparezcan como publicaciones individuales
+        # El challenge aparecerá como una entrada UNIFICADA en el feed
+        logger.info(f"🔒 Los polls del challenge mantienen challenge_pending=True (no aparecen individualmente)")
         
         logger.info(f"🎊 Challenge {challenge_id} publicado exitosamente con layout {challenge_layout}")
         return True
