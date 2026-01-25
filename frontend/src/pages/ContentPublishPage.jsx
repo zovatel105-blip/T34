@@ -534,7 +534,7 @@ const ContentPublishPage = () => {
         {/* Botón fijo abajo */}
         <div className="p-4 bg-black border-t border-gray-800">
           <button
-            onClick={handlePublish}
+            onClick={handleFinalPublish}
             disabled={isPublishing}
             className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:from-gray-600 disabled:to-gray-700 rounded-full text-white font-bold text-lg transition-all flex items-center justify-center gap-2"
           >
