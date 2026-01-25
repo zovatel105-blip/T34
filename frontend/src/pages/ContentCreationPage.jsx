@@ -1268,7 +1268,8 @@ const ContentCreationPage = () => {
       state: { 
         contentData,
         returnTo: '/feed',
-        isChallengeMode: isChallengeMode // Pass challenge mode flag
+        isChallengeMode: isChallengeMode, // Pass challenge mode flag
+        challengeId: joiningChallengeId // Pass challenge ID if joining existing challenge
       } 
     });
   };
