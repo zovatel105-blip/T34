@@ -50,7 +50,7 @@ const ChallengeCreationPage = () => {
       try {
         setSearching(true);
         const response = await fetch(
-          `${API_BASE_URL}/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
+          `${AppConfig.BACKEND_URL}/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
           {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -65,6 +65,8 @@ const ChallengeCreationPage = () => {
             u => u.id !== user.id && !selectedUsers.find(s => s.id === u.id)
           );
           setSearchResults(filtered);
+        } else {
+          console.error('Error en búsqueda de usuarios:', response.status);
         }
       } catch (error) {
         console.error('Error searching users:', error);
@@ -75,7 +77,7 @@ const ChallengeCreationPage = () => {
 
     const debounce = setTimeout(searchUsers, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, token, user.id, selectedUsers]);
+  }, [searchQuery, token, user?.id, selectedUsers]);
 
   const handleSelectUser = (selectedUser) => {
     if (selectedUsers.length >= 6) {
