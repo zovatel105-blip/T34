@@ -238,7 +238,7 @@ const ContentPublishPage = () => {
       setTimeout(() => {
         if (isChallengeMode) {
           // Navigate to challenge creation with poll ID
-          navigate('/challenge-create', { 
+          navigate('/challenge/create', { 
             state: { pollId: newPoll.id } 
           });
         } else {
