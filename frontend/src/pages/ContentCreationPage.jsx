@@ -1409,7 +1409,7 @@ const ContentCreationPage = () => {
           <div className="px-4 pb-3 flex justify-end">
             <button
               onClick={handleCreate}
-              disabled={isCreating || options.filter(opt => opt && opt.media).length < (isChallengeMode ? 1 : 2)}
+              disabled={isCreating || options.filter(opt => opt && opt.media).length < ((isChallengeMode || joiningChallengeId) ? 1 : 2)}
               className="flex items-center gap-2 bg-gray-900/80 hover:bg-gray-800/80 disabled:bg-gray-900/40 disabled:cursor-not-allowed backdrop-blur-sm rounded-full px-4 py-2 transition-all"
             >
               <span className="text-white font-medium text-sm">
