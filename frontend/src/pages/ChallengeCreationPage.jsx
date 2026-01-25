@@ -303,13 +303,18 @@ const ChallengeCreationPage = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar usuarios..."
+                    placeholder="Escribe al menos 2 caracteres..."
                     className="flex-1 bg-transparent text-white placeholder-zinc-500 focus:outline-none"
                   />
                   {searching && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500" />
                   )}
                 </div>
+                
+                {/* Ayuda para el usuario */}
+                {searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
+                  <p className="text-zinc-500 text-xs mt-1">Escribe al menos 2 caracteres para buscar</p>
+                )}
 
                 {/* Resultados de búsqueda */}
                 {searchQuery.trim().length >= 2 && (
