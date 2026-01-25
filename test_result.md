@@ -7773,3 +7773,85 @@ const getAvatarUrl = (user) => {
 4. No infinite loading states
 5. Check console for any errors related to media loading
 
+
+---
+
+**🎯 SISTEMA DE CHALLENGES CON VISIBILIDAD CONTROLADA IMPLEMENTADO (2025-01-28)**
+
+✅ **FUNCIONALIDADES IMPLEMENTADAS:**
+
+**REQUISITOS DEL USUARIO:**
+1. Las publicaciones tipo Challenge NO se publican hasta que el Challenge esté completo
+2. Los Challenges activos se muestran en "Activos" en Explore (solo para participantes)
+3. Los polls de un Challenge son 100% privados hasta publicación
+4. Límite: 6 participantes máximo (1 creador + 5 invitados)
+5. Mínimo para publicar: 2 usuarios (creador + al menos 1 invitado que complete)
+6. Si todos rechazan → Challenge se cancela
+7. Layout adaptativo según número de participantes finales
+
+**CAMBIOS BACKEND IMPLEMENTADOS:**
+
+1. **POST /api/challenges** - Creación de challenge:
+   - Valida máximo 5 usuarios invitados (6 total con creador)
+   - Marca el poll del creador con `challenge_pending: true`
+   - Poll del creador oculto del feed público
+
+2. **GET /api/challenges/active** - Challenges activos:
+   - 🔒 Solo muestra challenges donde el usuario es participante
+   - Filtra por creator_id O participants.user_id
+   - Challenges incompletos son privados
+
+3. **POST /api/challenges/{id}/reject** - Rechazar challenge:
+   - Verifica si queda mínimo de 2 participantes posibles
+   - Si no se puede alcanzar el mínimo → cancela el challenge
+   - Limpia polls del challenge cancelado (quita challenge_id y challenge_pending)
+
+4. **POST /api/challenges/{id}/submit-content** - Enviar contenido:
+   - Marca el poll como `challenge_pending: true`
+   - Verifica si todos completaron para publicar automáticamente
+
+5. **publish_challenge()** - Publicación:
+   - Calcula layout adaptativo según participantes finales:
+     - 2 → "1vs1"
+     - 3 → "stack"
+     - 4 → "grid-2x2"
+     - 5 → "grid-adaptive-5"
+     - 6 → "grid-3x2"
+   - Quita `challenge_pending` de todos los polls (hacen visibles en feed)
+   - Guarda `final_layout` y `final_participant_count`
+
+6. **GET /api/challenges/{id}/polls** - Nuevo endpoint:
+   - Si challenge publicado: cualquier usuario puede ver polls
+   - Si challenge no publicado: solo participantes pueden ver
+   - Retorna polls con información de autores
+
+7. **Filtros en feeds** - Excluir polls de challenges pendientes:
+   - GET /api/polls
+   - GET /api/polls/ultra-fast
+   - GET /api/polls/following
+   - Condición: `challenge_pending != true`
+
+**REGLAS DE VISIBILIDAD:**
+- Challenge incompleto → solo participantes pueden ver
+- Challenge publicado → público en feed
+- Poll con challenge_pending=true → NO aparece en feeds públicos
+- Poll con challenge_pending=false o sin campo → aparece en feeds
+
+**ARCHIVOS MODIFICADOS:**
+- `/app/backend/server.py`:
+  - Líneas ~9900-10000: POST /api/challenges (creación)
+  - Líneas ~10050-10095: GET /api/challenges/active (filtrado por participante)
+  - Líneas ~10230-10320: POST /api/challenges/{id}/reject (cancelación automática)
+  - Líneas ~10460-10540: publish_challenge() (layouts adaptativos)
+  - Líneas ~10650-10760: GET /api/challenges/{id}/polls (nuevo endpoint)
+  - Líneas ~5940-5970: GET /api/polls/ultra-fast (filtro challenge_pending)
+  - Líneas ~5620-5640: GET /api/polls (filtro challenge_pending)
+  - Líneas ~6370-6395: GET /api/polls/following (filtro challenge_pending)
+
+**TESTING PENDIENTE:**
+- Verificar que crear challenge marca poll como challenge_pending
+- Confirmar que polls con challenge_pending no aparecen en feed
+- Probar rechazo de challenge y cancelación automática
+- Verificar que solo participantes ven challenges activos
+- Probar publicación automática con layouts adaptativos
+- Confirmar que polls se vuelven visibles después de publicar challenge
