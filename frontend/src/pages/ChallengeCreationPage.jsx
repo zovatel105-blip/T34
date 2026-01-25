@@ -8,8 +8,6 @@ import challengeService from '../services/challengeService';
 import AppConfig from '../config/config';
 import { cn } from '../lib/utils';
 
-const API_BASE_URL = AppConfig.API_BASE_URL;
-
 const ChallengeCreationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
