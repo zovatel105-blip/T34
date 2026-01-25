@@ -10374,26 +10374,75 @@ async def submit_challenge_content(
 
 async def publish_challenge(challenge_id: str):
     """
-    Función helper para publicar un challenge cuando todos han completado
-    Actualiza el estado del challenge a PUBLISHED
+    Función helper para publicar un challenge cuando está listo
+    
+    FUNCIONALIDADES:
+    1. Actualiza el estado del challenge a PUBLISHED
+    2. Quita el flag challenge_pending de todos los polls del challenge
+    3. Calcula y asigna el layout adaptativo según número de participantes:
+       - 2 participantes: layout "1vs1"
+       - 3 participantes: layout "stack" 
+       - 4 participantes: layout "grid-2x2"
+       - 5 participantes: layout "grid-adaptive-5"
+       - 6 participantes: layout "grid-3x2"
     """
     try:
+        # Obtener el challenge para acceder a los participantes
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            logger.error(f"❌ Challenge {challenge_id} no encontrado para publicar")
+            return False
+        
+        participants = challenge.get("participants", [])
+        
+        # Contar participantes que enviaron contenido (CONTENT_SUBMITTED)
+        active_participants = [p for p in participants if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED]
+        participant_count = len(active_participants)
+        
+        # Determinar el layout adaptativo según número de participantes
+        if participant_count == 2:
+            challenge_layout = "1vs1"
+        elif participant_count == 3:
+            challenge_layout = "stack"
+        elif participant_count == 4:
+            challenge_layout = "grid-2x2"
+        elif participant_count == 5:
+            challenge_layout = "grid-adaptive-5"
+        elif participant_count >= 6:
+            challenge_layout = "grid-3x2"
+        else:
+            challenge_layout = "single"  # Fallback para 1 participante (no debería ocurrir)
+        
+        logger.info(f"🎨 Challenge {challenge_id}: {participant_count} participantes → Layout: {challenge_layout}")
+        
+        # Actualizar el estado del challenge
         await db.challenges.update_one(
             {"id": challenge_id},
             {
                 "$set": {
                     "status": ChallengeStatus.PUBLISHED,
-                    "published_at": datetime.utcnow()
+                    "published_at": datetime.utcnow(),
+                    "final_layout": challenge_layout,
+                    "final_participant_count": participant_count
                 }
             }
         )
         
-        # Aquí podrías agregar lógica adicional:
-        # - Notificar a todos los participantes
-        # - Crear una entrada en el feed
-        # - Enviar notificaciones push
+        # 🔓 CRITICAL: Quitar challenge_pending de todos los polls del challenge
+        # Esto hace que los polls sean visibles en el feed público
+        poll_ids = [p.get("poll_id") for p in active_participants if p.get("poll_id")]
         
-        logger.info(f"🎊 Challenge {challenge_id} publicado exitosamente")
+        if poll_ids:
+            result = await db.polls.update_many(
+                {"id": {"$in": poll_ids}},
+                {
+                    "$set": {"challenge_pending": False},
+                    "$unset": {"challenge_pending": ""}  # También eliminar el campo completamente
+                }
+            )
+            logger.info(f"🔓 {result.modified_count} polls del challenge ahora visibles en feed público")
+        
+        logger.info(f"🎊 Challenge {challenge_id} publicado exitosamente con layout {challenge_layout}")
         return True
         
     except Exception as e:
