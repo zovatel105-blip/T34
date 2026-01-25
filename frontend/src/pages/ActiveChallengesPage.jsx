@@ -221,6 +221,80 @@ const ActiveChallengesPage = () => {
     navigate(`/profile/${userId}`);
   };
 
+  // Aceptar un challenge
+  const handleAcceptChallenge = async (challengeId) => {
+    try {
+      await challengeService.acceptChallenge(challengeId, token);
+      // Recargar challenges
+      const challenges = await challengeService.getActiveChallenges(token);
+      setActiveChallenges(challenges);
+      // Actualizar battles
+      const transformedBattles = challenges.map(challenge => ({
+        id: challenge.id,
+        challengeId: challenge.id,
+        participants: challenge.participants.map(p => ({
+          id: p.user_id,
+          username: p.username,
+          displayName: p.display_name || p.username,
+          avatar: p.avatar_url,
+          status: p.status,
+          pollId: p.poll_id,
+          isLive: p.status === 'content_submitted'
+        })),
+        viewers: 0,
+        type: 'challenge',
+        isActive: challenge.status === 'pending' || challenge.status === 'active',
+        status: challenge.status,
+        title: challenge.title,
+        description: challenge.description,
+        creatorId: challenge.creator_id,
+        media: null
+      }));
+      setBattles(transformedBattles);
+      console.log('✅ Challenge aceptado');
+    } catch (error) {
+      console.error('Error aceptando challenge:', error);
+    }
+  };
+
+  // Rechazar un challenge
+  const handleRejectChallenge = async (challengeId) => {
+    try {
+      await challengeService.rejectChallenge(challengeId, token);
+      // Recargar challenges
+      const challenges = await challengeService.getActiveChallenges(token);
+      setActiveChallenges(challenges);
+      const transformedBattles = challenges.map(challenge => ({
+        id: challenge.id,
+        challengeId: challenge.id,
+        participants: challenge.participants.map(p => ({
+          id: p.user_id,
+          username: p.username,
+          displayName: p.display_name || p.username,
+          avatar: p.avatar_url,
+          status: p.status,
+          pollId: p.poll_id,
+          isLive: p.status === 'content_submitted'
+        })),
+        viewers: 0,
+        type: 'challenge',
+        isActive: challenge.status === 'pending' || challenge.status === 'active',
+        status: challenge.status,
+        title: challenge.title,
+        description: challenge.description,
+        creatorId: challenge.creator_id,
+        media: null
+      }));
+      setBattles(transformedBattles);
+      if (transformedBattles.length === 0) {
+        setSelectedBattleIndex(0);
+      }
+      console.log('✅ Challenge rechazado');
+    } catch (error) {
+      console.error('Error rechazando challenge:', error);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
       {/* Barra de avatares de battles/streams */}
