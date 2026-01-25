@@ -10651,6 +10651,109 @@ async def get_my_challenge_vote(
         raise HTTPException(status_code=500, detail="Error al obtener voto")
 
 
+@api_router.get("/challenges/{challenge_id}/polls")
+async def get_challenge_polls(
+    challenge_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Obtener los polls de un challenge específico
+    
+    REGLAS DE VISIBILIDAD:
+    - Si el challenge está PUBLICADO: cualquier usuario autenticado puede ver los polls
+    - Si el challenge NO está publicado: solo los participantes pueden ver los polls
+    """
+    try:
+        # Buscar el challenge
+        challenge = await db.challenges.find_one({"id": challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge no encontrado")
+        
+        challenge_status = challenge.get("status")
+        participants = challenge.get("participants", [])
+        
+        # Verificar permisos de visibilidad
+        is_participant = any(p["user_id"] == current_user.id for p in participants)
+        is_published = challenge_status == ChallengeStatus.PUBLISHED
+        
+        if not is_published and not is_participant:
+            raise HTTPException(
+                status_code=403, 
+                detail="Solo los participantes pueden ver los polls de un challenge no publicado"
+            )
+        
+        # Obtener los poll_ids de los participantes que enviaron contenido
+        poll_ids = [p.get("poll_id") for p in participants 
+                   if p.get("poll_id") and p.get("status") == ParticipantStatus.CONTENT_SUBMITTED]
+        
+        if not poll_ids:
+            return {"challenge_id": challenge_id, "polls": [], "total": 0}
+        
+        # Obtener los polls
+        polls_cursor = db.polls.find({"id": {"$in": poll_ids}})
+        polls = await polls_cursor.to_list(length=len(poll_ids))
+        
+        # Obtener información de los autores
+        author_ids = list(set(poll.get("author_id") for poll in polls if poll.get("author_id")))
+        authors_cursor = db.users.find({"id": {"$in": author_ids}})
+        authors_list = await authors_cursor.to_list(len(author_ids))
+        authors_dict = {user["id"]: {k: v for k, v in user.items() if k != "_id"} for user in authors_list}
+        
+        # Construir respuesta
+        result = []
+        for poll in polls:
+            author = authors_dict.get(poll.get("author_id"))
+            # Transformar opciones al formato frontend
+            transformed_options = []
+            for opt in poll.get("options", []):
+                media_url = opt.get("media_url")
+                media_type = opt.get("media_type")
+                thumbnail_url = opt.get("thumbnail_url")
+                
+                option_dict = {
+                    "id": opt.get("id"),
+                    "text": opt.get("text", ""),
+                    "votes": opt.get("votes", 0),
+                    "media": {
+                        "type": media_type,
+                        "url": media_url,
+                        "thumbnail": thumbnail_url or media_url,
+                    } if media_url else None
+                }
+                transformed_options.append(option_dict)
+            
+            poll_response = {
+                "id": poll.get("id"),
+                "title": poll.get("title"),
+                "author": author,
+                "authorUser": author,
+                "options": transformed_options,
+                "created_at": poll.get("created_at"),
+                "total_votes": poll.get("total_votes", 0),
+                "likes_count": poll.get("likes_count", 0),
+                "comments_count": poll.get("comments_count", 0),
+                "layout": poll.get("layout"),
+                "challenge_id": challenge_id
+            }
+            result.append(poll_response)
+        
+        logger.info(f"📋 Challenge {challenge_id}: retornando {len(result)} polls")
+        
+        return {
+            "challenge_id": challenge_id,
+            "polls": result,
+            "total": len(result),
+            "layout": challenge.get("final_layout"),
+            "status": challenge_status
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo polls del challenge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error al obtener polls del challenge")
+
+
 # =============  STORY ENDPOINTS =============
 
 @api_router.post("/stories", response_model=StoryResponse, tags=["Stories"])
