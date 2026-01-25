@@ -9,8 +9,6 @@ import challengeService from '../services/challengeService';  // ⚡ Import chal
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import AppConfig from '../config/config';
 
-const API_BASE_URL = AppConfig.API_BASE_URL;
-
 // CSS para ocultar scrollbar
 const scrollableOptionsStyle = `
   .scrollable-options::-webkit-scrollbar {
