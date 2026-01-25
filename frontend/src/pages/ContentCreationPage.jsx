@@ -645,15 +645,28 @@ const ContentCreationPage = () => {
   const [mentionsDialogOpen, setMentionsDialogOpen] = useState(false);
   const [activeSlotForDialog, setActiveSlotForDialog] = useState(null);
   const [textPreviewPosition, setTextPreviewPosition] = useState('bottom'); // 'top', 'center', 'bottom'
+  const [joiningChallengeId, setJoiningChallengeId] = useState(null); // ID del challenge al que unirse
 
-  // Initialize with pre-selected audio if provided
+  // Initialize with pre-selected audio if provided OR challengeId
   useEffect(() => {
     const preSelectedAudio = location.state?.preSelectedAudio;
+    const challengeId = location.state?.challengeId;
+    
     if (preSelectedAudio) {
       setSelectedMusic(preSelectedAudio);
       toast({
         title: "🎵 Audio seleccionado",
         description: `${preSelectedAudio.title} - ${preSelectedAudio.artist}`,
+      });
+    }
+    
+    // Si viene de un challenge existente, guardarlo
+    if (challengeId) {
+      setJoiningChallengeId(challengeId);
+      console.log('🎯 Creando contenido para challenge:', challengeId);
+      toast({
+        title: "🏆 Challenge",
+        description: "Crea tu contenido para el challenge",
       });
     }
   }, [location.state, toast]);
