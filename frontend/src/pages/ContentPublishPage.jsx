@@ -31,6 +31,7 @@ const ContentPublishPage = () => {
   const [contentData, setContentData] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);  // ⚡ Upload progress
   const [uploadStatus, setUploadStatus] = useState('');  // ⚡ Upload status message
+  const [isChallengeMode, setIsChallengeMode] = useState(false); // Track if creating content for challenge
   
   // New states for modals and selections
   const [showAudienceModal, setShowAudienceModal] = useState(false);
@@ -51,6 +52,8 @@ const ContentPublishPage = () => {
   // Get content data from navigation state
   useEffect(() => {
     const data = location.state?.contentData;
+    const challengeMode = location.state?.isChallengeMode || false;
+    
     if (!data) {
       // No content data, redirect back to creation
       navigate('/content-creation');
@@ -59,9 +62,11 @@ const ContentPublishPage = () => {
     console.log('📦 ContentPublishPage - Received contentData:', {
       layout: data.layout,
       optionsCount: data.options?.length,
+      isChallengeMode: challengeMode,
       data: data
     });
     setContentData(data);
+    setIsChallengeMode(challengeMode);
   }, [location.state, navigate]);
 
   const handleBack = () => {
@@ -224,12 +229,22 @@ const ContentPublishPage = () => {
 
       toast({
         title: "🎉 ¡Publicación creada!",
-        description: "Tu contenido ha sido publicado exitosamente",
+        description: isChallengeMode 
+          ? "Ahora crea tu challenge" 
+          : "Tu contenido ha sido publicado exitosamente",
       });
 
-      // Navigate to feed after successful publication
+      // Navigate based on mode
       setTimeout(() => {
-        navigate('/feed');
+        if (isChallengeMode) {
+          // Navigate to challenge creation with poll ID
+          navigate('/challenge-create', { 
+            state: { pollId: newPoll.id } 
+          });
+        } else {
+          // Navigate to feed
+          navigate('/feed');
+        }
       }, 1000);
 
     } catch (error) {
