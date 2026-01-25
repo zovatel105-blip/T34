@@ -719,6 +719,21 @@ const ContentPublishPage = () => {
               {/* Separator line */}
               <div className="border-t border-gray-800 mt-8 mb-3"></div>
 
+              {/* Joining Challenge Info - Shown when joining an existing challenge */}
+              {joiningChallengeId && (
+                <div className="px-5 md:px-2 mb-6">
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="w-5 h-5 text-yellow-500" />
+                      <span className="text-yellow-500 font-semibold">Participando en Challenge</span>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      Tu contenido será enviado al challenge. Una vez que todos los participantes suban su contenido, el challenge se publicará automáticamente.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Challenge Section - Only shown when CREATING a new challenge (not joining existing) */}
               {isChallengeMode && !joiningChallengeId && (
                 <div className="px-5 md:px-2 mb-6">
