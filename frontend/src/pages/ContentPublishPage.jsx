@@ -65,6 +65,7 @@ const ContentPublishPage = () => {
   useEffect(() => {
     const data = location.state?.contentData;
     const challengeMode = location.state?.isChallengeMode || false;
+    const existingChallengeId = location.state?.challengeId; // ID del challenge al que unirse
     
     if (!data) {
       // No content data, redirect back to creation
@@ -75,10 +76,17 @@ const ContentPublishPage = () => {
       layout: data.layout,
       optionsCount: data.options?.length,
       isChallengeMode: challengeMode,
+      existingChallengeId: existingChallengeId,
       data: data
     });
     setContentData(data);
     setIsChallengeMode(challengeMode);
+    
+    // Si viene de un challenge existente, guardarlo
+    if (existingChallengeId) {
+      setJoiningChallengeId(existingChallengeId);
+      console.log('🎯 Uniéndose al challenge:', existingChallengeId);
+    }
   }, [location.state, navigate]);
 
   // Search users for Challenge mode
