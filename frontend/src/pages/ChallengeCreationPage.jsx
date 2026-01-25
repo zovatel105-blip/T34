@@ -47,29 +47,43 @@ const ChallengeCreationPage = () => {
         return;
       }
 
+      // Verificar que tenemos token y usuario
+      if (!token || !user?.id) {
+        console.warn('⚠️ No hay token o usuario para buscar');
+        return;
+      }
+
       try {
         setSearching(true);
-        const response = await fetch(
-          `${AppConfig.BACKEND_URL}/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+        console.log('🔍 Buscando usuarios:', searchQuery);
+        
+        const url = `${AppConfig.BACKEND_URL}/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`;
+        console.log('🔗 URL de búsqueda:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        );
+        });
+
+        console.log('📡 Respuesta status:', response.status);
 
         if (response.ok) {
           const users = await response.json();
+          console.log('👥 Usuarios encontrados:', users.length, users);
+          
           // Filtrar usuarios ya seleccionados y el usuario actual
           const filtered = users.filter(
             u => u.id !== user.id && !selectedUsers.find(s => s.id === u.id)
           );
+          console.log('✅ Usuarios filtrados:', filtered.length);
           setSearchResults(filtered);
         } else {
-          console.error('Error en búsqueda de usuarios:', response.status);
+          const errorText = await response.text();
+          console.error('❌ Error en búsqueda de usuarios:', response.status, errorText);
         }
       } catch (error) {
-        console.error('Error searching users:', error);
+        console.error('❌ Error searching users:', error);
       } finally {
         setSearching(false);
       }
