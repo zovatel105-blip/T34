@@ -452,14 +452,15 @@ const ExplorePage = () => {
           const options = participantsWithContent.map((participant, idx) => ({
             id: participant.poll_id || `opt_${idx}`,
             text: participant.username || '',
-            votes: 0, // Se podría agregar votos del challenge
+            votes: 0,
             participant_id: participant.user_id,
             participant_username: participant.username,
             participant_avatar: participant.avatar_url,
-            media: {
-              type: 'image',
-              url: participant.poll_thumbnail || null, // Si tenemos thumbnail
-            }
+            media: participant.poll_media ? {
+              type: participant.poll_media.type || 'image',
+              url: participant.poll_media.url,
+              thumbnail: participant.poll_media.thumbnail || participant.poll_media.url
+            } : null
           }));
           
           return {
@@ -498,7 +499,6 @@ const ExplorePage = () => {
         setBattles(transformedChallenges);
       } catch (error) {
         console.error('Error loading completed challenges:', error);
-        // Si falla, usar array vacío
         setBattles([]);
       } finally {
         setLoading(false);
