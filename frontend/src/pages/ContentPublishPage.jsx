@@ -22,7 +22,7 @@ const ContentPublishPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
 
   // States
   const [title, setTitle] = useState('');
@@ -37,6 +37,15 @@ const ContentPublishPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);  // ⚡ Upload progress
   const [uploadStatus, setUploadStatus] = useState('');  // ⚡ Upload status message
   const [isChallengeMode, setIsChallengeMode] = useState(false); // Track if creating content for challenge
+  
+  // Challenge-specific states
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeDescription, setChallengeDescription] = useState('');
+  const [challengeType, setChallengeType] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   
   // New states for modals and selections
   const [showAudienceModal, setShowAudienceModal] = useState(false);
