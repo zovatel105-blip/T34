@@ -1421,63 +1421,75 @@ const ContentCreationPage = () => {
             </button>
           </div>
 
-          {/* Tab bar */}
-          <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
-            <div className="flex items-center justify-center gap-4">
-              {/* PUBLICAR */}
-              <button
-                onClick={() => setIsChallengeMode(false)}
-                className={`font-semibold text-sm tracking-wide transition-colors ${
-                  !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
-                }`}
-              >
-                PUBLICAR
-              </button>
+          {/* Tab bar - Oculto cuando viene de un challenge existente */}
+          {!joiningChallengeId ? (
+            <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
+              <div className="flex items-center justify-center gap-4">
+                {/* PUBLICAR */}
+                <button
+                  onClick={() => setIsChallengeMode(false)}
+                  className={`font-semibold text-sm tracking-wide transition-colors ${
+                    !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
+                  }`}
+                >
+                  PUBLICAR
+                </button>
+                
+                {/* HISTORIA */}
+                <button
+                  onClick={() => navigate('/story-creation')}
+                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
+                >
+                  HISTORIA
+                </button>
+                
+                {/* VS */}
+                <button
+                  onClick={() => navigate('/vs-create')}
+                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
+                >
+                  VS
+                </button>
+                
+                {/* MOMENTO */}
+                <button
+                  onClick={() => navigate('/moment-create')}
+                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
+                >
+                  MOMENTO
+                </button>
+                
+                {/* CHALLENGE */}
+                <button
+                  onClick={() => setIsChallengeMode(true)}
+                  className={`font-semibold text-sm tracking-wide transition-colors ${
+                    isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
+                  }`}
+                >
+                  CHALLENGE
+                </button>
+              </div>
               
-              {/* HISTORIA */}
-              <button
-                onClick={() => navigate('/story-creation')}
-                className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
-              >
-                HISTORIA
-              </button>
-              
-              {/* VS */}
-              <button
-                onClick={() => navigate('/vs-create')}
-                className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
-              >
-                VS
-              </button>
-              
-              {/* MOMENTO */}
-              <button
-                onClick={() => navigate('/moment-create')}
-                className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
-              >
-                MOMENTO
-              </button>
-              
-              {/* CHALLENGE */}
-              <button
-                onClick={() => setIsChallengeMode(true)}
-                className={`font-semibold text-sm tracking-wide transition-colors ${
-                  isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
-                }`}
-              >
-                CHALLENGE
-              </button>
+              {/* Active indicator line */}
+              <div className="flex justify-center mt-2">
+                <div 
+                  className={`w-16 h-0.5 rounded-full transition-colors ${
+                    isChallengeMode ? 'bg-yellow-500' : 'bg-white'
+                  }`}
+                ></div>
+              </div>
             </div>
-            
-            {/* Active indicator line */}
-            <div className="flex justify-center mt-2">
-              <div 
-                className={`w-16 h-0.5 rounded-full transition-colors ${
-                  isChallengeMode ? 'bg-yellow-500' : 'bg-white'
-                }`}
-              ></div>
+          ) : (
+            /* Indicador de Challenge cuando viene de un challenge existente */
+            <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-yellow-500 font-semibold text-sm">🏆 CHALLENGE</span>
+              </div>
+              <div className="flex justify-center mt-2">
+                <div className="w-16 h-0.5 rounded-full bg-yellow-500"></div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
