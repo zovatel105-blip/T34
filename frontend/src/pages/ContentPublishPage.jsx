@@ -662,6 +662,173 @@ const ContentPublishPage = () => {
               {/* Separator line */}
               <div className="border-t border-gray-800 mt-8 mb-3"></div>
 
+              {/* Challenge Section - Only shown in Challenge mode */}
+              {isChallengeMode && (
+                <div className="px-5 md:px-2 mb-6">
+                  {/* Challenge Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    <span className="text-yellow-500 font-semibold">Configuración del Challenge</span>
+                  </div>
+
+                  {/* Challenge Title */}
+                  <div className="mb-4">
+                    <label className="block text-gray-300 text-sm mb-2">
+                      Título del Challenge *
+                    </label>
+                    <input
+                      type="text"
+                      value={challengeTitle}
+                      onChange={(e) => setChallengeTitle(e.target.value)}
+                      placeholder="Ej: Challenge de Baile 💃"
+                      maxLength={100}
+                      className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none transition-colors text-sm"
+                    />
+                    <p className="text-gray-500 text-xs mt-1">
+                      {challengeTitle.length}/100 caracteres
+                    </p>
+                  </div>
+
+                  {/* Challenge Description */}
+                  <div className="mb-4">
+                    <label className="block text-gray-300 text-sm mb-2">
+                      Descripción (Opcional)
+                    </label>
+                    <textarea
+                      value={challengeDescription}
+                      onChange={(e) => setChallengeDescription(e.target.value)}
+                      placeholder="Describe el reto..."
+                      maxLength={300}
+                      rows={2}
+                      className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none transition-colors resize-none text-sm"
+                    />
+                    <p className="text-gray-500 text-xs mt-1">
+                      {challengeDescription.length}/300 caracteres
+                    </p>
+                  </div>
+
+                  {/* Challenge Category */}
+                  <div className="mb-4">
+                    <label className="block text-gray-300 text-sm mb-2">
+                      Categoría (Opcional)
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['Baile', 'Arte', 'Cocina', 'Música', 'Deporte', 'Otro'].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setChallengeType(type.toLowerCase())}
+                          className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                            challengeType === type.toLowerCase()
+                              ? 'bg-yellow-500 text-black'
+                              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Invite Users */}
+                  <div className="mb-4">
+                    <label className="block text-gray-300 text-sm mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Invitar Participantes * ({selectedUsers.length}/6)
+                      </span>
+                      {selectedUsers.length >= 6 && (
+                        <span className="text-yellow-500 text-xs">Límite alcanzado</span>
+                      )}
+                    </label>
+
+                    {/* Selected Users */}
+                    {selectedUsers.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {selectedUsers.map((selectedUser) => (
+                          <div
+                            key={selectedUser.id}
+                            className="flex items-center justify-between bg-gray-900 p-2 rounded-lg"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
+                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                  {selectedUser.display_name?.[0]?.toUpperCase() || selectedUser.username?.[0]?.toUpperCase() || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="text-white text-sm font-medium">{selectedUser.display_name || selectedUser.username}</p>
+                                <p className="text-gray-500 text-xs">@{selectedUser.username}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveUser(selectedUser.id)}
+                              className="text-red-500 hover:text-red-400 transition-colors p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Search Users */}
+                    {selectedUsers.length < 6 && (
+                      <div className="relative">
+                        <div className="flex items-center gap-2 bg-gray-900 px-3 py-2 rounded-lg border border-gray-700 focus-within:border-yellow-500 transition-colors">
+                          <Search className="w-4 h-4 text-gray-500" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar usuarios..."
+                            className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                          />
+                          {searching && (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500" />
+                          )}
+                        </div>
+
+                        {/* Search Results */}
+                        {searchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg max-h-48 overflow-y-auto z-50 shadow-xl">
+                            {searchResults.map((searchUser) => (
+                              <button
+                                key={searchUser.id}
+                                type="button"
+                                onClick={() => handleSelectUser(searchUser)}
+                                className="w-full flex items-center gap-2 p-2 hover:bg-gray-800 transition-colors"
+                              >
+                                <Avatar className="w-8 h-8">
+                                  <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
+                                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                    {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="text-left">
+                                  <p className="text-white text-sm font-medium">{searchUser.display_name || searchUser.username}</p>
+                                  <p className="text-gray-500 text-xs">@{searchUser.username}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Challenge Info */}
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <p className="text-blue-300 text-xs">
+                      💡 Los usuarios invitados recibirán una notificación para participar en tu challenge. 
+                      Cuando acepten, crearán su propio contenido y los usuarios podrán votar por el ganador.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Audience Targeting */}
               <button 
                 onClick={() => setShowAudienceModal(true)}
