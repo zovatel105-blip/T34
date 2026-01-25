@@ -651,6 +651,7 @@ const ContentCreationPage = () => {
   useEffect(() => {
     const preSelectedAudio = location.state?.preSelectedAudio;
     const challengeId = location.state?.challengeId;
+    const challengeTitle = location.state?.challengeTitle;
     
     if (preSelectedAudio) {
       setSelectedMusic(preSelectedAudio);
@@ -665,14 +666,19 @@ const ContentCreationPage = () => {
       setJoiningChallengeId(challengeId);
       console.log('🎯 Creando contenido para challenge:', challengeId);
       toast({
-        title: "🏆 Challenge",
+        title: `🏆 ${challengeTitle || 'Challenge'}`,
         description: "Crea tu contenido para el challenge",
       });
     }
   }, [location.state, toast]);
 
   const handleClose = () => {
-    navigate('/feed');
+    // Si viene de un challenge, volver a los challenges activos
+    if (joiningChallengeId) {
+      navigate('/explore/active');
+    } else {
+      navigate('/feed');
+    }
   };
 
   const handleMusicSelect = (music) => {
