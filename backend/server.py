@@ -10327,11 +10327,15 @@ async def submit_challenge_content(
             }
         )
         
-        # Actualizar el poll con el challenge_id
+        # 🔒 Actualizar el poll con challenge_id y marcarlo como pendiente (oculto del feed)
         await db.polls.update_one(
             {"id": poll_id},
-            {"$set": {"challenge_id": challenge_id}}
+            {"$set": {
+                "challenge_id": challenge_id,
+                "challenge_pending": True  # 🔒 Poll oculto del feed público hasta publicación
+            }}
         )
+        logger.info(f"🔒 Poll {poll_id} marcado como challenge_pending=True")
         
         # Verificar si todos los participantes han enviado contenido
         updated_challenge = await db.challenges.find_one({"id": challenge_id})
