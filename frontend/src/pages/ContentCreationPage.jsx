@@ -638,6 +638,7 @@ const ContentCreationPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false); // New state for fullscreen preview
   const [cropActiveSlot, setCropActiveSlot] = useState(null); // Which slot is in crop mode
+  const [isChallengeMode, setIsChallengeMode] = useState(false); // Track if creating content for challenge
   
   // Dialog states for description and mentions
   const [descriptionDialogOpen, setDescriptionDialogOpen] = useState(false);
@@ -1251,7 +1252,8 @@ const ContentCreationPage = () => {
     navigate('/content-publish', { 
       state: { 
         contentData,
-        returnTo: '/feed'
+        returnTo: '/feed',
+        isChallengeMode: isChallengeMode // Pass challenge mode flag
       } 
     });
   };
@@ -1399,10 +1401,13 @@ const ContentCreationPage = () => {
 
           {/* Tab bar */}
           <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
-            <div className="flex items-center justify-center gap-6">
-              {/* PUBLICAR - Active */}
+            <div className="flex items-center justify-center gap-4">
+              {/* PUBLICAR */}
               <button
-                className="text-white font-semibold text-sm tracking-wide"
+                onClick={() => setIsChallengeMode(false)}
+                className={`font-semibold text-sm tracking-wide transition-colors ${
+                  !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
+                }`}
               >
                 PUBLICAR
               </button>
@@ -1430,11 +1435,25 @@ const ContentCreationPage = () => {
               >
                 MOMENTO
               </button>
+              
+              {/* CHALLENGE */}
+              <button
+                onClick={() => setIsChallengeMode(true)}
+                className={`font-semibold text-sm tracking-wide transition-colors ${
+                  isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                CHALLENGE
+              </button>
             </div>
             
             {/* Active indicator line */}
             <div className="flex justify-center mt-2">
-              <div className="w-16 h-0.5 bg-white rounded-full"></div>
+              <div 
+                className={`w-16 h-0.5 rounded-full transition-colors ${
+                  isChallengeMode ? 'bg-yellow-500' : 'bg-white'
+                }`}
+              ></div>
             </div>
           </div>
         </div>
