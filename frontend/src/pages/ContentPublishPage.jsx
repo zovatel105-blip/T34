@@ -91,27 +91,41 @@ const ContentPublishPage = () => {
         return;
       }
 
+      // Verificar que tenemos token y usuario
+      if (!token || !user?.id) {
+        console.warn('⚠️ No hay token o usuario para buscar');
+        return;
+      }
+
       try {
         setSearching(true);
-        const response = await fetch(
-          `${API_BASE_URL}/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+        console.log('🔍 Buscando usuarios:', searchQuery);
+        
+        const url = `${AppConfig.BACKEND_URL}/api/users/search?q=${encodeURIComponent(searchQuery)}&limit=20`;
+        console.log('🔗 URL:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        );
+        });
+
+        console.log('📡 Response status:', response.status);
 
         if (response.ok) {
           const users = await response.json();
+          console.log('👥 Usuarios encontrados:', users.length);
           // Filter out already selected users and current user
           const filtered = users.filter(
             u => u.id !== user?.id && !selectedUsers.find(s => s.id === u.id)
           );
+          console.log('✅ Usuarios filtrados:', filtered.length);
           setSearchResults(filtered);
+        } else {
+          console.error('❌ Error en búsqueda:', response.status);
         }
       } catch (error) {
-        console.error('Error searching users:', error);
+        console.error('❌ Error searching users:', error);
       } finally {
         setSearching(false);
       }
