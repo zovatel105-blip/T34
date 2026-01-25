@@ -35,6 +35,7 @@ const ContentPublishPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);  // ⚡ Upload progress
   const [uploadStatus, setUploadStatus] = useState('');  // ⚡ Upload status message
   const [isChallengeMode, setIsChallengeMode] = useState(false); // Track if creating content for challenge
+  const [joiningChallengeId, setJoiningChallengeId] = useState(null); // ID del challenge al que unirse (si existe)
   
   // Challenge-specific states
   const [challengeTitle, setChallengeTitle] = useState('');
