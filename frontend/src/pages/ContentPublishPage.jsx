@@ -214,8 +214,8 @@ const ContentPublishPage = () => {
       return;
     }
 
-    // Challenge-specific validations
-    if (isChallengeMode) {
+    // Challenge-specific validations - Solo para CREAR nuevo challenge, no para unirse
+    if (isChallengeMode && !joiningChallengeId) {
       if (!challengeTitle.trim()) {
         toast({
           title: "Error",
