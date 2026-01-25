@@ -1,18 +1,24 @@
 import AppConfig from '../config/config';
 
-const API_BASE_URL = AppConfig.API_BASE_URL;
-
 /**
  * Servicio para gestionar Challenges
  */
 class ChallengeService {
   
   /**
+   * Obtener la URL base del backend
+   */
+  getBaseUrl() {
+    return `${AppConfig.BACKEND_URL}/api`;
+  }
+
+  /**
    * Crear un nuevo challenge
    */
   async createChallenge(challengeData, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges`, {
+      console.log('🏆 ChallengeService.createChallenge:', challengeData);
+      const response = await fetch(`${this.getBaseUrl()}/challenges`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,14 +27,19 @@ class ChallengeService {
         body: JSON.stringify(challengeData)
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Error response:', errorData);
         throw new Error(errorData.detail || 'Error al crear el challenge');
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Challenge created:', result);
+      return result;
     } catch (error) {
-      console.error('Error creating challenge:', error);
+      console.error('❌ Error creating challenge:', error);
       throw error;
     }
   }
@@ -38,7 +49,7 @@ class ChallengeService {
    */
   async getMyInvitations(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/my-invitations`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/my-invitations`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -60,7 +71,7 @@ class ChallengeService {
    */
   async getActiveChallenges(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/active`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/active`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -83,7 +94,7 @@ class ChallengeService {
   async getCompletedChallenges(limit = 20, skip = 0) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/challenges/completed?limit=${limit}&skip=${skip}`
+        `${this.getBaseUrl()}/challenges/completed?limit=${limit}&skip=${skip}`
       );
 
       if (!response.ok) {
@@ -107,7 +118,7 @@ class ChallengeService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/${challengeId}`, {
         headers
       });
 
@@ -127,7 +138,7 @@ class ChallengeService {
    */
   async acceptChallenge(challengeId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/accept`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/${challengeId}/accept`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -151,7 +162,7 @@ class ChallengeService {
    */
   async rejectChallenge(challengeId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/reject`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/${challengeId}/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -176,7 +187,7 @@ class ChallengeService {
   async submitContent(challengeId, pollId, token) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/challenges/${challengeId}/submit-content?poll_id=${pollId}`,
+        `${this.getBaseUrl()}/challenges/${challengeId}/submit-content?poll_id=${pollId}`,
         {
           method: 'POST',
           headers: {
@@ -202,7 +213,7 @@ class ChallengeService {
    */
   async voteChallenge(challengeId, participantId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/vote`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/${challengeId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -228,7 +239,7 @@ class ChallengeService {
    */
   async getMyVote(challengeId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/my-vote`, {
+      const response = await fetch(`${this.getBaseUrl()}/challenges/${challengeId}/my-vote`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
