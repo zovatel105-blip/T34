@@ -136,10 +136,11 @@ const ContentPublishPage = () => {
   }, [searchQuery, token, user?.id, selectedUsers, isChallengeMode]);
 
   const handleSelectUser = (selectedUser) => {
-    if (selectedUsers.length >= 6) {
+    // Máximo 5 invitados (6 total con creador)
+    if (selectedUsers.length >= 5) {
       toast({
         title: "Límite alcanzado",
-        description: "Máximo 6 participantes permitidos",
+        description: "Máximo 5 usuarios invitados (6 total con creador)",
         variant: "destructive"
       });
       return;
