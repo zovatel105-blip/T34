@@ -319,28 +319,55 @@ const ActiveChallengesPage = () => {
         </div>
       </div>
 
-      {/* Contenido principal - Imagen/Video del battle seleccionado */}
+      {/* Contenido principal - Muestra contenido del challenge seleccionado */}
       <div className="absolute inset-0 z-0">
-        {selectedBattle?.media?.type === 'video' ? (
-          <video
-            src={selectedBattle.media.url}
-            className="w-full h-full object-cover"
-            autoPlay
-            loop
-            muted={isMuted}
-            playsInline
-          />
-        ) : (
-          <div 
-            className="w-full h-full bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${selectedBattle?.media?.url})`,
-            }}
-          >
-            {/* Overlay gradient for better readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
-          </div>
-        )}
+        {(() => {
+          // Obtener los polls del challenge seleccionado
+          const challengeId = selectedBattle?.challengeId || selectedBattle?.id;
+          const polls = challengePolls[challengeId] || [];
+          const firstPoll = polls[0];
+          const mediaUrl = firstPoll?.options?.[0]?.media?.url || 
+                          firstPoll?.options?.[0]?.media?.thumbnail;
+          const mediaType = firstPoll?.options?.[0]?.media?.type;
+          
+          if (mediaType === 'video' && mediaUrl) {
+            return (
+              <video
+                src={mediaUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+              />
+            );
+          } else if (mediaUrl) {
+            return (
+              <div 
+                className="w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${mediaUrl})` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+              </div>
+            );
+          } else {
+            // Fallback: mostrar gradiente con info del challenge
+            return (
+              <div className="w-full h-full bg-gradient-to-br from-purple-900 via-black to-pink-900">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+                    <h2 className="text-white text-xl font-bold mb-2">{selectedBattle?.title || 'Challenge'}</h2>
+                    <p className="text-gray-300 text-sm">
+                      {selectedBattle?.participants?.filter(p => p.status === 'content_submitted').length || 0} de {selectedBattle?.participants?.length || 0} participantes listos
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        })()}
       </div>
 
       {/* Información del battle/stream actual */}
