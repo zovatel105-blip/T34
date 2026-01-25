@@ -106,9 +106,10 @@ const mockBattles = [
 const ActiveChallengesPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, token } = useAuth();
-  const [battles, setBattles] = useState(mockBattles);
+  const [battles, setBattles] = useState([]);
   const [activeChallenges, setActiveChallenges] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [challengePolls, setChallengePolls] = useState({});
+  const [loading, setLoading] = useState(true);
   const [selectedBattleIndex, setSelectedBattleIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -120,13 +121,72 @@ const ActiveChallengesPage = () => {
   // Cargar challenges activos del backend
   useEffect(() => {
     const loadActiveChallenges = async () => {
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
         const challenges = await challengeService.getActiveChallenges(token);
         setActiveChallenges(challenges);
-        console.log('✅ Challenges activos cargados:', challenges.length);
+        console.log('✅ Challenges activos cargados:', challenges.length, challenges);
+        
+        // Transformar challenges al formato de battles para la UI
+        const transformedBattles = challenges.map(challenge => {
+          // Obtener participantes con contenido enviado
+          const participantsWithContent = challenge.participants.filter(
+            p => p.status === 'content_submitted'
+          );
+          
+          return {
+            id: challenge.id,
+            challengeId: challenge.id,
+            participants: challenge.participants.map(p => ({
+              id: p.user_id,
+              username: p.username,
+              displayName: p.display_name || p.username,
+              avatar: p.avatar_url,
+              status: p.status,
+              pollId: p.poll_id,
+              isLive: p.status === 'content_submitted'
+            })),
+            viewers: 0,
+            type: 'challenge',
+            isActive: challenge.status === 'pending' || challenge.status === 'active',
+            status: challenge.status,
+            title: challenge.title,
+            description: challenge.description,
+            creatorId: challenge.creator_id,
+            // Usaremos el primer poll con contenido como media de fondo
+            media: null // Se cargará después
+          };
+        });
+        
+        setBattles(transformedBattles);
+        
+        // Cargar los polls de cada challenge para mostrar el contenido de fondo
+        for (const challenge of challenges) {
+          try {
+            const pollsResponse = await fetch(
+              `${AppConfig.BACKEND_URL}/api/challenges/${challenge.id}/polls`,
+              {
+                headers: { 'Authorization': `Bearer ${token}` }
+              }
+            );
+            if (pollsResponse.ok) {
+              const pollsData = await pollsResponse.json();
+              setChallengePolls(prev => ({
+                ...prev,
+                [challenge.id]: pollsData.polls
+              }));
+              console.log(`📋 Polls del challenge ${challenge.id}:`, pollsData.polls);
+            }
+          } catch (err) {
+            console.error(`Error cargando polls del challenge ${challenge.id}:`, err);
+          }
+        }
+        
       } catch (error) {
         console.error('Error loading active challenges:', error);
       } finally {
