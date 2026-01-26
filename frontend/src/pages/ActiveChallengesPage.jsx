@@ -445,7 +445,7 @@ const ActiveChallengesPage = () => {
                     onClick={() => navigate('/content-creation', { state: { challengeId: selectedBattle.id, challengeTitle: selectedBattle.title } })}
                     className="mt-4 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg shadow-purple-500/30"
                   >
-                    📸 Subir mi contenido
+                    Subir mi contenido
                   </button>
                 );
               } else if (myParticipation.status === 'content_submitted') {
