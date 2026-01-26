@@ -409,8 +409,8 @@ const ActiveChallengesPage = () => {
                 selectedBattle?.status === 'pending' ? "bg-yellow-500/80" :
                 selectedBattle?.status === 'active' ? "bg-green-500/80" : "bg-purple-500/80"
               )}>
-                {selectedBattle?.status === 'pending' ? '⏳ ESPERANDO' :
-                 selectedBattle?.status === 'active' ? '🔥 ACTIVO' : 'CHALLENGE'}
+                {selectedBattle?.status === 'pending' ? 'ESPERANDO' :
+                 selectedBattle?.status === 'active' ? 'ACTIVO' : 'CHALLENGE'}
               </span>
               <span className="text-white/60 text-xs">
                 {selectedBattle?.participants?.filter(p => p.status === 'content_submitted').length || 0}/{selectedBattle?.participants?.length || 0} listos
