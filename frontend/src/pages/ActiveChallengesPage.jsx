@@ -451,7 +451,7 @@ const ActiveChallengesPage = () => {
               } else if (myParticipation.status === 'content_submitted') {
                 return (
                   <div className="mt-4 px-4 py-2 bg-green-500/20 rounded-full text-green-400 text-sm">
-                    ✓ Ya subiste tu contenido - Esperando a los demás
+                    Ya subiste tu contenido - Esperando a los demás
                   </div>
                 );
               }
