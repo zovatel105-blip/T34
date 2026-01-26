@@ -429,13 +429,13 @@ const ActiveChallengesPage = () => {
                       onClick={() => handleAcceptChallenge(selectedBattle.id)}
                       className="px-6 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
                     >
-                      ✓ Aceptar
+                      Aceptar
                     </button>
                     <button 
                       onClick={() => handleRejectChallenge(selectedBattle.id)}
                       className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-full text-white font-semibold text-sm transition-all"
                     >
-                      ✗ Rechazar
+                      Rechazar
                     </button>
                   </div>
                 );
