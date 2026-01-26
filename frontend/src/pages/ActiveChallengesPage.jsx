@@ -383,9 +383,9 @@ const ActiveChallengesPage = () => {
                       participant.status === 'accepted' ? "text-yellow-400" :
                       participant.status === 'invited' ? "text-blue-400" : "text-gray-400"
                     )}>
-                      {participant.status === 'content_submitted' ? '✓ Listo' :
-                       participant.status === 'accepted' ? '⏳ Preparando' :
-                       participant.status === 'invited' ? '📩 Invitado' : participant.status}
+                      {participant.status === 'content_submitted' ? 'Listo' :
+                       participant.status === 'accepted' ? 'Preparando' :
+                       participant.status === 'invited' ? 'Invitado' : participant.status}
                     </span>
                   </div>
                   {index < selectedBattle.participants.length - 1 && (
