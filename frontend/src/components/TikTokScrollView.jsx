@@ -1192,6 +1192,7 @@ const TikTokScrollView = ({
   onCreatePoll,
   onLoadMore,
   isLoadingMore = false,
+  isInitialLoading = false,
   hasMoreContent = true,
   showLogo = true,
   showCloseButton = true,
@@ -1203,7 +1204,9 @@ const TikTokScrollView = ({
   onUpdatePoll = null,
   onDeletePoll = null,
   isOwnProfile = false,
-  onIndexChange = null
+  onIndexChange = null,
+  emptyMessage = 'No hay publicaciones disponibles',
+  emptySubMessage = 'Vuelve más tarde para ver nuevo contenido'
 }) => {
   const containerRef = useRef(null);
   const swiperRef = useRef(null);
