@@ -1536,18 +1536,59 @@ const TikTokScrollView = ({
   // 👆 Touch gesture detection - Now handled by Swiper touch modules
   // useEffect removed - Swiper handles touch gestures natively with better performance
 
-  // No polls state - Show loading spinner
+  // No polls state - Show loading spinner OR empty state
   if (!polls.length) {
+    // Si está cargando, mostrar spinner
+    if (isInitialLoading) {
+      return (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+             style={{
+               height: '100vh',
+               height: '100dvh'
+             }}>
+          <div className="text-center px-6">
+            <div className="w-20 h-20 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mx-auto mb-6"></div>
+            <h3 className="text-xl font-semibold text-white mb-2">Cargando publicaciones...</h3>
+            <p className="text-gray-400 text-sm">Por favor espera un momento</p>
+          </div>
+        </div>
+      );
+    }
+    
+    // Si terminó de cargar pero no hay contenido, mostrar mensaje vacío
     return (
       <div className="fixed inset-0 z-50 bg-black flex items-center justify-center"
            style={{
              height: '100vh',
              height: '100dvh'
            }}>
+        {/* Active Challenges Button - Visible even when empty */}
+        {showActiveChallengesButton && (
+          <div className="fixed z-50"
+               style={{
+                 top: 'max(1rem, env(safe-area-inset-top))',
+                 right: 'max(1rem, env(safe-area-inset-right))'
+               }}>
+            <Button
+              onClick={() => {
+                console.log('🏆 ACTIVE CHALLENGES BUTTON CLICKED');
+                navigate('/explore/active');
+              }}
+              className="bg-red-500 text-white hover:bg-red-600 backdrop-blur-md border-none px-3 py-2 h-10 rounded-full transition-all duration-200 hover:scale-105 shadow-xl flex items-center gap-1.5"
+              size="sm"
+            >
+              <Swords className="w-4 h-4" />
+              <span className="text-sm font-medium">Activos</span>
+            </Button>
+          </div>
+        )}
+        
         <div className="text-center px-6">
-          <div className="w-20 h-20 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin mx-auto mb-6"></div>
-          <h3 className="text-xl font-semibold text-white mb-2">Cargando publicaciones...</h3>
-          <p className="text-gray-400 text-sm">Por favor espera un momento</p>
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Trophy className="w-10 h-10 text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">{emptyMessage}</h3>
+          <p className="text-gray-400 text-sm">{emptySubMessage}</p>
         </div>
       </div>
     );
