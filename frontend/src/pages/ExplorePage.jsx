@@ -150,6 +150,9 @@ const ExplorePage = () => {
         onCreatePoll={handleCreatePoll}
         showLogo={false}
         showActiveChallengesButton={true}
+        isInitialLoading={loading}
+        emptyMessage="No hay retos completados"
+        emptySubMessage="Los retos completados aparecerán aquí. ¡Crea o participa en un reto!"
         savedPolls={savedPolls}
         setSavedPolls={setSavedPolls}
         commentedPolls={commentedPolls}
