@@ -683,15 +683,7 @@ const TikTokPollCard = ({
         {/* 🏆 CHALLENGE LAYOUT - Muestra contenido de múltiples participantes */}
         {poll.is_challenge ? (
           <div className="w-full h-full flex flex-col">
-            {/* Header del Challenge */}
-            <div className="absolute top-16 left-0 right-0 z-40 flex justify-center">
-              <div className="bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
-                <Trophy className="w-4 h-4 text-white" />
-                <span className="text-white font-bold text-sm">CHALLENGE</span>
-              </div>
-            </div>
-            
-            {/* Contenido del Challenge - Layout VS */}
+            {/* Contenido del Challenge - Layout limpio sin badges */}
             <div className="flex-1 flex">
               {poll.options && poll.options.length === 2 ? (
                 // Layout 1vs1 - Dos contenidos lado a lado
@@ -741,15 +733,6 @@ const TikTokPollCard = ({
                           <span>{option.votes || 0} votos</span>
                         </div>
                       </div>
-                      
-                      {/* VS Badge */}
-                      {optIdx === 0 && (
-                        <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 z-50">
-                          <div className="bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg">
-                            <span className="text-black font-black text-sm">VS</span>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </>
