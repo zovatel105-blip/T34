@@ -746,19 +746,6 @@ const TikTokPollCard = ({
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
                       )}
-                      
-                      {/* Info del participante */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                        <div className="flex items-center gap-1">
-                          <Avatar className="w-6 h-6 border border-white">
-                            <AvatarImage src={option.participant_avatar} />
-                            <AvatarFallback className="bg-purple-500 text-white text-[10px]">
-                              {option.participant_username?.[0]?.toUpperCase() || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-white font-medium text-xs">@{option.participant_username}</span>
-                        </div>
-                      </div>
                     </div>
                   ))}
                 </div>
