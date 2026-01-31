@@ -93,10 +93,53 @@ const ExplorePage = () => {
   }, []);
 
   // Handlers para interacciones
-  const handleVote = useCallback((pollId, optionId) => {
-    console.log('Vote on completed battle:', pollId, optionId);
-    // No permitir votar en batallas completadas
-  }, []);
+  const handleVote = useCallback(async (pollId, optionId) => {
+    console.log('Vote on challenge:', pollId, optionId);
+    
+    // Extraer el challenge_id real (quitando el prefijo "challenge_")
+    const challengeId = pollId.replace('challenge_', '');
+    
+    // Buscar el participante_id de la opción votada
+    const battle = battles.find(b => b.id === pollId);
+    if (!battle) {
+      console.error('Challenge no encontrado');
+      return;
+    }
+    
+    const votedOption = battle.options.find(opt => opt.id === optionId);
+    if (!votedOption || !votedOption.participant_id) {
+      console.error('Opción o participante no encontrado');
+      return;
+    }
+    
+    try {
+      const result = await challengeService.voteChallenge(
+        challengeId, 
+        votedOption.participant_id, 
+        token
+      );
+      
+      console.log('✅ Voto registrado:', result);
+      
+      // Actualizar el estado local para reflejar el voto
+      setBattles(prev => prev.map(b => {
+        if (b.id === pollId) {
+          return {
+            ...b,
+            options: b.options.map(opt => ({
+              ...opt,
+              votes: opt.id === optionId ? (opt.votes || 0) + 1 : opt.votes
+            })),
+            userVote: optionId
+          };
+        }
+        return b;
+      }));
+      
+    } catch (error) {
+      console.error('Error al votar:', error);
+    }
+  }, [battles, token]);
 
   const handleLike = useCallback((pollId) => {
     console.log('Like completed battle:', pollId);
