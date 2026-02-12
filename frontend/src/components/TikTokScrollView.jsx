@@ -741,32 +741,53 @@ const TikTokPollCard = ({
               ) : (
                 // Layout para más de 2 participantes - Grid
                 <div className="w-full h-full grid grid-cols-2 gap-1">
-                  {poll.options?.map((option, optIdx) => (
-                    <div 
-                      key={option.id || optIdx}
-                      className="relative overflow-hidden"
-                      onClick={() => handleVote(option.id)}
-                    >
-                      {option.media?.type?.includes('video') ? (
-                        <video
-                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                          className="w-full h-full object-cover"
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                        />
-                      ) : option.media?.url ? (
-                        <img
-                          src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                          alt={option.participant_username || ''}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
-                      )}
-                    </div>
-                  ))}
+                  {poll.options?.map((option, optIdx) => {
+                    const isVoted = poll.userVote === option.id;
+                    const hasUserVoted = !!poll.userVote;
+                    
+                    return (
+                      <div 
+                        key={option.id || optIdx}
+                        className={cn(
+                          "relative overflow-hidden",
+                          hasUserVoted && !isVoted ? "opacity-60" : ""
+                        )}
+                        onClick={() => !hasUserVoted && handleVote(option.id)}
+                      >
+                        {option.media?.type?.includes('video') ? (
+                          <video
+                            src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                          />
+                        ) : option.media?.url ? (
+                          <img
+                            src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                            alt={option.participant_username || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
+                        )}
+                        
+                        {/* Indicador de voto y contador */}
+                        {hasUserVoted && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className={cn(
+                              "bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5",
+                              isVoted ? "ring-2 ring-green-500" : ""
+                            )}>
+                              {isVoted && <CheckCircle className="w-4 h-4 text-green-500" />}
+                              <span className="text-white font-bold">{option.votes || 0}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
