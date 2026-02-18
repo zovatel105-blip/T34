@@ -683,61 +683,112 @@ const TikTokPollCard = ({
         {/* 🏆 CHALLENGE LAYOUT - Muestra contenido de múltiples participantes */}
         {poll.is_challenge ? (
           <div className="w-full h-full flex flex-col">
-            {/* Contenido del Challenge - Layout limpio sin badges */}
+            {/* Contenido del Challenge - Layout limpio con barras de porcentaje */}
             <div className="flex-1 flex">
               {poll.options && poll.options.length === 2 ? (
                 // Layout 1vs1 - Dos contenidos lado a lado
-                <>
-                  {poll.options.map((option, optIdx) => {
-                    const isVoted = poll.userVote === option.id;
-                    const hasUserVoted = !!poll.userVote;
-                    
-                    return (
-                      <div 
-                        key={option.id || optIdx}
-                        className={cn(
-                          "flex-1 relative overflow-hidden",
-                          optIdx === 0 ? "border-r-2 border-white/30" : "",
-                          hasUserVoted && !isVoted ? "opacity-60" : ""
-                        )}
-                        onClick={() => !hasUserVoted && handleVote(option.id)}
-                      >
-                        {/* Media del participante */}
-                        {option.media?.type?.includes('video') ? (
-                          <video
-                            src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                            className="w-full h-full object-cover"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                          />
-                        ) : option.media?.url ? (
-                          <img
-                            src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                            alt={option.participant_username || ''}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
-                        )}
+                (() => {
+                  // Calcular total de votos y porcentajes
+                  const totalVotes = poll.options.reduce((sum, opt) => sum + (opt.votes || 0), 0);
+                  const getPercentage = (votes) => {
+                    if (totalVotes === 0) return 50; // Si no hay votos, 50-50
+                    return Math.round((votes / totalVotes) * 100);
+                  };
+                  
+                  // Determinar ganador
+                  const maxVotes = Math.max(...poll.options.map(o => o.votes || 0));
+                  const hasUserVoted = !!poll.userVote;
+                  
+                  return (
+                    <>
+                      {poll.options.map((option, optIdx) => {
+                        const isVoted = poll.userVote === option.id;
+                        const percentage = getPercentage(option.votes || 0);
+                        const isWinner = (option.votes || 0) === maxVotes && maxVotes > 0;
                         
-                        {/* Indicador de voto y contador */}
-                        {hasUserVoted && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className={cn(
-                              "bg-black/60 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2",
-                              isVoted ? "ring-2 ring-green-500" : ""
-                            )}>
-                              {isVoted && <CheckCircle className="w-5 h-5 text-green-500" />}
-                              <span className="text-white font-bold text-lg">{option.votes || 0}</span>
-                            </div>
+                        return (
+                          <div 
+                            key={option.id || optIdx}
+                            className={cn(
+                              "flex-1 relative overflow-hidden",
+                              optIdx === 0 ? "border-r-2 border-white/30" : ""
+                            )}
+                            onClick={() => !hasUserVoted && handleVote(option.id)}
+                          >
+                            {/* Media del participante */}
+                            {option.media?.type?.includes('video') ? (
+                              <video
+                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                                className="w-full h-full object-cover"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                              />
+                            ) : option.media?.url ? (
+                              <img
+                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                                alt={option.participant_username || ''}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
+                            )}
+                            
+                            {/* Barra de porcentaje desde abajo */}
+                            {hasUserVoted && (
+                              <div 
+                                className={cn(
+                                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out",
+                                  isWinner 
+                                    ? "bg-gradient-to-t from-green-500/80 via-green-500/50 to-green-500/20"
+                                    : isVoted 
+                                      ? "bg-gradient-to-t from-blue-500/80 via-blue-500/50 to-blue-500/20"
+                                      : "bg-gradient-to-t from-white/60 via-white/40 to-white/20"
+                                )}
+                                style={{ 
+                                  height: `${Math.max(percentage, 15)}%`,
+                                  minHeight: '80px',
+                                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }}
+                              >
+                                {/* Icono de trofeo para ganador */}
+                                {isWinner && (
+                                  <div className="absolute top-3 left-1/2 transform -translate-x-1/2">
+                                    <Trophy className="w-6 h-6 text-yellow-300 drop-shadow-lg" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Porcentaje y votos centrados */}
+                            {hasUserVoted && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className={cn(
+                                  "bg-black/60 backdrop-blur-sm rounded-2xl px-5 py-3 flex flex-col items-center",
+                                  isVoted ? "ring-2 ring-blue-400" : "",
+                                  isWinner ? "ring-2 ring-green-400" : ""
+                                )}>
+                                  <span className="text-white font-black text-3xl">{percentage}%</span>
+                                  <span className="text-white/80 text-sm">{option.votes || 0} votos</span>
+                                  {isVoted && <CheckCircle className="w-5 h-5 text-blue-400 mt-1" />}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Borde de selección */}
+                            {hasUserVoted && isVoted && (
+                              <div className="absolute inset-0 ring-2 ring-blue-400/60 ring-inset pointer-events-none"></div>
+                            )}
+                            {hasUserVoted && isWinner && (
+                              <div className="absolute inset-0 ring-2 ring-green-400 ring-inset pointer-events-none"></div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </>
+                        );
+                      })}
+                    </>
+                  );
+                })()
               ) : (
                 // Layout para más de 2 participantes - Grid
                 <div className="w-full h-full grid grid-cols-2 gap-1">
