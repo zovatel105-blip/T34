@@ -22,7 +22,7 @@ const ExplorePage = () => {
     const loadCompletedChallenges = async () => {
       try {
         setLoading(true);
-        const challenges = await challengeService.getCompletedChallenges(20, 0);
+        const challenges = await challengeService.getCompletedChallenges(20, 0, token);
         console.log('✅ Challenges completados cargados:', challenges);
         
         // Transformar challenges al formato de TikTokScrollView
@@ -34,9 +34,9 @@ const ExplorePage = () => {
           
           // Construir opciones del challenge (cada participante es una opción)
           const options = participantsWithContent.map((participant, idx) => ({
-            id: participant.poll_id || `opt_${idx}`,
+            id: participant.user_id, // Usar user_id como id de opción para coincidir con userVote
             text: participant.username || '',
-            votes: 0,
+            votes: participant.votes_received || 0,
             participant_id: participant.user_id,
             participant_username: participant.username,
             participant_avatar: participant.avatar_url,
@@ -56,12 +56,13 @@ const ExplorePage = () => {
             is_challenge: true,
             isCompleted: true,
             category: 'Challenge',
-            totalVotes: 0,
-            total_votes: 0,
+            totalVotes: challenge.total_votes || 0,
+            total_votes: challenge.total_votes || 0,
             views: 0,
             likes_count: 0,
             comments_count: 0,
             created_at: challenge.published_at || challenge.created_at,
+            userVote: challenge.user_vote_participant_id || null,
             author: {
               id: challenge.creator_id,
               username: challenge.creator_username,
@@ -90,7 +91,7 @@ const ExplorePage = () => {
     };
 
     loadCompletedChallenges();
-  }, []);
+  }, [token]);
 
   // Handlers para interacciones
   const handleVote = useCallback(async (pollId, optionId) => {
