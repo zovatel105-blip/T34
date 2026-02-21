@@ -10222,12 +10222,13 @@ async def get_active_challenges(
 @api_router.get("/challenges/completed")
 async def get_completed_challenges(
     limit: int = 20,
-    skip: int = 0
+    skip: int = 0,
+    current_user: Optional[UserResponse] = Depends(get_current_user_optional)
 ):
     """
     Obtener challenges completados y publicados con información de media
     Estos aparecen en la página principal de Explore
-    No requiere autenticación
+    No requiere autenticación, pero si está autenticado incluye el voto del usuario
     """
     try:
         # Buscar challenges publicados
@@ -10236,6 +10237,17 @@ async def get_completed_challenges(
         }).sort("published_at", -1).skip(skip).limit(limit)
         
         challenges = await challenges_cursor.to_list(length=limit)
+        
+        # Obtener votos del usuario si está autenticado
+        user_votes = {}
+        if current_user:
+            challenge_ids = [c.get("id") for c in challenges]
+            votes_cursor = db.challenge_votes.find({
+                "challenge_id": {"$in": challenge_ids},
+                "voter_id": current_user.id
+            })
+            votes_list = await votes_cursor.to_list(length=len(challenge_ids))
+            user_votes = {v.get("challenge_id"): v.get("participant_id") for v in votes_list}
         
         responses = []
         for challenge in challenges:
@@ -10255,7 +10267,7 @@ async def get_completed_challenges(
                 polls_list = await polls_cursor.to_list(length=len(participant_poll_ids))
                 polls_dict = {p.get("id"): p for p in polls_list}
             
-            # Enriquecer participantes con info de media
+            # Enriquecer participantes con info de media y votos
             enriched_participants = []
             for p in participants:
                 poll = polls_dict.get(p.get("poll_id"))
@@ -10270,8 +10282,12 @@ async def get_completed_challenges(
                 
                 enriched_participants.append({
                     **p,
-                    "poll_media": poll_media
+                    "poll_media": poll_media,
+                    "votes_received": p.get("votes_received", 0)
                 })
+            
+            # Obtener el voto del usuario para este challenge
+            user_vote_participant = user_votes.get(challenge.get("id"))
             
             response = {
                 "id": challenge.get("id"),
@@ -10290,7 +10306,9 @@ async def get_completed_challenges(
                 "final_participant_count": challenge.get("final_participant_count"),
                 "accepted_count": total_participants,
                 "submitted_count": total_participants,
-                "is_ready_to_publish": True
+                "is_ready_to_publish": True,
+                "user_vote_participant_id": user_vote_participant,
+                "total_votes": challenge.get("total_votes", 0)
             }
             responses.append(response)
         
