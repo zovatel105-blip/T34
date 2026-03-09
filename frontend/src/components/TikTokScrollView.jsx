@@ -11,6 +11,7 @@ import PostManagementMenu from './PostManagementMenu';
 import FeedMenu from './FeedMenu';
 import StoriesViewer from './StoriesViewer';
 import VotersModal from './VotersModal';
+import ChallengeParticipantsModal from './ChallengeParticipantsModal';
 import { useFollow } from '../contexts/FollowContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useShare } from '../hooks/useShare';
@@ -141,6 +142,7 @@ const TikTokPollCard = ({
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showVotersModal, setShowVotersModal] = useState(false);
+  const [showChallengeParticipants, setShowChallengeParticipants] = useState(false);
   const [audioContextActivated, setAudioContextActivated] = useState(false);
   
   // Carousel state for multiple options
@@ -658,27 +660,25 @@ const TikTokPollCard = ({
               </div>
               <p className="text-sm text-white/70">{poll.timeAgo}</p>
               
-              {/* 🏷️ Challenge participant tags - next to author info */}
+              {/* 🏷️ Challenge participant tags - avatars + text */}
               {poll.is_challenge && poll.participants && poll.participants.length > 0 && (
-                <div 
-                  className="flex items-center gap-1.5 mt-1 cursor-pointer"
+                <button 
+                  className="flex items-center gap-1.5 mt-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const firstParticipant = poll.participants[0];
-                    if (firstParticipant?.username) {
-                      navigate(`/profile/${firstParticipant.username}`);
-                    } else if (firstParticipant?.id) {
-                      navigate(`/profile/${firstParticipant.id}`);
-                    }
+                    setShowChallengeParticipants(true);
                   }}
                 >
-                  {/* Overlapping participant avatars */}
-                  <div className="flex items-center -space-x-1.5">
-                    {poll.participants.slice(0, 3).map((participant, idx) => (
+                  {/* Overlapping circular avatars (max 2 visible) */}
+                  <div className="flex items-center" style={{ marginRight: '2px' }}>
+                    {poll.participants.slice(0, 2).map((participant, idx) => (
                       <div
                         key={participant.id || idx}
-                        className="w-5 h-5 rounded-full border-[1.5px] border-black/70 overflow-hidden bg-gray-700 flex-shrink-0"
-                        style={{ zIndex: 10 - idx }}
+                        className="w-[22px] h-[22px] rounded-full border-[1.5px] border-white/80 overflow-hidden bg-gray-700 flex-shrink-0"
+                        style={{ 
+                          zIndex: 10 - idx,
+                          marginLeft: idx > 0 ? '-8px' : '0'
+                        }}
                       >
                         {participant.avatar_url ? (
                           <img
@@ -694,21 +694,22 @@ const TikTokPollCard = ({
                       </div>
                     ))}
                   </div>
-                  {/* Participant names text */}
-                  <span className="text-white/80 text-[11px] font-medium leading-tight">
+                  {/* Participant text */}
+                  <span className="text-white text-[11px] font-semibold leading-tight drop-shadow-sm">
                     {(() => {
-                      const firstP = poll.participants[0];
-                      const name1 = firstP.username || firstP.display_name || 'usuario';
-                      const rest = poll.participants.length - 1;
-                      if (rest === 0) return name1;
-                      if (rest === 1) {
-                        const secondP = poll.participants[1];
-                        return `${name1} y ${secondP.username || secondP.display_name || 'usuario'}`;
+                      const total = poll.participants.length;
+                      const p1 = poll.participants[0];
+                      const name1 = p1.username || p1.display_name || 'usuario';
+                      if (total === 2) {
+                        const p2 = poll.participants[1];
+                        const name2 = p2.username || p2.display_name || 'usuario';
+                        return `${name1} vs ${name2}`;
                       }
-                      return `${name1} y ${rest} personas más`;
+                      const rest = total - 1;
+                      return `${name1} y ${rest} persona${rest > 1 ? 's' : ''} más`;
                     })()}
                   </span>
-                </div>
+                </button>
               )}
             </div>
           </div>
@@ -721,7 +722,6 @@ const TikTokPollCard = ({
           </h2>
         </div>
 
-        {/* Mentioned users moved to header area for challenges */}
 
       </div>
 
@@ -1251,6 +1251,16 @@ const TikTokPollCard = ({
         onClose={() => setShowVotersModal(false)}
         pollId={poll.id}
       />
+
+      {/* Modal de participantes del challenge */}
+      {poll.is_challenge && (
+        <ChallengeParticipantsModal
+          isOpen={showChallengeParticipants}
+          onClose={() => setShowChallengeParticipants(false)}
+          participants={poll.participants || []}
+          challengeTitle={poll.title}
+        />
+      )}
 
       {/* Modal de compartir */}
       <ShareModal
