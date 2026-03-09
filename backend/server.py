@@ -6062,6 +6062,16 @@ async def get_ultra_fast_feed(
             if not challenge_polls:
                 continue
             
+            # Obtener voto del usuario actual en este challenge
+            user_challenge_vote = None
+            if current_user:
+                existing_vote = await db.challenge_votes.find_one({
+                    "challenge_id": challenge.get("id"),
+                    "voter_id": current_user.id
+                })
+                if existing_vote:
+                    user_challenge_vote = existing_vote.get("participant_id")
+            
             # Construir las opciones del challenge (cada poll es una opción)
             challenge_options = []
             for idx, poll in enumerate(challenge_polls):
@@ -6075,11 +6085,15 @@ async def get_ultra_fast_feed(
                         None
                     )
                     
+                    # Votos vienen de votes_received del participante en el challenge
+                    participant_votes = participant_info.get("votes_received", 0) if participant_info else 0
+                    participant_user_id = participant_info.get("user_id") if participant_info else None
+                    
                     challenge_options.append({
-                        "id": poll.get("id"),
+                        "id": participant_user_id or poll.get("id"),
                         "text": participant_info.get("username", "") if participant_info else "",
-                        "votes": poll.get("total_votes", 0),
-                        "participant_id": participant_info.get("user_id") if participant_info else None,
+                        "votes": participant_votes,
+                        "participant_id": participant_user_id,
                         "participant_username": participant_info.get("username") if participant_info else None,
                         "participant_avatar": participant_info.get("avatar_url") if participant_info else None,
                         "media": {
@@ -6120,7 +6134,7 @@ async def get_ultra_fast_feed(
                 "comments_count": 0,
                 "layout": challenge_layout,
                 "music": None,
-                "userVote": None,
+                "userVote": user_challenge_vote,
                 "userLiked": False,
                 "comments_enabled": True,
                 "show_vote_count": True,

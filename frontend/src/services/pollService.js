@@ -143,6 +143,22 @@ class PollService {
     }
   }
 
+  // Vote on a challenge (votes go to specific participant)
+  async voteOnChallenge(challengeId, participantId) {
+    try {
+      const response = await fetch(`${this.baseURL}/challenges/${challengeId}/vote`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ participant_id: participantId }),
+      });
+
+      return await this.handleResponse(response);
+    } catch (error) {
+      console.error('Error voting on challenge:', error);
+      throw error;
+    }
+  }
+
   // Toggle like on a poll
   async toggleLike(pollId) {
     try {
@@ -229,6 +245,9 @@ class PollService {
         user: option.user,
         text: option.text,
         votes: option.votes,
+        participant_id: option.participant_id || null,  // 🏆 Challenge: participant user_id for voting
+        participant_username: option.participant_username || null,
+        participant_avatar: option.participant_avatar || null,
         mentioned_users: option.mentioned_users || [],  // ✅ CRITICAL FIX: Include option-specific mentioned_users
         extracted_audio_id: option.extracted_audio_id,  // 🎵 NUEVO: Include extracted_audio_id for carousel audio
         thumbnail_url: option.thumbnail_url,  // 🖼️ NUEVO: Include thumbnail_url for dynamic carousel covers
@@ -245,7 +264,7 @@ class PollService {
       shares: backendPoll.shares,
       comments: backendPoll.comments_count,
       saves_count: backendPoll.saves_count || 0,  // ✅ CRITICAL FIX: Include saves_count
-      userVote: backendPoll.user_vote,
+      userVote: backendPoll.user_vote || backendPoll.userVote || null,
       userLiked: backendPoll.user_liked,
       category: backendPoll.category,
       tags: backendPoll.tags || [],

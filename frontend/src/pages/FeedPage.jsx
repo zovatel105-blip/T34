@@ -243,6 +243,10 @@ const FeedPage = () => {
     }
 
     try {
+      // Find the poll to check if it's a challenge
+      const targetPoll = polls.find(p => p.id === pollId);
+      const isChallenge = targetPoll?.is_challenge && targetPoll?.challenge_id;
+
       // Optimistic update
       setPolls(prev => prev.map(poll => {
         if (poll.id === pollId) {
@@ -262,15 +266,22 @@ const FeedPage = () => {
         return poll;
       }));
 
-      // Send vote to backend
-      await pollService.voteOnPoll(pollId, optionId);
+      // Send vote to backend - use challenge endpoint for challenges
+      if (isChallenge) {
+        // For challenges, optionId is the participant_id (user_id)
+        await pollService.voteOnChallenge(targetPoll.challenge_id, optionId);
+      } else {
+        await pollService.voteOnPoll(pollId, optionId);
+      }
       
       // Track action for addiction system
       await trackAction('vote');
       
       toast({
         title: "¡Voto registrado!",
-        description: "Tu voto ha sido contabilizado exitosamente",
+        description: isChallenge 
+          ? `Tu voto ha sido contabilizado para ${targetPoll.options.find(o => o.id === optionId)?.text || 'el participante'}`
+          : "Tu voto ha sido contabilizado exitosamente",
       });
       
       // Refresh poll data to get accurate counts
