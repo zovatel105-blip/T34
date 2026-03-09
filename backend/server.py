@@ -6137,6 +6137,17 @@ async def get_ultra_fast_feed(
             else:
                 challenge_layout = "vs-grid"
             
+            # 🎵 Resolve music from challenge polls
+            challenge_music_info = None
+            for poll in challenge_polls:
+                if poll.get("music"):
+                    challenge_music_info = poll.get("music")
+                    break
+                elif poll.get("music_id"):
+                    challenge_music_info = await get_music_info(poll.get("music_id"))
+                    if challenge_music_info:
+                        break
+            
             challenge_response = {
                 "id": f"challenge_{challenge.get('id')}",
                 "challenge_id": challenge.get("id"),
@@ -6149,7 +6160,7 @@ async def get_ultra_fast_feed(
                 "likes_count": 0,
                 "comments_count": 0,
                 "layout": challenge_layout,
-                "music": None,
+                "music": challenge_music_info,
                 "userVote": user_challenge_vote,
                 "userLiked": False,
                 "comments_enabled": True,
