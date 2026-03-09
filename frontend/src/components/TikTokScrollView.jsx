@@ -604,12 +604,13 @@ const TikTokPollCard = ({
                         )}
                       </div>
                     )}
-                    {/* Avatar 2 - top-right, behind */}
+                    {/* Avatar 2 - top-right, behind, with dark border for crescent cutout effect */}
                     {poll.participants[1] && (
                       <div
-                        className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
-                        style={{ zIndex: 1, top: '0px', right: '0px' }}
+                        className="w-9 h-9 rounded-full overflow-hidden absolute shadow-md"
+                        style={{ zIndex: 1, top: '0px', right: '0px', padding: '2px', backgroundColor: 'rgba(0,0,0,0.8)' }}
                       >
+                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-700">
                         {poll.participants[1].avatar_url ? (
                           <img
                             src={poll.participants[1].avatar_url}
@@ -621,6 +622,7 @@ const TikTokPollCard = ({
                             <User className="w-3.5 h-3.5 text-white" />
                           </div>
                         )}
+                        </div>
                       </div>
                     )}
                   </div>
