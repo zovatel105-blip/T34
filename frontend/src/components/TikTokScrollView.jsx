@@ -584,33 +584,13 @@ const TikTokPollCard = ({
                   }}
                 >
                   {/* Overlapping circular avatars - diagonal stack like Instagram Reels */}
-                  <div className="relative flex-shrink-0" style={{ width: '44px', height: '44px' }}>
-                    {/* Avatar 1 - bottom-left, in front */}
-                    {poll.participants[0] && (
-                      <div
-                        className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
-                        style={{ zIndex: 2, bottom: '0px', left: '0px' }}
-                      >
-                        {poll.participants[0].avatar_url ? (
-                          <img
-                            src={poll.participants[0].avatar_url}
-                            alt={poll.participants[0].username || ''}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-3.5 h-3.5 text-white" />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {/* Avatar 2 - top-right, behind, with dark border for crescent cutout effect */}
+                  <div className="relative flex-shrink-0" style={{ width: '48px', height: '48px' }}>
+                    {/* Avatar 2 - top-right, behind (rendered first so it's below in DOM) */}
                     {poll.participants[1] && (
                       <div
-                        className="w-9 h-9 rounded-full overflow-hidden absolute shadow-md"
-                        style={{ zIndex: 1, top: '0px', right: '0px', padding: '2px', backgroundColor: 'rgba(0,0,0,0.8)' }}
+                        className="rounded-full overflow-hidden bg-gray-700 absolute"
+                        style={{ zIndex: 1, top: '0px', right: '0px', width: '30px', height: '30px' }}
                       >
-                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-700">
                         {poll.participants[1].avatar_url ? (
                           <img
                             src={poll.participants[1].avatar_url}
@@ -619,9 +599,29 @@ const TikTokPollCard = ({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-3.5 h-3.5 text-white" />
+                            <User className="w-3 h-3 text-white" />
                           </div>
                         )}
+                      </div>
+                    )}
+                    {/* Avatar 1 - bottom-left, in front (larger, with dark ring for crescent cutout) */}
+                    {poll.participants[0] && (
+                      <div
+                        className="rounded-full absolute"
+                        style={{ zIndex: 2, bottom: '0px', left: '0px', width: '38px', height: '38px', padding: '2px', backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: '9999px' }}
+                      >
+                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-700">
+                          {poll.participants[0].avatar_url ? (
+                            <img
+                              src={poll.participants[0].avatar_url}
+                              alt={poll.participants[0].username || ''}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
+                              <User className="w-4 h-4 text-white" />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
