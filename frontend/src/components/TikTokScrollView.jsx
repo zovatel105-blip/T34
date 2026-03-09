@@ -583,22 +583,18 @@ const TikTokPollCard = ({
                     setShowChallengeParticipants(true);
                   }}
                 >
-                  {/* Overlapping circular avatars - diagonal stack */}
-                  <div className="relative flex-shrink-0" style={{ width: '46px', height: '46px' }}>
-                    {poll.participants.slice(0, 2).map((participant, idx) => (
+                  {/* Overlapping circular avatars - diagonal stack like Instagram Reels */}
+                  <div className="relative flex-shrink-0" style={{ width: '44px', height: '44px' }}>
+                    {/* Avatar 1 - bottom-left, behind */}
+                    {poll.participants[0] && (
                       <div
-                        key={participant.id || idx}
                         className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
-                        style={{ 
-                          zIndex: idx === 0 ? 2 : 1,
-                          top: idx === 0 ? '0px' : '14px',
-                          left: idx === 0 ? '0px' : '14px'
-                        }}
+                        style={{ zIndex: 1, bottom: '0px', left: '0px' }}
                       >
-                        {participant.avatar_url ? (
+                        {poll.participants[0].avatar_url ? (
                           <img
-                            src={participant.avatar_url}
-                            alt={participant.username || ''}
+                            src={poll.participants[0].avatar_url}
+                            alt={poll.participants[0].username || ''}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -607,7 +603,26 @@ const TikTokPollCard = ({
                           </div>
                         )}
                       </div>
-                    ))}
+                    )}
+                    {/* Avatar 2 - top-right, in front (higher z-index) */}
+                    {poll.participants[1] && (
+                      <div
+                        className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
+                        style={{ zIndex: 2, top: '0px', right: '0px' }}
+                      >
+                        {poll.participants[1].avatar_url ? (
+                          <img
+                            src={poll.participants[1].avatar_url}
+                            alt={poll.participants[1].username || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
+                            <User className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Participant names */}
