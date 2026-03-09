@@ -583,15 +583,16 @@ const TikTokPollCard = ({
                     setShowChallengeParticipants(true);
                   }}
                 >
-                  {/* Overlapping circular avatars */}
-                  <div className="flex items-center">
+                  {/* Overlapping circular avatars - diagonal stack */}
+                  <div className="relative flex-shrink-0" style={{ width: '46px', height: '46px' }}>
                     {poll.participants.slice(0, 2).map((participant, idx) => (
                       <div
                         key={participant.id || idx}
-                        className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 shadow-lg"
+                        className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
                         style={{ 
-                          zIndex: 10 - idx,
-                          marginLeft: idx > 0 ? '-14px' : '0'
+                          zIndex: idx === 0 ? 2 : 1,
+                          top: idx === 0 ? '0px' : '14px',
+                          left: idx === 0 ? '0px' : '14px'
                         }}
                       >
                         {participant.avatar_url ? (
@@ -602,7 +603,7 @@ const TikTokPollCard = ({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-4 h-4 text-white" />
+                            <User className="w-3.5 h-3.5 text-white" />
                           </div>
                         )}
                       </div>
