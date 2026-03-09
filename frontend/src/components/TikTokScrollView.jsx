@@ -571,113 +571,27 @@ const TikTokPollCard = ({
            style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* PROPIETARIO - Avatar clickeable para perfil */}
-            <div className="group relative">
-              {/* Avatar para navegar al perfil o abrir historias */}
-              <button
-                onClick={handleAvatarClick}
-                className={cn(
-                  "w-12 h-12 rounded-full overflow-hidden relative transition-transform duration-200 hover:scale-110",
-                  authorHasStories && authorStoriesData?.has_unviewed
-                    ? "p-[1.5px] bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]" 
-                    : authorHasStories && !authorStoriesData?.has_unviewed
-                    ? "p-[1.5px] bg-gray-300"
-                    : "ring-3 ring-yellow-400 shadow-lg shadow-yellow-400/50"
-                )}
-              >
-                {/* Inner white border for story ring effect */}
-                {authorHasStories && (
-                  <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
-                    <div className="w-full h-full bg-white rounded-full overflow-hidden">
-                      <Avatar className="w-full h-full rounded-full">
-                        <AvatarImage 
-                          src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
-                          className="object-cover" 
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-                          <User className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Normal avatar when no stories */}
-                {!authorHasStories && (
-                  <Avatar className="w-full h-full rounded-full">
-                    <AvatarImage 
-                      src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
-                      className="object-cover" 
-                    />
-                    <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-                      <User className="w-5 h-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </button>
 
-              {/* Botón separado para seguir - Solo se muestra si no se está siguiendo y no es el usuario actual */}
-              {!isFollowing(authorUserId) && currentUser && authorUserId !== currentUser.id && (
+            {/* 🏆 CHALLENGE: Avatares de participantes reemplazan el avatar del autor */}
+            {poll.is_challenge && poll.participants && poll.participants.length > 0 ? (
+              <>
+                {/* Participant avatars + text (replaces author avatar) */}
                 <button
-                  onClick={(e) => {
-                    console.log('🎯 PLUS BUTTON CLICKED!');
-                    e.stopPropagation();
-                    // Crear objeto de usuario con username correcto
-                    const userToFollow = poll.authorUser || { 
-                      username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
-                      displayName: poll.author?.display_name || poll.author?.username || 'Usuario',
-                      id: authorUserId 
-                    };
-                    console.log('📝 userToFollow object:', userToFollow);
-                    handleFollowUser(userToFollow);
-                  }}
-                  className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 rounded-full p-1 shadow-lg cursor-pointer transition-colors duration-200 hover:scale-110"
-                >
-                  <Plus className="w-3 h-3 text-white" />
-                </button>
-              )}
-              
-              {/* Hover tooltip para seguir - Solo cuando se puede seguir */}
-              {!isFollowing(authorUserId) && currentUser && authorUserId !== currentUser.id && (
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                  <div className="bg-blue-800/90 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm whitespace-nowrap border border-blue-600/30 shadow-lg">
-                    <div className="font-medium">@{poll.authorUser?.username || poll.author?.username || poll.author?.display_name || 'usuario'}</div>
-                    <div className="text-blue-300 text-[10px]">Seguir usuario</div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Indicador de siguiendo */}
-              {isFollowing(authorUserId) && (
-                <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1 shadow-lg">
-                  <CheckCircle className="w-3 h-3 text-white" />
-                </div>
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-white font-semibold text-base">{poll.author?.display_name || poll.author?.username || poll.authorUser?.displayName || 'Usuario'}</h3>
-              </div>
-              <p className="text-sm text-white/70">{poll.timeAgo}</p>
-              
-              {/* 🏷️ Challenge participant tags - avatars + text */}
-              {poll.is_challenge && poll.participants && poll.participants.length > 0 && (
-                <button 
-                  className="flex items-center gap-1.5 mt-1"
+                  className="flex items-center gap-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowChallengeParticipants(true);
                   }}
                 >
-                  {/* Overlapping circular avatars (max 2 visible) */}
-                  <div className="flex items-center" style={{ marginRight: '2px' }}>
+                  {/* Overlapping circular avatars */}
+                  <div className="flex items-center">
                     {poll.participants.slice(0, 2).map((participant, idx) => (
                       <div
                         key={participant.id || idx}
-                        className="w-[22px] h-[22px] rounded-full border-[1.5px] border-white/80 overflow-hidden bg-gray-700 flex-shrink-0"
+                        className="w-10 h-10 rounded-full border-[2px] border-white/90 overflow-hidden bg-gray-700 flex-shrink-0 shadow-lg"
                         style={{ 
                           zIndex: 10 - idx,
-                          marginLeft: idx > 0 ? '-8px' : '0'
+                          marginLeft: idx > 0 ? '-14px' : '0'
                         }}
                       >
                         {participant.avatar_url ? (
@@ -688,30 +602,126 @@ const TikTokPollCard = ({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-2.5 h-2.5 text-white" />
+                            <User className="w-4 h-4 text-white" />
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
-                  {/* Participant text */}
-                  <span className="text-white text-[11px] font-semibold leading-tight drop-shadow-sm">
-                    {(() => {
-                      const total = poll.participants.length;
-                      const p1 = poll.participants[0];
-                      const name1 = p1.username || p1.display_name || 'usuario';
-                      if (total === 2) {
-                        const p2 = poll.participants[1];
-                        const name2 = p2.username || p2.display_name || 'usuario';
-                        return `${name1} vs ${name2}`;
-                      }
-                      const rest = total - 1;
-                      return `${name1} y ${rest} persona${rest > 1 ? 's' : ''} más`;
-                    })()}
-                  </span>
+
+                  {/* Participant names */}
+                  <div>
+                    <span className="text-white text-sm font-bold leading-tight drop-shadow-md">
+                      {(() => {
+                        const total = poll.participants.length;
+                        const p1 = poll.participants[0];
+                        const name1 = p1.username || p1.display_name || 'usuario';
+                        if (total === 2) {
+                          const p2 = poll.participants[1];
+                          const name2 = p2.username || p2.display_name || 'usuario';
+                          return `${name1} vs ${name2}`;
+                        }
+                        const rest = total - 1;
+                        return `${name1} y ${rest} persona${rest > 1 ? 's' : ''} más`;
+                      })()}
+                    </span>
+                    <p className="text-sm text-white/70">{poll.timeAgo}</p>
+                  </div>
                 </button>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* NORMAL POST: Avatar del autor con botón seguir */}
+                <div className="group relative">
+                  {/* Avatar para navegar al perfil o abrir historias */}
+                  <button
+                    onClick={handleAvatarClick}
+                    className={cn(
+                      "w-12 h-12 rounded-full overflow-hidden relative transition-transform duration-200 hover:scale-110",
+                      authorHasStories && authorStoriesData?.has_unviewed
+                        ? "p-[1.5px] bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]" 
+                        : authorHasStories && !authorStoriesData?.has_unviewed
+                        ? "p-[1.5px] bg-gray-300"
+                        : "ring-3 ring-yellow-400 shadow-lg shadow-yellow-400/50"
+                    )}
+                  >
+                    {/* Inner white border for story ring effect */}
+                    {authorHasStories && (
+                      <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
+                        <div className="w-full h-full bg-white rounded-full overflow-hidden">
+                          <Avatar className="w-full h-full rounded-full">
+                            <AvatarImage 
+                              src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                              className="object-cover" 
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                              <User className="w-4 h-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Normal avatar when no stories */}
+                    {!authorHasStories && (
+                      <Avatar className="w-full h-full rounded-full">
+                        <AvatarImage 
+                          src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                          className="object-cover" 
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                          <User className="w-5 h-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </button>
+
+                  {/* Botón separado para seguir */}
+                  {!isFollowing(authorUserId) && currentUser && authorUserId !== currentUser.id && (
+                    <button
+                      onClick={(e) => {
+                        console.log('🎯 PLUS BUTTON CLICKED!');
+                        e.stopPropagation();
+                        const userToFollow = poll.authorUser || { 
+                          username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
+                          displayName: poll.author?.display_name || poll.author?.username || 'Usuario',
+                          id: authorUserId 
+                        };
+                        console.log('📝 userToFollow object:', userToFollow);
+                        handleFollowUser(userToFollow);
+                      }}
+                      className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 rounded-full p-1 shadow-lg cursor-pointer transition-colors duration-200 hover:scale-110"
+                    >
+                      <Plus className="w-3 h-3 text-white" />
+                    </button>
+                  )}
+                  
+                  {/* Hover tooltip para seguir */}
+                  {!isFollowing(authorUserId) && currentUser && authorUserId !== currentUser.id && (
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                      <div className="bg-blue-800/90 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm whitespace-nowrap border border-blue-600/30 shadow-lg">
+                        <div className="font-medium">@{poll.authorUser?.username || poll.author?.username || poll.author?.display_name || 'usuario'}</div>
+                        <div className="text-blue-300 text-[10px]">Seguir usuario</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Indicador de siguiendo */}
+                  {isFollowing(authorUserId) && (
+                    <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1 shadow-lg">
+                      <CheckCircle className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-white font-semibold text-base">{poll.author?.display_name || poll.author?.username || poll.authorUser?.displayName || 'Usuario'}</h3>
+                  </div>
+                  <p className="text-sm text-white/70">{poll.timeAgo}</p>
+                </div>
+              </>
+            )}
+
           </div>
 
         </div>
