@@ -261,7 +261,12 @@ class PollService {
       show_vote_count: backendPoll.show_vote_count !== undefined ? backendPoll.show_vote_count : true,
       // Post settings - camelCase for frontend compatibility
       commentsEnabled: backendPoll.comments_enabled !== undefined ? backendPoll.comments_enabled : true,
-      showVoteCount: backendPoll.show_vote_count !== undefined ? backendPoll.show_vote_count : true
+      showVoteCount: backendPoll.show_vote_count !== undefined ? backendPoll.show_vote_count : true,
+      // 🏆 Challenge fields
+      is_challenge: backendPoll.is_challenge || false,
+      challenge_id: backendPoll.challenge_id || null,
+      challenge_status: backendPoll.challenge_status || null,
+      participants: backendPoll.participants || []
     };
     
     return transformedPoll;
