@@ -1252,10 +1252,14 @@ const ProfilePage = () => {
   });
   
   // Calculate dynamic statistics from actual user polls
-  const totalVotesFromPolls = userPolls.reduce((total, poll) => total + (poll.totalVotes || 0), 0);
+  // For totalVotes, use profile API value (correctly includes per-user challenge votes)
+  // Don't sum from userPolls because challenge posts have total_votes for ALL participants, not per-user
+  const totalVotesFromPolls = userPolls
+    .filter(poll => !poll.is_challenge)
+    .reduce((total, poll) => total + (poll.totalVotes || 0), 0);
   const totalLikesReceived = userPolls.reduce((total, poll) => total + (poll.likes || 0), 0);
   const totalSharesReceived = userPolls.reduce((total, poll) => total + (poll.shares || 0), 0);
-  // Use profile API total_votes (includes challenge votes) or frontend calculation, whichever is higher
+  // Use profile API total_votes (includes per-user challenge votes) + regular poll votes
   const profileApiVotes = isOwnProfile ? (ownProfileStats?.totalVotes || 0) : (viewedUser?.totalVotes || 0);
   const totalVotesReceived = Math.max(totalVotesFromPolls, profileApiVotes);
   
