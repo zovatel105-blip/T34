@@ -98,6 +98,7 @@ const ProfilePage = () => {
   const [socialLinks, setSocialLinks] = useState({});
   const [savingSocialLinks, setSavingSocialLinks] = useState(false);
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
+  const [ownProfileStats, setOwnProfileStats] = useState(null);
   const [newSocialName, setNewSocialName] = useState('');
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [followRequestPending, setFollowRequestPending] = useState(false);
@@ -124,6 +125,24 @@ const ProfilePage = () => {
 
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
+
+  // 🏆 Load own profile stats (includes challenge votes)
+  useEffect(() => {
+    const loadOwnProfileStats = async () => {
+      if (!authUser?.id) return;
+      try {
+        const profile = await userService.getUserProfile(authUser.id);
+        setOwnProfileStats({
+          totalVotes: profile.total_votes || 0,
+          totalLikes: profile.likes_count || 0,
+          votesCount: profile.votes_count || 0,
+        });
+      } catch (error) {
+        console.error('Error loading own profile stats:', error);
+      }
+    };
+    loadOwnProfileStats();
+  }, [authUser?.id]);
 
   // Load user's polls
   useEffect(() => {
@@ -1233,9 +1252,12 @@ const ProfilePage = () => {
   });
   
   // Calculate dynamic statistics from actual user polls
-  const totalVotesReceived = userPolls.reduce((total, poll) => total + (poll.totalVotes || 0), 0);
+  const totalVotesFromPolls = userPolls.reduce((total, poll) => total + (poll.totalVotes || 0), 0);
   const totalLikesReceived = userPolls.reduce((total, poll) => total + (poll.likes || 0), 0);
   const totalSharesReceived = userPolls.reduce((total, poll) => total + (poll.shares || 0), 0);
+  // Use profile API total_votes (includes challenge votes) or frontend calculation, whichever is higher
+  const profileApiVotes = isOwnProfile ? (ownProfileStats?.totalVotes || 0) : (viewedUser?.totalVotes || 0);
+  const totalVotesReceived = Math.max(totalVotesFromPolls, profileApiVotes);
   
   const displayUser = isOwnProfile ? {
     id: authUser?.id || '1',
