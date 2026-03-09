@@ -657,6 +657,59 @@ const TikTokPollCard = ({
                 <h3 className="text-white font-semibold text-base">{poll.author?.display_name || poll.author?.username || poll.authorUser?.displayName || 'Usuario'}</h3>
               </div>
               <p className="text-sm text-white/70">{poll.timeAgo}</p>
+              
+              {/* 🏷️ Challenge participant tags - next to author info */}
+              {poll.is_challenge && poll.participants && poll.participants.length > 0 && (
+                <div 
+                  className="flex items-center gap-1.5 mt-1 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const firstParticipant = poll.participants[0];
+                    if (firstParticipant?.username) {
+                      navigate(`/profile/${firstParticipant.username}`);
+                    } else if (firstParticipant?.id) {
+                      navigate(`/profile/${firstParticipant.id}`);
+                    }
+                  }}
+                >
+                  {/* Overlapping participant avatars */}
+                  <div className="flex items-center -space-x-1.5">
+                    {poll.participants.slice(0, 3).map((participant, idx) => (
+                      <div
+                        key={participant.id || idx}
+                        className="w-5 h-5 rounded-full border-[1.5px] border-black/70 overflow-hidden bg-gray-700 flex-shrink-0"
+                        style={{ zIndex: 10 - idx }}
+                      >
+                        {participant.avatar_url ? (
+                          <img
+                            src={participant.avatar_url}
+                            alt={participant.username || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
+                            <User className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Participant names text */}
+                  <span className="text-white/80 text-[11px] font-medium leading-tight">
+                    {(() => {
+                      const firstP = poll.participants[0];
+                      const name1 = firstP.username || firstP.display_name || 'usuario';
+                      const rest = poll.participants.length - 1;
+                      if (rest === 0) return name1;
+                      if (rest === 1) {
+                        const secondP = poll.participants[1];
+                        return `${name1} y ${secondP.username || secondP.display_name || 'usuario'}`;
+                      }
+                      return `${name1} y ${rest} personas más`;
+                    })()}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -668,7 +721,7 @@ const TikTokPollCard = ({
           </h2>
         </div>
 
-        {/* Mentioned users moved to options */}
+        {/* Mentioned users moved to header area for challenges */}
 
       </div>
 

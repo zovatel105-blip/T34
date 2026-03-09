@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://endless-loading-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://challenge-mentions.preview.emergentagent.com/api"
 TEST_CREDENTIALS = {
     "email": "test@example.com",
     "password": "test123"
