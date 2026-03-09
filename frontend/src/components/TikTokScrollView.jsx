@@ -588,7 +588,7 @@ const TikTokPollCard = ({
                     {poll.participants.slice(0, 2).map((participant, idx) => (
                       <div
                         key={participant.id || idx}
-                        className="w-10 h-10 rounded-full border-[2px] border-white/90 overflow-hidden bg-gray-700 flex-shrink-0 shadow-lg"
+                        className="w-10 h-10 rounded-full overflow-hidden bg-gray-700 flex-shrink-0 shadow-lg"
                         style={{ 
                           zIndex: 10 - idx,
                           marginLeft: idx > 0 ? '-14px' : '0'
