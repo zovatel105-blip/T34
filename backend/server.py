@@ -2198,10 +2198,26 @@ async def ensure_user_profile(user_id: str):
         result = await db.polls.aggregate(pipeline).to_list(length=1)
         total_votes_received = result[0]["total_votes_received"] if result else 0
         
-        logger.info(f"📊 Calculated real votes for user {user_id}: {total_votes_received}")
+        # 🏆 Also count votes received in challenges
+        challenge_votes_pipeline = [
+            {"$unwind": "$participants"},
+            {"$match": {"participants.user_id": user_id}},
+            {"$group": {
+                "_id": None,
+                "challenge_votes": {"$sum": "$participants.votes_received"}
+            }}
+        ]
+        challenge_votes_result = await db.challenges.aggregate(challenge_votes_pipeline).to_list(length=1)
+        challenge_votes_received = challenge_votes_result[0]["challenge_votes"] if challenge_votes_result else 0
+        total_votes_received += challenge_votes_received
+        
+        logger.info(f"📊 Calculated real votes for user {user_id}: {total_votes_received} (polls + {challenge_votes_received} challenge votes)")
         
         # Count votes made by this user
         votes_made_by_user = await db.votes.count_documents({"user_id": user_id})
+        # 🏆 Also count challenge votes made by this user
+        challenge_votes_made = await db.challenge_votes.count_documents({"voter_id": user_id})
+        votes_made_by_user += challenge_votes_made
         
         # Count likes received on user's polls using aggregation
         likes_pipeline = [

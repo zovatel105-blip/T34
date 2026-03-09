@@ -284,12 +284,14 @@ const FeedPage = () => {
           : "Tu voto ha sido contabilizado exitosamente",
       });
       
-      // Refresh poll data to get accurate counts
-      const updatedPoll = await pollService.refreshPoll(pollId);
-      if (updatedPoll) {
-        setPolls(prev => prev.map(poll => 
-          poll.id === pollId ? updatedPoll : poll
-        ));
+      // Refresh poll data to get accurate counts (skip for challenges - they use synthetic IDs)
+      if (!isChallenge) {
+        const updatedPoll = await pollService.refreshPoll(pollId);
+        if (updatedPoll) {
+          setPolls(prev => prev.map(poll => 
+            poll.id === pollId ? updatedPoll : poll
+          ));
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);
