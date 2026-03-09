@@ -585,11 +585,11 @@ const TikTokPollCard = ({
                 >
                   {/* Overlapping circular avatars - diagonal stack like Instagram Reels */}
                   <div className="relative flex-shrink-0" style={{ width: '44px', height: '44px' }}>
-                    {/* Avatar 1 - bottom-left, behind */}
+                    {/* Avatar 1 - bottom-left, in front */}
                     {poll.participants[0] && (
                       <div
                         className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
-                        style={{ zIndex: 1, bottom: '0px', left: '0px' }}
+                        style={{ zIndex: 2, bottom: '0px', left: '0px' }}
                       >
                         {poll.participants[0].avatar_url ? (
                           <img
@@ -604,11 +604,11 @@ const TikTokPollCard = ({
                         )}
                       </div>
                     )}
-                    {/* Avatar 2 - top-right, in front (higher z-index) */}
+                    {/* Avatar 2 - top-right, behind */}
                     {poll.participants[1] && (
                       <div
                         className="w-8 h-8 rounded-full overflow-hidden bg-gray-700 absolute shadow-md"
-                        style={{ zIndex: 2, top: '0px', right: '0px' }}
+                        style={{ zIndex: 1, top: '0px', right: '0px' }}
                       >
                         {poll.participants[1].avatar_url ? (
                           <img
