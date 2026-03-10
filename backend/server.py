@@ -6167,17 +6167,31 @@ async def get_ultra_fast_feed(
                 "show_vote_count": True,
                 "is_challenge": True,
                 "challenge_status": "published",
-                "participants": [
+                "participants": [],  # Will be populated below
+            }
+            
+            # Fetch fresh user data for participants
+            participant_user_ids = [
+                p.get("user_id") for p in challenge.get("participants", [])
+                if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+            ]
+            if participant_user_ids:
+                fresh_users = await db.users.find(
+                    {"id": {"$in": participant_user_ids}},
+                    {"id": 1, "username": 1, "display_name": 1, "avatar_url": 1, "_id": 0}
+                ).to_list(length=10)
+                fresh_users_map = {u["id"]: u for u in fresh_users}
+                
+                challenge_response["participants"] = [
                     {
                         "id": p.get("user_id"),
-                        "username": p.get("username"),
-                        "display_name": p.get("display_name"),
-                        "avatar_url": p.get("avatar_url")
+                        "username": fresh_users_map.get(p.get("user_id"), {}).get("username", p.get("username")),
+                        "display_name": fresh_users_map.get(p.get("user_id"), {}).get("display_name", p.get("display_name")),
+                        "avatar_url": fresh_users_map.get(p.get("user_id"), {}).get("avatar_url", p.get("avatar_url"))
                     }
                     for p in challenge.get("participants", [])
                     if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
                 ]
-            }
             
             # Insertar al inicio del feed para que los challenges destaquen
             result.insert(0, challenge_response)
