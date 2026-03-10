@@ -38,7 +38,6 @@ const ContentPublishPage = () => {
   const [joiningChallengeId, setJoiningChallengeId] = useState(null); // ID del challenge al que unirse (si existe)
   
   // Challenge-specific states
-  const [challengeTitle, setChallengeTitle] = useState('');
   const [challengeDescription, setChallengeDescription] = useState('');
   const [challengeType, setChallengeType] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -217,10 +216,10 @@ const ContentPublishPage = () => {
 
     // Challenge-specific validations - Solo para CREAR nuevo challenge, no para unirse
     if (isChallengeMode && !joiningChallengeId) {
-      if (!challengeTitle.trim()) {
+      if (!challengeDescription.trim()) {
         toast({
           title: "Error",
-          description: "Necesitas escribir un título para el challenge",
+          description: "Necesitas escribir una descripción para el challenge",
           variant: "destructive"
         });
         return;
@@ -380,8 +379,8 @@ const ContentPublishPage = () => {
         setUploadProgress(95);
         
         const challengeData = {
-          title: challengeTitle.trim(),
-          description: challengeDescription.trim() || null,
+          title: challengeDescription.trim(),
+          description: challengeDescription.trim(),
           participant_ids: selectedUsers.map(u => u.id),
           challenge_type: challengeType || null,
           deadline: null,
@@ -837,28 +836,10 @@ const ContentPublishPage = () => {
                     <span className="text-yellow-500 font-semibold">Configuración del Challenge</span>
                   </div>
 
-                  {/* Challenge Title */}
-                  <div className="mb-4">
-                    <label className="block text-gray-300 text-sm mb-2">
-                      Título del Challenge *
-                    </label>
-                    <input
-                      type="text"
-                      value={challengeTitle}
-                      onChange={(e) => setChallengeTitle(e.target.value)}
-                      placeholder="Ej: Challenge de Baile 💃"
-                      maxLength={100}
-                      className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none transition-colors text-sm"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">
-                      {challengeTitle.length}/100 caracteres
-                    </p>
-                  </div>
-
                   {/* Challenge Description */}
                   <div className="mb-4">
                     <label className="block text-gray-300 text-sm mb-2">
-                      Descripción (Opcional)
+                      Descripción del Challenge *
                     </label>
                     <textarea
                       value={challengeDescription}

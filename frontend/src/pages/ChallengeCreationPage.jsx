@@ -17,7 +17,6 @@ const ChallengeCreationPage = () => {
   // El poll_id viene desde ContentCreationPage después de crear el contenido
   const creatorPollId = location.state?.pollId;
 
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [challengeType, setChallengeType] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -115,10 +114,10 @@ const ChallengeCreationPage = () => {
 
   const handleCreateChallenge = async () => {
     // Validaciones
-    if (!title.trim()) {
+    if (!description.trim()) {
       toast({
         title: "Campo requerido",
-        description: "Debes agregar un título al challenge",
+        description: "Debes agregar una descripción al challenge",
         variant: "destructive"
       });
       return;
@@ -137,8 +136,8 @@ const ChallengeCreationPage = () => {
       setCreating(true);
 
       const challengeData = {
-        title: title.trim(),
-        description: description.trim() || null,
+        title: description.trim(),
+        description: description.trim(),
         participant_ids: selectedUsers.map(u => u.id),
         challenge_type: challengeType || null,
         deadline: null,
@@ -180,10 +179,10 @@ const ChallengeCreationPage = () => {
         <h1 className="text-white text-lg font-bold">Crear Challenge</h1>
         <button
           onClick={handleCreateChallenge}
-          disabled={creating || selectedUsers.length < 1 || !title.trim()}
+          disabled={creating || selectedUsers.length < 1 || !description.trim()}
           className={cn(
             "px-4 py-2 rounded-lg font-semibold transition-all",
-            creating || selectedUsers.length < 1 || !title.trim()
+            creating || selectedUsers.length < 1 || !description.trim()
               ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
               : "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:shadow-lg"
           )}
@@ -196,28 +195,10 @@ const ChallengeCreationPage = () => {
       <div className="flex-1 overflow-y-auto pb-20">
         {/* Formulario */}
         <div className="px-4 py-6 space-y-6">
-          {/* Título */}
-          <div>
-            <label className="block text-white font-semibold mb-2">
-              Título del Challenge *
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej: Challenge de Baile 💃"
-              maxLength={100}
-              className="w-full bg-zinc-900 text-white px-4 py-3 rounded-lg border border-zinc-700 focus:border-yellow-500 focus:outline-none transition-colors"
-            />
-            <p className="text-zinc-500 text-xs mt-1">
-              {title.length}/100 caracteres
-            </p>
-          </div>
-
           {/* Descripción */}
           <div>
             <label className="block text-white font-semibold mb-2">
-              Descripción (Opcional)
+              Descripción del Challenge *
             </label>
             <textarea
               value={description}
@@ -361,7 +342,7 @@ const ChallengeCreationPage = () => {
               <div className="text-sm text-blue-200">
                 <p className="font-semibold mb-1">¿Cómo funcionan los Challenges?</p>
                 <ul className="space-y-1 text-blue-300">
-                  <li>• Los usuarios invitados verán tu challenge en Explore > Activos</li>
+                  <li>• Los usuarios invitados verán tu challenge en Explore {'>'} Activos</li>
                   <li>• Deben aceptar y crear su propio contenido</li>
                   <li>• Cuando todos completen, se publicará automáticamente</li>
                   <li>• Los usuarios podrán votar por el ganador</li>
