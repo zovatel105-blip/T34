@@ -1051,7 +1051,7 @@ async def search_music_preview(
 @api_router.get("/music/search-realtime")
 async def search_music_realtime(
     query: str,
-    limit: int = 20,
+    limit: int = 200,
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Search for music in real time using iTunes API - supports any artist/song"""

@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://challenge-mentions.preview.emergentagent.com/api"
+BACKEND_URL = "https://full-music-catalog.preview.emergentagent.com/api"
 
 class HealthTester:
     def __init__(self):

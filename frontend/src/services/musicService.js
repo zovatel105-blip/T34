@@ -19,7 +19,7 @@ class MusicService {
   }
 
   // Search for music
-  async searchMusic(query, limit = 20) {
+  async searchMusic(query, limit = 200) {
     try {
       const params = new URLSearchParams({
         query,

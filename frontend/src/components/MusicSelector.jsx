@@ -223,7 +223,7 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '', darkMode 
     setSearchError('');
     
     try {
-      const result = await musicService.searchMusic(query, 20);
+      const result = await musicService.searchMusic(query, 200);
       if (result.success) {
         setSearchResults(result.results || []);
       } else {
