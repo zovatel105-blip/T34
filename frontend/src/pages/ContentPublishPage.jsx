@@ -38,7 +38,6 @@ const ContentPublishPage = () => {
   const [joiningChallengeId, setJoiningChallengeId] = useState(null); // ID del challenge al que unirse (si existe)
   
   // Challenge-specific states
-  const [challengeDescription, setChallengeDescription] = useState('');
   const [challengeType, setChallengeType] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -216,10 +215,10 @@ const ContentPublishPage = () => {
 
     // Challenge-specific validations - Solo para CREAR nuevo challenge, no para unirse
     if (isChallengeMode && !joiningChallengeId) {
-      if (!challengeDescription.trim()) {
+      if (!title.trim()) {
         toast({
           title: "Error",
-          description: "Necesitas escribir una descripción para el challenge",
+          description: "Necesitas escribir una descripción para la publicación",
           variant: "destructive"
         });
         return;
@@ -379,8 +378,8 @@ const ContentPublishPage = () => {
         setUploadProgress(95);
         
         const challengeData = {
-          title: challengeDescription.trim(),
-          description: challengeDescription.trim(),
+          title: title.trim(),
+          description: title.trim(),
           participant_ids: selectedUsers.map(u => u.id),
           challenge_type: challengeType || null,
           deadline: null,
@@ -834,24 +833,6 @@ const ContentPublishPage = () => {
                   <div className="flex items-center gap-2 mb-4">
                     <Trophy className="w-5 h-5 text-yellow-500" />
                     <span className="text-yellow-500 font-semibold">Configuración del Challenge</span>
-                  </div>
-
-                  {/* Challenge Description */}
-                  <div className="mb-4">
-                    <label className="block text-gray-300 text-sm mb-2">
-                      Descripción del Challenge *
-                    </label>
-                    <textarea
-                      value={challengeDescription}
-                      onChange={(e) => setChallengeDescription(e.target.value)}
-                      placeholder="Describe el reto..."
-                      maxLength={300}
-                      rows={2}
-                      className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none transition-colors resize-none text-sm"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">
-                      {challengeDescription.length}/300 caracteres
-                    </p>
                   </div>
 
                   {/* Challenge Category */}
