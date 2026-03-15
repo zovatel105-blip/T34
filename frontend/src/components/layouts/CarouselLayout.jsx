@@ -59,13 +59,19 @@ const CarouselLayout = ({
 
   const mobile = window.innerWidth <= 768;
 
+  // Detectar si hay música global asignada al post
+  const hasGlobalMusic = !!(poll.music && poll.music.preview_url);
+
   // On poll change → reset slide and clear audio pool
   useEffect(() => {
     setCurrentSlide(0);
     currentSlideSafe.current = 0;
     
-    // ⚠️ CRÍTICO: Detener audioManager
-    audioManager.stop();
+    // Solo detener audioManager si NO hay música global
+    // (Si hay música global, TikTokScrollView lo gestiona)
+    if (!hasGlobalMusic) {
+      audioManager.stop();
+    }
     
     // Limpiar pool de audio al cambiar de poll
     audioPool.current.forEach((audio) => {
@@ -85,7 +91,10 @@ const CarouselLayout = ({
   useEffect(() => {
     return () => {
       console.log('🧹 Limpiando CarouselLayout...');
-      audioManager.stop();
+      // Solo detener audioManager si NO hay música global
+      if (!hasGlobalMusic) {
+        audioManager.stop();
+      }
       audioPool.current.forEach((audio) => {
         if (audio.audioElement) {
           audio.audioElement.pause();
@@ -201,14 +210,24 @@ const CarouselLayout = ({
 
   // ========== AUDIO HANDLING CON POOL PRECARGADO ==========
   useEffect(() => {
+    // Si hay música global, NO interferir con audioManager
+    // La música global la gestiona TikTokScrollView/MusicPlayer
+    if (hasGlobalMusic) {
+      // Solo actualizar thumbnail si corresponde
+      const option = poll.options[currentSlide];
+      if (option && onThumbnailChange && option.thumbnail_url) {
+        onThumbnailChange(option.thumbnail_url);
+      }
+      return;
+    }
+
     if (!isActive) {
-      // Pausar todos los audios cuando no está activo
+      // Pausar todos los audios del pool cuando no está activo
       audioPool.current.forEach((audio) => {
         if (audio.audioElement) {
           audio.audioElement.pause();
         }
       });
-      audioManager.stop();
       audioLoading.current = false;
       return;
     }
@@ -219,13 +238,12 @@ const CarouselLayout = ({
     const extractedAudioId = option.extracted_audio_id;
 
     if (!extractedAudioId) {
-      // Pausar todos los audios si no hay audio extraído
+      // Pausar todos los audios del pool si no hay audio extraído
       audioPool.current.forEach((audio) => {
         if (audio.audioElement) {
           audio.audioElement.pause();
         }
       });
-      audioManager.stop();
       onAudioChange?.(null);
       
       if (onThumbnailChange && option.thumbnail_url) {
@@ -239,9 +257,6 @@ const CarouselLayout = ({
       audioLoading.current = true;
 
       try {
-        // ⚠️ CRÍTICO: Detener audioManager primero para evitar doble reproducción
-        await audioManager.stop();
-
         // Pausar todos los otros audios del pool
         audioPool.current.forEach((audio, slideIndex) => {
           if (audio.audioElement) {
@@ -306,7 +321,7 @@ const CarouselLayout = ({
     };
 
     playFromPool();
-  }, [currentSlide, isActive, poll.options, poll.author]);
+  }, [currentSlide, isActive, poll.options, poll.author, hasGlobalMusic]);
 
   // ========== VIDEO SUPPRESSION FIX (THE IMPORTANT PART) ==========
   //
