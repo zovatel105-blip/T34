@@ -6057,7 +6057,10 @@ async def get_ultra_fast_feed(
                     "created_at": poll_data.get("created_at"),
                     "total_votes": poll_data.get("total_votes", 0),
                     "totalVotes": poll_data.get("total_votes", 0),  # camelCase alias for frontend
-                    "likes_count": poll_data.get("likes_count", 0),
+                    "likes": poll_data.get("likes", 0),
+                    "likes_count": poll_data.get("likes", 0),  # alias for compatibility
+                    "shares": poll_data.get("shares", 0),
+                    "saves_count": poll_data.get("saves_count", 0),
                     "comments_count": poll_data.get("comments_count", 0),
                     "layout": poll_data.get("layout"),
                     "music": music_info,  # 🎵 FIXED: Use resolved music info

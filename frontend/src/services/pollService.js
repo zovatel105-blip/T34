@@ -260,12 +260,12 @@ class PollService {
         } : null
       })),
       totalVotes: backendPoll.total_votes,
-      likes: backendPoll.likes,
-      shares: backendPoll.shares,
+      likes: backendPoll.likes || backendPoll.likes_count || 0,
+      shares: backendPoll.shares || backendPoll.shares_count || 0,
       comments: backendPoll.comments_count,
       saves_count: backendPoll.saves_count || 0,  // ✅ CRITICAL FIX: Include saves_count
       userVote: backendPoll.user_vote || backendPoll.userVote || null,
-      userLiked: backendPoll.user_liked,
+      userLiked: backendPoll.user_liked || backendPoll.userLiked || false,
       category: backendPoll.category,
       tags: backendPoll.tags || [],
       is_featured: backendPoll.is_featured,
