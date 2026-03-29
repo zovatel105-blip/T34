@@ -69,7 +69,7 @@ class PollService {
           const ultraResult = await ultraResponse.json();
           const data = ultraResult.polls || ultraResult;
           console.log(`🚀 Ultra-fast success: ${data.length} polls loaded in ${ultraResult.response_time_ms || 'N/A'}ms`);
-          return data;
+          return data.map(poll => this.transformPollData(poll));
         } else {
           console.warn(`⚠️ Ultra-fast returned ${ultraResponse.status}, falling back to standard`);
         }
