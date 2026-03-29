@@ -184,6 +184,13 @@ const ProfilePage = () => {
           return authorMatches;
         });
         
+        // Sort by most recent first
+        userPolls.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
+          return dateB - dateA;
+        });
+        
         console.log('Filtered user polls:', userPolls.length);
         setPolls(userPolls);
       } catch (error) {
