@@ -6708,6 +6708,151 @@ async def get_following_polls(
         )
         result.append(poll_response)
     
+    # 🏆 AGREGAR CHALLENGES PUBLICADOS DE USUARIOS SEGUIDOS
+    try:
+        published_challenges_cursor = db.challenges.find({
+            "status": ChallengeStatus.PUBLISHED,
+            "creator_id": {"$in": following_user_ids}
+        }).sort("published_at", -1).limit(10)
+        
+        published_challenges = await published_challenges_cursor.to_list(length=10)
+        
+        for challenge in published_challenges:
+            participant_poll_ids = [
+                p.get("poll_id") for p in challenge.get("participants", [])
+                if p.get("poll_id") and p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+            ]
+            
+            if not participant_poll_ids:
+                continue
+            
+            challenge_polls = await db.polls.find({"id": {"$in": participant_poll_ids}}).to_list(length=10)
+            
+            if not challenge_polls:
+                continue
+            
+            # Voto del usuario actual en este challenge
+            user_challenge_vote = None
+            existing_vote = await db.challenge_votes.find_one({
+                "challenge_id": challenge.get("id"),
+                "voter_id": current_user.id
+            })
+            if existing_vote:
+                user_challenge_vote = existing_vote.get("participant_id")
+            
+            # Construir opciones del challenge
+            challenge_options = []
+            for c_poll in challenge_polls:
+                c_poll_options = c_poll.get("options", [])
+                if c_poll_options:
+                    first_option = c_poll_options[0]
+                    participant_info = next(
+                        (p for p in challenge.get("participants", []) if p.get("poll_id") == c_poll.get("id")),
+                        None
+                    )
+                    participant_votes = participant_info.get("votes_received", 0) if participant_info else 0
+                    participant_user_id = participant_info.get("user_id") if participant_info else None
+                    
+                    challenge_options.append({
+                        "id": participant_user_id or c_poll.get("id"),
+                        "text": participant_info.get("username", "") if participant_info else "",
+                        "votes": participant_votes,
+                        "participant_id": participant_user_id,
+                        "participant_username": participant_info.get("username") if participant_info else None,
+                        "participant_avatar": participant_info.get("avatar_url") if participant_info else None,
+                        "media": {
+                            "type": first_option.get("media_type"),
+                            "url": first_option.get("media_url"),
+                            "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
+                        } if first_option.get("media_url") else None
+                    })
+            
+            # Info del creador
+            creator = authors_dict.get(challenge.get("creator_id"))
+            if not creator:
+                creator_doc = await db.users.find_one({"id": challenge.get("creator_id")})
+                if creator_doc:
+                    creator = UserResponse(**{k: v for k, v in creator_doc.items() if k != "_id"})
+            
+            if not creator:
+                continue
+            
+            # Layout según participantes
+            num_participants = len(challenge_options)
+            if num_participants == 2:
+                challenge_layout = "vs-horizontal"
+            elif num_participants == 3:
+                challenge_layout = "vs-stack"
+            elif num_participants == 4:
+                challenge_layout = "vs-grid-2x2"
+            else:
+                challenge_layout = "vs-grid"
+            
+            # Música del challenge
+            challenge_music_info = None
+            for c_poll in challenge_polls:
+                if c_poll.get("music"):
+                    challenge_music_info = c_poll.get("music")
+                    break
+                elif c_poll.get("music_id"):
+                    challenge_music_info = await get_music_info(c_poll.get("music_id"))
+                    if challenge_music_info:
+                        break
+            
+            # Participantes con datos frescos
+            challenge_participants = []
+            p_user_ids = [
+                p.get("user_id") for p in challenge.get("participants", [])
+                if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+            ]
+            if p_user_ids:
+                fresh_users = await db.users.find(
+                    {"id": {"$in": p_user_ids}},
+                    {"id": 1, "username": 1, "display_name": 1, "avatar_url": 1, "_id": 0}
+                ).to_list(length=10)
+                fresh_users_map = {u["id"]: u for u in fresh_users}
+                
+                challenge_participants = [
+                    {
+                        "id": p.get("user_id"),
+                        "username": fresh_users_map.get(p.get("user_id"), {}).get("username", p.get("username")),
+                        "display_name": fresh_users_map.get(p.get("user_id"), {}).get("display_name", p.get("display_name")),
+                        "avatar_url": fresh_users_map.get(p.get("user_id"), {}).get("avatar_url", p.get("avatar_url"))
+                    }
+                    for p in challenge.get("participants", [])
+                    if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
+                ]
+            
+            challenge_response = PollResponse(
+                id=f"challenge_{challenge.get('id')}",
+                title=challenge.get("title", "Challenge"),
+                author=creator,
+                options=challenge_options,
+                total_votes=sum(opt.get("votes", 0) for opt in challenge_options),
+                likes=0,
+                shares=0,
+                comments_count=0,
+                saves_count=0,
+                music=challenge_music_info,
+                user_vote=user_challenge_vote,
+                user_liked=False,
+                is_featured=False,
+                tags=[],
+                category=None,
+                layout=challenge_layout,
+                challenge_id=challenge.get("id"),
+                is_challenge=True,
+                challenge_status="published",
+                participants=challenge_participants,
+                created_at=challenge.get("published_at") or challenge.get("created_at"),
+                time_ago=calculate_time_ago(challenge.get("published_at") or challenge.get("created_at")),
+                comments_enabled=True,
+                show_vote_count=True
+            )
+            result.insert(0, challenge_response)
+    except Exception as e:
+        print(f"⚠️ Error loading challenges for following feed: {e}")
+    
     return result
 
 @api_router.get("/users/{user_id}/mentioned-polls", response_model=List[PollResponse])
