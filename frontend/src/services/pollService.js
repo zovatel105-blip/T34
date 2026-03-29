@@ -285,7 +285,9 @@ class PollService {
       is_challenge: backendPoll.is_challenge || false,
       challenge_id: backendPoll.challenge_id || null,
       challenge_status: backendPoll.challenge_status || null,
-      participants: backendPoll.participants || []
+      participants: backendPoll.participants || [],
+      // 📅 Date fields
+      created_at: backendPoll.created_at || null
     };
     
     return transformedPoll;
