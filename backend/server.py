@@ -5994,6 +5994,23 @@ async def get_ultra_fast_feed(
             user_copy = {k: v for k, v in user.items() if k != "_id"}
             authors_dict[user["id"]] = user_copy
         
+        # 📊 Batch lookup: user votes and likes for percentage bars
+        poll_ids = [poll.get("id") for poll in polls if poll.get("id")]
+        
+        user_votes_cursor = db.votes.find({
+            "poll_id": {"$in": poll_ids},
+            "user_id": current_user.id
+        })
+        user_votes = await user_votes_cursor.to_list(len(poll_ids))
+        user_votes_dict = {vote["poll_id"]: vote["option_id"] for vote in user_votes}
+        
+        user_likes_cursor = db.poll_likes.find({
+            "poll_id": {"$in": poll_ids},
+            "user_id": current_user.id
+        })
+        user_likes = await user_likes_cursor.to_list(len(poll_ids))
+        liked_poll_ids = set(like["poll_id"] for like in user_likes)
+        
         # Build response quickly
         result = []
         for poll_data in polls:
@@ -6039,12 +6056,13 @@ async def get_ultra_fast_feed(
                     "options": transformed_options,  # 🎨 FIXED: Use transformed options
                     "created_at": poll_data.get("created_at"),
                     "total_votes": poll_data.get("total_votes", 0),
+                    "totalVotes": poll_data.get("total_votes", 0),  # camelCase alias for frontend
                     "likes_count": poll_data.get("likes_count", 0),
                     "comments_count": poll_data.get("comments_count", 0),
                     "layout": poll_data.get("layout"),
                     "music": music_info,  # 🎵 FIXED: Use resolved music info
-                    "userVote": None,  # Simplified - no user vote lookup for speed
-                    "userLiked": False,  # Simplified - no user like lookup for speed
+                    "userVote": user_votes_dict.get(poll_data.get("id")),
+                    "userLiked": poll_data.get("id") in liked_poll_ids,
                     # Post settings - Include from database
                     "comments_enabled": poll_data.get("comments_enabled", True),
                     "show_vote_count": poll_data.get("show_vote_count", True),
