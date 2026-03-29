@@ -78,7 +78,7 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
             transition={{ duration: 0.3, delay: index * 0.05 }}
           >
             {/* Thumbnail or static image representation */}
-            <div className="w-full h-full relative bg-gray-100 rounded-lg">
+            <div className="w-full h-full relative bg-gray-100 rounded-lg z-0">
               {(() => {
                 const thumbnail = getPostThumbnail(poll);
                 const isVideo = hasVideoContent(poll);
@@ -125,10 +125,10 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
             </div>
 
             {/* Dark overlay for better text visibility */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors pointer-events-none" />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors pointer-events-none z-10" />
 
             {/* Play Button (responsive for touch) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <motion.div
                 className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 whileHover={{ scale: 1.1 }}
@@ -140,14 +140,14 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
 
             {/* Video indicator - top right */}
             {hasVideoContent(poll) && (
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none">
+              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none z-20">
                 <Video className="w-3 h-3" />
               </div>
             )}
 
             {/* Vote count overlay - bottom left */}
             {voteCount > 0 && poll.show_vote_count !== false && (
-              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none">
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none z-30">
                 <Vote className="w-3 h-3" />
                 <span>{formatViewCount(voteCount)}</span>
               </div>
