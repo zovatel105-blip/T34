@@ -10448,13 +10448,19 @@ async def get_completed_challenges(
 ):
     """
     Obtener challenges completados y publicados con información de media
-    Estos aparecen en la página principal de Explore
-    No requiere autenticación, pero si está autenticado incluye el voto del usuario
+    Solo visibles para el creador y los participantes del challenge
     """
     try:
-        # Buscar challenges publicados
+        # 🔒 CRITICAL: Solo mostrar challenges donde el usuario es creador o participante
+        if not current_user:
+            return []
+        
         challenges_cursor = db.challenges.find({
-            "status": ChallengeStatus.PUBLISHED
+            "status": ChallengeStatus.PUBLISHED,
+            "$or": [
+                {"creator_id": current_user.id},
+                {"participants.user_id": current_user.id}
+            ]
         }).sort("published_at", -1).skip(skip).limit(limit)
         
         challenges = await challenges_cursor.to_list(length=limit)
