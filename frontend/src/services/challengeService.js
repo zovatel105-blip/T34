@@ -91,10 +91,15 @@ class ChallengeService {
   /**
    * Obtener challenges completados y publicados
    */
-  async getCompletedChallenges(limit = 20, skip = 0) {
+  async getCompletedChallenges(limit = 20, skip = 0, token = null) {
     try {
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch(
-        `${this.getBaseUrl()}/challenges/completed?limit=${limit}&skip=${skip}`
+        `${this.getBaseUrl()}/challenges/completed?limit=${limit}&skip=${skip}`,
+        { headers }
       );
 
       if (!response.ok) {
