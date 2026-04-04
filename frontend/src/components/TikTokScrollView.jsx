@@ -960,7 +960,7 @@ const TikTokPollCard = ({
           <div className="mb-4">
             {poll.is_challenge ? (
               /* 🏆 CHALLENGE: Mostrar estado en vez de conteo de votos */
-              <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
+              <div className="inline-flex items-center px-4 py-2 rounded-lg bg-black/20 backdrop-blur-sm">
                 <span className="text-white/90 font-semibold text-sm">
                   {(() => {
                     const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
