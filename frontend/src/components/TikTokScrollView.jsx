@@ -958,15 +958,37 @@ const TikTokPollCard = ({
         {/* Solo mostrar votos si show_vote_count es true (o por defecto si no existe) */}
         {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
           <div className="mb-4">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowVotersModal(true);
-              }}
-              className="text-white/90 font-semibold text-base hover:text-white transition-colors cursor-pointer"
-            >
-              {formatNumber(poll.totalVotes)} votos
-            </button>
+            {poll.is_challenge ? (
+              /* 🏆 CHALLENGE: Mostrar estado en vez de conteo de votos */
+              <span className="text-white/90 font-semibold text-base">
+                {(() => {
+                  const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                  if (totalVotes === 0) return "Sé el primero en decidir";
+                  
+                  // Encontrar votos máximos y mínimos
+                  const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+                  const maxVotes = sortedOptions[0]?.votes || 0;
+                  const secondVotes = sortedOptions[1]?.votes || 0;
+                  
+                  // Verificar empate
+                  if (maxVotes === secondVotes) return "Empate";
+                  
+                  // Hay un ganador
+                  const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
+                  return `${winnerName} va ganando`;
+                })()}
+              </span>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowVotersModal(true);
+                }}
+                className="text-white/90 font-semibold text-base hover:text-white transition-colors cursor-pointer"
+              >
+                {formatNumber(poll.totalVotes)} votos
+              </button>
+            )}
           </div>
         )}
 
