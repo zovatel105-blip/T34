@@ -10,6 +10,7 @@ import { cn } from '../../lib/utils';
 import { Trophy, User } from 'lucide-react';
 import audioManager from '../../services/AudioManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -389,9 +390,12 @@ const CarouselLayout = ({
 
           return (
             <SwiperSlide key={option.id}>
+              <DoubleTapVoteAnimation
+                onDoubleTap={() => onVote(option.id)}
+                disabled={!!poll.userVote}
+              >
               <div
                 className="relative w-full h-full overflow-hidden rounded-lg"
-                onClick={() => onVote(option.id)}
               >
               {/* MEDIA */}
               <div className="absolute inset-0">
@@ -520,6 +524,7 @@ const CarouselLayout = ({
                 );
               })()}
               </div>
+              </DoubleTapVoteAnimation>
             </SwiperSlide>
           );
         })}

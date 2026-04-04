@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
+import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 
 // Colores por país - TODOS LOS PAÍSES DEL MUNDO
 const countryColors = {
@@ -527,10 +528,8 @@ const QuestionSlide = ({
         const isTop = index === 0;
         
         return (
-          <button
+          <div
             key={option.id}
-            onClick={() => isActive && !showResults && onVote(option.id)}
-            disabled={showResults}
             className={cn(
               "flex-1 relative overflow-hidden transition-all duration-300",
               !imageUrl && bgColor,
@@ -538,6 +537,10 @@ const QuestionSlide = ({
               isHighlighted && !isSelected && "ring-4 ring-yellow-400 ring-inset scale-[1.02]"
             )}
           >
+            <DoubleTapVoteAnimation
+              onDoubleTap={() => isActive && !showResults && onVote(option.id)}
+              disabled={showResults}
+            >
             {/* Overlay de resaltado por voz */}
             {isHighlighted && !isSelected && (
               <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse" />
@@ -585,7 +588,8 @@ const QuestionSlide = ({
                 </svg>
               </div>
             )}
-          </button>
+            </DoubleTapVoteAnimation>
+          </div>
         );
       })}
       

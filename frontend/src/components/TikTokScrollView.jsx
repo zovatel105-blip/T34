@@ -25,6 +25,7 @@ import { useToast } from '../hooks/use-toast';
 import audioManager from '../services/AudioManager';
 import realMusicService from '../services/realMusicService';
 import LayoutRenderer from './layouts/LayoutRenderer';
+import DoubleTapVoteAnimation from './DoubleTapVoteAnimation';
 import feedMenuService from '../services/feedMenuService';
 import storyService from '../services/storyService';
 
@@ -801,8 +802,11 @@ const TikTokPollCard = ({
                               "flex-1 relative overflow-hidden",
                               optIdx === 0 ? "border-r-2 border-white/30" : ""
                             )}
-                            onClick={() => !hasUserVoted && handleVote(option.id)}
                           >
+                            <DoubleTapVoteAnimation
+                              onDoubleTap={() => !hasUserVoted && handleVote(option.id)}
+                              disabled={hasUserVoted}
+                            >
                             {/* Media del participante */}
                             {option.media?.type?.includes('video') ? (
                               <video
@@ -849,6 +853,7 @@ const TikTokPollCard = ({
                             {hasUserVoted && isWinner && (
                               <div className="absolute inset-0 ring-2 ring-green-400 ring-inset pointer-events-none"></div>
                             )}
+                            </DoubleTapVoteAnimation>
                           </div>
                         );
                       })}
@@ -867,8 +872,11 @@ const TikTokPollCard = ({
                           <div 
                             key={option.id || optIdx}
                             className="relative overflow-hidden"
-                            onClick={() => !hasUserVoted && handleVote(option.id)}
                           >
+                            <DoubleTapVoteAnimation
+                              onDoubleTap={() => !hasUserVoted && handleVote(option.id)}
+                              disabled={hasUserVoted}
+                            >
                             {option.media?.type?.includes('video') ? (
                               <video
                                 src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
@@ -914,6 +922,7 @@ const TikTokPollCard = ({
                             {hasUserVoted && isWinner && (
                               <div className="absolute inset-0 ring-2 ring-green-400 ring-inset pointer-events-none"></div>
                             )}
+                            </DoubleTapVoteAnimation>
                           </div>
                         );
                       })}

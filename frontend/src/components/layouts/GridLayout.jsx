@@ -4,6 +4,7 @@ import { cn } from '../../lib/utils';
 import { Trophy, User } from 'lucide-react';
 import videoMemoryManager from '../../services/videoMemoryManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 
 const GridLayout = ({ 
   poll, 
@@ -194,12 +195,15 @@ const GridLayout = ({
           <div
             key={option.id}
             className="relative cursor-pointer group h-full w-full overflow-hidden touch-manipulation rounded-lg"
-            onClick={() => onVote(option.id)}
             style={{ 
               WebkitTapHighlightColor: 'transparent',
               touchAction: 'manipulation'
             }}
           >
+            <DoubleTapVoteAnimation
+              onDoubleTap={() => onVote(option.id)}
+              disabled={!!poll.userVote}
+            >
             {/* 🚀 OPTIMIZED Background media with performance controls */}
             <div className="absolute inset-0 w-full h-full">
               {option.media?.url ? (
@@ -412,6 +416,7 @@ const GridLayout = ({
                 </div>
               );
             })()}
+            </DoubleTapVoteAnimation>
           </div>
         );
       })}
