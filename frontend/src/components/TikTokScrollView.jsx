@@ -983,7 +983,7 @@ const TikTokPollCard = ({
                   e.stopPropagation();
                   setShowVotersModal(true);
                 }}
-                className="text-white/90 font-semibold text-base hover:text-white transition-colors cursor-pointer"
+                className="inline-flex items-center px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm text-white/90 font-semibold text-sm hover:text-white transition-colors cursor-pointer"
               >
                 {formatNumber(poll.totalVotes)} votos
               </button>
