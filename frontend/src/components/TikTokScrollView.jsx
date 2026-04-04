@@ -960,24 +960,23 @@ const TikTokPollCard = ({
           <div className="mb-4">
             {poll.is_challenge ? (
               /* 🏆 CHALLENGE: Mostrar estado en vez de conteo de votos */
-              <span className="text-white/90 font-semibold text-base">
-                {(() => {
-                  const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
-                  if (totalVotes === 0) return "Sé el primero en decidir";
-                  
-                  // Encontrar votos máximos y mínimos
-                  const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
-                  const maxVotes = sortedOptions[0]?.votes || 0;
-                  const secondVotes = sortedOptions[1]?.votes || 0;
-                  
-                  // Verificar empate
-                  if (maxVotes === secondVotes) return "Empate";
-                  
-                  // Hay un ganador
-                  const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
-                  return `${winnerName} va ganando`;
-                })()}
-              </span>
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm">
+                <span className="text-white/90 font-semibold text-sm">
+                  {(() => {
+                    const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                    if (totalVotes === 0) return "Sé el primero en decidir";
+                    
+                    const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+                    const maxVotes = sortedOptions[0]?.votes || 0;
+                    const secondVotes = sortedOptions[1]?.votes || 0;
+                    
+                    if (maxVotes === secondVotes) return "Empate";
+                    
+                    const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
+                    return `${winnerName} va ganando`;
+                  })()}
+                </span>
+              </div>
             ) : (
               <button
                 onClick={(e) => {
