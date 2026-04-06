@@ -32,8 +32,6 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
   const counterRef = useRef(0);
 
   const handleTap = useCallback((e) => {
-    if (disabled) return;
-
     const now = Date.now();
     const timeSinceLastTap = now - lastTapRef.current;
     lastTapRef.current = now;
@@ -47,15 +45,17 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
       counterRef.current += 1;
       const id = `${now}-${counterRef.current}`;
 
+      // Always show animation
       setAnimations(prev => [...prev, { id, x, y }]);
 
-      // Cleanup after animation completes
       setTimeout(() => {
         setAnimations(prev => prev.filter(a => a.id !== id));
       }, 850);
 
-      // Fire vote callback
-      onDoubleTap?.();
+      // Only fire vote if not disabled
+      if (!disabled) {
+        onDoubleTap?.();
+      }
     }
   }, [disabled, onDoubleTap]);
 
