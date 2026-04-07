@@ -1,25 +1,33 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// SVG icon with gradient definition
-const VoteIconWithGradient = ({ id }) => (
+const GRADIENTS = [
+  { id: 'red', colors: ['#FF3B3B', '#FF5A5A', '#FF7A7A'], glow: 'rgba(255,59,59,0.5)' },
+  { id: 'orange', colors: ['#FF5A1F', '#FF7A1A', '#FFA31A'], glow: 'rgba(255,90,31,0.5)' },
+  { id: 'yellow', colors: ['#FFD21A', '#FFE14D', '#FFF07A'], glow: 'rgba(255,210,26,0.5)' },
+  { id: 'green', colors: ['#1ED760', '#3BFF7A', '#7AFFA1'], glow: 'rgba(30,215,96,0.5)' },
+  { id: 'blue', colors: ['#1A8CFF', '#3BAAFF', '#7AC7FF'], glow: 'rgba(26,140,255,0.5)' },
+  { id: 'violet', colors: ['#8A2BE2', '#A64DFF', '#C27AFF'], glow: 'rgba(138,43,226,0.5)' },
+  { id: 'pink', colors: ['#FF2D8A', '#FF5FA2', '#FF8FC4'], glow: 'rgba(255,45,138,0.5)' },
+];
+
+const getRandomGradient = () => GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
+
+const VoteIconWithGradient = ({ gradientId, colors }) => (
   <svg
     viewBox="0 0 1024 1024"
     className="w-full h-full"
-    style={{ filter: `drop-shadow(0 0 18px rgba(236,72,153,0.6)) drop-shadow(0 0 30px rgba(139,92,246,0.4))` }}
   >
     <defs>
-      <linearGradient id={`voteGrad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#ec4899" />
-        <stop offset="25%" stopColor="#a855f7" />
-        <stop offset="50%" stopColor="#6366f1" />
-        <stop offset="75%" stopColor="#f97316" />
-        <stop offset="100%" stopColor="#facc15" />
+      <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={colors[0]} />
+        <stop offset="50%" stopColor={colors[1]} />
+        <stop offset="100%" stopColor={colors[2]} />
       </linearGradient>
     </defs>
     <g transform="scale(1, -1) translate(0, -1024)">
       <path
-        fill={`url(#voteGrad-${id})`}
+        fill={`url(#${gradientId})`}
         d="M747.9 858.5c-4.9-3.6-8.3-6.8-39.9-37.9-28.7-28.2-40.9-40.3-190.8-188.6-45.3-44.8-83.4-82-84.5-82.7-6.4-3.6-11.7-.9-27 13.6-18 17.1-57.3 53.1-79.6 73-10.8 9.6-23.3 21-27.8 25.3-11.8 11.1-15.9 13.2-18.5 9.4-.4-.6-.8-113.9-.8-251.8 0-226.5.2-250.8 1.6-252.2 3.3-3.4 2.5-4 32.9 24.4 12.2 11.3 36.2 33.6 53.5 49.5 17.3 16 42 38.9 55 50.9 12.9 12.1 26 24.3 29 27 3 2.8 15.6 14.6 27.9 26.1 12.4 11.6 29.9 28 39.1 36.5 32.3 30.2 74 69.3 129 120.9 36.1 33.9 78.7 74.4 83.5 79.6 9.6 10.2 18.9 25.9 23.6 40l2.3 7 .3 114.9c.3 85.3.1 115.2-.8 116.2-1.7 2-4.1 1.7-8-.11z"
       />
     </g>
@@ -37,22 +45,20 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
     lastTapRef.current = now;
 
     if (timeSinceLastTap < 350) {
-      // Get tap position relative to the container
       const rect = e.currentTarget.getBoundingClientRect();
       const x = (e.clientX || e.touches?.[0]?.clientX || rect.width / 2) - rect.left;
       const y = (e.clientY || e.touches?.[0]?.clientY || rect.height / 2) - rect.top;
 
       counterRef.current += 1;
       const id = `${now}-${counterRef.current}`;
+      const gradient = getRandomGradient();
 
-      // Always show animation
-      setAnimations(prev => [...prev, { id, x, y }]);
+      setAnimations(prev => [...prev, { id, x, y, gradient }]);
 
       setTimeout(() => {
         setAnimations(prev => prev.filter(a => a.id !== id));
       }, 850);
 
-      // Only fire vote if not disabled
       if (!disabled) {
         onDoubleTap?.();
       }
@@ -67,15 +73,15 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
       {children}
 
       <AnimatePresence>
-        {animations.map(({ id, x, y }) => (
+        {animations.map(({ id, x, y, gradient }) => (
           <div
             key={id}
             className="absolute pointer-events-none"
             style={{
-              left: x - 47.5,
-              top: y - 47.5,
-              width: 95,
-              height: 95,
+              left: x - 60,
+              top: y - 60,
+              width: 120,
+              height: 120,
               zIndex: 9999,
             }}
           >
@@ -83,7 +89,7 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
             <motion.div
               className="absolute inset-0 rounded-full"
               style={{
-                background: 'conic-gradient(from 0deg, rgba(236,72,153,0.25), rgba(168,85,247,0.25), rgba(99,102,241,0.25), rgba(249,115,22,0.25), rgba(250,204,21,0.25), rgba(236,72,153,0.25))',
+                background: `radial-gradient(circle, ${gradient.colors[0]}40, ${gradient.colors[1]}20, transparent)`,
               }}
               initial={{ scale: 0.6, opacity: 0.3 }}
               animate={{ scale: 1.6, opacity: 0 }}
@@ -92,9 +98,9 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
 
             {/* Glow layer */}
             <motion.div
-              className="absolute inset-[-12px] rounded-full"
+              className="absolute inset-[-15px] rounded-full"
               style={{
-                background: 'radial-gradient(circle, rgba(168,85,247,0.4) 0%, rgba(236,72,153,0.2) 40%, transparent 70%)',
+                background: `radial-gradient(circle, ${gradient.glow} 0%, ${gradient.colors[0]}30 40%, transparent 70%)`,
               }}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{
@@ -111,6 +117,9 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
             {/* Main icon */}
             <motion.div
               className="absolute inset-0"
+              style={{
+                filter: `drop-shadow(0 0 14px ${gradient.glow}) drop-shadow(0 0 28px ${gradient.colors[1]}60)`,
+              }}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{
                 scale: [0.8, 1.15, 1.0, 1.0, 1.0],
@@ -122,7 +131,7 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
                 ease: [0.34, 1.56, 0.64, 1],
               }}
             >
-              <VoteIconWithGradient id={id} />
+              <VoteIconWithGradient gradientId={`vg-${id}`} colors={gradient.colors} />
             </motion.div>
           </div>
         ))}
