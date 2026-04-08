@@ -400,7 +400,9 @@ const CarouselLayout = ({
                       className="absolute inset-x-0 bottom-0 rounded-t-lg transition-all"
                       style={{
                         height: `${Math.max(percentage, 15)}%`,
-                        background: 'transparent',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
                         borderLeft: isWinner 
                           ? '3px solid rgba(74, 222, 128, 0.8)'
                           : isSelected 
