@@ -38,15 +38,10 @@ const CarouselLayout = ({
   // === Tracking references for video DOM elements ===
   const videoRefs = useRef(new Map());
 
-  // === Prevent audio race conditions ===
-  const audioVersionRef = useRef(0); // Version counter for latest slide change
-  const currentSlideSafe = useRef(0);
-
-  // === AUDIO POOL FOR SMOOTH TRANSITIONS ===
-  const audioPool = useRef(new Map()); // Map<slideIndex, {audioUrl, audioData, audioElement}>
+  // === SINGLE AUDIO ELEMENT for carousel extracted audio ===
+  const carouselAudioRef = useRef(null); // Single Audio element - no pool needed
   const audioMetadataCache = useRef(new Map()); // Cache de metadata del audio
-
-  const totalSlides = poll.options?.length || 1;
+  const currentSlideSafe = useRef(0);
 
   // === Slide state ===
   const [internalCurrentSlide, setInternalCurrentSlide] = useState(0);
@@ -65,49 +60,52 @@ const CarouselLayout = ({
   const hasExtractedAudio = poll.options?.some(opt => opt.extracted_audio_id);
   const hasGlobalMusic = !!(poll.music && poll.music.preview_url) && !hasExtractedAudio;
 
-  // On poll change → reset slide and clear audio pool
+  // Initialize single audio element once
+  useEffect(() => {
+    if (!carouselAudioRef.current) {
+      const audio = new Audio();
+      audio.crossOrigin = 'anonymous';
+      audio.volume = 0.7;
+      audio.loop = true;
+      audio.preload = 'auto';
+      carouselAudioRef.current = audio;
+    }
+    return () => {
+      if (carouselAudioRef.current) {
+        carouselAudioRef.current.pause();
+        carouselAudioRef.current.src = '';
+        carouselAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // On poll change → reset slide and stop audio
   useEffect(() => {
     setCurrentSlide(0);
     currentSlideSafe.current = 0;
     
-    // Solo detener audioManager si NO hay música global
-    // (Si hay música global, TikTokScrollView lo gestiona)
     if (!hasGlobalMusic) {
       audioManager.stop();
     }
     
-    // Limpiar pool de audio al cambiar de poll
-    audioPool.current.forEach((audio) => {
-      if (audio.audioElement) {
-        audio.audioElement.pause();
-        audio.audioElement.currentTime = 0;
-        audio.audioElement.src = '';
-      }
-    });
-    audioPool.current.clear();
+    // Stop carousel audio
+    if (carouselAudioRef.current) {
+      carouselAudioRef.current.pause();
+      carouselAudioRef.current.src = '';
+    }
     audioMetadataCache.current.clear();
-    
-    console.log('🧹 Pool de audio limpiado');
   }, [poll.id]);
 
   // Cleanup cuando el componente se desmonta
   useEffect(() => {
     return () => {
-      console.log('🧹 Limpiando CarouselLayout...');
-      // Invalidate any in-progress async audio operations
-      audioVersionRef.current++;
-      // Solo detener audioManager si NO hay música global
       if (!hasGlobalMusic) {
         audioManager.stop();
       }
-      audioPool.current.forEach((audio) => {
-        if (audio.audioElement) {
-          audio.audioElement.pause();
-          audio.audioElement.currentTime = 0;
-          audio.audioElement.src = '';
-        }
-      });
-      audioPool.current.clear();
+      if (carouselAudioRef.current) {
+        carouselAudioRef.current.pause();
+        carouselAudioRef.current.src = '';
+      }
     };
   }, []);
 
@@ -115,97 +113,44 @@ const CarouselLayout = ({
     currentSlideSafe.current = currentSlide;
   }, [currentSlide]);
 
-  // ========== FUNCIÓN PARA PRECARGAR AUDIO DE UN SLIDE ==========
-  const preloadAudioForSlide = async (slideIndex) => {
-    if (slideIndex < 0 || slideIndex >= poll.options.length) return;
-    if (audioPool.current.has(slideIndex)) return; // Ya está precargado
-    
-    const option = poll.options[slideIndex];
-    if (!option?.extracted_audio_id) return;
+  // ========== FETCH AUDIO METADATA (no Audio element creation) ==========
+  const fetchAudioMetadata = async (extractedAudioId) => {
+    if (audioMetadataCache.current.has(extractedAudioId)) {
+      return audioMetadataCache.current.get(extractedAudioId);
+    }
 
     try {
-      console.log(`🔊 Precargando audio para slide ${slideIndex}...`);
-      
-      // Fetch audio metadata si no está en cache
-      if (!audioMetadataCache.current.has(option.extracted_audio_id)) {
-        const res = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/audio/${option.extracted_audio_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/audio/${extractedAudioId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
-        );
+        }
+      );
+      if (!res.ok) return null;
 
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const audioData = data.audio || data;
-        
-        audioMetadataCache.current.set(option.extracted_audio_id, audioData);
-      }
-
-      const audioData = audioMetadataCache.current.get(option.extracted_audio_id);
-      const audioUrl = audioData.public_url || audioData.url || audioData.preview_url;
-      
-      if (!audioUrl) return;
-
-      // Crear elemento de audio y precargarlo
-      const audioElement = new Audio();
-      audioElement.preload = 'auto';
-      audioElement.crossOrigin = 'anonymous';
-      audioElement.volume = 0.7;
-      audioElement.loop = true;
-      audioElement.src = audioUrl;
-
-      // Forzar precarga
-      audioElement.load();
-
-      // Guardar en el pool
-      audioPool.current.set(slideIndex, {
-        audioUrl,
-        audioData,
-        audioElement,
-        coverImage: audioData.cover_url || option.thumbnail_url
-      });
-
-      console.log(`✅ Audio precargado para slide ${slideIndex}`);
+      const data = await res.json();
+      const audioData = data.audio || data;
+      audioMetadataCache.current.set(extractedAudioId, audioData);
+      return audioData;
     } catch (error) {
-      console.error(`❌ Error precargando audio para slide ${slideIndex}:`, error);
+      console.error(`❌ Error fetching audio metadata:`, error);
+      return null;
     }
   };
 
-  // ========== PRECARGAR AUDIOS ADYACENTES ==========
+  // Pre-fetch metadata for adjacent slides (no Audio elements)
   useEffect(() => {
     if (!isActive || !poll.options) return;
-
-    // Precargar slides: actual, anterior y siguiente
-    const slidesToPreload = [
-      currentSlide,
-      currentSlide - 1,
-      currentSlide + 1,
-      currentSlide + 2 // Extra para mayor buffer
-    ];
-
-    slidesToPreload.forEach(index => {
-      if (index >= 0 && index < poll.options.length) {
-        preloadAudioForSlide(index);
-      }
-    });
-
-    // Limpiar audios muy lejanos para liberar memoria
-    const maxDistance = 3;
-    audioPool.current.forEach((audio, slideIndex) => {
-      if (Math.abs(slideIndex - currentSlide) > maxDistance) {
-        if (audio.audioElement) {
-          audio.audioElement.pause();
-          audio.audioElement.src = '';
+    [currentSlide - 1, currentSlide, currentSlide + 1, currentSlide + 2].forEach(idx => {
+      if (idx >= 0 && idx < poll.options.length) {
+        const opt = poll.options[idx];
+        if (opt?.extracted_audio_id) {
+          fetchAudioMetadata(opt.extracted_audio_id);
         }
-        audioPool.current.delete(slideIndex);
-        console.log(`🗑️ Liberado audio del slide ${slideIndex}`);
       }
     });
-
   }, [currentSlide, isActive, poll.options]);
 
   // ========== SWIPER SLIDE CHANGE HANDLER ==========
@@ -214,22 +159,15 @@ const CarouselLayout = ({
     setCurrentSlide(newIndex);
   };
 
-  // ========== AUDIO HANDLING CON POOL PRECARGADO ==========
+  // ========== AUDIO HANDLING - SINGLE ELEMENT (no pool) ==========
   useEffect(() => {
-    // Helper: pause and reset ALL pool audios
-    const pauseAllPoolAudios = () => {
-      audioPool.current.forEach((audio) => {
-        if (audio.audioElement) {
-          audio.audioElement.pause();
-          audio.audioElement.currentTime = 0;
-        }
-      });
-    };
+    const audio = carouselAudioRef.current;
+    if (!audio) return;
 
     // Si hay música global, NO interferir con audioManager
-    // La música global la gestiona TikTokScrollView/MusicPlayer
     if (hasGlobalMusic) {
-      // Solo actualizar thumbnail si corresponde
+      audio.pause();
+      audio.src = '';
       const option = poll.options[currentSlide];
       if (option && onThumbnailChange && option.thumbnail_url) {
         onThumbnailChange(option.thumbnail_url);
@@ -237,12 +175,10 @@ const CarouselLayout = ({
       return;
     }
 
-    // Increment version on EVERY effect run to invalidate previous async calls
-    const myVersion = ++audioVersionRef.current;
-
     if (!isActive) {
-      // Pausar todos los audios del pool cuando no está activo
-      pauseAllPoolAudios();
+      // Stop audio immediately when not active
+      audio.pause();
+      audio.currentTime = 0;
       return;
     }
 
@@ -252,97 +188,78 @@ const CarouselLayout = ({
     const extractedAudioId = option.extracted_audio_id;
 
     if (!extractedAudioId) {
-      // Pausar todos los audios del pool si no hay audio extraído
-      pauseAllPoolAudios();
+      // No extracted audio for this slide - stop playing
+      audio.pause();
+      audio.currentTime = 0;
       onAudioChange?.(null);
-      
       if (onThumbnailChange && option.thumbnail_url) {
         onThumbnailChange(option.thumbnail_url);
       }
       return;
     }
 
-    const playFromPool = async () => {
+    // We have extracted audio for this slide - fetch metadata and play
+    let cancelled = false;
+
+    const playSlideAudio = async () => {
       try {
-        // ALWAYS pause all audios first
-        pauseAllPoolAudios();
+        // Immediately stop whatever is currently playing
+        audio.pause();
+        audio.currentTime = 0;
 
-        // Verificar si el audio está en el pool
-        if (!audioPool.current.has(currentSlide)) {
-          console.log(`⏳ Audio del slide ${currentSlide} aún no está precargado, cargando...`);
-          await preloadAudioForSlide(currentSlide);
-        }
+        // Fetch metadata (cached)
+        const audioData = await fetchAudioMetadata(extractedAudioId);
+        if (cancelled || !audioData) return;
 
-        // Check if a newer effect run happened while we were loading
-        if (audioVersionRef.current !== myVersion) {
-          console.log(`⏭️ Version changed while loading audio, skipping playback for slide ${currentSlide}`);
-          return;
-        }
+        const audioUrl = audioData.public_url || audioData.url || audioData.preview_url;
+        if (!audioUrl) return;
 
-        const pooledAudio = audioPool.current.get(currentSlide);
-        
-        if (!pooledAudio) {
-          console.error(`❌ No se pudo cargar audio para slide ${currentSlide}`);
-          return;
-        }
+        const coverImage = audioData.cover_url || option.thumbnail_url;
 
-        const { audioElement, audioData, coverImage } = pooledAudio;
-
-        // Update thumbnail for MusicPlayer
+        // Update thumbnail
         if (onThumbnailChange && coverImage) {
           onThumbnailChange(coverImage);
         }
 
-        // Update UI music player with complete audio object
+        // Update UI music info
         onAudioChange?.({
           id: audioData.id,
           title: audioData.title || 'Original Sound',
           artist: audioData.artist || poll.author?.display_name || 'Unknown',
-          preview_url: audioElement.src,
+          preview_url: audioUrl,
           cover: coverImage,
           isOriginal: true,
           source: 'User Upload'
         });
 
-        // Final version check before playing
-        if (audioVersionRef.current !== myVersion) {
-          console.log(`⏭️ Version changed before play, skipping for slide ${currentSlide}`);
-          return;
-        }
+        if (cancelled) return;
 
-        // Pause all AGAIN right before playing to catch any race conditions
-        audioPool.current.forEach((audio, idx) => {
-          if (idx !== currentSlide && audio.audioElement) {
-            audio.audioElement.pause();
-            audio.audioElement.currentTime = 0;
-          }
-        });
+        // Set src and play - changing src on the SAME element automatically stops previous audio
+        audio.src = audioUrl;
+        audio.currentTime = 0;
+        audio.volume = 0.7;
+        audio.loop = true;
 
-        // Reproducir el audio desde el pool
-        audioElement.currentTime = 0;
-        audioElement.volume = 0.7;
-        
         try {
-          await audioElement.play();
-          console.log(`▶️ Audio del slide ${currentSlide} reproduciendo (v${myVersion})`);
+          await audio.play();
+          console.log(`▶️ Audio del slide ${currentSlide} reproduciendo`);
         } catch (playError) {
-          // AbortError is expected when pause() is called during play()
           if (playError.name !== 'AbortError') {
             console.error('Error al reproducir audio:', playError);
           }
         }
-
       } catch (err) {
-        console.error('❌ Error en playFromPool:', err);
+        console.error('❌ Error en playSlideAudio:', err);
       }
     };
 
-    playFromPool();
+    playSlideAudio();
 
-    // Cleanup: when this effect re-runs or component unmounts, invalidate and pause
+    // Cleanup: cancel pending operations and stop audio
     return () => {
-      audioVersionRef.current++;
-      pauseAllPoolAudios();
+      cancelled = true;
+      audio.pause();
+      audio.currentTime = 0;
     };
   }, [currentSlide, isActive, poll.options, poll.author, hasGlobalMusic]);
 
