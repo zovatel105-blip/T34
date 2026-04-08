@@ -158,13 +158,12 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     
     let imageUrl = null;
     if (isVideo) {
-      // For videos: prefer thumbnail_url, fallback to media_url with poster trick
-      imageUrl = option.thumbnail_url;
+      // For videos: prefer thumbnail_url, then try media_url (some browsers can poster it)
+      imageUrl = option.thumbnail_url || option.media_url;
     } else {
       imageUrl = option.media_url || option.thumbnail_url;
     }
 
-    // Video with a real thumbnail image → fast load just like images
     if (imageUrl) {
       return (
         <>
@@ -174,7 +173,16 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             className={imgClassName}
             loading="lazy"
             onError={(e) => {
+              // On error: show gradient placeholder with play icon instantly
               e.target.style.display = 'none';
+              const parent = e.target.closest('.relative') || e.target.parentElement;
+              if (parent && !parent.querySelector('[data-video-placeholder]')) {
+                const placeholder = document.createElement('div');
+                placeholder.setAttribute('data-video-placeholder', 'true');
+                placeholder.className = 'absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center';
+                placeholder.innerHTML = '<div class="bg-white/20 rounded-full p-3"><svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>';
+                parent.insertBefore(placeholder, parent.firstChild);
+              }
             }}
           />
           {isVideo && (
@@ -188,8 +196,8 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       );
     }
     
-    // Video without thumbnail → instant styled placeholder (no slow <video> loading)
-    if (isVideo && option.media_url) {
+    // No URL at all → instant styled placeholder
+    if (isVideo) {
       return (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
           <div className="flex flex-col items-center gap-1">
@@ -500,7 +508,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                 (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
               
               if (isVideo) {
-                imageUrl = option.thumbnail_url;
+                imageUrl = option.thumbnail_url || option.media_url;
               } else {
                 imageUrl = option.media_url || option.thumbnail_url;
               }
@@ -513,7 +521,17 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                       alt={option.text || `Option ${index + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const parent = e.target.closest('.relative') || e.target.parentElement;
+                        if (parent && !parent.querySelector('[data-video-placeholder]')) {
+                          const placeholder = document.createElement('div');
+                          placeholder.setAttribute('data-video-placeholder', 'true');
+                          placeholder.className = 'absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center';
+                          placeholder.innerHTML = '<div class="bg-white/20 rounded-full p-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>';
+                          parent.insertBefore(placeholder, parent.firstChild);
+                        }
+                      }}
                     />
                     {isVideo && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -524,8 +542,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                     )}
                   </>
                 );
-              } else if (isVideo && option.media_url) {
-                // Instant placeholder for video without thumbnail (no slow <video> loading)
+              } else if (isVideo) {
                 return (
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
                     <div className="bg-white/20 rounded-full p-1.5 backdrop-blur-sm">
