@@ -1437,7 +1437,7 @@ const SearchPage = () => {
                           <button 
                             onClick={(e) => handleFollow(result, e)}
                             disabled={isLoading}
-                            className={`flex items-center space-x-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors flex-shrink-0 ${
+                            className={`flex items-center space-x-1 px-5 py-2 text-sm font-medium rounded-full transition-colors flex-shrink-0 ${
                               isFollowing 
                                 ? 'bg-gray-200 text-gray-900 hover:bg-gray-300' 
                                 : 'text-white hover:opacity-90'
