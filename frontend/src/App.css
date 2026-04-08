@@ -195,3 +195,23 @@
 .animate-border-glow {
     animation: borderGlow 2s ease-in-out infinite;
 }
+
+
+/* Marquee scrolling animation for music titles */
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+    display: inline-block;
+    padding-right: 2rem;
+    animation: marquee-scroll 8s linear infinite;
+}
+
+.marquee-wrapper {
+    overflow: hidden;
+    max-width: 55vw;
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 90%, transparent 100%);
+}
