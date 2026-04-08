@@ -1289,51 +1289,44 @@ const TikTokPollCard = ({
               />
             );
           })()}
-        </div>
-      </div>
 
-      {/* Título de la música - Posición original debajo de los botones */}
-      {poll.music && !isMenuOpen && (() => {
-        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-        const displayMusic = hasExtractedAudio && carouselAudioData
-          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
-          : poll.music;
-        return (
-        <div className="absolute left-0 right-0 z-10 px-4 pointer-events-none"
-             style={{ 
-               bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-               paddingRight: 'max(1rem, env(safe-area-inset-right))'
-             }}>
-          <div 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (displayMusic?.id) {
-                let audioId = displayMusic.id;
-                if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
-                  audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
-                }
-                navigate(`/audio/${audioId}`);
-              }
-            }}
-            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit pointer-events-auto" 
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-          >
-            <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-            <div className="marquee-wrapper" style={{ maxWidth: '45vw' }}>
-              <span 
-                className="text-xs font-light animate-marquee"
+          {/* Título de la música - inline debajo del disco */}
+          {poll.music && !isMenuOpen && (() => {
+            const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+            const displayMusic = hasExtractedAudio && carouselAudioData
+              ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
+              : poll.music;
+            return (
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (displayMusic?.id) {
+                    let audioId = displayMusic.id;
+                    if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
+                      audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
+                    }
+                    navigate(`/audio/${audioId}`);
+                  }
+                }}
+                className="flex items-center gap-1 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 w-full pointer-events-auto" 
                 style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
               >
-                {`${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0`}
-              </span>
-            </div>
-          </div>
+                <Music className="w-3 h-3 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+                <div className="marquee-wrapper" style={{ maxWidth: '22vw' }}>
+                  <span 
+                    className="text-[10px] font-light animate-marquee"
+                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+                  >
+                    {`${displayMusic.title} - ${displayMusic.artist}`}
+                    {`\u00A0\u00A0\u2022\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
+                    {`\u00A0\u00A0\u2022\u00A0\u00A0`}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
-        );
-      })()}
+      </div>
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
