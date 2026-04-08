@@ -156,6 +156,7 @@ const TikTokPollCard = ({
   
   // 🎵 NUEVO: Estado para audio dinámico del carrusel con audio original
   const [carouselAudioId, setCarouselAudioId] = useState(null);
+  const [carouselAudioData, setCarouselAudioData] = useState(null); // Full audio data for current slide
   
   // Story state for author avatar ring
   const [authorHasStories, setAuthorHasStories] = useState(false);
@@ -205,12 +206,14 @@ const TikTokPollCard = ({
       extractedId: audioId
     });
     setCarouselAudioId(audioId);
+    setCarouselAudioData(audioData); // Save full audio data for UI display
   };
   
   // 🔄 Reset carousel thumbnail y audio cuando cambia el poll
   useEffect(() => {
     setCarouselThumbnail(null);
     setCarouselAudioId(null);
+    setCarouselAudioData(null);
   }, [poll.id]);
   
   // 🔄 Cerrar el modal de comentarios cuando el card deja de estar activo (scroll)
@@ -1240,9 +1243,13 @@ const TikTokPollCard = ({
             // Si es carrusel con audio extraído por slide, NO auto-reproducir desde MusicPlayer
             // CarouselLayout gestiona su propio audio por slide
             const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+            // When carousel has extracted audio, use the current slide's audio data for display
+            const displayMusic = hasExtractedAudio && carouselAudioData
+              ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url }
+              : poll.music;
             return (
               <MusicPlayer
-                music={poll.music}
+                music={displayMusic}
                 isVisible={isActive}
                 onTogglePlay={handleMusicToggle}
                 autoPlay={!hasExtractedAudio}  // ✅ Desactivar autoplay cuando carousel maneja audio
@@ -1259,7 +1266,13 @@ const TikTokPollCard = ({
       </div>
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
-      {poll.music && !isMenuOpen && (
+      {poll.music && !isMenuOpen && (() => {
+        // Use current carousel slide's audio data if available
+        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+        const displayMusic = hasExtractedAudio && carouselAudioData
+          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
+          : poll.music;
+        return (
         <div className="absolute left-0 right-0 z-40 px-4"
              style={{ 
                bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
@@ -1269,9 +1282,9 @@ const TikTokPollCard = ({
           <div 
             onClick={(e) => {
               e.stopPropagation();
-              if (poll.music?.id) {
-                let audioId = poll.music.id;
-                if (poll.music.isOriginal || poll.music.source === 'User Upload') {
+              if (displayMusic?.id) {
+                let audioId = displayMusic.id;
+                if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
                   audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
                 }
                 navigate(`/audio/${audioId}`);
@@ -1283,14 +1296,15 @@ const TikTokPollCard = ({
             <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
             <span className="text-xs font-light" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
               {(() => {
-                const fullTitle = `${poll.music.title} - ${poll.music.artist}`;
+                const fullTitle = `${displayMusic.title} - ${displayMusic.artist}`;
                 const truncateLength = Math.ceil(fullTitle.length * 0.6);
                 return fullTitle.length > truncateLength ? `${fullTitle.substring(0, truncateLength)}...` : fullTitle;
               })()}
             </span>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
