@@ -61,7 +61,9 @@ const CarouselLayout = ({
   const mobile = window.innerWidth <= 768;
 
   // Detectar si hay música global asignada al post
-  const hasGlobalMusic = !!(poll.music && poll.music.preview_url);
+  // Si las opciones tienen extracted_audio_id, NO es música global - es audio por slide
+  const hasExtractedAudio = poll.options?.some(opt => opt.extracted_audio_id);
+  const hasGlobalMusic = !!(poll.music && poll.music.preview_url) && !hasExtractedAudio;
 
   // On poll change → reset slide and clear audio pool
   useEffect(() => {

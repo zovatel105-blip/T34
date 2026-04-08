@@ -376,7 +376,10 @@ const TikTokPollCard = ({
   // SINCRONIZACIÓN COMPLETA DE AUDIO con detección mejorada
   useEffect(() => {
     const handleAudioSync = async () => {
-      const hasMusic = poll.music && poll.music.preview_url;
+      // Si es un carrusel con audio extraído por slide, NO gestionar música aquí
+      // CarouselLayout gestiona su propio audio por slide
+      const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+      const hasMusic = poll.music && poll.music.preview_url && !hasExtractedAudio;
       const currentPostId = audioManager.getCurrentPostId();
       const isPlayingThisPost = audioManager.isPlayingPost(poll.id);
       
