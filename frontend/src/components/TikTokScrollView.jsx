@@ -1268,76 +1268,53 @@ const TikTokPollCard = ({
             )}
           </div>
           
-          {/* Music Player - Right side, same height as buttons con autoplay */}
+          {/* Music Player + Title - Right side */}
           {poll.music && (() => {
-            // Si es carrusel con audio extraído por slide, NO auto-reproducir desde MusicPlayer
-            // CarouselLayout gestiona su propio audio por slide
             const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-            // When carousel has extracted audio, use the current slide's audio data for display
             const displayMusic = hasExtractedAudio && carouselAudioData
-              ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url }
+              ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
               : poll.music;
             return (
-              <MusicPlayer
-                music={displayMusic}
-                isVisible={isActive}
-                onTogglePlay={handleMusicToggle}
-                autoPlay={!hasExtractedAudio}  // ✅ Desactivar autoplay cuando carousel maneja audio
-                loop={true}     // 🔄 LOOP AUTOMÁTICO HABILITADO
-                authorAvatar={carouselThumbnail || poll.author?.avatar_url}
-                authorUsername={poll.author?.username || poll.author?.display_name}
-                overrideAudioId={carouselAudioId}  // 🎵 NUEVO: Audio del slide actual en carrusel
-                forceUseAvatar={!!carouselThumbnail}  // 🎨 CORREGIDO: Forzar uso de thumbnail cuando hay thumbnail del carrusel
-                className="flex-shrink-0"
-              />
+              <div 
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (displayMusic?.id) {
+                    let audioId = displayMusic.id;
+                    if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
+                      audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
+                    }
+                    navigate(`/audio/${audioId}`);
+                  }
+                }}
+              >
+                <div className="marquee-wrapper" style={{ maxWidth: '28vw' }}>
+                  <span 
+                    className="text-[10px] font-light text-white whitespace-nowrap animate-marquee"
+                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+                  >
+                    {`${displayMusic.title} - ${displayMusic.artist}`}
+                    {`\u00A0\u00A0\u2022\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
+                    {`\u00A0\u00A0\u2022\u00A0\u00A0`}
+                  </span>
+                </div>
+                <MusicPlayer
+                  music={displayMusic}
+                  isVisible={isActive}
+                  onTogglePlay={handleMusicToggle}
+                  autoPlay={!hasExtractedAudio}
+                  loop={true}
+                  authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+                  authorUsername={poll.author?.username || poll.author?.display_name}
+                  overrideAudioId={carouselAudioId}
+                  forceUseAvatar={!!carouselThumbnail}
+                  className="flex-shrink-0"
+                />
+              </div>
             );
           })()}
         </div>
       </div>
-
-      {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
-      {poll.music && !isMenuOpen && (() => {
-        // Use current carousel slide's audio data if available
-        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-        const displayMusic = hasExtractedAudio && carouselAudioData
-          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
-          : poll.music;
-        return (
-        <div className="absolute left-0 right-0 z-40 px-4"
-             style={{ 
-               bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-               paddingRight: 'max(1rem, env(safe-area-inset-right))'
-             }}>
-          <div 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (displayMusic?.id) {
-                let audioId = displayMusic.id;
-                if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
-                  audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
-                }
-                navigate(`/audio/${audioId}`);
-              }
-            }}
-            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit" 
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-          >
-            <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-            <div className="marquee-wrapper">
-              <span 
-                className="text-xs font-light animate-marquee"
-                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-              >
-                {`${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0`}
-              </span>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
