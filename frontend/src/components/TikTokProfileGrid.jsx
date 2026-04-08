@@ -76,17 +76,17 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
           transition={{ duration: 0.3 }}
         >
           <div className="w-full h-full relative bg-gray-900 rounded-lg flex flex-col items-center justify-center">
-            {/* Thumbnail preview (blurred) */}
+            {/* Thumbnail preview */}
             {upload.thumbnail && (
               <img
                 src={upload.thumbnail}
                 alt="Subiendo..."
-                className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-40 blur-[2px]"
+                className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-60"
               />
             )}
             
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/50 rounded-lg" />
+            <div className="absolute inset-0 bg-black/40 rounded-lg" />
             
             {/* Status indicator */}
             <div className="relative z-10 flex flex-col items-center justify-center">

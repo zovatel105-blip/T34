@@ -214,21 +214,99 @@ export const UploadProvider = ({ children }) => {
     }
   }, [updateUpload, removeUploadCard]);
 
+  // Generate a thumbnail from a video file by capturing the first frame
+  const generateVideoThumbnail = (file) => {
+    return new Promise((resolve) => {
+      try {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.muted = true;
+        video.playsInline = true;
+
+        const objectUrl = URL.createObjectURL(file);
+        
+        const cleanup = () => {
+          URL.revokeObjectURL(objectUrl);
+          video.remove();
+        };
+
+        video.onloadeddata = () => {
+          // Seek to 0.1s to avoid black first frames
+          video.currentTime = 0.1;
+        };
+
+        video.onseeked = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 320;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            cleanup();
+            resolve(dataUrl);
+          } catch (e) {
+            cleanup();
+            resolve(null);
+          }
+        };
+
+        video.onerror = () => {
+          cleanup();
+          resolve(null);
+        };
+
+        // Timeout fallback
+        setTimeout(() => {
+          cleanup();
+          resolve(null);
+        }, 3000);
+
+        video.src = objectUrl;
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  };
+
   // Start a new background upload
   const publishInBackground = useCallback((params) => {
     const { contentData, title } = params;
     const firstOption = contentData.options?.[0];
-    let previewThumbnail = null;
-    try {
-      previewThumbnail = firstOption?.file
-        ? URL.createObjectURL(firstOption.file)
-        : firstOption?.media_url || null;
-    } catch (e) {
-      previewThumbnail = firstOption?.media_url || null;
-    }
 
     const id = Date.now().toString();
-    const upload = { id, progress: 5, status: 'uploading', title: title || 'Publicando...', thumbnail: previewThumbnail };
+    // Start with null thumbnail, will be updated async if video
+    const upload = { id, progress: 5, status: 'uploading', title: title || 'Publicando...', thumbnail: null };
+
+    // Try to get a quick thumbnail for images
+    if (firstOption?.file && firstOption.file.type?.startsWith('image/')) {
+      try {
+        upload.thumbnail = URL.createObjectURL(firstOption.file);
+      } catch (e) { /* ignore */ }
+    } else if (firstOption?.media_url && !firstOption.media_url.startsWith('blob:')) {
+      upload.thumbnail = firstOption.media_url;
+    }
+
+    setActiveUploads(prev => {
+      const next = [upload, ...prev];
+      uploadsRef.current = next;
+      return next;
+    });
+
+    // For video files, generate a real thumbnail frame async
+    if (firstOption?.file && firstOption.file.type?.startsWith('video/')) {
+      generateVideoThumbnail(firstOption.file).then((thumbDataUrl) => {
+        if (thumbDataUrl) {
+          updateUpload(id, { thumbnail: thumbDataUrl });
+        }
+      });
+    } else if (firstOption?.file && !firstOption.file.type?.startsWith('image/')) {
+      // For blob URLs that might be video
+      try {
+        const blobUrl = URL.createObjectURL(firstOption.file);
+        updateUpload(id, { thumbnail: blobUrl });
+      } catch (e) { /* ignore */ }
+    }
 
     setActiveUploads(prev => {
       const next = [upload, ...prev];
