@@ -8503,6 +8503,38 @@ async def get_posts_using_audio(
                         all_polls.append(poll)
                         existing_ids.add(poll["id"])
         
+        # Estrategia 4: Buscar en options.extracted_audio_id (carruseles con audio extraído por slide)
+        logger.info(f"🔍 Buscando posts con options.extracted_audio_id = {audio_id}")
+        extracted_filter = {"options.extracted_audio_id": audio_id}
+        extracted_polls = await db.polls.find(extracted_filter).to_list(1000)
+        logger.info(f"📊 Posts encontrados por options.extracted_audio_id: {len(extracted_polls)}")
+        
+        for poll in extracted_polls:
+            if poll["id"] not in existing_ids:
+                all_polls.append(poll)
+                existing_ids.add(poll["id"])
+        
+        # Estrategia 4.1: COMPATIBILIDAD - Buscar con/sin prefijo user_audio_ en extracted_audio_id
+        if audio_id.startswith('user_audio_'):
+            bare_uuid = audio_id.replace('user_audio_', '')
+            extracted_bare_filter = {"options.extracted_audio_id": bare_uuid}
+            extracted_bare_polls = await db.polls.find(extracted_bare_filter).to_list(1000)
+            for poll in extracted_bare_polls:
+                if poll["id"] not in existing_ids:
+                    all_polls.append(poll)
+                    existing_ids.add(poll["id"])
+        else:
+            import re
+            uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+            if re.match(uuid_pattern, audio_id):
+                prefixed_id = f"user_audio_{audio_id}"
+                extracted_prefix_filter = {"options.extracted_audio_id": prefixed_id}
+                extracted_prefix_polls = await db.polls.find(extracted_prefix_filter).to_list(1000)
+                for poll in extracted_prefix_polls:
+                    if poll["id"] not in existing_ids:
+                        all_polls.append(poll)
+                        existing_ids.add(poll["id"])
+        
         # Ordenar por fecha de creación (más reciente primero) y aplicar paginación
         all_polls.sort(key=lambda x: x.get("created_at", ""), reverse=True)
         total = len(all_polls)
