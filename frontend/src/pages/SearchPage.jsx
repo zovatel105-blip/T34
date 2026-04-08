@@ -486,7 +486,7 @@ const SearchPage = () => {
           
           // 2. Cargar inicial: anterior y siguiente SIN cambiar el índice de la vista
           setTimeout(() => {
-            loadAdjacentPostsInitial(postResults, clickedIndex, transformedPollData);
+            loadAdjacentPostsInitial(postResults, clickedIndex);
           }, 300); // Dar tiempo para que se renderice la publicación seleccionada primero
           
         } else {
@@ -518,64 +518,46 @@ const SearchPage = () => {
     }
   };
 
-  // Function to load adjacent posts initially (previous and next)
-  const loadAdjacentPostsInitial = async (postResults, clickedIndex, selectedPollData) => {
-    const finalPolls = [selectedPollData];
-    let finalIndex = 0;
+  // Function to load adjacent posts initially (ONLY next posts to avoid index shifting)
+  const loadAdjacentPostsInitial = async (postResults, clickedIndex) => {
+    // ✅ FIX: Only append NEXT posts. Never prepend previous posts.
+    // This keeps the selected post ALWAYS at index 0, avoiding race conditions
+    // where the Swiper shows the wrong post due to index shifting.
+    // Previous posts are loaded dynamically when user swipes backward.
     
-    // Cargar publicación ANTERIOR (si existe)
-    if (clickedIndex > 0) {
-      try {
-        const prevPost = postResults[clickedIndex - 1];
-        const prevResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${prevPost.id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
+    const nextPolls = [];
+    
+    // Load up to 2 next posts for smooth scrolling
+    for (let i = 1; i <= 2; i++) {
+      const nextIndex = clickedIndex + i;
+      if (nextIndex < postResults.length) {
+        try {
+          const nextPost = postResults[nextIndex];
+          const nextResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${nextPost.id}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (nextResponse.ok) {
+            const nextPollData = await nextResponse.json();
+            const transformedNextPoll = transformPollData(nextPollData);
+            console.log(`📤 Loaded next poll ${i}:`, transformedNextPoll.id);
+            nextPolls.push(transformedNextPoll);
           }
-        });
-        
-        if (prevResponse.ok) {
-          const prevPollData = await prevResponse.json();
-          const transformedPrevPoll = transformPollData(prevPollData);
-          console.log('📥 Loaded previous poll in background:', transformedPrevPoll.id, 'userVote:', transformedPrevPoll.userVote);
-          finalPolls.unshift(transformedPrevPoll);
-          finalIndex = 1;
+        } catch (error) {
+          console.warn(`Error loading next post ${i}:`, error);
         }
-      } catch (error) {
-        console.warn('Error loading previous post:', error);
       }
     }
     
-    // Cargar publicación SIGUIENTE (si existe)
-    if (clickedIndex < postResults.length - 1) {
-      try {
-        const nextPost = postResults[clickedIndex + 1];
-        const nextResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${nextPost.id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (nextResponse.ok) {
-          const nextPollData = await nextResponse.json();
-          const transformedNextPoll = transformPollData(nextPollData);
-          console.log('📤 Loaded next poll in background:', transformedNextPoll.id, 'userVote:', transformedNextPoll.userVote);
-          finalPolls.push(transformedNextPoll);
-        }
-      } catch (error) {
-        console.warn('Error loading next post:', error);
-      }
+    if (nextPolls.length > 0) {
+      console.log('🔄 Appending', nextPolls.length, 'next polls. Selected stays at index 0.');
+      // Simply append next posts - selected post stays at index 0, no index change needed
+      setTikTokViewPosts(prev => [...prev, ...nextPolls]);
+      // Index stays at 0, no need to change it
     }
-    
-    console.log('🔄 Initial polls loaded:', finalPolls.length, 'Selected index:', finalIndex);
-    // ✅ CRITICAL FIX: Update index BEFORE posts to ensure TikTokScrollView has correct initial position
-    // When posts array changes, TikTokScrollView will use the already-updated index
-    setCurrentTikTokIndex(finalIndex);
-    // Use setTimeout to ensure index update is processed first
-    setTimeout(() => {
-      setTikTokViewPosts(finalPolls);
-    }, 0);
   };
 
   // Function to dynamically load more posts as user navigates
