@@ -315,21 +315,27 @@ const TikTokVotingCard = ({
                   {showResults && (
                     <motion.div
                       className={cn(
-                        "absolute inset-0",
-                        isSelected 
-                          ? "border-t border-blue-400/40"
-                          : isWinner
-                            ? "border-t border-green-400/40"
-                            : "border-t border-white/20"
+                        "absolute inset-0"
                       )}
                       style={{
-                        background: isSelected 
-                          ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                        borderLeft: isSelected 
+                          ? '3px solid rgba(96, 165, 250, 0.8)'
                           : isWinner
-                            ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
-                            : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
-                        backdropFilter: 'blur(4px)',
-                        WebkitBackdropFilter: 'blur(4px)'
+                            ? '3px solid rgba(74, 222, 128, 0.8)'
+                            : '3px solid rgba(255, 255, 255, 0.3)',
+                        borderRight: isSelected 
+                          ? '3px solid rgba(96, 165, 250, 0.8)'
+                          : isWinner
+                            ? '3px solid rgba(74, 222, 128, 0.8)'
+                            : '3px solid rgba(255, 255, 255, 0.3)',
+                        borderTop: isSelected 
+                          ? '1px solid rgba(96, 165, 250, 0.4)'
+                          : isWinner
+                            ? '1px solid rgba(74, 222, 128, 0.4)'
+                            : '1px solid rgba(255, 255, 255, 0.15)'
                       }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: percentage / 100 }}

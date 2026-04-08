@@ -277,26 +277,30 @@ const GridLayout = ({
             {/* Progress overlay - Only show when active, user has voted on mobile, and has percentage */}
             {isActive && isMobile && poll.userVote && percentage > 0 && (
               <div 
-                className={cn(
-                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out rounded-t-lg",
-                  isWinner 
-                    ? "border-t border-green-400/40"
-                    : isSelected 
-                      ? "border-t border-blue-400/40"
-                      : "border-t border-white/20"
-                )}
+                className="absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out rounded-t-lg"
                 style={{ 
                   height: `${Math.max(percentage, 15)}%`,
                   minHeight: '60px',
                   transform: `translateY(${100 - Math.max(percentage, 15)}%)`,
                   transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: isWinner 
-                    ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
-                    : isSelected
-                      ? 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)'
-                      : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
-                  backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)'
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
+                  borderLeft: isWinner 
+                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                    : isSelected 
+                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                      : '3px solid rgba(255, 255, 255, 0.3)',
+                  borderRight: isWinner 
+                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                    : isSelected 
+                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                      : '3px solid rgba(255, 255, 255, 0.3)',
+                  borderTop: isWinner 
+                    ? '1px solid rgba(74, 222, 128, 0.4)'
+                    : isSelected 
+                      ? '1px solid rgba(96, 165, 250, 0.4)'
+                      : '1px solid rgba(255, 255, 255, 0.15)'
                 }}
               >
                 {/* Trophy icon in progress bar for winner */}

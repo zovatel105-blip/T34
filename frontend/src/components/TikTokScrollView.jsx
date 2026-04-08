@@ -849,28 +849,32 @@ const TikTokPollCard = ({
                               <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
                             )}
                             
-                            {/* Barra de porcentaje - igual que en el feed */}
+                            {/* Barra de porcentaje - cristalina con bordes de color */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
-                                className={cn(
-                                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out",
-                                  isWinner 
-                                    ? "border-t border-green-400/40"
-                                    : isSelected 
-                                      ? "border-t border-blue-400/40"
-                                      : "border-t border-white/20"
-                                )}
+                                className="absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out"
                                 style={{ 
                                   height: `${Math.max(percentage, 15)}%`,
                                   minHeight: '60px',
                                   transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  background: isWinner 
-                                    ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
-                                    : isSelected
-                                      ? 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)'
-                                      : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
-                                  backdropFilter: 'blur(4px)',
-                                  WebkitBackdropFilter: 'blur(4px)'
+                                  background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                                  backdropFilter: 'blur(6px)',
+                                  WebkitBackdropFilter: 'blur(6px)',
+                                  borderLeft: isWinner 
+                                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                                    : isSelected 
+                                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                                      : '3px solid rgba(255, 255, 255, 0.3)',
+                                  borderRight: isWinner 
+                                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                                    : isSelected 
+                                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                                      : '3px solid rgba(255, 255, 255, 0.3)',
+                                  borderTop: isWinner 
+                                    ? '1px solid rgba(74, 222, 128, 0.4)'
+                                    : isSelected 
+                                      ? '1px solid rgba(96, 165, 250, 0.4)'
+                                      : '1px solid rgba(255, 255, 255, 0.15)'
                                 }}
                               />
                             )}
@@ -925,28 +929,32 @@ const TikTokPollCard = ({
                               <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
                             )}
                             
-                            {/* Barra de porcentaje */}
+                            {/* Barra de porcentaje - cristalina con bordes de color */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
-                                className={cn(
-                                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out",
-                                  isWinner 
-                                    ? "border-t border-green-400/40"
-                                    : isSelected 
-                                      ? "border-t border-blue-400/40"
-                                      : "border-t border-white/20"
-                                )}
+                                className="absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out"
                                 style={{ 
                                   height: `${Math.max(percentage, 15)}%`,
                                   minHeight: '50px',
                                   transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  background: isWinner 
-                                    ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
-                                    : isSelected
-                                      ? 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)'
-                                      : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
-                                  backdropFilter: 'blur(4px)',
-                                  WebkitBackdropFilter: 'blur(4px)'
+                                  background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                                  backdropFilter: 'blur(6px)',
+                                  WebkitBackdropFilter: 'blur(6px)',
+                                  borderLeft: isWinner 
+                                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                                    : isSelected 
+                                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                                      : '3px solid rgba(255, 255, 255, 0.3)',
+                                  borderRight: isWinner 
+                                    ? '3px solid rgba(74, 222, 128, 0.8)'
+                                    : isSelected 
+                                      ? '3px solid rgba(96, 165, 250, 0.8)'
+                                      : '3px solid rgba(255, 255, 255, 0.3)',
+                                  borderTop: isWinner 
+                                    ? '1px solid rgba(74, 222, 128, 0.4)'
+                                    : isSelected 
+                                      ? '1px solid rgba(96, 165, 250, 0.4)'
+                                      : '1px solid rgba(255, 255, 255, 0.15)'
                                 }}
                               />
                             )}
