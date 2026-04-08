@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const location = useLocation();
   const { isTikTokMode, hideRightNavigation } = useTikTok();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   // Desktop detection state
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -38,10 +38,11 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isContentPublishPage = location.pathname === '/content-publish';
   const isSearchPage = location.pathname === '/search';
   const isMessagesPage = location.pathname.startsWith('/messages');
+  const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const shouldUseTikTokLayout = (isFeedPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
   
-  // Force hide RightSideNavigation on create page, story pages, content publish page, search page and messages page regardless of other conditions
-  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage;
+  // Force hide RightSideNavigation on create page, story pages, content publish page, search page, messages page, and other users' profiles
+  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile;
 
   if (shouldUseTikTokLayout) {
     // Mobile TikTok mode - full screen without sidebars
