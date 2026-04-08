@@ -12,21 +12,28 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   const [selectedOption, setSelectedOption] = useState(null);
   const longPressTimer = useRef(null);
   const containerRef = useRef(null);
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const hasMoved = useRef(false);
   
-  // Long press handlers - Nueva lógica
+  // Long press handlers - Track swipe vs tap
   const handlePressStart = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    hasMoved.current = false;
+    
+    if (e.type.includes('touch') && e.touches.length > 0) {
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+      touchStartPos.current = { x: e.clientX, y: e.clientY };
+    }
     
     longPressTimer.current = setTimeout(() => {
-      setShowQuickVote(true);
-    }, 300); // 300ms para mostrar opciones
+      if (!hasMoved.current) {
+        setShowQuickVote(true);
+      }
+    }, 300);
   }, []);
   
   const handlePressMove = useCallback((e) => {
-    if (!showQuickVote || !containerRef.current) return;
-    
-    // Obtener posición del touch/mouse
+    // Track movement to distinguish swipe from tap
     let clientX, clientY;
     if (e.type.includes('touch')) {
       if (e.touches.length > 0) {
@@ -39,6 +46,18 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       clientX = e.clientX;
       clientY = e.clientY;
     }
+    
+    const dx = Math.abs(clientX - touchStartPos.current.x);
+    const dy = Math.abs(clientY - touchStartPos.current.y);
+    
+    if (dx > 10 || dy > 10) {
+      hasMoved.current = true;
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    }
+    
+    if (!showQuickVote || !containerRef.current) return;
     
     // Encontrar elemento bajo el cursor
     const elements = document.elementsFromPoint(clientX, clientY);
@@ -53,15 +72,14 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   }, [showQuickVote]);
   
   const handlePressEnd = useCallback(async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
     
     // Si se mostró el menú y hay una opción seleccionada, votar
     if (showQuickVote && selectedOption !== null && onQuickVote && result) {
+      e.preventDefault();
+      e.stopPropagation();
       await onQuickVote(result.id, selectedOption);
     }
     
@@ -69,8 +87,8 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     setShowQuickVote(false);
     setSelectedOption(null);
     
-    // Si no se mostró el menú, permitir click normal
-    if (!showQuickVote && onClick) {
+    // Solo abrir si fue un tap (no swipe) y no se mostró el menú
+    if (!showQuickVote && !hasMoved.current && onClick) {
       onClick();
     }
   }, [showQuickVote, selectedOption, onQuickVote, result, onClick]);
@@ -436,8 +454,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             {(() => {
               // Determinar la URL correcta a usar
               let imageUrl = null;
-              if (option.media_type === 'video') {
-                // Para videos, SOLO usar thumbnail_url
+              const isVideo = option.media_type === 'video' || 
+                (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
+              
+              if (isVideo) {
+                // Para videos, usar thumbnail_url primero, luego media_url como fallback
                 imageUrl = option.thumbnail_url;
               } else {
                 // Para imágenes, priorizar media_url
@@ -452,13 +473,23 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                     alt={option.text || `Option ${index + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      // Si falla la imagen, mostrar placeholder con texto
                       e.target.style.display = 'none';
-                      const parent = e.target.parentElement;
-                      const placeholder = document.createElement('div');
-                      placeholder.className = 'absolute inset-0 bg-gray-300 flex items-center justify-center text-xs text-gray-600';
-                      placeholder.textContent = option.text || `Option ${index + 1}`;
-                      parent.appendChild(placeholder);
+                    }}
+                  />
+                );
+              } else if (isVideo && option.media_url) {
+                // Fallback para video sin thumbnail: usar video element con poster
+                return (
+                  <video
+                    src={option.media_url}
+                    className="w-full h-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                    onLoadedData={(e) => {
+                      // Pause at first frame to use as thumbnail
+                      e.target.currentTime = 0.1;
+                      e.target.pause();
                     }}
                   />
                 );
