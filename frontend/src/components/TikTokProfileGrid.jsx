@@ -89,31 +89,32 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
             <div className="absolute inset-0 bg-black/50 rounded-lg" />
             
             {/* Status indicator */}
-            <div className="relative z-10 flex flex-col items-center gap-2 px-3">
+            <div className="relative z-10 flex flex-col items-center justify-center">
               {upload.status === 'done' ? (
-                <CheckCircle2 className="w-8 h-8 text-green-400" />
+                <CheckCircle2 className="w-10 h-10 text-green-400" />
               ) : upload.status === 'error' ? (
-                <AlertCircle className="w-8 h-8 text-red-400" />
+                <AlertCircle className="w-10 h-10 text-red-400" />
               ) : (
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
-              )}
-              
-              <span className="text-white text-xs font-medium text-center line-clamp-2">
-                {upload.status === 'done' ? '¡Publicado!' : 
-                 upload.status === 'error' ? (upload.errorMsg || 'Error') :
-                 upload.status === 'creating' ? 'Creando...' : 'Subiendo...'}
-              </span>
-              
-              {/* Progress bar */}
-              {upload.status !== 'done' && upload.status !== 'error' && (
-                <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-white rounded-full"
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${upload.progress}%` }}
-                    transition={{ duration: 0.3 }}
+                <svg className="w-12 h-12" viewBox="0 0 48 48">
+                  <circle
+                    cx="24" cy="24" r="20"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth="2.5"
                   />
-                </div>
+                  <motion.circle
+                    cx="24" cy="24" r="20"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray={125.6}
+                    initial={{ strokeDashoffset: 125.6 }}
+                    animate={{ strokeDashoffset: 125.6 - (125.6 * upload.progress / 100) }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                  />
+                </svg>
               )}
             </div>
           </div>
