@@ -22,7 +22,7 @@ const ContentPublishPage = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, user, token } = useAuth();
-  const { startUpload, updateUpload, removeUpload } = useUpload();
+  const { publishInBackground } = useUpload();
 
   // States
   const [title, setTitle] = useState('');
@@ -235,195 +235,29 @@ const ContentPublishPage = () => {
       }
     }
 
-    // Get a thumbnail preview from the first option for the upload card
-    const firstOption = contentData.options?.[0];
-    const previewThumbnail = firstOption?.file 
-      ? URL.createObjectURL(firstOption.file) 
-      : firstOption?.media_url || null;
-
-    // ✅ Register upload in global context (visible in profile grid)
-    const uploadId = startUpload({
+    // ✅ Start background upload via context (persists across navigation)
+    publishInBackground({
+      contentData,
       title: title.trim(),
-      thumbnail: previewThumbnail,
+      hashtagsList,
+      mentionedUsers,
+      commentsEnabled,
+      audienceTarget,
+      sourceAuthenticity,
+      votingPrivacy,
+      matureContent,
+      allowDownloads,
+      showVoteCount,
+      isChallengeMode,
+      joiningChallengeId,
+      selectedUsers,
+      challengeType,
+      token,
+      toast,
     });
 
     // ✅ Navigate to profile IMMEDIATELY
     navigate(`/profile/${user?.username || 'me'}`);
-
-    // 🔄 Background upload process (component may unmount, but this continues)
-    (async () => {
-      try {
-        console.log('🚀 Starting background upload process...');
-        
-        // ⚡ PASO 1: Identificar archivos que necesitan subirse
-        const filesToUpload = contentData.options
-          .filter(opt => opt.file && opt.needsUpload !== false)
-          .map(opt => opt.file);
-        
-        console.log(`📦 Found ${filesToUpload.length} files to upload`);
-        
-        let uploadedOptions = [...contentData.options];
-        
-        // ⚡ PASO 2: Subir archivos
-        if (filesToUpload.length > 0) {
-          updateUpload(uploadId, { progress: 10, status: 'uploading' });
-          
-          const uploadResults = await uploadService.uploadMultipleFiles(
-            filesToUpload,
-            'poll_options',
-            (progress) => {
-              // Map file upload progress to 10-70% range
-              const mappedProgress = Math.round(10 + (progress * 0.6));
-              updateUpload(uploadId, { progress: mappedProgress });
-            }
-          );
-          
-          console.log('✅ All files uploaded:', uploadResults);
-          
-          // ⚡ PASO 3: Reemplazar URLs locales con URLs del servidor
-          let uploadIndex = 0;
-          uploadedOptions = contentData.options.map(opt => {
-            if (opt.file && opt.needsUpload !== false) {
-              const uploadResult = uploadResults[uploadIndex++];
-              return {
-                text: opt.text || '',
-                media_type: uploadResult.file_type === 'video' ? 'video' : 'image',
-                media_url: uploadResult.public_url,
-                thumbnail_url: uploadResult.thumbnail_url || uploadResult.public_url,
-                media_transform: opt.media_transform || null,
-                mentioned_users: Array.isArray(opt.mentioned_users) && opt.mentioned_users.length > 0
-                  ? opt.mentioned_users.filter(id => typeof id === 'string' && id)
-                  : opt.mentionedUsers
-                    ? opt.mentionedUsers.map(u => u.id).filter(id => typeof id === 'string' && id)
-                    : []
-              };
-            }
-            return {
-              text: opt.text || '',
-              media_type: opt.media_type,
-              media_url: opt.media_url,
-              thumbnail_url: opt.thumbnail_url || opt.media_url,
-              media_transform: opt.media_transform || null,
-              mentioned_users: Array.isArray(opt.mentioned_users) && opt.mentioned_users.length > 0
-                ? opt.mentioned_users.filter(id => typeof id === 'string' && id)
-                : opt.mentionedUsers
-                  ? opt.mentionedUsers.map(u => u.id).filter(id => typeof id === 'string' && id)
-                  : []
-            };
-          });
-        }
-        
-        // ⚡ PASO 4: Crear poll con las URLs ya subidas
-        updateUpload(uploadId, { progress: 75, status: 'creating' });
-        const allMentionedUsers = [
-          ...contentData.mentioned_users,
-          ...mentionedUsers.map(user => user.id)
-        ];
-
-        const pollData = {
-          title: title.trim(),
-          description: null,
-          options: uploadedOptions,
-          music_id: contentData.music_id,
-          tags: hashtagsList.map(tag => tag.startsWith('#') ? tag : `#${tag}`),
-          category: 'general',
-          mentioned_users: [...new Set(allMentionedUsers)],
-          video_playbook_settings: null,
-          layout: contentData.layout,
-          comments_enabled: commentsEnabled,
-          audience_target: audienceTarget,
-          source_authenticity: sourceAuthenticity,
-          voting_privacy: votingPrivacy,
-          mature_content: matureContent,
-          allow_downloads: allowDownloads,
-          show_vote_count: showVoteCount
-        };
-
-        console.log('📤 Creating poll with uploaded URLs:', pollData);
-        const newPoll = await pollService.createPoll(pollData);
-        
-        // ✅ Upload complete!
-        updateUpload(uploadId, { progress: 100, status: 'done' });
-        
-        // Remove the upload card from profile after 2 seconds
-        setTimeout(() => removeUpload(uploadId), 2000);
-        
-        // ⚡ PASO 5: Verificar si es challenge
-        if (joiningChallengeId) {
-          try {
-            const result = await challengeService.submitContent(joiningChallengeId, newPoll.id, token);
-            console.log('✅ Contenido enviado al challenge:', result);
-            toast({
-              title: "🏆 ¡Contenido enviado!",
-              description: result.is_ready_to_publish 
-                ? "¡El challenge está completo y se ha publicado!" 
-                : "Tu contenido ha sido añadido al challenge",
-            });
-          } catch (submitError) {
-            console.error('❌ Error enviando contenido al challenge:', submitError);
-            toast({
-              title: "Error al enviar contenido",
-              description: submitError.message || "El contenido se publicó pero no se pudo asociar al challenge",
-              variant: "destructive"
-            });
-          }
-        } else if (isChallengeMode) {
-          const challengeData = {
-            title: title.trim(),
-            description: title.trim(),
-            participant_ids: selectedUsers.map(u => u.id),
-            challenge_type: challengeType || null,
-            deadline: null,
-            creator_poll_id: newPoll.id
-          };
-
-          try {
-            const createdChallenge = await challengeService.createChallenge(challengeData, token);
-            console.log('✅ Challenge created:', createdChallenge);
-            toast({
-              title: "🏆 ¡Challenge creado!",
-              description: `Se envió la invitación a ${selectedUsers.length} ${selectedUsers.length === 1 ? 'usuario' : 'usuarios'}`,
-            });
-          } catch (challengeError) {
-            console.error('❌ Error creating challenge:', challengeError);
-            toast({
-              title: "Error al crear challenge",
-              description: challengeError.message || "El contenido se publicó pero no se pudo crear el challenge",
-              variant: "destructive"
-            });
-          }
-        } else {
-          toast({
-            title: "🎉 ¡Publicación creada!",
-            description: "Tu contenido ha sido publicado exitosamente",
-          });
-        }
-
-      } catch (error) {
-        console.error('❌ Error creating content in background:', error);
-        updateUpload(uploadId, { progress: 0, status: 'error' });
-        setTimeout(() => removeUpload(uploadId), 4000);
-        
-        let errorMessage = "No se pudo crear la publicación. Inténtalo de nuevo.";
-        if (error.message) {
-          if (error.message.includes('Not authenticated')) {
-            errorMessage = "Tu sesión ha expirado. Inicia sesión nuevamente.";
-          } else if (error.message.includes('validation')) {
-            errorMessage = "Error en los datos. Verifica que todos los campos estén correctos.";
-          } else if (error.message.includes('Upload failed') || error.message.includes('Network error')) {
-            errorMessage = "Error al subir archivos. Verifica tu conexión e intenta de nuevo.";
-          } else {
-            errorMessage = error.message;
-          }
-        }
-
-        toast({
-          title: "Error al crear publicación",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
-    })();
   };
 
   // Show loading screen if not authenticated or no content data
