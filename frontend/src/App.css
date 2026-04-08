@@ -199,10 +199,10 @@
 
 /* Marquee scrolling animation for music titles */
 @keyframes marquee-scroll {
-    0% { transform: translateX(0%); }
-    20% { transform: translateX(0%); }
-    80% { transform: translateX(calc(-100% + 45vw)); }
-    100% { transform: translateX(calc(-100% + 45vw)); }
+    0% { transform: translateX(calc(-100% + 45vw)); }
+    20% { transform: translateX(calc(-100% + 45vw)); }
+    80% { transform: translateX(0%); }
+    100% { transform: translateX(0%); }
 }
 
 .marquee-wrapper {
