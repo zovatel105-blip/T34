@@ -39,7 +39,7 @@ const CarouselLayout = ({
   const videoRefs = useRef(new Map());
 
   // === Prevent audio race conditions ===
-  const audioLoading = useRef(false);
+  const audioVersionRef = useRef(0); // Version counter for latest slide change
   const currentSlideSafe = useRef(0);
 
   // === AUDIO POOL FOR SMOOTH TRANSITIONS ===
@@ -229,7 +229,6 @@ const CarouselLayout = ({
           audio.audioElement.pause();
         }
       });
-      audioLoading.current = false;
       return;
     }
 
@@ -253,12 +252,12 @@ const CarouselLayout = ({
       return;
     }
 
-    const playFromPool = async () => {
-      if (audioLoading.current) return;
-      audioLoading.current = true;
+    // Increment version so only the latest slide change wins
+    const myVersion = ++audioVersionRef.current;
 
+    const playFromPool = async () => {
       try {
-        // Pausar todos los otros audios del pool
+        // ALWAYS pause all audios first - even if another call is in progress
         audioPool.current.forEach((audio, slideIndex) => {
           if (audio.audioElement) {
             audio.audioElement.pause();
@@ -272,11 +271,16 @@ const CarouselLayout = ({
           await preloadAudioForSlide(currentSlide);
         }
 
+        // Check if a newer slide change happened while we were loading
+        if (audioVersionRef.current !== myVersion) {
+          console.log(`⏭️ Slide changed while loading audio, skipping playback for slide ${currentSlide}`);
+          return;
+        }
+
         const pooledAudio = audioPool.current.get(currentSlide);
         
         if (!pooledAudio) {
           console.error(`❌ No se pudo cargar audio para slide ${currentSlide}`);
-          audioLoading.current = false;
           return;
         }
 
@@ -299,6 +303,12 @@ const CarouselLayout = ({
           source: 'User Upload'
         });
 
+        // Final check before playing - another slide change may have occurred
+        if (audioVersionRef.current !== myVersion) {
+          console.log(`⏭️ Slide changed before play, skipping for slide ${currentSlide}`);
+          return;
+        }
+
         // Reproducir el audio desde el pool (instantáneo)
         audioElement.currentTime = 0;
         audioElement.volume = 0.7;
@@ -316,8 +326,6 @@ const CarouselLayout = ({
 
       } catch (err) {
         console.error('❌ Error en playFromPool:', err);
-      } finally {
-        audioLoading.current = false;
       }
     };
 
