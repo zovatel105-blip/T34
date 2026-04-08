@@ -3,6 +3,8 @@ import pollService from '../services/pollService';
 import uploadService from '../services/uploadService';
 import challengeService from '../services/challengeService';
 import { savePendingUpload, getPendingUploads, removePendingUpload } from '../services/uploadDB';
+import { useAuth } from './AuthContext';
+import { useToast } from '../hooks/use-toast';
 
 const UploadContext = createContext(null);
 
@@ -18,6 +20,16 @@ export const UploadProvider = ({ children }) => {
   const [activeUploads, setActiveUploads] = useState([]);
   const uploadsRef = useRef([]);
   const resumedRef = useRef(false);
+
+  // Get auth token and toast from context so we can re-inject on resume
+  const { token: authToken } = useAuth();
+  const { toast: contextToast } = useToast();
+
+  // Keep refs so callbacks always have fresh values
+  const authTokenRef = useRef(authToken);
+  const contextToastRef = useRef(contextToast);
+  useEffect(() => { authTokenRef.current = authToken; }, [authToken]);
+  useEffect(() => { contextToastRef.current = contextToast; }, [contextToast]);
 
   // Warn user before page reload if uploads are in progress
   useEffect(() => {
@@ -58,8 +70,12 @@ export const UploadProvider = ({ children }) => {
       contentData, title, hashtagsList, mentionedUsers,
       commentsEnabled, audienceTarget, sourceAuthenticity,
       votingPrivacy, matureContent, allowDownloads, showVoteCount,
-      isChallengeMode, joiningChallengeId, selectedUsers, challengeType, token, toast,
+      isChallengeMode, joiningChallengeId, selectedUsers, challengeType,
     } = params;
+
+    // Use token and toast from params if available (new upload), otherwise from context refs (resumed upload)
+    const token = params.token || authTokenRef.current || localStorage.getItem('token');
+    const toast = (typeof params.toast === 'function') ? params.toast : contextToastRef.current;
 
     try {
       // Recover File objects from stored Blobs if needed
@@ -237,54 +253,90 @@ export const UploadProvider = ({ children }) => {
               fileName = `file_${Date.now()}`;
             } catch (e) { /* ignore */ }
           }
+          // Strip any non-serializable fields from options
+          const { file: _file, mentionedUsers: _mu, ...serializableOpt } = opt;
           return {
-            ...opt,
-            file: undefined, // Don't store File directly (use storedBlob)
+            ...serializableOpt,
+            file: undefined,
             storedBlob,
             fileName,
           };
         })
       );
 
+      // Build serializable params - strip non-serializable fields (toast is a function)
+      const { toast: _toast, ...serializableParams } = params;
+
+      // Also ensure selectedUsers only contain plain objects
+      const cleanSelectedUsers = (serializableParams.selectedUsers || []).map(u => ({
+        id: u.id,
+        username: u.username,
+        display_name: u.display_name,
+      }));
+
       const persistData = {
         id,
         params: {
-          ...params,
+          ...serializableParams,
+          selectedUsers: cleanSelectedUsers,
           contentData: { ...contentData, options: serializableOptions },
         },
         createdAt: Date.now(),
       };
 
-      await savePendingUpload(persistData);
-      console.log(`💾 [Upload ${id}] Saved to IndexedDB`);
+      try {
+        await savePendingUpload(persistData);
+        console.log(`💾 [Upload ${id}] Saved to IndexedDB successfully`);
+      } catch (saveErr) {
+        console.warn(`⚠️ [Upload ${id}] Failed to save to IndexedDB (upload will not be resumable):`, saveErr);
+      }
 
-      // Now execute
+      // Now execute the upload (with original params including toast)
       executeUpload(id, params);
     })();
 
     return id;
   }, [executeUpload]);
 
-  // Resume pending uploads on page load
+  // Resume pending uploads on page load - waits for auth token to be available
   useEffect(() => {
     if (resumedRef.current) return;
+
+    // We need an auth token to resume uploads (all uploads require authentication)
+    // Also try localStorage as fallback in case AuthContext hasn't loaded yet
+    const availableToken = authToken || localStorage.getItem('token');
+    if (!availableToken) {
+      console.log('🔄 [UploadContext] Waiting for auth token before resuming uploads...');
+      return; // Will re-run when authToken changes
+    }
+
     resumedRef.current = true;
 
     (async () => {
-      const pending = await getPendingUploads();
-      if (pending.length === 0) return;
+      let pending;
+      try {
+        pending = await getPendingUploads();
+      } catch (e) {
+        console.warn('[UploadContext] Failed to read pending uploads:', e);
+        return;
+      }
+      if (!pending || pending.length === 0) return;
 
       console.log(`🔄 [UploadContext] Found ${pending.length} pending upload(s) to resume`);
 
       for (const entry of pending) {
         // Skip entries older than 1 hour
         if (Date.now() - entry.createdAt > 60 * 60 * 1000) {
-          console.log(`⏰ [Upload ${entry.id}] Too old, removing`);
+          console.log(`⏰ [Upload ${entry.id}] Too old (> 1 hour), removing`);
           await removePendingUpload(entry.id);
           continue;
         }
 
         const { id, params } = entry;
+
+        // Re-inject fresh token (stored token may be expired)
+        params.token = availableToken;
+        // toast will be resolved from contextToastRef inside executeUpload
 
         // Get thumbnail from first option
         let thumbnail = null;
@@ -293,8 +345,8 @@ export const UploadProvider = ({ children }) => {
           try { thumbnail = URL.createObjectURL(firstOpt.storedBlob); } catch (e) { /* ignore */ }
         }
 
-        // Show the card
-        const upload = { id, progress: 5, status: 'uploading', title: params.title || 'Reanudando...', thumbnail };
+        // Show the upload card with "Reanudando..." status
+        const upload = { id, progress: 5, status: 'uploading', title: params.title || 'Reanudando subida...', thumbnail };
         setActiveUploads(prev => {
           const next = [upload, ...prev];
           uploadsRef.current = next;
@@ -302,11 +354,11 @@ export const UploadProvider = ({ children }) => {
         });
 
         // Resume execution
-        console.log(`▶️ [Upload ${id}] Resuming...`);
+        console.log(`▶️ [Upload ${id}] Resuming upload after page reload...`);
         executeUpload(id, params);
       }
     })();
-  }, [executeUpload]);
+  }, [authToken, executeUpload]);
 
   const value = { activeUploads, publishInBackground };
 
