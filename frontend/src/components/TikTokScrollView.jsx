@@ -1289,44 +1289,48 @@ const TikTokPollCard = ({
               />
             );
           })()}
-
-          {/* Título de la música - inline debajo del disco */}
-          {poll.music && !isMenuOpen && (() => {
-            const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-            const displayMusic = hasExtractedAudio && carouselAudioData
-              ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
-              : poll.music;
-            return (
-              <div 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (displayMusic?.id) {
-                    let audioId = displayMusic.id;
-                    if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
-                      audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
-                    }
-                    navigate(`/audio/${audioId}`);
-                  }
-                }}
-                className="flex items-center gap-1 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 w-full pointer-events-auto" 
-                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-              >
-                <Music className="w-3 h-3 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-                <div className="marquee-wrapper" style={{ maxWidth: '22vw' }}>
-                  <span 
-                    className="text-[10px] font-light animate-marquee"
-                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-                  >
-                    {`${displayMusic.title} - ${displayMusic.artist}`}
-                    {`\u00A0\u00A0\u2022\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
-                    {`\u00A0\u00A0\u2022\u00A0\u00A0`}
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
         </div>
       </div>
+
+      {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
+      {poll.music && !isMenuOpen && (() => {
+        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+        const displayMusic = hasExtractedAudio && carouselAudioData
+          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
+          : poll.music;
+        return (
+        <div className="absolute left-0 right-0 z-40 px-4"
+             style={{ 
+               bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+               paddingRight: 'max(1rem, env(safe-area-inset-right))'
+             }}>
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (displayMusic?.id) {
+                let audioId = displayMusic.id;
+                if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
+                  audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
+                }
+                navigate(`/audio/${audioId}`);
+              }
+            }}
+            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit" 
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+          >
+            <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+            <span className="text-xs font-light" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+              {(() => {
+                const fullTitle = `${displayMusic.title} - ${displayMusic.artist}`;
+                const truncateLength = Math.ceil(fullTitle.length * 0.6);
+                return fullTitle.length > truncateLength ? `${fullTitle.substring(0, truncateLength)}...` : fullTitle;
+              })()}
+            </span>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
