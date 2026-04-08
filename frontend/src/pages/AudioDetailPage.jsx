@@ -180,10 +180,14 @@ const AudioDetailPage = () => {
             opt.extracted_audio_id === audioId.replace('user_audio_', '') ||
             `user_audio_${opt.extracted_audio_id}` === audioId
           );
+          // Options may have media.thumbnail (nested) or thumbnail_url (flat)
+          const matchingThumb = matchingOption?.media?.thumbnail 
+            || matchingOption?.thumbnail_url 
+            || matchingOption?.media?.url;
           return {
             ...post,
             // Override thumbnail with the matching slide's thumbnail
-            thumbnail_url: matchingOption?.thumbnail_url || matchingOption?.media_url || post.thumbnail_url,
+            thumbnail_url: matchingThumb || post.thumbnail_url,
             userVote: post.user_vote,
             userLiked: post.user_liked,
             totalVotes: post.total_votes,
