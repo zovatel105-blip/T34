@@ -397,16 +397,27 @@ const CarouselLayout = ({
                 <div>
                   {percentage > 0 && (
                     <div
-                      className={cn(
-                        'absolute inset-x-0 bottom-0 rounded-t-lg transition-all',
-                        isWinner
-                          ? 'bg-green-500/40'
-                          : isSelected
-                          ? 'bg-blue-500/40'
-                          : 'bg-white/30'
-                      )}
+                      className="absolute inset-x-0 bottom-0 rounded-t-lg transition-all"
                       style={{
-                        height: `${Math.max(percentage, 15)}%`
+                        height: `${Math.max(percentage, 15)}%`,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                        borderLeft: isWinner 
+                          ? '3px solid rgba(74, 222, 128, 0.8)'
+                          : isSelected 
+                            ? '3px solid rgba(96, 165, 250, 0.8)'
+                            : '3px solid rgba(255, 255, 255, 0.3)',
+                        borderRight: isWinner 
+                          ? '3px solid rgba(74, 222, 128, 0.8)'
+                          : isSelected 
+                            ? '3px solid rgba(96, 165, 250, 0.8)'
+                            : '3px solid rgba(255, 255, 255, 0.3)',
+                        borderTop: isWinner 
+                          ? '1px solid rgba(74, 222, 128, 0.4)'
+                          : isSelected 
+                            ? '1px solid rgba(96, 165, 250, 0.4)'
+                            : '1px solid rgba(255, 255, 255, 0.15)'
                       }}
                     >
                       {isWinner && (
