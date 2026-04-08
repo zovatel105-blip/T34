@@ -233,12 +233,12 @@ const ContentPublishPage = () => {
       }
     }
 
-    // ✅ Navigate away IMMEDIATELY - upload continues in background
+    // ✅ Navigate to profile IMMEDIATELY - upload continues in background
     toast({
       title: "📤 Publicando...",
       description: "Tu contenido se está subiendo en segundo plano",
     });
-    navigate('/feed');
+    navigate(`/profile/${user?.username || 'me'}`);
 
     // 🔄 Background upload process (component may unmount, but this continues)
     (async () => {
