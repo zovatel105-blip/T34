@@ -418,6 +418,57 @@ const SearchPage = () => {
   };
 
   // Transform backend poll data to frontend format (snake_case to camelCase)
+  // Transform a search result into TikTokScrollView-compatible format (instant, no API needed)
+  const transformSearchResultToPoll = (result) => {
+    // Calculate time ago from created_at
+    let timeAgo = '';
+    if (result.created_at) {
+      const now = new Date();
+      const created = new Date(result.created_at);
+      const diffMs = now - created;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      
+      if (diffDays > 0) timeAgo = `hace ${diffDays}d`;
+      else if (diffHours > 0) timeAgo = `hace ${diffHours}h`;
+      else if (diffMins > 0) timeAgo = `hace ${diffMins}m`;
+      else timeAgo = 'ahora';
+    }
+
+    return {
+      id: result.id,
+      title: result.title || result.content || '',
+      content: result.content || '',
+      layout: result.layout || 'vertical',
+      options: (result.options || []).map(opt => ({
+        ...opt,
+        votes: opt.votes || 0,
+      })),
+      author: result.author || {},
+      author_id: result.author_id || result.author?.id || '',
+      likes: result.likes_count || 0,
+      comments: result.comments_count || 0,
+      shares: result.shares_count || 0,
+      saves_count: result.saves_count || 0,
+      total_votes: result.votes_count || 0,
+      totalVotes: result.votes_count || 0,
+      hashtags: result.hashtags || [],
+      created_at: result.created_at || '',
+      timeAgo: timeAgo,
+      time_ago: timeAgo,
+      userVote: null,
+      user_vote: null,
+      userLiked: false,
+      user_liked: false,
+      music: result.music || null,
+      is_challenge: result.is_challenge || false,
+      show_vote_count: result.show_vote_count !== false,
+      comments_enabled: result.comments_enabled !== false,
+      _isPreview: true, // Mark as preview data - will be replaced with full data
+    };
+  };
+
   const transformPollData = (pollData) => {
     return {
       ...pollData,
@@ -447,14 +498,18 @@ const SearchPage = () => {
       setOriginalSearchPosts(postResults);
       setCurrentSearchIndex(clickedIndex);
       
-      // ABRIR VISTA INMEDIATAMENTE con la publicación seleccionada
-      setTikTokViewPosts([]);
+      // ✅ INSTANT DISPLAY: Transform search result data directly (no API call needed!)
+      const instantPollData = transformSearchResultToPoll(result);
+      console.log('⚡ Instant display with search result data:', instantPollData.id);
+      
+      // Show immediately with the data we already have
+      setTikTokViewPosts([instantPollData]);
       setCurrentTikTokIndex(0);
       setShowTikTokView(true);
       setLoadingAdjacentPosts(new Set());
       
+      // 🔄 BACKGROUND: Fetch full data to get vote status, music, exact counts, etc.
       try {
-        // 1. Cargar INMEDIATAMENTE la publicación seleccionada
         const selectedResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${result.id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -464,50 +519,23 @@ const SearchPage = () => {
         
         if (selectedResponse.ok) {
           const selectedPollData = await selectedResponse.json();
-          console.log('✅ Loaded selected poll immediately:', selectedPollData.id);
-          console.log('📊 Poll data structure:', {
-            layout: selectedPollData.layout,
-            hasOptions: !!selectedPollData.options,
-            optionsCount: selectedPollData.options?.length,
-            firstOptionType: selectedPollData.options?.[0]?.media_type,
-            hasImages: !!selectedPollData.images,
-            imagesCount: selectedPollData.images?.length,
-            user_vote: selectedPollData.user_vote,
-            userVote: selectedPollData.userVote
-          });
-          
-          // Transform poll data to frontend format
           const transformedPollData = transformPollData(selectedPollData);
-          console.log('🔄 Transformed poll data - userVote:', transformedPollData.userVote);
+          console.log('✅ Full data loaded, updating view:', transformedPollData.id);
           
-          // Mostrar inmediatamente SOLO la publicación seleccionada
-          setTikTokViewPosts([transformedPollData]);
-          setCurrentTikTokIndex(0);
-          
-          // 2. Cargar inicial: anterior y siguiente SIN cambiar el índice de la vista
-          setTimeout(() => {
-            loadAdjacentPostsInitial(postResults, clickedIndex);
-          }, 300); // Dar tiempo para que se renderice la publicación seleccionada primero
-          
-        } else {
-          console.warn(`Failed to fetch selected poll ${result.id}:`, selectedResponse.status);
-          setShowTikTokView(false);
-          toast({
-            title: "Error",
-            description: "No se pudo cargar la publicación.",
-            variant: "destructive",
-          });
+          // Replace preview data with full data (preserving position)
+          setTikTokViewPosts(prev => prev.map(p => 
+            p.id === transformedPollData.id ? transformedPollData : p
+          ));
         }
-        
       } catch (error) {
-        console.error('Error loading poll data:', error);
-        setShowTikTokView(false);
-        toast({
-          title: "Error",
-          description: "Error al cargar la publicación.",
-          variant: "destructive",
-        });
+        console.warn('Background fetch failed, preview data still displayed:', error);
+        // No error toast - the preview data is already showing fine
       }
+      
+      // Load adjacent posts for smooth scrolling
+      setTimeout(() => {
+        loadAdjacentPostsInitial(postResults, clickedIndex);
+      }, 100);
       
     } else if (result.type === 'user') {
       navigate(`/profile/${result.username}`);

@@ -158,12 +158,13 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     
     let imageUrl = null;
     if (isVideo) {
-      // For videos: prefer thumbnail_url, then media_url as fallback for generating poster
+      // For videos: prefer thumbnail_url, fallback to media_url with poster trick
       imageUrl = option.thumbnail_url;
     } else {
       imageUrl = option.media_url || option.thumbnail_url;
     }
 
+    // Video with a real thumbnail image → fast load just like images
     if (imageUrl) {
       return (
         <>
@@ -171,24 +172,9 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             src={imageUrl}
             alt={altText}
             className={imgClassName}
+            loading="lazy"
             onError={(e) => {
-              // If thumbnail fails for a video, try to show video element as fallback
-              if (isVideo && option.media_url) {
-                e.target.style.display = 'none';
-                const parent = e.target.parentElement;
-                if (parent && !parent.querySelector('video')) {
-                  const videoEl = document.createElement('video');
-                  videoEl.src = option.media_url;
-                  videoEl.className = imgClassName;
-                  videoEl.muted = true;
-                  videoEl.playsInline = true;
-                  videoEl.preload = 'metadata';
-                  videoEl.onloadeddata = () => { videoEl.currentTime = 0.1; videoEl.pause(); };
-                  parent.insertBefore(videoEl, parent.firstChild);
-                }
-              } else {
-                e.target.style.display = 'none';
-              }
+              e.target.style.display = 'none';
             }}
           />
           {isVideo && (
@@ -200,27 +186,21 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
           )}
         </>
       );
-    } else if (isVideo && option.media_url) {
-      // No thumbnail at all - render a <video> element to capture first frame
+    }
+    
+    // Video without thumbnail → instant styled placeholder (no slow <video> loading)
+    if (isVideo && option.media_url) {
       return (
-        <>
-          <video
-            src={option.media_url}
-            className={imgClassName}
-            muted
-            playsInline
-            preload="metadata"
-            onLoadedData={(e) => {
-              e.target.currentTime = 0.1;
-              e.target.pause();
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/40 rounded-full p-2">
-              <Play size={20} className="text-white fill-white" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
+          <div className="flex flex-col items-center gap-1">
+            <div className="bg-white/20 rounded-full p-3 backdrop-blur-sm">
+              <Play size={24} className="text-white fill-white" />
             </div>
+            {option.text && (
+              <span className="text-white/70 text-xs mt-1 px-2 text-center line-clamp-1">{option.text}</span>
+            )}
           </div>
-        </>
+        </div>
       );
     }
     
@@ -520,14 +500,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                 (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
               
               if (isVideo) {
-                // Para videos, usar thumbnail_url primero, luego media_url como fallback
                 imageUrl = option.thumbnail_url;
               } else {
-                // Para imágenes, priorizar media_url
                 imageUrl = option.media_url || option.thumbnail_url;
               }
 
-              // Si tenemos una URL válida, renderizar imagen
               if (imageUrl) {
                 return (
                   <>
@@ -535,25 +512,8 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                       src={imageUrl}
                       alt={option.text || `Option ${index + 1}`}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // If thumbnail fails for a video, try to show video element
-                        if (isVideo && option.media_url) {
-                          e.target.style.display = 'none';
-                          const parent = e.target.parentElement;
-                          if (parent && !parent.querySelector('video')) {
-                            const videoEl = document.createElement('video');
-                            videoEl.src = option.media_url;
-                            videoEl.className = 'w-full h-full object-cover';
-                            videoEl.muted = true;
-                            videoEl.playsInline = true;
-                            videoEl.preload = 'metadata';
-                            videoEl.onloadeddata = () => { videoEl.currentTime = 0.1; videoEl.pause(); };
-                            parent.insertBefore(videoEl, parent.firstChild);
-                          }
-                        } else {
-                          e.target.style.display = 'none';
-                        }
-                      }}
+                      loading="lazy"
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                     {isVideo && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -565,30 +525,15 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   </>
                 );
               } else if (isVideo && option.media_url) {
-                // Fallback para video sin thumbnail: usar video element con poster
+                // Instant placeholder for video without thumbnail (no slow <video> loading)
                 return (
-                  <>
-                    <video
-                      src={option.media_url}
-                      className="w-full h-full object-cover"
-                      muted
-                      playsInline
-                      preload="metadata"
-                      onLoadedData={(e) => {
-                        // Pause at first frame to use as thumbnail
-                        e.target.currentTime = 0.1;
-                        e.target.pause();
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="bg-black/40 rounded-full p-1">
-                        <Play size={14} className="text-white fill-white" />
-                      </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
+                    <div className="bg-white/20 rounded-full p-1.5 backdrop-blur-sm">
+                      <Play size={14} className="text-white fill-white" />
                     </div>
-                  </>
+                  </div>
                 );
               } else {
-                // Placeholder para opciones sin imagen válida
                 return (
                   <div className="absolute inset-0 bg-gray-300 flex items-center justify-center text-xs text-gray-600 p-1 text-center">
                     {option.text || `Option ${index + 1}`}
