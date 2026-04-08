@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Play } from 'lucide-react';
 
 /**
  * Componente de miniatura de poll que replica el layout completo del poll
@@ -151,6 +151,82 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     }
   };
 
+  // Helper: Render the correct media element for an option (image or video fallback)
+  const renderMediaElement = (option, altText, imgClassName = "w-full h-full object-cover") => {
+    const isVideo = option.media_type === 'video' || 
+      (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
+    
+    let imageUrl = null;
+    if (isVideo) {
+      // For videos: prefer thumbnail_url, then media_url as fallback for generating poster
+      imageUrl = option.thumbnail_url;
+    } else {
+      imageUrl = option.media_url || option.thumbnail_url;
+    }
+
+    if (imageUrl) {
+      return (
+        <>
+          <img
+            src={imageUrl}
+            alt={altText}
+            className={imgClassName}
+            onError={(e) => {
+              // If thumbnail fails for a video, try to show video element as fallback
+              if (isVideo && option.media_url) {
+                e.target.style.display = 'none';
+                const parent = e.target.parentElement;
+                if (parent && !parent.querySelector('video')) {
+                  const videoEl = document.createElement('video');
+                  videoEl.src = option.media_url;
+                  videoEl.className = imgClassName;
+                  videoEl.muted = true;
+                  videoEl.playsInline = true;
+                  videoEl.preload = 'metadata';
+                  videoEl.onloadeddata = () => { videoEl.currentTime = 0.1; videoEl.pause(); };
+                  parent.insertBefore(videoEl, parent.firstChild);
+                }
+              } else {
+                e.target.style.display = 'none';
+              }
+            }}
+          />
+          {isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/40 rounded-full p-2">
+                <Play size={20} className="text-white fill-white" />
+              </div>
+            </div>
+          )}
+        </>
+      );
+    } else if (isVideo && option.media_url) {
+      // No thumbnail at all - render a <video> element to capture first frame
+      return (
+        <>
+          <video
+            src={option.media_url}
+            className={imgClassName}
+            muted
+            playsInline
+            preload="metadata"
+            onLoadedData={(e) => {
+              e.target.currentTime = 0.1;
+              e.target.pause();
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/40 rounded-full p-2">
+              <Play size={20} className="text-white fill-white" />
+            </div>
+          </div>
+        </>
+      );
+    }
+    
+    return null;
+  };
+
   // Debug logging
   console.log('🔍 PollThumbnail Debug:', {
     pollId: result?.id,
@@ -204,14 +280,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
         onTouchEnd={handlePressEnd}
         onTouchCancel={handlePressCancel}
       >
-        <img
-          src={firstOption.media_type === 'video' ? firstOption.thumbnail_url : (firstOption.media_url || firstOption.thumbnail_url)}
-          alt={result.title || 'Poll option'}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.style.display = 'none';
-          }}
-        />
+        {renderMediaElement(firstOption, result.title || 'Poll option', "w-full h-full object-cover")}
         {/* Indicador de carrusel - Eliminado por solicitud del usuario */}
         
         {/* Modal de votación rápida - Layout carrusel horizontal */}
@@ -322,14 +391,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
         onTouchEnd={handlePressEnd}
         onTouchCancel={handlePressCancel}
       >
-        <img
-          src={firstOption.media_type === 'video' ? firstOption.thumbnail_url : (firstOption.media_url || firstOption.thumbnail_url)}
-          alt={result.title || 'Momento'}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.style.display = 'none';
-          }}
-        />
+        {renderMediaElement(firstOption, result.title || 'Momento', "w-full h-full object-cover")}
         
         {/* Badge de Momento */}
         {!hideBadge && (
@@ -468,30 +530,62 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
               // Si tenemos una URL válida, renderizar imagen
               if (imageUrl) {
                 return (
-                  <img
-                    src={imageUrl}
-                    alt={option.text || `Option ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
+                  <>
+                    <img
+                      src={imageUrl}
+                      alt={option.text || `Option ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // If thumbnail fails for a video, try to show video element
+                        if (isVideo && option.media_url) {
+                          e.target.style.display = 'none';
+                          const parent = e.target.parentElement;
+                          if (parent && !parent.querySelector('video')) {
+                            const videoEl = document.createElement('video');
+                            videoEl.src = option.media_url;
+                            videoEl.className = 'w-full h-full object-cover';
+                            videoEl.muted = true;
+                            videoEl.playsInline = true;
+                            videoEl.preload = 'metadata';
+                            videoEl.onloadeddata = () => { videoEl.currentTime = 0.1; videoEl.pause(); };
+                            parent.insertBefore(videoEl, parent.firstChild);
+                          }
+                        } else {
+                          e.target.style.display = 'none';
+                        }
+                      }}
+                    />
+                    {isVideo && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black/40 rounded-full p-1">
+                          <Play size={14} className="text-white fill-white" />
+                        </div>
+                      </div>
+                    )}
+                  </>
                 );
               } else if (isVideo && option.media_url) {
                 // Fallback para video sin thumbnail: usar video element con poster
                 return (
-                  <video
-                    src={option.media_url}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                    preload="metadata"
-                    onLoadedData={(e) => {
-                      // Pause at first frame to use as thumbnail
-                      e.target.currentTime = 0.1;
-                      e.target.pause();
-                    }}
-                  />
+                  <>
+                    <video
+                      src={option.media_url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedData={(e) => {
+                        // Pause at first frame to use as thumbnail
+                        e.target.currentTime = 0.1;
+                        e.target.pause();
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-black/40 rounded-full p-1">
+                        <Play size={14} className="text-white fill-white" />
+                      </div>
+                    </div>
+                  </>
                 );
               } else {
                 // Placeholder para opciones sin imagen válida
