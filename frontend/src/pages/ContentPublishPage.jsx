@@ -256,8 +256,8 @@ const ContentPublishPage = () => {
       toast,
     });
 
-    // ✅ Navigate to profile IMMEDIATELY
-    navigate(`/profile/${user?.username || 'me'}`);
+    // ✅ Navigate to OWN profile page (without username = own profile with right nav)
+    navigate('/profile');
   };
 
   // Show loading screen if not authenticated or no content data
