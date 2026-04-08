@@ -318,9 +318,9 @@ const TikTokVotingCard = ({
                         "absolute inset-0"
                       )}
                       style={{
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)',
-                        backdropFilter: 'blur(6px)',
-                        WebkitBackdropFilter: 'blur(6px)',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.1), rgba(0,0,0,0.05), transparent)',
+                        backdropFilter: 'blur(2px)',
+                        WebkitBackdropFilter: 'blur(2px)',
                         borderLeft: isSelected 
                           ? '3px solid rgba(96, 165, 250, 0.8)'
                           : isWinner
