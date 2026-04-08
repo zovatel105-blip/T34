@@ -12,6 +12,7 @@ import ShareModal from '../components/ShareModal';
 import StatisticsModal from '../components/StatisticsModal';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
 import TikTokScrollView from '../components/TikTokScrollView';
+import { useUpload } from '../contexts/UploadContext';
 import StoriesViewer from '../components/StoriesViewer';
 import { 
   Settings, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
@@ -63,6 +64,7 @@ const StatCard = ({ icon: Icon, label, value, color = "blue", onClick, clickable
 );
 
 const ProfilePage = () => {
+  const { activeUploads } = useUpload();
   const [activeTab, setActiveTab] = useState("polls");
   const [polls, setPolls] = useState([]);
   const [mentionedPolls, setMentionedPolls] = useState([]);
@@ -2256,7 +2258,7 @@ const ProfilePage = () => {
               {/* Contenido de tabs - Con padding lateral mínimo */}
               <div className="mt-0">
                 <TabsContent value="polls" className="mt-0">
-                  {polls.length === 0 ? (
+                  {polls.length === 0 && (!isOwnProfile || activeUploads.length === 0) ? (
                     <div className="text-center py-16 space-y-6 px-1 sm:px-2">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
                         <LayoutDashboard className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
