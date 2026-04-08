@@ -94,6 +94,8 @@ const CarouselLayout = ({
   useEffect(() => {
     return () => {
       console.log('🧹 Limpiando CarouselLayout...');
+      // Invalidate any in-progress async audio operations
+      audioVersionRef.current++;
       // Solo detener audioManager si NO hay música global
       if (!hasGlobalMusic) {
         audioManager.stop();
@@ -101,6 +103,7 @@ const CarouselLayout = ({
       audioPool.current.forEach((audio) => {
         if (audio.audioElement) {
           audio.audioElement.pause();
+          audio.audioElement.currentTime = 0;
           audio.audioElement.src = '';
         }
       });
@@ -213,6 +216,16 @@ const CarouselLayout = ({
 
   // ========== AUDIO HANDLING CON POOL PRECARGADO ==========
   useEffect(() => {
+    // Helper: pause and reset ALL pool audios
+    const pauseAllPoolAudios = () => {
+      audioPool.current.forEach((audio) => {
+        if (audio.audioElement) {
+          audio.audioElement.pause();
+          audio.audioElement.currentTime = 0;
+        }
+      });
+    };
+
     // Si hay música global, NO interferir con audioManager
     // La música global la gestiona TikTokScrollView/MusicPlayer
     if (hasGlobalMusic) {
@@ -224,13 +237,12 @@ const CarouselLayout = ({
       return;
     }
 
+    // Increment version on EVERY effect run to invalidate previous async calls
+    const myVersion = ++audioVersionRef.current;
+
     if (!isActive) {
       // Pausar todos los audios del pool cuando no está activo
-      audioPool.current.forEach((audio) => {
-        if (audio.audioElement) {
-          audio.audioElement.pause();
-        }
-      });
+      pauseAllPoolAudios();
       return;
     }
 
@@ -241,11 +253,7 @@ const CarouselLayout = ({
 
     if (!extractedAudioId) {
       // Pausar todos los audios del pool si no hay audio extraído
-      audioPool.current.forEach((audio) => {
-        if (audio.audioElement) {
-          audio.audioElement.pause();
-        }
-      });
+      pauseAllPoolAudios();
       onAudioChange?.(null);
       
       if (onThumbnailChange && option.thumbnail_url) {
@@ -254,18 +262,10 @@ const CarouselLayout = ({
       return;
     }
 
-    // Increment version so only the latest slide change wins
-    const myVersion = ++audioVersionRef.current;
-
     const playFromPool = async () => {
       try {
-        // ALWAYS pause all audios first - even if another call is in progress
-        audioPool.current.forEach((audio, slideIndex) => {
-          if (audio.audioElement) {
-            audio.audioElement.pause();
-            audio.audioElement.currentTime = 0;
-          }
-        });
+        // ALWAYS pause all audios first
+        pauseAllPoolAudios();
 
         // Verificar si el audio está en el pool
         if (!audioPool.current.has(currentSlide)) {
@@ -273,9 +273,9 @@ const CarouselLayout = ({
           await preloadAudioForSlide(currentSlide);
         }
 
-        // Check if a newer slide change happened while we were loading
+        // Check if a newer effect run happened while we were loading
         if (audioVersionRef.current !== myVersion) {
-          console.log(`⏭️ Slide changed while loading audio, skipping playback for slide ${currentSlide}`);
+          console.log(`⏭️ Version changed while loading audio, skipping playback for slide ${currentSlide}`);
           return;
         }
 
@@ -290,7 +290,6 @@ const CarouselLayout = ({
 
         // Update thumbnail for MusicPlayer
         if (onThumbnailChange && coverImage) {
-          console.log(`🖼️ Actualizando cover para slide ${currentSlide}`);
           onThumbnailChange(coverImage);
         }
 
@@ -305,25 +304,32 @@ const CarouselLayout = ({
           source: 'User Upload'
         });
 
-        // Final check before playing - another slide change may have occurred
+        // Final version check before playing
         if (audioVersionRef.current !== myVersion) {
-          console.log(`⏭️ Slide changed before play, skipping for slide ${currentSlide}`);
+          console.log(`⏭️ Version changed before play, skipping for slide ${currentSlide}`);
           return;
         }
 
-        // Reproducir el audio desde el pool (instantáneo)
+        // Pause all AGAIN right before playing to catch any race conditions
+        audioPool.current.forEach((audio, idx) => {
+          if (idx !== currentSlide && audio.audioElement) {
+            audio.audioElement.pause();
+            audio.audioElement.currentTime = 0;
+          }
+        });
+
+        // Reproducir el audio desde el pool
         audioElement.currentTime = 0;
         audioElement.volume = 0.7;
         
-        const playPromise = audioElement.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log(`▶️ Audio del slide ${currentSlide} reproduciendo`);
-            })
-            .catch((error) => {
-              console.error('Error al reproducir audio:', error);
-            });
+        try {
+          await audioElement.play();
+          console.log(`▶️ Audio del slide ${currentSlide} reproduciendo (v${myVersion})`);
+        } catch (playError) {
+          // AbortError is expected when pause() is called during play()
+          if (playError.name !== 'AbortError') {
+            console.error('Error al reproducir audio:', playError);
+          }
         }
 
       } catch (err) {
@@ -332,6 +338,12 @@ const CarouselLayout = ({
     };
 
     playFromPool();
+
+    // Cleanup: when this effect re-runs or component unmounts, invalidate and pause
+    return () => {
+      audioVersionRef.current++;
+      pauseAllPoolAudios();
+    };
   }, [currentSlide, isActive, poll.options, poll.author, hasGlobalMusic]);
 
   // ========== VIDEO SUPPRESSION FIX (THE IMPORTANT PART) ==========
