@@ -315,13 +315,22 @@ const TikTokVotingCard = ({
                   {showResults && (
                     <motion.div
                       className={cn(
-                        "absolute inset-0 bg-gradient-to-t",
+                        "absolute inset-0",
                         isSelected 
-                          ? "from-blue-500/70 to-blue-600/30"
+                          ? "border-t border-blue-400/40"
                           : isWinner
-                            ? "from-green-500/70 to-green-600/30"
-                            : "from-gray-500/50 to-gray-600/20"
+                            ? "border-t border-green-400/40"
+                            : "border-t border-white/20"
                       )}
+                      style={{
+                        background: isSelected 
+                          ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
+                          : isWinner
+                            ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
+                            : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)'
+                      }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: percentage / 100 }}
                       transition={{ duration: 1 }}

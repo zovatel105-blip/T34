@@ -280,16 +280,23 @@ const GridLayout = ({
                 className={cn(
                   "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out rounded-t-lg",
                   isWinner 
-                    ? "bg-gradient-to-t from-green-500/70 via-green-500/50 to-green-500/20"
+                    ? "border-t border-green-400/40"
                     : isSelected 
-                      ? "bg-gradient-to-t from-blue-500/70 via-blue-500/50 to-blue-500/20"
-                      : "bg-gradient-to-t from-white/60 via-white/40 to-white/20"
+                      ? "border-t border-blue-400/40"
+                      : "border-t border-white/20"
                 )}
                 style={{ 
                   height: `${Math.max(percentage, 15)}%`,
                   minHeight: '60px',
                   transform: `translateY(${100 - Math.max(percentage, 15)}%)`,
-                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: isWinner 
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.15), transparent)'
+                    : isSelected
+                      ? 'linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.12), transparent)'
+                      : 'linear-gradient(to top, rgba(0,0,0,0.25), rgba(0,0,0,0.1), transparent)',
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
                 }}
               >
                 {/* Trophy icon in progress bar for winner */}
