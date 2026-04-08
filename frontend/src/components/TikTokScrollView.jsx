@@ -1320,14 +1320,12 @@ const TikTokPollCard = ({
             style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
           >
             <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-            <div className="marquee-wrapper" style={{ maxWidth: '45vw' }}>
+            <div className="marquee-wrapper">
               <span 
                 className="text-xs font-light animate-marquee"
                 style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
               >
                 {`${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
-                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0`}
               </span>
             </div>
           </div>
