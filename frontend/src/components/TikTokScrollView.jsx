@@ -1268,53 +1268,72 @@ const TikTokPollCard = ({
             )}
           </div>
           
-          {/* Music Player + Title - Right side */}
+          {/* Music Player - Spinning disc */}
           {poll.music && (() => {
             const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
             const displayMusic = hasExtractedAudio && carouselAudioData
               ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
               : poll.music;
             return (
-              <div 
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (displayMusic?.id) {
-                    let audioId = displayMusic.id;
-                    if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
-                      audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
-                    }
-                    navigate(`/audio/${audioId}`);
-                  }
-                }}
-              >
-                <div className="marquee-wrapper" style={{ maxWidth: '28vw' }}>
-                  <span 
-                    className="text-[10px] font-light text-white whitespace-nowrap animate-marquee"
-                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
-                  >
-                    {`${displayMusic.title} - ${displayMusic.artist}`}
-                    {`\u00A0\u00A0\u2022\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
-                    {`\u00A0\u00A0\u2022\u00A0\u00A0`}
-                  </span>
-                </div>
-                <MusicPlayer
-                  music={displayMusic}
-                  isVisible={isActive}
-                  onTogglePlay={handleMusicToggle}
-                  autoPlay={!hasExtractedAudio}
-                  loop={true}
-                  authorAvatar={carouselThumbnail || poll.author?.avatar_url}
-                  authorUsername={poll.author?.username || poll.author?.display_name}
-                  overrideAudioId={carouselAudioId}
-                  forceUseAvatar={!!carouselThumbnail}
-                  className="flex-shrink-0"
-                />
-              </div>
+              <MusicPlayer
+                music={displayMusic}
+                isVisible={isActive}
+                onTogglePlay={handleMusicToggle}
+                autoPlay={!hasExtractedAudio}
+                loop={true}
+                authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+                authorUsername={poll.author?.username || poll.author?.display_name}
+                overrideAudioId={carouselAudioId}
+                forceUseAvatar={!!carouselThumbnail}
+                className="flex-shrink-0"
+              />
             );
           })()}
         </div>
       </div>
+
+      {/* Título de la música - Posición original debajo de los botones */}
+      {poll.music && !isMenuOpen && (() => {
+        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+        const displayMusic = hasExtractedAudio && carouselAudioData
+          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
+          : poll.music;
+        return (
+        <div className="absolute left-0 right-0 z-10 px-4 pointer-events-none"
+             style={{ 
+               bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+               paddingRight: 'max(1rem, env(safe-area-inset-right))'
+             }}>
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              if (displayMusic?.id) {
+                let audioId = displayMusic.id;
+                if (displayMusic.isOriginal || displayMusic.source === 'User Upload') {
+                  audioId = audioId.startsWith('user_audio_') ? audioId : `user_audio_${audioId}`;
+                }
+                navigate(`/audio/${audioId}`);
+              }
+            }}
+            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit pointer-events-auto" 
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+          >
+            <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+            <div className="marquee-wrapper" style={{ maxWidth: '45vw' }}>
+              <span 
+                className="text-xs font-light animate-marquee"
+                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+              >
+                {`${displayMusic.title} - ${displayMusic.artist}`}
+                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0${displayMusic.title} - ${displayMusic.artist}`}
+                {`\u00A0\u00A0\u00A0\u2022\u00A0\u00A0\u00A0`}
+              </span>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
