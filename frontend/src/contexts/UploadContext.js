@@ -85,12 +85,43 @@ export const UploadProvider = ({ children }) => {
     (async () => {
       try {
         console.log('🚀 [UploadContext] Starting background upload...');
+        console.log('🚀 [UploadContext] Options:', contentData.options?.length);
         
-        const filesToUpload = contentData.options
-          .filter(opt => opt.file && opt.needsUpload !== false)
+        // ⚡ STEP 1: Ensure all options with local media have valid File objects
+        const optionsWithFiles = [];
+        for (const opt of contentData.options) {
+          let fileObj = opt.file;
+          
+          // If file is missing but we have a blob URL, recover the file from it
+          if (!fileObj && opt.media_url && opt.media_url.startsWith('blob:')) {
+            try {
+              console.log('🔄 [UploadContext] Recovering file from blob URL...');
+              const response = await fetch(opt.media_url);
+              const blob = await response.blob();
+              const extension = opt.media_type === 'video' ? '.mp4' : '.jpg';
+              fileObj = new File([blob], `upload_${Date.now()}${extension}`, { type: blob.type });
+              console.log('✅ [UploadContext] File recovered:', fileObj.name, fileObj.size);
+            } catch (e) {
+              console.warn('⚠️ [UploadContext] Could not recover file from blob:', e);
+            }
+          }
+          
+          // Verify file is valid
+          if (fileObj && !(fileObj instanceof Blob)) {
+            console.warn('⚠️ [UploadContext] Invalid file object, skipping:', typeof fileObj);
+            fileObj = null;
+          }
+          
+          optionsWithFiles.push({ ...opt, file: fileObj });
+        }
+        
+        const filesToUpload = optionsWithFiles
+          .filter(opt => opt.file)
           .map(opt => opt.file);
         
-        let uploadedOptions = [...contentData.options];
+        console.log(`📦 [UploadContext] Files to upload: ${filesToUpload.length}`);
+        
+        let uploadedOptions = [...optionsWithFiles];
         
         if (filesToUpload.length > 0) {
           updateUpload(id, { progress: 10, status: 'uploading' });
@@ -107,7 +138,7 @@ export const UploadProvider = ({ children }) => {
           console.log('✅ [UploadContext] Files uploaded:', uploadResults.length);
           
           let uploadIndex = 0;
-          uploadedOptions = contentData.options.map(opt => {
+          uploadedOptions = optionsWithFiles.map(opt => {
             if (opt.file && opt.needsUpload !== false) {
               const uploadResult = uploadResults[uploadIndex++];
               return {
@@ -211,8 +242,10 @@ export const UploadProvider = ({ children }) => {
 
       } catch (error) {
         console.error('❌ [UploadContext] Upload error:', error);
-        updateUpload(id, { progress: 0, status: 'error' });
-        setTimeout(() => removeUpload(id), 5000);
+        console.error('❌ [UploadContext] Error stack:', error.stack);
+        console.error('❌ [UploadContext] Error name:', error.name);
+        updateUpload(id, { progress: 0, status: 'error', errorMsg: error.message || 'Error desconocido' });
+        setTimeout(() => removeUpload(id), 8000);
         
         if (toast) toast({
           title: "Error al crear publicación",

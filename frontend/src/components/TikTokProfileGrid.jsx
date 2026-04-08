@@ -98,9 +98,9 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               )}
               
-              <span className="text-white text-xs font-medium text-center line-clamp-1">
+              <span className="text-white text-xs font-medium text-center line-clamp-2">
                 {upload.status === 'done' ? '¡Publicado!' : 
-                 upload.status === 'error' ? 'Error' :
+                 upload.status === 'error' ? (upload.errorMsg || 'Error') :
                  upload.status === 'creating' ? 'Creando...' : 'Subiendo...'}
               </span>
               
