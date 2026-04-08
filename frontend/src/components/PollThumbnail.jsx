@@ -151,19 +151,23 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     }
   };
 
+  // Helper: Check if a URL points to a video file
+  const isVideoUrl = (url) => {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || lower.includes('.avi');
+  };
+
   // Helper: Render the correct media element for an option (image or video fallback)
   const renderMediaElement = (option, altText, imgClassName = "w-full h-full object-cover") => {
-    const isVideo = option.media_type === 'video' || 
-      (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
+    const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
     
-    let imageUrl = null;
-    if (isVideo) {
-      // For videos: prefer thumbnail_url, then try media_url (some browsers can poster it)
-      imageUrl = option.thumbnail_url || option.media_url;
-    } else {
-      imageUrl = option.media_url || option.thumbnail_url;
-    }
-
+    // Determine the best image thumbnail (must be an actual image, NOT a video file)
+    const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
+    const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
+    const imageUrl = thumbnailIsImage ? option.thumbnail_url : (mediaIsImage ? option.media_url : null);
+    
+    // Best case: we have a real image thumbnail → instant load
     if (imageUrl) {
       return (
         <>
@@ -172,18 +176,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             alt={altText}
             className={imgClassName}
             loading="lazy"
-            onError={(e) => {
-              // On error: show gradient placeholder with play icon instantly
-              e.target.style.display = 'none';
-              const parent = e.target.closest('.relative') || e.target.parentElement;
-              if (parent && !parent.querySelector('[data-video-placeholder]')) {
-                const placeholder = document.createElement('div');
-                placeholder.setAttribute('data-video-placeholder', 'true');
-                placeholder.className = 'absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center';
-                placeholder.innerHTML = '<div class="bg-white/20 rounded-full p-3"><svg width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>';
-                parent.insertBefore(placeholder, parent.firstChild);
-              }
-            }}
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
           {isVideo && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -196,19 +189,28 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       );
     }
     
-    // No URL at all → instant styled placeholder
-    if (isVideo) {
+    // Video without image thumbnail → use <video> element to show first frame
+    const videoSrc = option.media_url || option.thumbnail_url;
+    if (isVideo && videoSrc) {
       return (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
-          <div className="flex flex-col items-center gap-1">
-            <div className="bg-white/20 rounded-full p-3 backdrop-blur-sm">
-              <Play size={24} className="text-white fill-white" />
+        <>
+          <video
+            src={videoSrc}
+            className={imgClassName}
+            muted
+            playsInline
+            preload="metadata"
+            onLoadedData={(e) => {
+              e.target.currentTime = 0.1;
+              e.target.pause();
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/40 rounded-full p-2">
+              <Play size={20} className="text-white fill-white" />
             </div>
-            {option.text && (
-              <span className="text-white/70 text-xs mt-1 px-2 text-center line-clamp-1">{option.text}</span>
-            )}
           </div>
-        </div>
+        </>
       );
     }
     
@@ -502,17 +504,16 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             style={{ minHeight: '30px' }}
           >
             {(() => {
-              // Determinar la URL correcta a usar
-              let imageUrl = null;
-              const isVideo = option.media_type === 'video' || 
-                (option.media_url && (option.media_url.includes('.mp4') || option.media_url.includes('.mov') || option.media_url.includes('.webm')));
+              const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
               
-              if (isVideo) {
-                imageUrl = option.thumbnail_url || option.media_url;
-              } else {
-                imageUrl = option.media_url || option.thumbnail_url;
-              }
+              // For thumbnails: only use URLs that are actual images (not .mp4 files!)
+              const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
+              const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
+              const imageUrl = isVideo 
+                ? (thumbnailIsImage ? option.thumbnail_url : null) 
+                : (option.media_url || option.thumbnail_url);
 
+              // Real image thumbnail → fast <img>
               if (imageUrl) {
                 return (
                   <>
@@ -521,17 +522,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                       alt={option.text || `Option ${index + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const parent = e.target.closest('.relative') || e.target.parentElement;
-                        if (parent && !parent.querySelector('[data-video-placeholder]')) {
-                          const placeholder = document.createElement('div');
-                          placeholder.setAttribute('data-video-placeholder', 'true');
-                          placeholder.className = 'absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center';
-                          placeholder.innerHTML = '<div class="bg-white/20 rounded-full p-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>';
-                          parent.insertBefore(placeholder, parent.firstChild);
-                        }
-                      }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                     {isVideo && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -542,21 +533,38 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                     )}
                   </>
                 );
-              } else if (isVideo) {
+              }
+              
+              // Video without image thumbnail → use <video> to show first frame
+              const videoSrc = option.media_url || option.thumbnail_url;
+              if (isVideo && videoSrc) {
                 return (
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
-                    <div className="bg-white/20 rounded-full p-1.5 backdrop-blur-sm">
-                      <Play size={14} className="text-white fill-white" />
+                  <>
+                    <video
+                      src={videoSrc}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedData={(e) => {
+                        e.target.currentTime = 0.1;
+                        e.target.pause();
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-black/40 rounded-full p-1">
+                        <Play size={14} className="text-white fill-white" />
+                      </div>
                     </div>
-                  </div>
-                );
-              } else {
-                return (
-                  <div className="absolute inset-0 bg-gray-300 flex items-center justify-center text-xs text-gray-600 p-1 text-center">
-                    {option.text || `Option ${index + 1}`}
-                  </div>
+                  </>
                 );
               }
+              
+              return (
+                <div className="absolute inset-0 bg-gray-300 flex items-center justify-center text-xs text-gray-600 p-1 text-center">
+                  {option.text || `Option ${index + 1}`}
+                </div>
+              );
             })()}
             
             {/* Overlay con texto de la opción si existe */}
