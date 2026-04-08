@@ -1236,20 +1236,25 @@ const TikTokPollCard = ({
           </div>
           
           {/* Music Player - Right side, same height as buttons con autoplay */}
-          {poll.music && (
-            <MusicPlayer
-              music={poll.music}
-              isVisible={isActive}
-              onTogglePlay={handleMusicToggle}
-              autoPlay={true}  // ✅ REPRODUCCIÓN AUTOMÁTICA ACTIVADA
-              loop={true}     // 🔄 LOOP AUTOMÁTICO HABILITADO
-              authorAvatar={carouselThumbnail || poll.author?.avatar_url}
-              authorUsername={poll.author?.username || poll.author?.display_name}
-              overrideAudioId={carouselAudioId}  // 🎵 NUEVO: Audio del slide actual en carrusel
-              forceUseAvatar={!!carouselThumbnail}  // 🎨 CORREGIDO: Forzar uso de thumbnail cuando hay thumbnail del carrusel
-              className="flex-shrink-0"
-            />
-          )}
+          {poll.music && (() => {
+            // Si es carrusel con audio extraído por slide, NO auto-reproducir desde MusicPlayer
+            // CarouselLayout gestiona su propio audio por slide
+            const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+            return (
+              <MusicPlayer
+                music={poll.music}
+                isVisible={isActive}
+                onTogglePlay={handleMusicToggle}
+                autoPlay={!hasExtractedAudio}  // ✅ Desactivar autoplay cuando carousel maneja audio
+                loop={true}     // 🔄 LOOP AUTOMÁTICO HABILITADO
+                authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+                authorUsername={poll.author?.username || poll.author?.display_name}
+                overrideAudioId={carouselAudioId}  // 🎵 NUEVO: Audio del slide actual en carrusel
+                forceUseAvatar={!!carouselThumbnail}  // 🎨 CORREGIDO: Forzar uso de thumbnail cuando hay thumbnail del carrusel
+                className="flex-shrink-0"
+              />
+            );
+          })()}
         </div>
       </div>
 
