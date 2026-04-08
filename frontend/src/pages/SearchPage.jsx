@@ -64,6 +64,33 @@ const SearchPage = () => {
   const { isAuthenticated, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Lock body scroll when TikTok view is open to prevent search results from showing behind
+  useEffect(() => {
+    if (showTikTokView) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      document.body.style.top = '0';
+      document.body.style.left = '0';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+    };
+  }, [showTikTokView]);
+
   // Initialize from URL params and load real data
   useEffect(() => {
     const query = searchParams.get('q') || '';
@@ -1622,11 +1649,20 @@ const SearchPage = () => {
 
       {/* TikTokScrollView for search results with back button */}
       {showTikTokView && tikTokViewPosts.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-black">
+        <div className="fixed inset-0 z-[999] bg-black overflow-hidden" style={{ 
+          height: '100vh', 
+          height: '100dvh',
+          width: '100vw',
+          width: '100dvw',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0
+        }}>
           {/* Back to search button - moved closer to right edge */}
           <button
             onClick={handleCloseTikTokView}
-            className="fixed top-4 right-1 z-[60] bg-black/50 hover:bg-black/70 text-white text-sm px-3 py-2 rounded-full backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
+            className="fixed top-4 right-1 z-[1000] bg-black/50 hover:bg-black/70 text-white text-sm px-3 py-2 rounded-full backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
           >
             <ArrowLeft size={16} />
             Volver a búsqueda
