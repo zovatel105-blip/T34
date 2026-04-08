@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import pollService from '../services/pollService';
 import uploadService from '../services/uploadService';
 import challengeService from '../services/challengeService';
@@ -14,9 +14,24 @@ export const useUpload = () => {
 };
 
 export const UploadProvider = ({ children }) => {
-  // Active background uploads: { id, progress, status, thumbnail, title }
   const [activeUploads, setActiveUploads] = useState([]);
   const uploadsRef = useRef([]);
+
+  // Warn user before page reload/close if uploads are in progress
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      const hasActiveUploads = uploadsRef.current.some(
+        u => u.status === 'uploading' || u.status === 'creating'
+      );
+      if (hasActiveUploads) {
+        e.preventDefault();
+        e.returnValue = 'Tienes contenido subiendo. Si recargas, se perderá el progreso.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   const updateUpload = useCallback((id, updates) => {
     setActiveUploads(prev => {
