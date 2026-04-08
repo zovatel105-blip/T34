@@ -81,8 +81,11 @@ const CarouselLayout = ({
 
   // On poll change → reset slide and stop audio
   useEffect(() => {
-    setCurrentSlide(0);
-    currentSlideSafe.current = 0;
+    // Only reset to 0 if parent isn't controlling the slide (no external slide provided)
+    if (externalCurrentSlide === undefined) {
+      setCurrentSlide(0);
+      currentSlideSafe.current = 0;
+    }
     
     if (!hasGlobalMusic) {
       audioManager.stop();

@@ -138,7 +138,10 @@ const TikTokPollCard = ({
   // 🔒 NEW: Callback para notificar cuando un modal se abre/cierra
   onModalStateChange = null,
   // 📜 NEW: Mostrar hint de scroll solo para usuarios nuevos
-  showScrollHint = false
+  showScrollHint = false,
+  // 🎵 Audio detail page context
+  fromAudioDetailPage = false,
+  currentAudio = null
 }) => {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
@@ -147,7 +150,20 @@ const TikTokPollCard = ({
   const [audioContextActivated, setAudioContextActivated] = useState(false);
   
   // Carousel state for multiple options
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // When coming from AudioDetailPage, start at the slide matching the current audio
+  const getInitialSlide = () => {
+    if (fromAudioDetailPage && currentAudio?.id && poll.options) {
+      const audioId = currentAudio.id;
+      const matchIdx = poll.options.findIndex(opt => 
+        opt.extracted_audio_id === audioId || 
+        opt.extracted_audio_id === `user_audio_${audioId}` ||
+        `user_audio_${opt.extracted_audio_id}` === audioId
+      );
+      if (matchIdx >= 0) return matchIdx;
+    }
+    return 0;
+  };
+  const [currentSlide, setCurrentSlide] = useState(getInitialSlide);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   
@@ -1930,6 +1946,9 @@ const TikTokScrollView = ({
             onModalStateChange={setIsModalOpen}
             // 📜 Mostrar hint de scroll solo para usuarios nuevos
             showScrollHint={showScrollHint && index === 0}
+            // 🎵 Audio detail page context for initial slide
+            fromAudioDetailPage={fromAudioDetailPage}
+            currentAudio={currentAudio}
           />
           </SwiperSlide>
         ))}

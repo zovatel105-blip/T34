@@ -173,14 +173,24 @@ const AudioDetailPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const transformedPosts = (data.posts || []).map(post => ({
-          ...post,
-          userVote: post.user_vote,
-          userLiked: post.user_liked,
-          totalVotes: post.total_votes,
-          authorUser: post.author,
-          commentsCount: post.comments_count
-        }));
+        const transformedPosts = (data.posts || []).map(post => {
+          // Find the option that matches the current audioId to show its thumbnail
+          const matchingOption = post.options?.find(opt => 
+            opt.extracted_audio_id === audioId ||
+            opt.extracted_audio_id === audioId.replace('user_audio_', '') ||
+            `user_audio_${opt.extracted_audio_id}` === audioId
+          );
+          return {
+            ...post,
+            // Override thumbnail with the matching slide's thumbnail
+            thumbnail_url: matchingOption?.thumbnail_url || matchingOption?.media_url || post.thumbnail_url,
+            userVote: post.user_vote,
+            userLiked: post.user_liked,
+            totalVotes: post.total_votes,
+            authorUser: post.author,
+            commentsCount: post.comments_count
+          };
+        });
         setPosts(transformedPosts);
       } else {
         setPosts([]);
