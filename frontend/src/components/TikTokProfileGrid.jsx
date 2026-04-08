@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Vote, BarChart3, Video } from 'lucide-react';
+import { Play, Vote, BarChart3, Video, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LayoutRenderer from './layouts/LayoutRenderer';
 import PostManagementMenu from './PostManagementMenu';
 import uploadService from '../services/uploadService';
+import { useUpload } from '../contexts/UploadContext';
 
 const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, currentUser, isOwnProfile = false }) => {
   const [thumbnails, setThumbnails] = useState({});
+  const { activeUploads } = useUpload();
 
   // Function to format vote count
   const formatViewCount = (votes) => {
@@ -63,6 +65,61 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
 
   return (
     <div className="tiktok-profile-grid">
+      {/* Background upload placeholders - shown at the top of own profile grid */}
+      {isOwnProfile && activeUploads.map((upload) => (
+        <motion.div
+          key={`upload-${upload.id}`}
+          className="tiktok-profile-grid-item relative overflow-hidden rounded-lg"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="w-full h-full relative bg-gray-900 rounded-lg flex flex-col items-center justify-center">
+            {/* Thumbnail preview (blurred) */}
+            {upload.thumbnail && (
+              <img
+                src={upload.thumbnail}
+                alt="Subiendo..."
+                className="absolute inset-0 w-full h-full object-cover rounded-lg opacity-40 blur-[2px]"
+              />
+            )}
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/50 rounded-lg" />
+            
+            {/* Status indicator */}
+            <div className="relative z-10 flex flex-col items-center gap-2 px-3">
+              {upload.status === 'done' ? (
+                <CheckCircle2 className="w-8 h-8 text-green-400" />
+              ) : upload.status === 'error' ? (
+                <AlertCircle className="w-8 h-8 text-red-400" />
+              ) : (
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              )}
+              
+              <span className="text-white text-xs font-medium text-center line-clamp-1">
+                {upload.status === 'done' ? '¡Publicado!' : 
+                 upload.status === 'error' ? 'Error' :
+                 upload.status === 'creating' ? 'Creando...' : 'Subiendo...'}
+              </span>
+              
+              {/* Progress bar */}
+              {upload.status !== 'done' && upload.status !== 'error' && (
+                <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-white rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${upload.progress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      ))}
+      
       {polls.map((poll, index) => {
         const voteCount = getVoteCount(poll);
 

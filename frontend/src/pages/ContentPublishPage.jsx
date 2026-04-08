@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Hash, AtSign, Search, X, Users, Trophy } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useUpload } from '../contexts/UploadContext';
 import pollService from '../services/pollService';
 import uploadService from '../services/uploadService';  // ⚡ Import upload service
 import challengeService from '../services/challengeService';  // ⚡ Import challenge service
@@ -21,6 +22,7 @@ const ContentPublishPage = () => {
   const location = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, user, token } = useAuth();
+  const { startUpload, updateUpload, removeUpload } = useUpload();
 
   // States
   const [title, setTitle] = useState('');
@@ -233,11 +235,19 @@ const ContentPublishPage = () => {
       }
     }
 
-    // ✅ Navigate to profile IMMEDIATELY - upload continues in background
-    toast({
-      title: "📤 Publicando...",
-      description: "Tu contenido se está subiendo en segundo plano",
+    // Get a thumbnail preview from the first option for the upload card
+    const firstOption = contentData.options?.[0];
+    const previewThumbnail = firstOption?.file 
+      ? URL.createObjectURL(firstOption.file) 
+      : firstOption?.media_url || null;
+
+    // ✅ Register upload in global context (visible in profile grid)
+    const uploadId = startUpload({
+      title: title.trim(),
+      thumbnail: previewThumbnail,
     });
+
+    // ✅ Navigate to profile IMMEDIATELY
     navigate(`/profile/${user?.username || 'me'}`);
 
     // 🔄 Background upload process (component may unmount, but this continues)
@@ -254,12 +264,18 @@ const ContentPublishPage = () => {
         
         let uploadedOptions = [...contentData.options];
         
-        // ⚡ PASO 2: Subir archivos usando multipart/form-data (RÁPIDO)
+        // ⚡ PASO 2: Subir archivos
         if (filesToUpload.length > 0) {
+          updateUpload(uploadId, { progress: 10, status: 'uploading' });
+          
           const uploadResults = await uploadService.uploadMultipleFiles(
             filesToUpload,
             'poll_options',
-            () => {} // No progress UI needed
+            (progress) => {
+              // Map file upload progress to 10-70% range
+              const mappedProgress = Math.round(10 + (progress * 0.6));
+              updateUpload(uploadId, { progress: mappedProgress });
+            }
           );
           
           console.log('✅ All files uploaded:', uploadResults);
@@ -298,6 +314,7 @@ const ContentPublishPage = () => {
         }
         
         // ⚡ PASO 4: Crear poll con las URLs ya subidas
+        updateUpload(uploadId, { progress: 75, status: 'creating' });
         const allMentionedUsers = [
           ...contentData.mentioned_users,
           ...mentionedUsers.map(user => user.id)
@@ -324,6 +341,12 @@ const ContentPublishPage = () => {
 
         console.log('📤 Creating poll with uploaded URLs:', pollData);
         const newPoll = await pollService.createPoll(pollData);
+        
+        // ✅ Upload complete!
+        updateUpload(uploadId, { progress: 100, status: 'done' });
+        
+        // Remove the upload card from profile after 2 seconds
+        setTimeout(() => removeUpload(uploadId), 2000);
         
         // ⚡ PASO 5: Verificar si es challenge
         if (joiningChallengeId) {
@@ -378,6 +401,8 @@ const ContentPublishPage = () => {
 
       } catch (error) {
         console.error('❌ Error creating content in background:', error);
+        updateUpload(uploadId, { progress: 0, status: 'error' });
+        setTimeout(() => removeUpload(uploadId), 4000);
         
         let errorMessage = "No se pudo crear la publicación. Inténtalo de nuevo.";
         if (error.message) {

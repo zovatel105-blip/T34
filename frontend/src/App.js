@@ -37,6 +37,7 @@ import { TikTokProvider, useTikTok } from './contexts/TikTokContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AddictionProvider } from './contexts/AddictionContext';
 import { FollowProvider } from './contexts/FollowContext';
+import { UploadProvider } from './contexts/UploadContext';
 
 // ✅ Configuración automática de entorno
 import AppConfig from './config/config';
@@ -175,9 +176,11 @@ function App() {
       <AuthProvider>
         <FollowProvider>
           <AddictionProvider>
-            <TikTokProvider>
-              <AppContent />
-            </TikTokProvider>
+            <UploadProvider>
+              <TikTokProvider>
+                <AppContent />
+              </TikTokProvider>
+            </UploadProvider>
           </AddictionProvider>
         </FollowProvider>
       </AuthProvider>
