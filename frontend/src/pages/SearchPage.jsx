@@ -1525,8 +1525,9 @@ const SearchPage = () => {
                           className={`flex items-center space-x-1 px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                             isFollowing 
                               ? 'bg-gray-200 text-gray-900 hover:bg-gray-300' 
-                              : 'bg-black text-white hover:bg-gray-800'
+                              : 'text-white hover:opacity-90'
                           } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          style={!isFollowing ? {backgroundColor: '#B061FF'} : {}}
                         >
                           {isFollowing ? (
                             <>
