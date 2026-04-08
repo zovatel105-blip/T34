@@ -53,7 +53,7 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
       const id = `${now}-${counterRef.current}`;
       const gradient = getRandomGradient();
 
-      setAnimations(prev => [...prev, { id, x, y, gradient }]);
+      setAnimations(prev => [...prev, { id, x, y: y - 60, gradient }]);
 
       setTimeout(() => {
         setAnimations(prev => prev.filter(a => a.id !== id));
@@ -114,21 +114,24 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
               }}
             />
 
-            {/* Main icon */}
+            {/* Main icon with pop + shake + fade */}
             <motion.div
               className="absolute inset-0"
               style={{
                 filter: `drop-shadow(0 0 14px ${gradient.glow}) drop-shadow(0 0 28px ${gradient.colors[1]}60)`,
               }}
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.6, opacity: 0, rotate: 0 }}
               animate={{
-                scale: [0.8, 1.15, 1.0, 1.0, 1.0],
+                scale: [0.6, 1.2, 1.0, 1.0, 1.0],
+                rotate: [0, -8, 8, -4, 4, 0],
                 opacity: [0, 1, 1, 1, 0],
               }}
               transition={{
-                duration: 0.8,
-                times: [0, 0.25, 0.375, 0.625, 1],
-                ease: [0.34, 1.56, 0.64, 1],
+                duration: 0.75,
+                times: [0, 0.2, 0.35, 0.6, 1],
+                scale: { duration: 0.75, times: [0, 0.2, 0.35, 0.6, 1], ease: [0.34, 1.56, 0.64, 1] },
+                rotate: { duration: 0.6, times: [0, 0.15, 0.3, 0.45, 0.6, 1], ease: 'easeInOut' },
+                opacity: { duration: 0.75, times: [0, 0.15, 0.4, 0.65, 1], ease: 'easeOut' },
               }}
             >
               <VoteIconWithGradient gradientId={`vg-${id}`} colors={gradient.colors} />
