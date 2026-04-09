@@ -258,16 +258,9 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
       </div>
 
       {/* Search status */}
-      {searchQuery.trim() && (
-        <div className="flex items-center justify-between text-sm px-4 pb-2">
-          <span className="text-white/60">
-            {isSearching 
-              ? `Buscando "${searchQuery}"...`
-              : searchResults.length > 0
-                ? `${searchResults.length} resultados`
-                : searchError || 'Sin resultados'
-            }
-          </span>
+      {searchQuery.trim() && isSearching && (
+        <div className="flex items-center text-sm px-4 pb-2">
+          <span className="text-white/60">Buscando "{searchQuery}"...</span>
         </div>
       )}
 
