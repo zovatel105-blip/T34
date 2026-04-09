@@ -419,23 +419,20 @@ const CarouselLayout = ({
                 </div>
               )}
 
-              </div>
-              </DoubleTapVoteAnimation>
-              {/* Mentioned Users - OUTSIDE DoubleTap for clickability */}
+              {/* Mentioned Users */}
               {(() => {
                 const optionMentions = option.mentioned_users || [];
 
                 if (isThumbnail || optionMentions.length === 0) return null;
 
                 return (
-                  <div className="absolute bottom-24 left-2 right-2 z-[60] pointer-events-auto">
+                  <div className="absolute bottom-24 left-2 right-2 z-20" onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-wrap gap-1 items-center justify-center mb-1">
                       {optionMentions.slice(0, 2).map((mentionedUser, index) => (
                         <button
                           key={mentionedUser.id || index}
                           onClick={(e) => {
                             e.stopPropagation();
-                            e.preventDefault();
                             const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
                             if (username) {
                               navigate(`/profile/${username}`);
@@ -468,6 +465,8 @@ const CarouselLayout = ({
                   </div>
                 );
               })()}
+              </div>
+              </DoubleTapVoteAnimation>
             </SwiperSlide>
           );
         })}

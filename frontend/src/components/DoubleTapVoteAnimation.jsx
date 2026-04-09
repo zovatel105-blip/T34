@@ -40,6 +40,12 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
   const counterRef = useRef(0);
 
   const handleTap = useCallback((e) => {
+    // Ignore clicks from interactive elements (mentions, buttons, links)
+    const target = e.target;
+    if (target.closest('button, a, [role="button"]')) {
+      return;
+    }
+
     const now = Date.now();
     const timeSinceLastTap = now - lastTapRef.current;
     lastTapRef.current = now;
