@@ -6159,9 +6159,12 @@ async def get_ultra_fast_feed(
                     participant_votes = participant_info.get("votes_received", 0) if participant_info else 0
                     participant_user_id = participant_info.get("user_id") if participant_info else None
                     
+                    # Usar el texto original del poll del participante, NO el username
+                    original_text = first_option.get("text", "") if first_option else ""
+                    
                     challenge_options.append({
                         "id": participant_user_id or poll.get("id"),
-                        "text": participant_info.get("username", "") if participant_info else "",
+                        "text": original_text,
                         "votes": participant_votes,
                         "participant_id": participant_user_id,
                         "participant_username": participant_info.get("username") if participant_info else None,
@@ -6825,9 +6828,12 @@ async def get_following_polls(
                     participant_votes = participant_info.get("votes_received", 0) if participant_info else 0
                     participant_user_id = participant_info.get("user_id") if participant_info else None
                     
+                    # Usar el texto original del poll del participante, NO el username
+                    original_text = first_option.get("text", "") if first_option else ""
+                    
                     challenge_options.append({
                         "id": participant_user_id or c_poll.get("id"),
-                        "text": participant_info.get("username", "") if participant_info else "",
+                        "text": original_text,
                         "votes": participant_votes,
                         "participant_id": participant_user_id,
                         "participant_username": participant_info.get("username") if participant_info else None,
