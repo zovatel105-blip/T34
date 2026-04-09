@@ -10803,6 +10803,7 @@ async def get_completed_challenges(
                 "created_at": challenge.get("created_at"),
                 "published_at": challenge.get("published_at"),
                 "final_layout": challenge.get("final_layout"),
+                "required_layout": challenge.get("required_layout"),
                 "final_participant_count": challenge.get("final_participant_count"),
                 "accepted_count": total_participants,
                 "submitted_count": total_participants,

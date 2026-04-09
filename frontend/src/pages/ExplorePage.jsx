@@ -35,7 +35,7 @@ const ExplorePage = () => {
           // Construir opciones del challenge (cada participante es una opción)
           const options = participantsWithContent.map((participant, idx) => ({
             id: participant.user_id, // Usar user_id como id de opción para coincidir con userVote
-            text: participant.username || '',
+            text: '',
             votes: participant.votes_received || 0,
             participant_id: participant.user_id,
             participant_username: participant.username,
@@ -52,7 +52,7 @@ const ExplorePage = () => {
             challenge_id: challenge.id,
             title: challenge.title || 'Challenge',
             type: 'vs',
-            layout: challenge.final_layout || 'vs-horizontal',
+            layout: challenge.required_layout || challenge.final_layout || 'vs-horizontal',
             is_challenge: true,
             isCompleted: true,
             category: 'Challenge',
