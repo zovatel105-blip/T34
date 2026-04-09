@@ -820,35 +820,30 @@ const FollowingPage = () => {
           />
         )}
 
-        {/* Stories Overlay - TikTok style */}
+        {/* Stories Overlay - Instagram style (arriba) */}
         {showStoriesOverlay && (
           <div 
-            className="fixed inset-0 z-[99999] flex flex-col justify-end"
+            className="fixed inset-0 z-[99999] flex flex-col justify-start"
             onClick={() => setShowStoriesOverlay(false)}
           >
             {/* Backdrop oscuro */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
             
-            {/* Contenido del overlay */}
+            {/* Contenido del overlay - parte superior */}
             <div 
-              className="relative bg-black/95 rounded-t-3xl pt-4 pb-8 px-2 border-t border-white/10"
+              className="relative bg-black pt-3 pb-4 px-2 border-b border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Handle/Indicador de arrastre */}
-              <div className="flex justify-center mb-5">
-                <div className="w-10 h-1 bg-white/30 rounded-full" />
-              </div>
-
               {/* Botón cerrar */}
               <button 
                 onClick={() => setShowStoriesOverlay(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center z-10"
               >
                 <X className="w-4 h-4 text-white/70" />
               </button>
 
               {/* Historias horizontales */}
-              <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-4 pb-2">
+              <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-3 pt-1 pb-1">
                 {displayStories.map((story, index) => {
                   const isOwnStory = story.isOwnStory;
                   const hasStories = story.storiesCount > 0;
