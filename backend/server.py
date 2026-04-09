@@ -10789,6 +10789,19 @@ async def get_completed_challenges(
             # Obtener el voto del usuario para este challenge
             user_vote_participant = user_votes.get(challenge.get("id"))
             
+            # 🎵 Resolver música del challenge desde los polls de participantes
+            challenge_music_info = None
+            for p_poll_id in participant_poll_ids:
+                p_poll = polls_dict.get(p_poll_id)
+                if p_poll:
+                    if p_poll.get("music"):
+                        challenge_music_info = p_poll.get("music")
+                        break
+                    elif p_poll.get("music_id"):
+                        challenge_music_info = await get_music_info(p_poll.get("music_id"))
+                        if challenge_music_info:
+                            break
+            
             response = {
                 "id": challenge.get("id"),
                 "title": challenge.get("title"),
@@ -10809,7 +10822,8 @@ async def get_completed_challenges(
                 "submitted_count": total_participants,
                 "is_ready_to_publish": True,
                 "user_vote_participant_id": user_vote_participant,
-                "total_votes": challenge.get("total_votes", 0)
+                "total_votes": challenge.get("total_votes", 0),
+                "music": challenge_music_info
             }
             responses.append(response)
         

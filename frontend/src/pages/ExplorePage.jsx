@@ -71,6 +71,7 @@ const ExplorePage = () => {
               is_verified: false
             },
             options: options,
+            music: challenge.music || null,
             participants: participantsWithContent.map(p => ({
               id: p.user_id,
               username: p.username,
