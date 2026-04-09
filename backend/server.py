@@ -11151,19 +11151,26 @@ async def publish_challenge(challenge_id: str):
         active_participants = [p for p in participants if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED]
         participant_count = len(active_participants)
         
-        # Determinar el layout adaptativo según número de participantes
-        if participant_count == 2:
-            challenge_layout = "1vs1"
-        elif participant_count == 3:
-            challenge_layout = "stack"
-        elif participant_count == 4:
-            challenge_layout = "grid-2x2"
-        elif participant_count == 5:
-            challenge_layout = "grid-adaptive-5"
-        elif participant_count >= 6:
-            challenge_layout = "grid-3x2"
+        # Determinar el layout: usar required_layout del creador si existe, sino auto-calcular
+        stored_layout = challenge.get("required_layout")
+        if stored_layout:
+            challenge_layout = stored_layout
+            logger.info(f"🎨 Challenge {challenge_id}: usando layout del creador: {challenge_layout}")
         else:
-            challenge_layout = "single"  # Fallback para 1 participante (no debería ocurrir)
+            # Auto-calcular según número de participantes (fallback)
+            if participant_count == 2:
+                challenge_layout = "1vs1"
+            elif participant_count == 3:
+                challenge_layout = "stack"
+            elif participant_count == 4:
+                challenge_layout = "grid-2x2"
+            elif participant_count == 5:
+                challenge_layout = "grid-adaptive-5"
+            elif participant_count >= 6:
+                challenge_layout = "grid-3x2"
+            else:
+                challenge_layout = "single"
+            logger.info(f"🎨 Challenge {challenge_id}: layout auto-calculado: {challenge_layout}")
         
         logger.info(f"🎨 Challenge {challenge_id}: {participant_count} participantes → Layout: {challenge_layout}")
         

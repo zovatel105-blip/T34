@@ -791,7 +791,10 @@ const TikTokPollCard = ({
              right: 'env(safe-area-inset-right, 0)'
            }}>
         {/* 🏆 CHALLENGE LAYOUT - Muestra contenido de múltiples participantes */}
-        {poll.is_challenge ? (
+        {/* Si el challenge tiene un layout estándar de contenido (off, vertical, etc.), 
+            usar LayoutRenderer normal. Solo usar el layout challenge-específico para layouts 
+            tipo vs-horizontal, 1vs1, stack, etc. */}
+        {poll.is_challenge && !['off', 'vertical', 'horizontal', 'triptych-vertical', 'triptych-horizontal', 'grid-2x2', 'grid-3x2', 'horizontal-3x2'].includes(poll.layout) ? (
           <div className="w-full h-full flex flex-col">
             {/* Contenido del Challenge - Layout con barras de porcentaje como el feed */}
             <div className="flex-1 flex">
