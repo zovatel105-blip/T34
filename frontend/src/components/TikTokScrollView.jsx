@@ -1411,7 +1411,8 @@ const TikTokScrollView = ({
   isOwnProfile = false,
   onIndexChange = null,
   emptyMessage = 'No hay publicaciones disponibles',
-  emptySubMessage = 'Vuelve más tarde para ver nuevo contenido'
+  emptySubMessage = 'Vuelve más tarde para ver nuevo contenido',
+  onSwipeStart = null
 }) => {
   const containerRef = useRef(null);
   const swiperRef = useRef(null);
@@ -1893,6 +1894,7 @@ const TikTokScrollView = ({
             swiperRef.current = swiper;
           }}
           onSlideChange={handleSlideChange}
+          onTouchStart={() => { if (onSwipeStart) onSwipeStart(); }}
           direction="vertical"
           slidesPerView={1}
           spaceBetween={0}

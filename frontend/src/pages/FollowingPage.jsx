@@ -910,6 +910,7 @@ const FollowingPage = () => {
           onCreatePoll={handleCreatePoll}
           showLogo={false}
           showCloseButton={false}
+          onSwipeStart={() => setShowStoriesOverlay(false)}
         />
 
         <style jsx>{`
