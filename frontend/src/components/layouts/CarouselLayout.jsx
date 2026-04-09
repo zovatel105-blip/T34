@@ -325,6 +325,7 @@ const CarouselLayout = ({
         speed={300}
         noSwiping={true}
         noSwipingClass="no-swiping"
+        touchStartPreventDefault={false}
         className="h-full w-full"
       >
         {poll.options.map((option, idx) => {
@@ -333,7 +334,7 @@ const CarouselLayout = ({
           const isSelected = poll.userVote === option.id;
 
           return (
-            <SwiperSlide key={option.id}>
+            <SwiperSlide key={option.id} style={{ position: 'relative' }}>
               <DoubleTapVoteAnimation
                 onDoubleTap={() => onVote(option.id)}
                 disabled={!!poll.userVote}
