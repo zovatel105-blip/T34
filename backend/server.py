@@ -6931,12 +6931,16 @@ async def get_user_polls(
 ):
     """Get polls created by a specific user - for profile page"""
     try:
-        # Find user by ID or username
+        # Find user by ID or username (case-insensitive, trimmed)
         target_user = await db.users.find_one({"id": user_id})
         if not target_user:
             target_user = await db.users.find_one({"username": user_id})
             if not target_user:
-                raise HTTPException(status_code=404, detail="User not found")
+                # Try case-insensitive and trimmed match
+                stripped = user_id.strip()
+                target_user = await db.users.find_one({"username": {"$regex": f"^{stripped}\\s*$", "$options": "i"}})
+                if not target_user:
+                    raise HTTPException(status_code=404, detail="User not found")
         
         target_user_id = target_user["id"]
         

@@ -1757,30 +1757,30 @@ const ProfilePage = () => {
   };
 
   const handlePollClick = (poll) => {
-    // Encontrar el índice de la publicación seleccionada dentro de la lista actual
-    const currentPolls = activeTab === 'polls' ? userPolls : 
+    // FIX: Usar la misma fuente de datos que la cuadrícula del perfil
+    // La cuadrícula usa `polls` directamente, no `userPolls` (que aplicaba un doble filtro)
+    const currentPolls = activeTab === 'polls' ? polls : 
                         activeTab === 'liked' ? likedPolls :
                         activeTab === 'mentions' ? mentionedPolls :
-                        activeTab === 'saved' ? savedPolls : [];
+                        activeTab === 'saved' ? savedPolls : polls;
     
     const pollIndex = currentPolls.findIndex(p => p.id === poll.id);
     
-    // DEBUG: Log data structure
-    console.log('🔍 PROFILE DEBUG - Active tab:', activeTab);
-    console.log('🔍 PROFILE DEBUG - Poll clicked:', poll);
-    console.log('🔍 PROFILE DEBUG - Current polls array length:', currentPolls?.length);
-    console.log('🔍 PROFILE DEBUG - Poll index found:', pollIndex);
+    // Verificar estructura válida
+    const validPolls = currentPolls.filter(p => p && p.id);
     
-    // Verificar que los datos tienen la estructura correcta
-    const validPolls = currentPolls.filter(p => p && p.id && p.authorUser);
-    if (validPolls.length !== currentPolls.length) {
-      console.warn('⚠️ PROFILE WARNING - Some polls have invalid structure, filtering...');
+    if (validPolls.length === 0 && polls.length > 0) {
+      // Fallback: si la pestaña actual está vacía, usar polls del perfil
+      console.warn('handlePollClick: currentPolls vacío, usando polls como fallback');
+      const fallbackIndex = polls.findIndex(p => p.id === poll.id);
+      setTikTokPolls(polls);
+      setInitialPollIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
+    } else {
+      setTikTokPolls(validPolls);
+      setInitialPollIndex(pollIndex >= 0 ? pollIndex : 0);
     }
     
-    // Use TikTok context instead of manual state
-    setTikTokPolls(validPolls);
-    setInitialPollIndex(pollIndex >= 0 ? pollIndex : 0);
-    enterTikTokMode(); // This will properly set up TikTok mode with context
+    enterTikTokMode();
   };
 
   const handleCreatePoll = () => {
