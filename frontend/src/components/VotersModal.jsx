@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Vote, Loader2, User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
@@ -163,9 +164,9 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       : { opacity: 0, scale: 0.85, y: 60 }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50">
+      <div className="fixed inset-0 z-[9999]">
         {/* Backdrop */}
         <motion.div
           className="absolute inset-0 bg-black/70 backdrop-blur-md"
@@ -378,7 +379,8 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
           </motion.div>
         </div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
