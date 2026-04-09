@@ -429,14 +429,14 @@ const CarouselLayout = ({
                 const optionMentions = option.mentioned_users || [];
                 if (isThumbnail || optionMentions.length === 0) return null;
                 return (
-                  <div className="absolute bottom-24 left-2 right-2 z-[50] no-swiping">
+                  <div className="absolute bottom-24 left-2 right-2 z-[50] no-swiping pointer-events-none">
                     <div className="flex flex-wrap gap-1 items-center justify-center mb-1">
                       {optionMentions.slice(0, 2).map((mentionedUser, mIdx) => {
                         const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
                         return (
                           <button
                             key={mentionedUser.id || mIdx}
-                            className="no-swiping flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
+                            className="no-swiping pointer-events-auto flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (username) navigate(`/profile/${username}`);
