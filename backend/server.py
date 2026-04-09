@@ -6625,6 +6625,26 @@ async def get_following_polls(
     user_likes = await user_likes_cursor.to_list(len(poll_ids))
     liked_poll_ids = set(like["poll_id"] for like in user_likes)
     
+    # 🏷️ Batch resolve: mentioned user IDs to full objects
+    all_mentioned_ids = set()
+    for poll_data in polls:
+        for opt in poll_data.get("options", []):
+            for mu in opt.get("mentioned_users", []):
+                if isinstance(mu, str):
+                    all_mentioned_ids.add(mu)
+    
+    mentioned_users_map = {}
+    if all_mentioned_ids:
+        mu_cursor = db.users.find({"id": {"$in": list(all_mentioned_ids)}})
+        mu_list = await mu_cursor.to_list(len(all_mentioned_ids))
+        for u in mu_list:
+            mentioned_users_map[u["id"]] = {
+                "id": u["id"],
+                "username": u.get("username"),
+                "display_name": u.get("display_name"),
+                "avatar_url": u.get("avatar_url")
+            }
+
     # Build response (same logic as get_polls but for followed users only)
     result = []
     for poll_data in polls:
@@ -6651,6 +6671,17 @@ async def get_following_polls(
             if not thumbnail_url and media_url and option.get("media_type") == "video":
                 thumbnail_url = await get_thumbnail_for_media_url(media_url)
             
+            # Resolve mentioned_users from IDs to full objects
+            raw_mentions = option.get("mentioned_users", [])
+            resolved_mentions = []
+            for mu in raw_mentions:
+                if isinstance(mu, str):
+                    user_obj = mentioned_users_map.get(mu)
+                    if user_obj:
+                        resolved_mentions.append(user_obj)
+                elif isinstance(mu, dict):
+                    resolved_mentions.append(mu)
+            
             option_dict = {
                 "id": option.get("id"),
                 "text": option.get("text", ""),
@@ -6662,7 +6693,7 @@ async def get_following_polls(
                     "verified": option_user.get("is_verified", False) if option_user else False,
                     "id": option_user["id"] if option_user else None
                 } if option_user else None,
-                "mentioned_users": option.get("mentioned_users", []),
+                "mentioned_users": resolved_mentions,
                 "extracted_audio_id": option.get("extracted_audio_id"),
                 "media": {
                     "type": option.get("media_type"),
