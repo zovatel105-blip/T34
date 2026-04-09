@@ -14,7 +14,7 @@ import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, ArrowLeft, Users, User } from 'lucide-react';
+import { Plus, ArrowLeft, Users, User, X } from 'lucide-react';
 
 const FollowingPage = () => {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ const FollowingPage = () => {
   const [selectedPollAuthor, setSelectedPollAuthor] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [preSelectedAudio, setPreSelectedAudio] = useState(null);
+  const [showStoriesOverlay, setShowStoriesOverlay] = useState(false);
   const { toast } = useToast();
   const { trackAction } = useAddiction();
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
@@ -212,8 +213,30 @@ const FollowingPage = () => {
   };
 
   const handleAddStory = () => {
-    // Navigate to story creation page
-    navigate('/story-creation');
+    // Show stories overlay instead of navigating directly
+    setShowStoriesOverlay(true);
+  };
+
+  const handleOverlayStoryClick = (index) => {
+    const story = displayStories[index];
+    setShowStoriesOverlay(false);
+    
+    if (story.isOwnStory && story.storiesCount === 0) {
+      // Navigate to story creation
+      navigate('/story-creation');
+      return;
+    }
+    
+    if (story.isOwnStory && story.storiesCount > 0) {
+      // View own stories
+      setSelectedStoryIndex(index);
+      setShowStoryViewer(true);
+      return;
+    }
+    
+    // View other user's stories
+    setSelectedStoryIndex(index);
+    setShowStoryViewer(true);
   };
 
   const handleCloseStoryViewer = () => {
@@ -795,6 +818,109 @@ const FollowingPage = () => {
             onClose={handleCloseStoryViewer}
             onStoryView={handleStoryView}
           />
+        )}
+
+        {/* Stories Overlay - TikTok style */}
+        {showStoriesOverlay && (
+          <div 
+            className="fixed inset-0 z-[99999] flex flex-col justify-end"
+            onClick={() => setShowStoriesOverlay(false)}
+          >
+            {/* Backdrop oscuro */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            
+            {/* Contenido del overlay */}
+            <div 
+              className="relative bg-black/95 rounded-t-3xl pt-4 pb-8 px-2 border-t border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Handle/Indicador de arrastre */}
+              <div className="flex justify-center mb-5">
+                <div className="w-10 h-1 bg-white/30 rounded-full" />
+              </div>
+
+              {/* Botón cerrar */}
+              <button 
+                onClick={() => setShowStoriesOverlay(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-white/70" />
+              </button>
+
+              {/* Historias horizontales */}
+              <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-4 pb-2">
+                {displayStories.map((story, index) => {
+                  const isOwnStory = story.isOwnStory;
+                  const hasStories = story.storiesCount > 0;
+                  const hasUnviewed = !story.hasViewed && hasStories;
+                  
+                  return (
+                    <button
+                      key={story.userId}
+                      onClick={() => handleOverlayStoryClick(index)}
+                      className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[72px]"
+                    >
+                      {/* Avatar con anillo */}
+                      {isOwnStory && !hasStories ? (
+                        // Crear historia - Avatar con botón +
+                        <div className="relative w-16 h-16">
+                          <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                            {story.userAvatar ? (
+                              <img
+                                src={story.userAvatar}
+                                alt={story.username}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <User className="w-8 h-8 text-gray-500" />
+                              </div>
+                            )}
+                          </div>
+                          {/* Botón + cyan */}
+                          <div className="absolute -bottom-0.5 right-0 w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center border-[2px] border-black shadow-lg">
+                            <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                          </div>
+                        </div>
+                      ) : (
+                        // Historia con anillo de colores
+                        <div className={`w-16 h-16 rounded-full p-[2.5px] ${
+                          hasUnviewed
+                            ? 'bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500'
+                            : hasStories
+                              ? 'bg-gray-500'
+                              : 'bg-transparent'
+                        }`}>
+                          <div className="w-full h-full bg-black rounded-full p-[2px]">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                              {story.userAvatar ? (
+                                <img
+                                  src={story.userAvatar}
+                                  alt={story.username}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <User className="w-8 h-8 text-gray-500" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Label */}
+                      <span className="text-white text-[11px] font-medium truncate w-full text-center">
+                        {isOwnStory ? 'Crear' : (story.username || 'Usuario')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         )}
         
         <TikTokScrollView
