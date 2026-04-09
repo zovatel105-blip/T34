@@ -251,7 +251,7 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
           zIndex: 99999
         } : {}}
       >
-        <MoreVertical className="post-management-icon w-6 h-6" />
+        <MoreVertical className="post-management-icon w-5 h-5" />
       </button>
 
       {/* Bottom Sheet Modal - Portal to body */}
