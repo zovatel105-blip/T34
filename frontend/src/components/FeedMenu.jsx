@@ -191,12 +191,12 @@ const FeedMenu = ({
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] animate-in fade-in duration-200"
             onClick={() => handleSetIsOpen(false)}
           />
           
           {/* Bottom Sheet Content */}
-          <div className="fixed bottom-0 left-0 right-0 z-[101] animate-in slide-in-from-bottom duration-300">
+          <div className="fixed bottom-0 left-0 right-0 z-[10000] animate-in slide-in-from-bottom duration-300">
             <div className="bg-white rounded-t-3xl shadow-2xl overflow-hidden max-w-lg mx-auto">
               {/* Handle Bar */}
               <div className="flex justify-center pt-3 pb-2">
@@ -285,7 +285,7 @@ const FeedMenu = ({
 
       {/* Report Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
