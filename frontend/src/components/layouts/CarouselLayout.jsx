@@ -421,62 +421,47 @@ const CarouselLayout = ({
                 </div>
               )}
 
-              {/* Mentioned Users */}
+              </div>
+              </DoubleTapVoteAnimation>
+              {/* Mentioned Users - inside SwiperSlide but outside DoubleTap */}
               {(() => {
                 const optionMentions = option.mentioned_users || [];
-
                 if (isThumbnail || optionMentions.length === 0) return null;
-
                 return (
-                  <div 
-                    className="absolute bottom-24 left-2 right-2 z-[9999]"
-                    style={{ pointerEvents: 'auto' }}
-                    onClickCapture={(e) => e.stopPropagation()}
-                    onTouchStartCapture={(e) => e.stopPropagation()}
-                    onTouchEndCapture={(e) => e.stopPropagation()}
-                  >
+                  <div className="absolute bottom-24 left-2 right-2 z-[50] no-swiping">
                     <div className="flex flex-wrap gap-1 items-center justify-center mb-1">
-                      {optionMentions.slice(0, 2).map((mentionedUser, index) => {
+                      {optionMentions.slice(0, 2).map((mentionedUser, mIdx) => {
                         const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
                         return (
-                          <a
-                            key={mentionedUser.id || index}
-                            href={username ? `/profile/${username}` : '#'}
+                          <button
+                            key={mentionedUser.id || mIdx}
+                            className="no-swiping flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
                             onClick={(e) => {
-                              e.preventDefault();
                               e.stopPropagation();
                               if (username) navigate(`/profile/${username}`);
                             }}
-                            className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200 no-swiping"
                           >
                             <Avatar className="w-3 h-3 mr-1 border border-white/50">
-                              <AvatarImage 
-                                src={mentionedUser.avatar_url} 
-                                alt={`@${mentionedUser.username || mentionedUser.display_name}`}
-                              />
+                              <AvatarImage src={mentionedUser.avatar_url} />
                               <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
                                 <User className="w-2 h-2" />
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs text-white font-medium">
+                            <span className="text-xs text-white font-medium pointer-events-none">
                               {(mentionedUser.display_name || mentionedUser.username)?.slice(0, 8)}
                             </span>
-                          </a>
+                          </button>
                         );
                       })}
                       {optionMentions.length > 2 && (
-                        <div className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm">
-                          <span className="text-xs text-white/90">
-                            +{optionMentions.length - 2}
-                          </span>
-                        </div>
+                        <span className="text-[10px] text-white/90 bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm">
+                          +{optionMentions.length - 2}
+                        </span>
                       )}
                     </div>
                   </div>
                 );
               })()}
-              </div>
-              </DoubleTapVoteAnimation>
             </SwiperSlide>
           );
         })}
