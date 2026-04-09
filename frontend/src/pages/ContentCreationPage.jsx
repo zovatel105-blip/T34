@@ -1694,9 +1694,9 @@ const ContentCreationPage = () => {
     {/* Music Selector Modal - Rendered outside overflow-hidden container using Portal */}
     {showMusicSelector && createPortal(
       <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-        {/* Backdrop */}
+        {/* Backdrop - lighter so bottom sheet transparency is visible */}
         <div 
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/30"
           onClick={() => setShowMusicSelector(false)}
         />
         
