@@ -589,6 +589,114 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
   );
 };
 
+// Bottom sheet with swipe-to-dismiss on handle bar
+const MusicBottomSheet = ({ onClose, children }) => {
+  const sheetRef = useRef(null);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e) => {
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'none';
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    // Only allow dragging down
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'transform 0.3s ease-out';
+    }
+    // If dragged more than 80px down, close
+    if (currentTranslateY.current > 80) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(100%)`;
+      }
+      setTimeout(onClose, 300);
+    } else {
+      // Snap back
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = 'translateY(0)';
+      }
+    }
+    currentTranslateY.current = 0;
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/30"
+        onClick={onClose}
+      />
+      
+      {/* Bottom Sheet */}
+      <div 
+        ref={sheetRef}
+        className="relative z-10 bg-black/20 backdrop-blur-xl rounded-t-3xl w-full max-h-[85vh] flex flex-col border-t border-white/10"
+        style={{ transition: 'transform 0.3s ease-out' }}
+      >
+        {/* Handle Bar - draggable area */}
+        <div 
+          className="flex justify-center pt-3 pb-3 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={(e) => {
+            const startY = e.clientY;
+            let translateY = 0;
+            if (sheetRef.current) sheetRef.current.style.transition = 'none';
+            
+            const onMouseMove = (ev) => {
+              const delta = ev.clientY - startY;
+              if (delta > 0) {
+                translateY = delta;
+                if (sheetRef.current) sheetRef.current.style.transform = `translateY(${delta}px)`;
+              }
+            };
+            const onMouseUp = () => {
+              document.removeEventListener('mousemove', onMouseMove);
+              document.removeEventListener('mouseup', onMouseUp);
+              if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
+              if (translateY > 80) {
+                if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+                setTimeout(onClose, 300);
+              } else {
+                if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+              }
+            };
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+          }}
+        >
+          <div className="w-10 h-1 bg-white/30 rounded-full" />
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const ContentCreationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1693,30 +1801,13 @@ const ContentCreationPage = () => {
     
     {/* Music Selector Modal - Rendered outside overflow-hidden container using Portal */}
     {showMusicSelector && createPortal(
-      <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-        {/* Backdrop - lighter so bottom sheet transparency is visible */}
-        <div 
-          className="absolute inset-0 bg-black/30"
-          onClick={() => setShowMusicSelector(false)}
+      <MusicBottomSheet onClose={() => setShowMusicSelector(false)}>
+        <MusicSelector
+          onSelectMusic={handleMusicSelect}
+          selectedMusic={selectedMusic}
+          pollTitle=""
         />
-        
-        {/* Bottom Sheet Container - frosted glass like Challenge status badges */}
-        <div className="relative z-10 bg-black/20 backdrop-blur-xl rounded-t-3xl w-full max-h-[85vh] flex flex-col border-t border-white/10">
-          {/* Handle Bar */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-white/30 rounded-full" />
-          </div>
-          
-          {/* Content - search + music list directly */}
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            <MusicSelector
-              onSelectMusic={handleMusicSelect}
-              selectedMusic={selectedMusic}
-              pollTitle=""
-            />
-          </div>
-        </div>
-      </div>,
+      </MusicBottomSheet>,
       document.body
     )}
     </>
