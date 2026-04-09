@@ -431,7 +431,7 @@ const CarouselLayout = ({
                 const optionMentions = option.mentioned_users || [];
                 if (isThumbnail || optionMentions.length === 0) return null;
                 return (
-                  <div className="absolute bottom-24 left-2 right-2 z-[50] no-swiping pointer-events-none">
+                  <div className="absolute bottom-1/2 translate-y-1/2 left-2 right-2 z-[50] no-swiping pointer-events-none">
                     <div className="flex flex-wrap gap-1 items-center justify-center mb-1">
                       {optionMentions.slice(0, 2).map((mentionedUser, mIdx) => {
                         const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
