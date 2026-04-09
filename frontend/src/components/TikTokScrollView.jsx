@@ -1044,7 +1044,7 @@ const TikTokPollCard = ({
       </div>
 
       {/* Bottom info and actions - Enhanced with safe area */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8"
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
@@ -1052,7 +1052,7 @@ const TikTokPollCard = ({
            }}>
         {/* Solo mostrar votos si show_vote_count es true (o por defecto si no existe) */}
         {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
-          <div className="mb-4">
+          <div className="mb-4 pointer-events-auto">
             {poll.is_challenge ? (
               /* 🏆 CHALLENGE: Mostrar estado en vez de conteo de votos */
               <div className="inline-flex items-center px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm">
@@ -1086,7 +1086,7 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 pointer-events-auto">
           {/* Social buttons - Left side when no music, or right side when music present */}
           <div className={`flex items-center gap-3 -ml-2 ${poll.music ? '' : 'flex-1 justify-start'}`}>
             <Button
@@ -1349,7 +1349,7 @@ const TikTokPollCard = ({
           ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
           : poll.music;
         return (
-        <div className="absolute left-0 right-0 z-40 px-4"
+        <div className="absolute left-0 right-0 z-40 px-4 pointer-events-none"
              style={{ 
                bottom: 'max(0.5rem, env(safe-area-inset-bottom))',
                paddingLeft: 'max(1rem, env(safe-area-inset-left))',
@@ -1366,7 +1366,7 @@ const TikTokPollCard = ({
                 navigate(`/audio/${audioId}`);
               }
             }}
-            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit" 
+            className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit pointer-events-auto" 
             style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
           >
             <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
