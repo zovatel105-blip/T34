@@ -1411,7 +1411,9 @@ const TikTokScrollView = ({
   isOwnProfile = false,
   onIndexChange = null,
   emptyMessage = 'No hay publicaciones disponibles',
-  emptySubMessage = 'Vuelve más tarde para ver nuevo contenido'
+  emptySubMessage = 'Vuelve más tarde para ver nuevo contenido',
+  topOffset = 0,
+  onSwipeStart = null
 }) => {
   const containerRef = useRef(null);
   const swiperRef = useRef(null);
@@ -1880,11 +1882,12 @@ const TikTokScrollView = ({
         ref={containerRef}
         className="w-full h-full overflow-hidden"
         style={{
-          height: '100vh',
-          height: '100dvh',
+          height: topOffset > 0 ? `calc(100dvh - ${topOffset}px)` : '100dvh',
           width: '100vw',
           width: '100dvw',
-          position: 'relative'
+          marginTop: topOffset > 0 ? `${topOffset}px` : '0px',
+          position: 'relative',
+          transition: 'all 0.3s ease-out'
         }}
       >
         <Swiper
@@ -1892,7 +1895,13 @@ const TikTokScrollView = ({
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
-          onSlideChange={handleSlideChange}
+          onSlideChange={(swiper) => {
+            handleSlideChange(swiper);
+            if (onSwipeStart) onSwipeStart();
+          }}
+          onTouchStart={() => {
+            if (onSwipeStart) onSwipeStart();
+          }}
           direction="vertical"
           slidesPerView={1}
           spaceBetween={0}
@@ -1909,8 +1918,7 @@ const TikTokScrollView = ({
           initialSlide={initialIndex}
           className="h-full w-full"
           style={{
-            height: '100vh',
-            height: '100dvh',
+            height: topOffset > 0 ? `calc(100dvh - ${topOffset}px)` : '100dvh',
           }}
         >
           {preloadedPolls.map((poll, index) => (

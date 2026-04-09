@@ -908,40 +908,22 @@ const FollowingPage = () => {
         </div>
         
         {/* Feed con espacio para el overlay y cierre al deslizar */}
-        <div 
-          className="transition-all duration-300 ease-out"
-          style={{ paddingTop: showStoriesOverlay ? '130px' : '0px' }}
-          onTouchStart={(e) => {
-            if (showStoriesOverlay) {
-              overlaySwipeRef.current = e.touches[0].clientY;
-            }
+        <TikTokScrollView
+          polls={polls}
+          onVote={handleVote}
+          onLike={handleLike}
+          onShare={handleShare}
+          onComment={handleComment}
+          onSave={handleSave}
+          onExitTikTok={handleExitTikTok}
+          onCreatePoll={handleCreatePoll}
+          showLogo={false}
+          showCloseButton={false}
+          topOffset={showStoriesOverlay ? 130 : 0}
+          onSwipeStart={() => {
+            if (showStoriesOverlay) setShowStoriesOverlay(false);
           }}
-          onTouchMove={(e) => {
-            if (showStoriesOverlay && overlaySwipeRef.current !== null) {
-              const diff = Math.abs(e.touches[0].clientY - overlaySwipeRef.current);
-              if (diff > 20) {
-                setShowStoriesOverlay(false);
-                overlaySwipeRef.current = null;
-              }
-            }
-          }}
-          onTouchEnd={() => {
-            overlaySwipeRef.current = null;
-          }}
-        >
-          <TikTokScrollView
-            polls={polls}
-            onVote={handleVote}
-            onLike={handleLike}
-            onShare={handleShare}
-            onComment={handleComment}
-            onSave={handleSave}
-            onExitTikTok={handleExitTikTok}
-            onCreatePoll={handleCreatePoll}
-            showLogo={false}
-            showCloseButton={false}
-          />
-        </div>
+        />
 
         <style jsx>{`
           .scrollbar-hide::-webkit-scrollbar {
