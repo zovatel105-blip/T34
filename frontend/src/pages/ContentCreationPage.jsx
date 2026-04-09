@@ -1703,28 +1703,16 @@ const ContentCreationPage = () => {
         {/* Bottom Sheet Container */}
         <div className="relative z-10 bg-zinc-900 rounded-t-3xl w-full max-h-[85vh] flex flex-col">
           {/* Handle Bar */}
-          <div className="flex justify-center pt-3 pb-2">
+          <div className="flex justify-center pt-3 pb-1">
             <div className="w-10 h-1 bg-zinc-600 rounded-full" />
           </div>
           
-          {/* Header */}
-          <div className="px-4 pb-3 flex items-center justify-between border-b border-zinc-800">
-            <h3 className="text-lg font-semibold text-white">Añadir sonido</h3>
-            <button
-              onClick={() => setShowMusicSelector(false)}
-              className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Content */}
+          {/* Content - search + music list directly */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
             <MusicSelector
               onSelectMusic={handleMusicSelect}
               selectedMusic={selectedMusic}
               pollTitle=""
-              darkMode={true}
             />
           </div>
         </div>
