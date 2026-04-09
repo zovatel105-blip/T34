@@ -6011,6 +6011,26 @@ async def get_ultra_fast_feed(
         user_likes = await user_likes_cursor.to_list(len(poll_ids))
         liked_poll_ids = set(like["poll_id"] for like in user_likes)
         
+        # 🏷️ Batch lookup: Resolve all mentioned user IDs across all options
+        all_mentioned_ids = set()
+        for poll_data in polls:
+            for opt in poll_data.get("options", []):
+                for mu in opt.get("mentioned_users", []):
+                    if isinstance(mu, str):
+                        all_mentioned_ids.add(mu)
+        
+        mentioned_users_dict = {}
+        if all_mentioned_ids:
+            mentioned_cursor = db.users.find({"id": {"$in": list(all_mentioned_ids)}})
+            mentioned_list = await mentioned_cursor.to_list(len(all_mentioned_ids))
+            for u in mentioned_list:
+                mentioned_users_dict[u["id"]] = {
+                    "id": u["id"],
+                    "username": u.get("username"),
+                    "display_name": u.get("display_name"),
+                    "avatar_url": u.get("avatar_url")
+                }
+
         # Build response quickly
         result = []
         for poll_data in polls:
@@ -6024,12 +6044,24 @@ async def get_ultra_fast_feed(
                     media_type = opt.get("media_type")
                     thumbnail_url = opt.get("thumbnail_url")
                     
+                    # Resolve mentioned users from IDs to full objects
+                    raw_mentions = opt.get("mentioned_users", [])
+                    resolved_mentions = []
+                    for mu in raw_mentions:
+                        if isinstance(mu, str):
+                            user_obj = mentioned_users_dict.get(mu)
+                            if user_obj:
+                                resolved_mentions.append(user_obj)
+                        elif isinstance(mu, dict):
+                            resolved_mentions.append(mu)
+                    
                     # Build option with proper media structure
                     option_dict = {
                         "id": opt.get("id"),
                         "text": opt.get("text", ""),
                         "votes": opt.get("votes", 0),
                         "extracted_audio_id": opt.get("extracted_audio_id"),
+                        "mentioned_users": resolved_mentions,
                         # 🎨 CRITICAL: Transform media to frontend format
                         "media": {
                             "type": media_type,
@@ -6063,6 +6095,7 @@ async def get_ultra_fast_feed(
                     "saves_count": poll_data.get("saves_count", 0),
                     "comments_count": poll_data.get("comments_count", 0),
                     "layout": poll_data.get("layout"),
+                    "mentioned_users": poll_data.get("mentioned_users", []),
                     "music": music_info,  # 🎵 FIXED: Use resolved music info
                     "userVote": user_votes_dict.get(poll_data.get("id")),
                     "userLiked": poll_data.get("id") in liked_poll_ids,
