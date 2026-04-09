@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
 import PollCard from '../components/PollCard';
@@ -30,6 +30,7 @@ const FollowingPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [preSelectedAudio, setPreSelectedAudio] = useState(null);
   const [showStoriesOverlay, setShowStoriesOverlay] = useState(false);
+  const overlaySwipeRef = useRef(null);
   const { toast } = useToast();
   const { trackAction } = useAddiction();
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
@@ -820,45 +821,64 @@ const FollowingPage = () => {
           />
         )}
 
-        {/* Stories Overlay - Instagram style (arriba) */}
-        {showStoriesOverlay && (
-          <div 
-            className="fixed inset-0 z-[99999] flex flex-col justify-start"
-            onClick={() => setShowStoriesOverlay(false)}
-          >
-            {/* Backdrop oscuro */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            
-            {/* Contenido del overlay - parte superior */}
-            <div 
-              className="relative bg-black pt-3 pb-4 px-2 border-b border-white/10"
-              onClick={(e) => e.stopPropagation()}
+        {/* Stories Overlay - Instagram style (arriba, empuja contenido) */}
+        <div 
+          className={`fixed top-0 left-0 right-0 z-[99999] bg-black border-b border-white/10 transition-all duration-300 ease-out overflow-hidden ${
+            showStoriesOverlay ? 'max-h-[130px] opacity-100' : 'max-h-0 opacity-0 border-b-0'
+          }`}
+        >
+          <div className="pt-3 pb-4 px-2">
+            {/* Botón cerrar */}
+            <button 
+              onClick={() => setShowStoriesOverlay(false)}
+              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center z-10"
             >
-              {/* Botón cerrar */}
-              <button 
-                onClick={() => setShowStoriesOverlay(false)}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center z-10"
-              >
-                <X className="w-4 h-4 text-white/70" />
-              </button>
+              <X className="w-4 h-4 text-white/70" />
+            </button>
 
-              {/* Historias horizontales */}
-              <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-3 pt-1 pb-1">
-                {displayStories.map((story, index) => {
-                  const isOwnStory = story.isOwnStory;
-                  const hasStories = story.storiesCount > 0;
-                  const hasUnviewed = !story.hasViewed && hasStories;
-                  
-                  return (
-                    <button
-                      key={story.userId}
-                      onClick={() => handleOverlayStoryClick(index)}
-                      className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[72px]"
-                    >
-                      {/* Avatar con anillo */}
-                      {isOwnStory && !hasStories ? (
-                        // Crear historia - Avatar con botón +
-                        <div className="relative w-16 h-16">
+            {/* Historias horizontales */}
+            <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-3 pt-1 pb-1">
+              {displayStories.map((story, index) => {
+                const isOwnStory = story.isOwnStory;
+                const hasStories = story.storiesCount > 0;
+                const hasUnviewed = !story.hasViewed && hasStories;
+                
+                return (
+                  <button
+                    key={story.userId}
+                    onClick={() => handleOverlayStoryClick(index)}
+                    className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[72px]"
+                  >
+                    {/* Avatar con anillo */}
+                    {isOwnStory && !hasStories ? (
+                      <div className="relative w-16 h-16">
+                        <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                          {story.userAvatar ? (
+                            <img
+                              src={story.userAvatar}
+                              alt={story.username}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="w-8 h-8 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute -bottom-0.5 right-0 w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center border-[2px] border-black shadow-lg">
+                          <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`w-16 h-16 rounded-full p-[2.5px] ${
+                        hasUnviewed
+                          ? 'bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500'
+                          : hasStories
+                            ? 'bg-gray-500'
+                            : 'bg-transparent'
+                      }`}>
+                        <div className="w-full h-full bg-black rounded-full p-[2px]">
                           <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                             {story.userAvatar ? (
                               <img
@@ -873,63 +893,55 @@ const FollowingPage = () => {
                               </div>
                             )}
                           </div>
-                          {/* Botón + cyan */}
-                          <div className="absolute -bottom-0.5 right-0 w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center border-[2px] border-black shadow-lg">
-                            <Plus className="w-3 h-3 text-white" strokeWidth={3} />
-                          </div>
                         </div>
-                      ) : (
-                        // Historia con anillo de colores
-                        <div className={`w-16 h-16 rounded-full p-[2.5px] ${
-                          hasUnviewed
-                            ? 'bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500'
-                            : hasStories
-                              ? 'bg-gray-500'
-                              : 'bg-transparent'
-                        }`}>
-                          <div className="w-full h-full bg-black rounded-full p-[2px]">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
-                              {story.userAvatar ? (
-                                <img
-                                  src={story.userAvatar}
-                                  alt={story.username}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { e.target.style.display = 'none'; }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <User className="w-8 h-8 text-gray-500" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Label */}
-                      <span className="text-white text-[11px] font-medium truncate w-full text-center">
-                        {isOwnStory ? 'Crear' : (story.username || 'Usuario')}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                      </div>
+                    )}
+                    
+                    <span className="text-white text-[11px] font-medium truncate w-full text-center">
+                      {isOwnStory ? 'Crear' : (story.username || 'Usuario')}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
+        </div>
         
-        <TikTokScrollView
-          polls={polls}
-          onVote={handleVote}
-          onLike={handleLike}
-          onShare={handleShare}
-          onComment={handleComment}
-          onSave={handleSave}
-          onExitTikTok={handleExitTikTok}
-          onCreatePoll={handleCreatePoll}
-          showLogo={false}
-          showCloseButton={false}
-        />
+        {/* Feed con espacio para el overlay y cierre al deslizar */}
+        <div 
+          className="transition-all duration-300 ease-out"
+          style={{ paddingTop: showStoriesOverlay ? '130px' : '0px' }}
+          onTouchStart={(e) => {
+            if (showStoriesOverlay) {
+              overlaySwipeRef.current = e.touches[0].clientY;
+            }
+          }}
+          onTouchMove={(e) => {
+            if (showStoriesOverlay && overlaySwipeRef.current !== null) {
+              const diff = Math.abs(e.touches[0].clientY - overlaySwipeRef.current);
+              if (diff > 20) {
+                setShowStoriesOverlay(false);
+                overlaySwipeRef.current = null;
+              }
+            }
+          }}
+          onTouchEnd={() => {
+            overlaySwipeRef.current = null;
+          }}
+        >
+          <TikTokScrollView
+            polls={polls}
+            onVote={handleVote}
+            onLike={handleLike}
+            onShare={handleShare}
+            onComment={handleComment}
+            onSave={handleSave}
+            onExitTikTok={handleExitTikTok}
+            onCreatePoll={handleCreatePoll}
+            showLogo={false}
+            showCloseButton={false}
+          />
+        </div>
 
         <style jsx>{`
           .scrollbar-hide::-webkit-scrollbar {
