@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://progress-bar-reset-1.preview.emergentagent.com"
+BASE_URL = "https://foreign-profile-bug.preview.emergentagent.com"
 TEST_USER = {
     "email": "backendtest@test.com",
     "password": "test1234",
