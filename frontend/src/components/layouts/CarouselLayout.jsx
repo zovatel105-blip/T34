@@ -326,6 +326,8 @@ const CarouselLayout = ({
         noSwiping={true}
         noSwipingClass="no-swiping"
         touchStartPreventDefault={false}
+        preventClicks={false}
+        preventClicksPropagation={false}
         className="h-full w-full"
       >
         {poll.options.map((option, idx) => {

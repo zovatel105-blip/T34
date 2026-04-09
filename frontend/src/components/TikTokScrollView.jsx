@@ -1962,6 +1962,8 @@ const TikTokScrollView = ({
           direction="vertical"
           slidesPerView={1}
           spaceBetween={0}
+          preventClicks={false}
+          preventClicksPropagation={false}
           mousewheel={{
             forceToAxis: true,
             sensitivity: 1,
