@@ -323,6 +323,8 @@ const CarouselLayout = ({
         spaceBetween={0}
         slidesPerView={1}
         speed={300}
+        noSwiping={true}
+        noSwipingClass="no-swiping"
         className="h-full w-full"
       >
         {poll.options.map((option, idx) => {
@@ -426,30 +428,26 @@ const CarouselLayout = ({
                 if (isThumbnail || optionMentions.length === 0) return null;
 
                 return (
-                  <div className="absolute bottom-24 left-2 right-2 z-20" onClick={(e) => e.stopPropagation()}>
+                  <div 
+                    className="absolute bottom-24 left-2 right-2 z-[9999]"
+                    style={{ pointerEvents: 'auto' }}
+                    onClickCapture={(e) => e.stopPropagation()}
+                    onTouchStartCapture={(e) => e.stopPropagation()}
+                    onTouchEndCapture={(e) => e.stopPropagation()}
+                  >
                     <div className="flex flex-wrap gap-1 items-center justify-center mb-1">
                       {optionMentions.slice(0, 2).map((mentionedUser, index) => {
-                        let startPos = { x: 0, y: 0 };
+                        const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
                         return (
-                          <div
+                          <a
                             key={mentionedUser.id || index}
-                            onTouchStart={(e) => {
-                              startPos.x = e.touches[0].clientX;
-                              startPos.y = e.touches[0].clientY;
+                            href={username ? `/profile/${username}` : '#'}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (username) navigate(`/profile/${username}`);
                             }}
-                            onTouchEnd={(e) => {
-                              const dx = Math.abs(e.changedTouches[0].clientX - startPos.x);
-                              const dy = Math.abs(e.changedTouches[0].clientY - startPos.y);
-                              if (dx < 10 && dy < 10) {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
-                                if (username) {
-                                  navigate(`/profile/${username}`);
-                                }
-                              }
-                            }}
-                            className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
+                            className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200 no-swiping"
                           >
                             <Avatar className="w-3 h-3 mr-1 border border-white/50">
                               <AvatarImage 
@@ -463,7 +461,7 @@ const CarouselLayout = ({
                             <span className="text-xs text-white font-medium">
                               {(mentionedUser.display_name || mentionedUser.username)?.slice(0, 8)}
                             </span>
-                          </div>
+                          </a>
                         );
                       })}
                       {optionMentions.length > 2 && (
