@@ -280,10 +280,10 @@ const GridLayout = ({
                 className={cn(
                   "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out rounded-t-lg",
                   isWinner 
-                    ? "bg-gradient-to-t from-green-500/70 via-green-500/50 to-green-500/20"
+                    ? "bg-gradient-to-t from-green-500/30 via-green-500/15 to-green-500/5"
                     : isSelected 
-                      ? "bg-gradient-to-t from-blue-500/70 via-blue-500/50 to-blue-500/20"
-                      : "bg-gradient-to-t from-white/60 via-white/40 to-white/20"
+                      ? "bg-gradient-to-t from-blue-500/30 via-blue-500/15 to-blue-500/5"
+                      : "bg-gradient-to-t from-white/25 via-white/12 to-white/5"
                 )}
                 style={{ 
                   height: `${Math.max(percentage, 15)}%`,

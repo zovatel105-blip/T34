@@ -400,10 +400,10 @@ const CarouselLayout = ({
                       className={cn(
                         'absolute inset-x-0 bottom-0 rounded-t-lg transition-all',
                         isWinner
-                          ? 'bg-green-500/40'
+                          ? 'bg-green-500/15'
                           : isSelected
-                          ? 'bg-blue-500/40'
-                          : 'bg-white/30'
+                          ? 'bg-blue-500/15'
+                          : 'bg-white/10'
                       )}
                       style={{
                         height: `${Math.max(percentage, 15)}%`
