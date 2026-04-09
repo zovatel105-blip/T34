@@ -907,7 +907,6 @@ const FollowingPage = () => {
           </div>
         </div>
         
-        {/* Feed con espacio para el overlay y cierre al deslizar */}
         <TikTokScrollView
           polls={polls}
           onVote={handleVote}
@@ -919,10 +918,6 @@ const FollowingPage = () => {
           onCreatePoll={handleCreatePoll}
           showLogo={false}
           showCloseButton={false}
-          topOffset={showStoriesOverlay ? 130 : 0}
-          onSwipeStart={() => {
-            if (showStoriesOverlay) setShowStoriesOverlay(false);
-          }}
         />
 
         <style jsx>{`
