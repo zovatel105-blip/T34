@@ -441,7 +441,8 @@ const CarouselLayout = ({
                             className="no-swiping pointer-events-auto flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (username) navigate(`/profile/${username}`);
+                              const trimmedUsername = (username || '').trim();
+                              if (trimmedUsername) navigate('/profile/' + trimmedUsername);
                             }}
                           >
                             <Avatar className="w-3 h-3 mr-1 border border-white/50">
