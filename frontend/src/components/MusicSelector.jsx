@@ -272,7 +272,7 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
       )}
 
       {/* Music list */}
-      <div className="max-h-[60vh] overflow-y-auto pb-4">
+      <div className="max-h-[38vh] overflow-y-auto pb-4">
         {isLoadingPopular && !searchQuery ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin mr-2 text-white/50" />
