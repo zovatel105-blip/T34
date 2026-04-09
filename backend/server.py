@@ -7195,6 +7195,9 @@ async def get_user_polls(
         except Exception as e:
             logger.error(f"Error loading challenges for user profile: {e}")
         
+        # Ordenar todo por fecha (más reciente primero)
+        result.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+        
         return {"polls": result, "total": total}
         
     except HTTPException:
