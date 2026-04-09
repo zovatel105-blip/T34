@@ -248,7 +248,7 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
           placeholder="Buscar..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="pl-10 h-12 rounded-xl border-0 text-[15px] bg-white/10 backdrop-blur-sm text-white placeholder:text-white/50 focus:ring-1 focus:ring-white/20 focus-visible:ring-white/20"
+          className="pl-10 h-9 rounded-xl border-0 text-sm bg-white/10 backdrop-blur-sm text-white placeholder:text-white/50 focus:ring-1 focus:ring-white/20 focus-visible:ring-white/20"
         />
         {isSearching && (
           <div className="absolute right-7 top-1/2 transform -translate-y-1/2 mt-0.5">
