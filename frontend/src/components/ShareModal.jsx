@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Facebook, MessageCircle, Copy, ExternalLink } from 'lucide-react';
 import { Button } from './ui/button';
@@ -159,7 +160,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
     }
   ];
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -168,8 +169,8 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           exit={{ opacity: 0 }}
           className={
             isMobile 
-              ? "fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              : "fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              ? "fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
+              : "fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
           }
           onClick={onClose}
         >
@@ -286,7 +287,8 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
