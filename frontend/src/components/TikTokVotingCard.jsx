@@ -311,20 +311,24 @@ const TikTokVotingCard = ({
                     )}
                   </div>
                   
-                  {/* Results Progress Overlay */}
+                  {/* Results Progress Bar - Almost transparent, grows from bottom like normal posts */}
                   {showResults && (
                     <motion.div
                       className={cn(
-                        "absolute inset-0 bg-gradient-to-t",
+                        "absolute inset-x-0 bottom-0 transition-all duration-700 ease-out",
                         isSelected 
-                          ? "from-blue-500/30 to-blue-600/10"
+                          ? "bg-gradient-to-t from-blue-500/25 via-blue-500/15 to-transparent"
                           : isWinner
-                            ? "from-green-500/30 to-green-600/10"
-                            : "from-gray-500/20 to-gray-600/8"
+                            ? "bg-gradient-to-t from-green-500/25 via-green-500/15 to-transparent"
+                            : "bg-gradient-to-t from-gray-500/20 via-gray-500/10 to-transparent"
                       )}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: percentage / 100 }}
-                      transition={{ duration: 1 }}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${Math.max(percentage, 15)}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      style={{
+                        transformOrigin: 'bottom',
+                        minHeight: '30px'
+                      }}
                     />
                   )}
                   
