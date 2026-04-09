@@ -14,7 +14,7 @@ import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, ArrowLeft, Users, User, X } from 'lucide-react';
+import { Plus, ArrowLeft, Users, User } from 'lucide-react';
 
 const FollowingPage = () => {
   const navigate = useNavigate();
@@ -827,17 +827,9 @@ const FollowingPage = () => {
             showStoriesOverlay ? 'max-h-[130px] opacity-100' : 'max-h-0 opacity-0 border-b-0'
           }`}
         >
-          <div className="pt-3 pb-4 px-2">
-            {/* Botón cerrar */}
-            <button 
-              onClick={() => setShowStoriesOverlay(false)}
-              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center z-10"
-            >
-              <X className="w-4 h-4 text-white/70" />
-            </button>
-
+          <div className="pt-3 pb-4 px-0">
             {/* Historias horizontales */}
-            <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-3 pt-1 pb-1">
+            <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-2 pt-1 pb-1">
               {displayStories.map((story, index) => {
                 const isOwnStory = story.isOwnStory;
                 const hasStories = story.storiesCount > 0;
