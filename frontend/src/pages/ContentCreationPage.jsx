@@ -1700,11 +1700,11 @@ const ContentCreationPage = () => {
           onClick={() => setShowMusicSelector(false)}
         />
         
-        {/* Bottom Sheet Container */}
-        <div className="relative z-10 bg-zinc-900 rounded-t-3xl w-full max-h-[85vh] flex flex-col">
+        {/* Bottom Sheet Container - frosted glass like Challenge status badges */}
+        <div className="relative z-10 bg-black/20 backdrop-blur-xl rounded-t-3xl w-full max-h-[85vh] flex flex-col border-t border-white/10">
           {/* Handle Bar */}
           <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+            <div className="w-10 h-1 bg-white/30 rounded-full" />
           </div>
           
           {/* Content - search + music list directly */}

@@ -41,21 +41,21 @@ const MusicWaveform = ({ waveform, isPlaying, duration = 30 }) => {
 };
 
 // TikTok-style music card matching reference design
-const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showSource = false, darkMode = false }) => {
+const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showSource = false }) => {
   return (
     <div 
       className={`
         flex items-center gap-4 px-4 py-3 cursor-pointer transition-all duration-200
         ${isSelected 
-          ? 'bg-zinc-800/80' 
-          : 'hover:bg-zinc-800/40 active:bg-zinc-800/60'
+          ? 'bg-white/15 backdrop-blur-sm' 
+          : 'hover:bg-white/8 active:bg-white/12'
         }
       `}
       onClick={() => onSelect(music)}
     >
       {/* Album art - larger, rounded like reference */}
       <div 
-        className="relative w-14 h-14 rounded-lg overflow-hidden bg-zinc-800 flex-shrink-0"
+        className="relative w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           onPlay(music);
@@ -78,12 +78,12 @@ const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showS
         )}
       </div>
 
-      {/* Music info - matching reference: title bold, arrow + artist • duration */}
+      {/* Music info */}
       <div className="flex-1 min-w-0">
         <h4 className="font-bold text-[15px] text-white truncate leading-tight">
           {music.title}
         </h4>
-        <p className="text-[13px] text-zinc-400 truncate mt-0.5 flex items-center gap-1">
+        <p className="text-[13px] text-white/60 truncate mt-0.5 flex items-center gap-1">
           <span className="inline-block transform rotate-45">→</span>
           <span>{music.artist}</span>
           {music.duration > 0 && (
@@ -240,19 +240,19 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
   };
 
   return (
-    <div className="bg-zinc-900">
-      {/* Search bar - matching reference design */}
+    <div className="bg-transparent">
+      {/* Search bar - frosted glass style */}
       <div className="relative px-4 pt-4 pb-3">
-        <Search className="absolute left-7 top-1/2 transform -translate-y-1/2 text-zinc-500 w-4 h-4 mt-0.5" />
+        <Search className="absolute left-7 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4 mt-0.5" />
         <Input
           placeholder="Buscar..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="pl-10 h-12 rounded-xl border-0 text-[15px] bg-zinc-800 text-white placeholder:text-zinc-500 focus:ring-1 focus:ring-zinc-700 focus-visible:ring-zinc-700"
+          className="pl-10 h-12 rounded-xl border-0 text-[15px] bg-white/10 backdrop-blur-sm text-white placeholder:text-white/50 focus:ring-1 focus:ring-white/20 focus-visible:ring-white/20"
         />
         {isSearching && (
           <div className="absolute right-7 top-1/2 transform -translate-y-1/2 mt-0.5">
-            <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
+            <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
           </div>
         )}
       </div>
@@ -260,7 +260,7 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
       {/* Search status */}
       {searchQuery.trim() && (
         <div className="flex items-center justify-between text-sm px-4 pb-2">
-          <span className="text-zinc-400">
+          <span className="text-white/60">
             {isSearching 
               ? `Buscando "${searchQuery}"...`
               : searchResults.length > 0
@@ -271,15 +271,15 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
         </div>
       )}
 
-      {/* Music list - no categories, direct list */}
+      {/* Music list */}
       <div className="max-h-[60vh] overflow-y-auto pb-4">
         {isLoadingPopular && !searchQuery ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin mr-2 text-zinc-500" />
-            <span className="text-zinc-500">Cargando...</span>
+            <Loader2 className="w-5 h-5 animate-spin mr-2 text-white/50" />
+            <span className="text-white/50">Cargando...</span>
           </div>
         ) : searchError && searchQuery ? (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-white/50">
             <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">{searchError}</p>
           </div>
@@ -298,7 +298,7 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
             ))}
           </>
         ) : (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-white/50">
             <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No se encontró música</p>
           </div>
