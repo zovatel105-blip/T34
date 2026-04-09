@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreHorizontal, MoreVertical, EyeOff, UserX, Bell, BellOff, Flag, X } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -186,8 +187,8 @@ const FeedMenu = ({
         <MoreVertical className="w-5 h-5" />
       </button>
 
-      {/* Bottom Sheet Modal */}
-      {isOpen && (
+      {/* Bottom Sheet Modal - Portal to body */}
+      {isOpen && createPortal(
         <>
           {/* Backdrop */}
           <div 
@@ -280,11 +281,12 @@ const FeedMenu = ({
               <div className="h-6" />
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
-      {/* Report Modal */}
-      {showReportModal && (
+      {/* Report Modal - Portal to body */}
+      {showReportModal && createPortal(
         <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div 
@@ -369,7 +371,8 @@ const FeedMenu = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
