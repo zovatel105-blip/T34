@@ -1241,7 +1241,7 @@ const TikTokPollCard = ({
             )}
 
             {/* Post Management Menu - Only shown for own posts */}
-            {onUpdatePoll && onDeletePoll && (
+            {onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
               <PostManagementMenu
                 poll={poll}
                 onUpdate={onUpdatePoll}
