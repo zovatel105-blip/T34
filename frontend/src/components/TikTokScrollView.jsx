@@ -884,31 +884,27 @@ const TikTokPollCard = ({
                               </div>
                             )}
 
-                            {/* Barra de porcentaje - igual que en el feed */}
+                            {/* Barra de porcentaje - estilo igual que polls normales */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
                                 className={cn(
-                                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out",
+                                  "absolute inset-x-0 bottom-0 rounded-t-lg transition-all",
                                   isWinner 
-                                    ? "bg-gradient-to-t from-green-500/30 via-green-500/15 to-green-500/5"
+                                    ? "bg-green-500/15"
                                     : isSelected 
-                                      ? "bg-gradient-to-t from-blue-500/30 via-blue-500/15 to-blue-500/5"
-                                      : "bg-gradient-to-t from-white/25 via-white/12 to-white/5"
+                                      ? "bg-blue-500/15"
+                                      : "bg-white/10"
                                 )}
                                 style={{ 
-                                  height: `${Math.max(percentage, 15)}%`,
-                                  minHeight: '60px',
-                                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                  height: `${Math.max(percentage, 15)}%`
                                 }}
-                              />
-                            )}
-                            
-                            {/* Borde de selección */}
-                            {hasUserVoted && isSelected && (
-                              <div className="absolute inset-0 ring-2 ring-blue-400/60 ring-inset pointer-events-none"></div>
-                            )}
-                            {hasUserVoted && isWinner && (
-                              <div className="absolute inset-0 ring-2 ring-green-400 ring-inset pointer-events-none"></div>
+                              >
+                                {isWinner && (
+                                  <div className="absolute top-2 left-1/2 -translate-x-1/2">
+                                    <Trophy className="w-4 h-4 text-green-300" />
+                                  </div>
+                                )}
+                              </div>
                             )}
                             </DoubleTapVoteAnimation>
                           </div>
@@ -985,31 +981,27 @@ const TikTokPollCard = ({
                               </div>
                             )}
 
-                            {/* Barra de porcentaje */}
+                            {/* Barra de porcentaje - estilo igual que polls normales */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
                                 className={cn(
-                                  "absolute inset-x-0 bottom-0 transition-all duration-1000 ease-out",
+                                  "absolute inset-x-0 bottom-0 rounded-t-lg transition-all",
                                   isWinner 
-                                    ? "bg-gradient-to-t from-green-500/30 via-green-500/15 to-green-500/5"
+                                    ? "bg-green-500/15"
                                     : isSelected 
-                                      ? "bg-gradient-to-t from-blue-500/30 via-blue-500/15 to-blue-500/5"
-                                      : "bg-gradient-to-t from-white/25 via-white/12 to-white/5"
+                                      ? "bg-blue-500/15"
+                                      : "bg-white/10"
                                 )}
                                 style={{ 
-                                  height: `${Math.max(percentage, 15)}%`,
-                                  minHeight: '50px',
-                                  transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                  height: `${Math.max(percentage, 15)}%`
                                 }}
-                              />
-                            )}
-                            
-                            {/* Bordes */}
-                            {hasUserVoted && isSelected && (
-                              <div className="absolute inset-0 ring-2 ring-blue-400/60 ring-inset pointer-events-none"></div>
-                            )}
-                            {hasUserVoted && isWinner && (
-                              <div className="absolute inset-0 ring-2 ring-green-400 ring-inset pointer-events-none"></div>
+                              >
+                                {isWinner && (
+                                  <div className="absolute top-2 left-1/2 -translate-x-1/2">
+                                    <Trophy className="w-4 h-4 text-green-300" />
+                                  </div>
+                                )}
+                              </div>
                             )}
                             </DoubleTapVoteAnimation>
                           </div>
