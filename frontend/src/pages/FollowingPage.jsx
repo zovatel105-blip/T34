@@ -824,12 +824,12 @@ const FollowingPage = () => {
         {/* Stories Overlay - Instagram style (arriba, empuja contenido) */}
         <div 
           className={`fixed top-0 left-0 right-0 z-[99999] bg-black border-b border-white/10 transition-all duration-300 ease-out overflow-hidden ${
-            showStoriesOverlay ? 'max-h-[126px] opacity-100' : 'max-h-0 opacity-0 border-b-0'
+            showStoriesOverlay ? 'max-h-[105px] opacity-100' : 'max-h-0 opacity-0 border-b-0'
           }`}
         >
-          <div className="pt-3 pb-3 px-0">
+          <div className="pt-2 pb-2 px-0">
             {/* Historias horizontales */}
-            <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-2 pt-1 pb-1">
+            <div className="flex items-start gap-3 overflow-x-auto scrollbar-hide px-2 pt-0.5 pb-0.5">
               {displayStories.map((story, index) => {
                 const isOwnStory = story.isOwnStory;
                 const hasStories = story.storiesCount > 0;
@@ -839,11 +839,11 @@ const FollowingPage = () => {
                   <button
                     key={story.userId}
                     onClick={() => handleOverlayStoryClick(index)}
-                    className="flex-shrink-0 flex flex-col items-center gap-1.5 w-[72px]"
+                    className="flex-shrink-0 flex flex-col items-center gap-1 w-[60px]"
                   >
                     {/* Avatar con anillo */}
                     {isOwnStory && !hasStories ? (
-                      <div className="relative w-16 h-16">
+                      <div className="relative w-13 h-13" style={{width: '52px', height: '52px'}}>
                         <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                           {story.userAvatar ? (
                             <img
@@ -854,23 +854,23 @@ const FollowingPage = () => {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <User className="w-8 h-8 text-gray-500" />
+                              <User className="w-6 h-6 text-gray-500" />
                             </div>
                           )}
                         </div>
-                        <div className="absolute -bottom-0.5 right-0 w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center border-[2px] border-black shadow-lg">
-                          <Plus className="w-3 h-3 text-white" strokeWidth={3} />
+                        <div className="absolute -bottom-0.5 right-0 w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center border-[2px] border-black shadow-lg">
+                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
                       </div>
                     ) : (
-                      <div className={`w-16 h-16 rounded-full p-[2.5px] ${
+                      <div className={`rounded-full p-[2px] ${
                         hasUnviewed
                           ? 'bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500'
                           : hasStories
                             ? 'bg-gray-500'
                             : 'bg-transparent'
-                      }`}>
-                        <div className="w-full h-full bg-black rounded-full p-[2px]">
+                      }`} style={{width: '52px', height: '52px'}}>
+                        <div className="w-full h-full bg-black rounded-full p-[1.5px]">
                           <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                             {story.userAvatar ? (
                               <img
@@ -881,7 +881,7 @@ const FollowingPage = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <User className="w-8 h-8 text-gray-500" />
+                                <User className="w-6 h-6 text-gray-500" />
                               </div>
                             )}
                           </div>
@@ -889,7 +889,7 @@ const FollowingPage = () => {
                       </div>
                     )}
                     
-                    <span className="text-white text-[11px] font-medium truncate w-full text-center">
+                    <span className="text-white text-[10px] font-medium truncate w-full text-center">
                       {isOwnStory ? 'Crear' : (story.username || 'Usuario')}
                     </span>
                   </button>
