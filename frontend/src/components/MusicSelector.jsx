@@ -45,7 +45,7 @@ const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showS
   return (
     <div 
       className={`
-        flex items-center gap-4 px-4 py-3 cursor-pointer transition-all duration-200
+        flex items-center gap-3 px-4 py-2 cursor-pointer transition-all duration-200
         ${isSelected 
           ? 'bg-white/15 backdrop-blur-sm' 
           : 'hover:bg-white/8 active:bg-white/12'
@@ -55,7 +55,7 @@ const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showS
     >
       {/* Album art - larger, rounded like reference */}
       <div 
-        className="relative w-14 h-14 rounded-lg overflow-hidden bg-white/10 flex-shrink-0"
+        className="relative w-10 h-10 rounded-md overflow-hidden bg-white/10 flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           onPlay(music);
@@ -80,10 +80,10 @@ const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showS
 
       {/* Music info */}
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-[15px] text-white truncate leading-tight">
+        <h4 className="font-bold text-sm text-white truncate leading-tight">
           {music.title}
         </h4>
-        <p className="text-[13px] text-white/60 truncate mt-0.5 flex items-center gap-1">
+        <p className="text-xs text-white/60 truncate mt-0.5 flex items-center gap-1">
           <span className="inline-block transform rotate-45">→</span>
           <span>{music.artist}</span>
           {music.duration > 0 && (
@@ -97,8 +97,8 @@ const SimpleMusicCard = ({ music, isSelected, isPlaying, onSelect, onPlay, showS
 
       {/* Selected indicator */}
       {isSelected && (
-        <div className="w-6 h-6 bg-white text-black rounded-full flex items-center justify-center flex-shrink-0">
-          <Check className="w-3.5 h-3.5" />
+        <div className="w-5 h-5 bg-white text-black rounded-full flex items-center justify-center flex-shrink-0">
+          <Check className="w-3 h-3" />
         </div>
       )}
     </div>
