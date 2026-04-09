@@ -7089,6 +7089,112 @@ async def get_user_polls(
         
         total = await db.polls.count_documents(filter_query)
         
+        # 🏆 También incluir challenges publicados donde este usuario es creador
+        try:
+            published_challenges = await db.challenges.find({
+                "status": ChallengeStatus.PUBLISHED,
+                "creator_id": target_user_id
+            }).sort("published_at", -1).to_list(20)
+            
+            for challenge in published_challenges:
+                challenge_poll_ids = []
+                for p in challenge.get("participants", []):
+                    if p.get("poll_id") and p.get("status") == "content_submitted":
+                        challenge_poll_ids.append(p.get("poll_id"))
+                
+                if not challenge_poll_ids:
+                    continue
+                
+                challenge_polls_cursor = db.polls.find({"id": {"$in": challenge_poll_ids}})
+                challenge_polls = await challenge_polls_cursor.to_list(len(challenge_poll_ids))
+                challenge_polls_dict = {cp.get("id"): cp for cp in challenge_polls}
+                
+                challenge_options = []
+                for cp in challenge_polls:
+                    first_option = cp.get("options", [{}])[0] if cp.get("options") else {}
+                    participant_info = next(
+                        (p for p in challenge.get("participants", []) if p.get("poll_id") == cp.get("id")),
+                        None
+                    )
+                    participant_votes = participant_info.get("votes_received", 0) if participant_info else 0
+                    participant_user_id = participant_info.get("user_id") if participant_info else None
+                    original_text = first_option.get("text", "") if first_option else ""
+                    
+                    challenge_options.append({
+                        "id": participant_user_id or cp.get("id"),
+                        "text": original_text,
+                        "votes": participant_votes,
+                        "participant_id": participant_user_id,
+                        "participant_username": participant_info.get("username") if participant_info else None,
+                        "participant_avatar": participant_info.get("avatar_url") if participant_info else None,
+                        "media": {
+                            "type": first_option.get("media_type"),
+                            "url": first_option.get("media_url"),
+                            "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
+                        } if first_option.get("media_url") else None
+                    })
+                
+                if not challenge_options:
+                    continue
+                
+                # Layout del challenge
+                stored_layout = challenge.get("required_layout")
+                if stored_layout:
+                    challenge_layout = stored_layout
+                else:
+                    num_p = len(challenge_options)
+                    challenge_layout = "vs-horizontal" if num_p == 2 else "vs-stack" if num_p == 3 else "vs-grid-2x2" if num_p == 4 else "vs-grid"
+                
+                # Música del challenge
+                challenge_music = None
+                for cp in challenge_polls:
+                    if cp.get("music"):
+                        challenge_music = cp.get("music")
+                        break
+                    elif cp.get("music_id"):
+                        challenge_music = await get_music_info(cp.get("music_id"))
+                        if challenge_music:
+                            break
+                
+                # Participantes info
+                challenge_participants = []
+                for p in challenge.get("participants", []):
+                    if p.get("status") == "content_submitted":
+                        challenge_participants.append({
+                            "id": p.get("user_id"),
+                            "username": p.get("username"),
+                            "display_name": p.get("display_name"),
+                            "avatar_url": p.get("avatar_url")
+                        })
+                
+                challenge_poll_response = {
+                    "id": f"challenge_{challenge.get('id')}",
+                    "challenge_id": challenge.get("id"),
+                    "title": challenge.get("title", "Challenge"),
+                    "author": author_data,
+                    "options": challenge_options,
+                    "created_at": challenge.get("published_at") or challenge.get("created_at"),
+                    "total_votes": challenge.get("total_votes", 0),
+                    "likes": 0,
+                    "likes_count": 0,
+                    "shares": 0,
+                    "saves_count": 0,
+                    "comments_count": 0,
+                    "layout": challenge_layout,
+                    "is_challenge": True,
+                    "challenge_status": "published",
+                    "participants": challenge_participants,
+                    "music": challenge_music,
+                    "user_vote": None,
+                    "user_liked": False,
+                    "comments_enabled": True,
+                    "show_vote_count": True,
+                }
+                result.append(challenge_poll_response)
+                total += 1
+        except Exception as e:
+            logger.error(f"Error loading challenges for user profile: {e}")
+        
         return {"polls": result, "total": total}
         
     except HTTPException:
