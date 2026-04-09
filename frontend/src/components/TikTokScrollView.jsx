@@ -849,6 +849,38 @@ const TikTokPollCard = ({
                               <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
                             )}
                             
+                            {/* Mentioned Users */}
+                            {option.mentioned_users?.length > 0 && (
+                              <div className="absolute bottom-16 left-2 right-2 z-20 flex flex-wrap gap-1 items-center">
+                                {option.mentioned_users.slice(0, 2).map((mentionedUser, mIdx) => (
+                                  <button
+                                    key={mentionedUser.id || mIdx}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
+                                      if (username) navigate(`/profile/${username}`);
+                                    }}
+                                    className="flex items-center bg-white/20 px-1.5 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
+                                  >
+                                    <Avatar className="w-4 h-4 mr-1 border border-white/50">
+                                      <AvatarImage src={mentionedUser.avatar_url} />
+                                      <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
+                                        <User className="w-2 h-2" />
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-[10px] text-white font-medium">
+                                      @{(mentionedUser.username || mentionedUser.display_name)?.slice(0, 10)}
+                                    </span>
+                                  </button>
+                                ))}
+                                {option.mentioned_users.length > 2 && (
+                                  <div className="flex items-center bg-white/20 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                                    <span className="text-[10px] text-white/90">+{option.mentioned_users.length - 2}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* Barra de porcentaje - igual que en el feed */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
@@ -918,6 +950,38 @@ const TikTokPollCard = ({
                               <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
                             )}
                             
+                            {/* Mentioned Users */}
+                            {option.mentioned_users?.length > 0 && (
+                              <div className="absolute bottom-12 left-1 right-1 z-20 flex flex-wrap gap-0.5 items-center">
+                                {option.mentioned_users.slice(0, 2).map((mentionedUser, mIdx) => (
+                                  <button
+                                    key={mentionedUser.id || mIdx}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const username = mentionedUser.username || mentionedUser.display_name?.toLowerCase().replace(/\s+/g, '_');
+                                      if (username) navigate(`/profile/${username}`);
+                                    }}
+                                    className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
+                                  >
+                                    <Avatar className="w-3 h-3 mr-0.5 border border-white/50">
+                                      <AvatarImage src={mentionedUser.avatar_url} />
+                                      <AvatarFallback className="bg-gray-400 text-white text-[7px] flex items-center justify-center">
+                                        <User className="w-2 h-2" />
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-[9px] text-white font-medium">
+                                      @{(mentionedUser.username || mentionedUser.display_name)?.slice(0, 8)}
+                                    </span>
+                                  </button>
+                                ))}
+                                {option.mentioned_users.length > 2 && (
+                                  <div className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm">
+                                    <span className="text-[9px] text-white/90">+{option.mentioned_users.length - 2}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* Barra de porcentaje */}
                             {hasUserVoted && percentage > 0 && (
                               <div 
