@@ -146,55 +146,35 @@ const ProfilePage = () => {
     loadOwnProfileStats();
   }, [authUser?.id]);
 
-  // Load user's polls
+  // Load user's polls using dedicated endpoint
   useEffect(() => {
     const loadUserPolls = async () => {
       if (!authUser?.id && !userId) return;
       
       setPollsLoading(true);
       try {
-        // Get all polls first
-        const allPolls = await pollService.getPollsForFrontend({ limit: 100 });
-        
-        // Determine target user info
-        let targetUserId, targetUsername;
+        // Determine target user identifier
+        let targetUserParam;
         
         if (userId && viewedUser) {
-          // Viewing another user's profile - use viewedUser data
-          targetUserId = viewedUser.id;
-          targetUsername = viewedUser.username;
+          // Viewing another user's profile - use viewedUser.id (UUID) for reliable API query
+          targetUserParam = viewedUser.id;
         } else if (!userId && authUser) {
-          // Viewing own profile - use authUser data
-          targetUserId = authUser.id;
-          targetUsername = authUser.username;
+          // Viewing own profile - use authUser.id
+          targetUserParam = authUser.id;
         } else if (userId && !viewedUser) {
           // Still loading viewedUser data, return early
           setPollsLoading(false);
           return;
         }
         
-        console.log('Target user ID:', targetUserId);
-        console.log('Target username:', targetUsername);
-        console.log('All polls:', allPolls.length);
+        console.log('📋 Loading polls for user:', targetUserParam);
         
-        // Filter polls by the target user (check both ID and username)
-        const userPolls = allPolls.filter(poll => {
-          const authorMatches = poll.authorUser?.id === targetUserId || 
-                               poll.authorUser?.username === targetUsername;
-                               
-          console.log(`Poll "${poll.title}" by ${poll.authorUser?.username} (${poll.authorUser?.id}) - matches: ${authorMatches}`);
-          return authorMatches;
-        });
+        // Use dedicated user polls endpoint (queries DB directly by author_id)
+        const userPollsData = await pollService.getUserPolls(targetUserParam, { limit: 100 });
         
-        // Sort by most recent first
-        userPolls.sort((a, b) => {
-          const dateA = new Date(a.created_at || 0);
-          const dateB = new Date(b.created_at || 0);
-          return dateB - dateA;
-        });
-        
-        console.log('Filtered user polls:', userPolls.length);
-        setPolls(userPolls);
+        console.log('📋 User polls loaded:', userPollsData.length);
+        setPolls(userPollsData);
       } catch (error) {
         console.error('Error loading user polls:', error);
         toast({

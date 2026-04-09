@@ -6922,6 +6922,163 @@ async def get_following_polls(
     
     return result
 
+@api_router.get("/users/{user_id}/polls")
+async def get_user_polls(
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get polls created by a specific user - for profile page"""
+    try:
+        # Find user by ID or username
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user:
+            target_user = await db.users.find_one({"username": user_id})
+            if not target_user:
+                raise HTTPException(status_code=404, detail="User not found")
+        
+        target_user_id = target_user["id"]
+        
+        # Query polls by this user
+        filter_query = {
+            "author_id": target_user_id,
+            "is_active": True,
+            "$or": [
+                {"challenge_pending": {"$exists": False}},
+                {"challenge_pending": False},
+                {"challenge_pending": None}
+            ]
+        }
+        
+        polls_cursor = db.polls.find(filter_query).sort("created_at", -1).skip(offset).limit(limit)
+        polls = await polls_cursor.to_list(limit)
+        
+        if not polls:
+            return {"polls": [], "total": 0}
+        
+        # Get author info
+        author_data = {k: v for k, v in target_user.items() if k != "_id"}
+        
+        # Get user votes and likes for current user
+        poll_ids = [poll.get("id") for poll in polls if poll.get("id")]
+        
+        user_votes_cursor = db.votes.find({
+            "poll_id": {"$in": poll_ids},
+            "user_id": current_user.id
+        })
+        user_votes = await user_votes_cursor.to_list(len(poll_ids))
+        user_votes_dict = {vote["poll_id"]: vote["option_id"] for vote in user_votes}
+        
+        user_likes_cursor = db.poll_likes.find({
+            "poll_id": {"$in": poll_ids},
+            "user_id": current_user.id
+        })
+        user_likes = await user_likes_cursor.to_list(len(poll_ids))
+        liked_poll_ids = set(like["poll_id"] for like in user_likes)
+        
+        # Resolve mentioned users
+        all_mentioned_ids = set()
+        for poll_data in polls:
+            for opt in poll_data.get("options", []):
+                for mu in opt.get("mentioned_users", []):
+                    if isinstance(mu, str):
+                        all_mentioned_ids.add(mu)
+        
+        mentioned_users_dict = {}
+        if all_mentioned_ids:
+            mentioned_cursor = db.users.find({"id": {"$in": list(all_mentioned_ids)}})
+            mentioned_list = await mentioned_cursor.to_list(len(all_mentioned_ids))
+            for u in mentioned_list:
+                mentioned_users_dict[u["id"]] = {
+                    "id": u["id"],
+                    "username": u.get("username"),
+                    "display_name": u.get("display_name"),
+                    "avatar_url": u.get("avatar_url")
+                }
+        
+        # Build response
+        result = []
+        for poll_data in polls:
+            # Transform options
+            transformed_options = []
+            for opt in poll_data.get("options", []):
+                media_url = opt.get("media_url")
+                media_type = opt.get("media_type")
+                thumbnail_url = opt.get("thumbnail_url")
+                
+                raw_mentions = opt.get("mentioned_users", [])
+                resolved_mentions = []
+                for mu in raw_mentions:
+                    if isinstance(mu, str):
+                        user_obj = mentioned_users_dict.get(mu)
+                        if user_obj:
+                            resolved_mentions.append(user_obj)
+                    elif isinstance(mu, dict):
+                        resolved_mentions.append(mu)
+                
+                option_dict = {
+                    "id": opt.get("id"),
+                    "text": opt.get("text", ""),
+                    "votes": opt.get("votes", 0),
+                    "extracted_audio_id": opt.get("extracted_audio_id"),
+                    "mentioned_users": resolved_mentions,
+                    "media": {
+                        "type": media_type,
+                        "url": media_url,
+                        "thumbnail": thumbnail_url or media_url,
+                        "transform": opt.get("media_transform")
+                    } if media_url else None
+                }
+                transformed_options.append(option_dict)
+            
+            # Resolve music
+            music_info = None
+            if poll_data.get("music_id"):
+                music_info = await get_music_info(poll_data.get("music_id"))
+            elif poll_data.get("music"):
+                music_info = poll_data.get("music")
+            
+            poll_response = {
+                "id": poll_data.get("id"),
+                "title": poll_data.get("title"),
+                "author": author_data,
+                "options": transformed_options,
+                "created_at": poll_data.get("created_at"),
+                "total_votes": poll_data.get("total_votes", 0),
+                "likes": poll_data.get("likes", 0),
+                "likes_count": poll_data.get("likes", 0),
+                "shares": poll_data.get("shares", 0),
+                "saves_count": poll_data.get("saves_count", 0),
+                "comments_count": poll_data.get("comments_count", 0),
+                "layout": poll_data.get("layout"),
+                "mentioned_users": poll_data.get("mentioned_users", []),
+                "music": music_info,
+                "user_vote": user_votes_dict.get(poll_data.get("id")),
+                "user_liked": poll_data.get("id") in liked_poll_ids,
+                "comments_enabled": poll_data.get("comments_enabled", True),
+                "show_vote_count": poll_data.get("show_vote_count", True),
+                "vs_id": poll_data.get("vs_id"),
+                "vs_questions": poll_data.get("vs_questions", []),
+                "creator_country": poll_data.get("creator_country"),
+                "is_challenge": poll_data.get("is_challenge", False),
+                "challenge_id": poll_data.get("challenge_id"),
+                "challenge_status": poll_data.get("challenge_status"),
+                "participants": poll_data.get("participants", []),
+            }
+            result.append(poll_response)
+        
+        total = await db.polls.count_documents(filter_query)
+        
+        return {"polls": result, "total": total}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting user polls: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/users/{user_id}/mentioned-polls", response_model=List[PollResponse])
 async def get_user_mentioned_polls(
     user_id: str,

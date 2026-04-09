@@ -14,6 +14,277 @@ TEST_USER = {
     "display_name": "Backend Test"
 }
 
+# Demo user credentials from test_credentials.md
+DEMO_USER = {
+    "email": "demo@example.com",
+    "password": "demo123",
+    "username": "demo_user"
+}
+
+# Test user for polls testing
+POLLS_TEST_USER = {
+    "email": "pollstest@test.com",
+    "password": "test1234",
+    "username": "pollstest",
+    "display_name": "Polls Test User"
+}
+
+class UserPollsEndpointTester:
+    def __init__(self):
+        self.base_url = BASE_URL
+        self.session = requests.Session()
+        self.access_token = None
+        self.demo_user_id = None
+        self.results = []
+
+    def log_result(self, test_name: str, success: bool, details: str = ""):
+        """Log test result"""
+        status = "✅ PASS" if success else "❌ FAIL"
+        result = f"{status} {test_name}"
+        if details:
+            result += f" - {details}"
+        print(result)
+        self.results.append({
+            "test": test_name,
+            "success": success,
+            "details": details
+        })
+
+    def login_demo_user(self) -> bool:
+        """Login with demo user credentials"""
+        try:
+            # Try polls test user first
+            login_url = f"{self.base_url}/api/auth/login"
+            login_data = {
+                "email": POLLS_TEST_USER["email"],
+                "password": POLLS_TEST_USER["password"]
+            }
+            response = self.session.post(login_url, json=login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.access_token = data.get("access_token")
+                user_data = data.get("user", {})
+                self.demo_user_id = user_data.get("id")
+                self.log_result("Polls test user login", True, f"Token obtained, User ID: {self.demo_user_id}")
+                return True
+            
+            # Fallback to demo user
+            login_data = {
+                "email": DEMO_USER["email"],
+                "password": DEMO_USER["password"]
+            }
+            response = self.session.post(login_url, json=login_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.access_token = data.get("access_token")
+                user_data = data.get("user", {})
+                self.demo_user_id = user_data.get("id")
+                self.log_result("Demo user login", True, f"Token obtained, User ID: {self.demo_user_id}")
+                return True
+            else:
+                self.log_result("User login", False, f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("User login", False, f"Exception: {str(e)}")
+            return False
+
+    def test_user_polls_with_auth(self, user_id: str, limit: Optional[int] = None, offset: Optional[int] = None) -> Dict[str, Any]:
+        """Test GET /api/users/{user_id}/polls with authentication"""
+        try:
+            url = f"{self.base_url}/api/users/{user_id}/polls"
+            params = {}
+            if limit is not None:
+                params["limit"] = limit
+            if offset is not None:
+                params["offset"] = offset
+            
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            response = self.session.get(url, params=params, headers=headers)
+            
+            test_name = f"GET /api/users/{user_id}/polls (authenticated)"
+            if params:
+                test_name += f" with params {params}"
+            
+            if response.status_code == 200:
+                data = response.json()
+                polls = data.get("polls", [])
+                total = data.get("total", 0)
+                
+                details = f"Status: 200, Polls: {len(polls)}, Total: {total}"
+                self.log_result(test_name, True, details)
+                return {"success": True, "data": data, "status": 200}
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:200]}"
+                self.log_result(test_name, False, details)
+                return {"success": False, "status": response.status_code, "response": response.text}
+                
+        except Exception as e:
+            self.log_result(test_name, False, f"Exception: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def test_user_polls_without_auth(self, user_id: str) -> Dict[str, Any]:
+        """Test GET /api/users/{user_id}/polls without authentication (should return 401)"""
+        try:
+            url = f"{self.base_url}/api/users/{user_id}/polls"
+            response = self.session.get(url)  # No Authorization header
+            
+            test_name = f"GET /api/users/{user_id}/polls (no auth)"
+            
+            if response.status_code == 401:
+                self.log_result(test_name, True, "Status: 401 (Unauthorized as expected)")
+                return {"success": True, "status": 401}
+            else:
+                details = f"Status: {response.status_code} (expected 401), Response: {response.text[:200]}"
+                self.log_result(test_name, False, details)
+                return {"success": False, "status": response.status_code}
+                
+        except Exception as e:
+            self.log_result(test_name, False, f"Exception: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def test_user_polls_invalid_user(self) -> Dict[str, Any]:
+        """Test GET /api/users/{user_id}/polls with invalid user ID (should return 404)"""
+        try:
+            invalid_user_id = "00000000-0000-0000-0000-000000000000"  # Non-existent UUID
+            url = f"{self.base_url}/api/users/{invalid_user_id}/polls"
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            response = self.session.get(url, headers=headers)
+            
+            test_name = f"GET /api/users/{invalid_user_id}/polls (invalid user)"
+            
+            if response.status_code == 404:
+                self.log_result(test_name, True, "Status: 404 (Not Found as expected)")
+                return {"success": True, "status": 404}
+            else:
+                details = f"Status: {response.status_code} (expected 404), Response: {response.text[:200]}"
+                self.log_result(test_name, False, details)
+                return {"success": False, "status": response.status_code}
+                
+        except Exception as e:
+            self.log_result(test_name, False, f"Exception: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def test_user_polls_by_username(self) -> Dict[str, Any]:
+        """Test GET /api/users/{username}/polls using username instead of UUID"""
+        try:
+            username = DEMO_USER["username"]
+            url = f"{self.base_url}/api/users/{username}/polls"
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            response = self.session.get(url, headers=headers)
+            
+            test_name = f"GET /api/users/{username}/polls (by username)"
+            
+            if response.status_code == 200:
+                data = response.json()
+                polls = data.get("polls", [])
+                total = data.get("total", 0)
+                
+                details = f"Status: 200, Polls: {len(polls)}, Total: {total}"
+                self.log_result(test_name, True, details)
+                return {"success": True, "data": data, "status": 200}
+            else:
+                details = f"Status: {response.status_code}, Response: {response.text[:200]}"
+                self.log_result(test_name, False, details)
+                return {"success": False, "status": response.status_code}
+                
+        except Exception as e:
+            self.log_result(test_name, False, f"Exception: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def run_comprehensive_tests(self):
+        """Run all user polls endpoint tests"""
+        print("👤 USER POLLS ENDPOINT TESTING - GET /api/users/{user_id}/polls")
+        print("=" * 70)
+        
+        # Step 1: Authentication
+        if not self.login_demo_user():
+            print("❌ CRITICAL: Authentication failed - cannot proceed with tests")
+            return False
+        
+        print(f"\n🔍 TESTING USER POLLS ENDPOINT")
+        print("-" * 50)
+        
+        # Step 2: Test with valid user ID and authentication
+        print("\n1. Testing with valid user ID and authentication")
+        valid_auth_test = self.test_user_polls_with_auth(self.demo_user_id)
+        
+        # Step 3: Test without authentication (should return 401)
+        print("\n2. Testing without authentication (should return 401)")
+        no_auth_test = self.test_user_polls_without_auth(self.demo_user_id)
+        
+        # Step 4: Test with invalid user ID (should return 404)
+        print("\n3. Testing with invalid user ID (should return 404)")
+        invalid_user_test = self.test_user_polls_invalid_user()
+        
+        # Step 5: Test with username instead of UUID
+        print("\n4. Testing with username instead of UUID")
+        username_test = self.test_user_polls_by_username()
+        
+        # Step 6: Test with limit parameter
+        print("\n5. Testing with limit parameter")
+        limit_test = self.test_user_polls_with_auth(self.demo_user_id, limit=10)
+        
+        # Step 7: Test with offset parameter
+        print("\n6. Testing with offset parameter")
+        offset_test = self.test_user_polls_with_auth(self.demo_user_id, offset=5)
+        
+        # Step 8: Test with both limit and offset
+        print("\n7. Testing with both limit and offset parameters")
+        limit_offset_test = self.test_user_polls_with_auth(self.demo_user_id, limit=5, offset=2)
+        
+        # Summary
+        print("\n" + "=" * 70)
+        print("📊 TEST SUMMARY")
+        print("=" * 70)
+        
+        passed_tests = sum(1 for r in self.results if r["success"])
+        total_tests = len(self.results)
+        
+        for result in self.results:
+            status = "✅" if result["success"] else "❌"
+            print(f"{status} {result['test']}: {result['details']}")
+        
+        print(f"\n🎯 OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
+        
+        # Check specific requirements
+        print("\n🔍 REQUIREMENT VERIFICATION:")
+        
+        # Requirement 1: Authentication required
+        if no_auth_test["success"]:
+            print("✅ Requires authentication (returns 401 without token)")
+        else:
+            print("❌ Authentication requirement not working properly")
+        
+        # Requirement 2: Valid user ID works
+        if valid_auth_test["success"]:
+            print("✅ Works with valid user ID and authentication")
+        else:
+            print("❌ Does not work with valid user ID")
+        
+        # Requirement 3: Invalid user returns 404
+        if invalid_user_test["success"]:
+            print("✅ Returns 404 for invalid user ID")
+        else:
+            print("❌ Does not return 404 for invalid user ID")
+        
+        # Requirement 4: Username support
+        if username_test["success"]:
+            print("✅ Supports username parameter")
+        else:
+            print("❌ Username parameter not working")
+        
+        # Requirement 5: Query parameters work
+        if limit_test["success"] and offset_test["success"]:
+            print("✅ Limit and offset parameters work")
+        else:
+            print("❌ Query parameters not working properly")
+        
+        return passed_tests == total_tests
+
+
 class MusicSearchTester:
     def __init__(self):
         self.base_url = BASE_URL
@@ -198,15 +469,42 @@ class MusicSearchTester:
 
 def main():
     """Main test execution"""
-    tester = MusicSearchTester()
-    success = tester.run_comprehensive_tests()
+    print("🚀 BACKEND API TESTING SUITE")
+    print("=" * 50)
     
-    if success:
-        print("\n🎉 ALL TESTS PASSED - Music search with 200 limit working correctly!")
+    # Test 1: User Polls Endpoint
+    print("\n🔥 TESTING NEW ENDPOINT: GET /api/users/{user_id}/polls")
+    user_polls_tester = UserPollsEndpointTester()
+    user_polls_success = user_polls_tester.run_comprehensive_tests()
+    
+    # Test 2: Music Search (existing test)
+    print("\n\n🎵 TESTING EXISTING ENDPOINT: Music Search")
+    music_tester = MusicSearchTester()
+    music_success = music_tester.run_comprehensive_tests()
+    
+    # Overall summary
+    print("\n" + "=" * 70)
+    print("🏁 FINAL TESTING SUMMARY")
+    print("=" * 70)
+    
+    if user_polls_success:
+        print("✅ User Polls Endpoint: ALL TESTS PASSED")
     else:
-        print("\n⚠️ SOME TESTS FAILED - See details above")
+        print("❌ User Polls Endpoint: SOME TESTS FAILED")
     
-    return success
+    if music_success:
+        print("✅ Music Search Endpoint: ALL TESTS PASSED")
+    else:
+        print("❌ Music Search Endpoint: SOME TESTS FAILED")
+    
+    overall_success = user_polls_success and music_success
+    
+    if overall_success:
+        print("\n🎉 ALL BACKEND TESTS PASSED!")
+    else:
+        print("\n⚠️ SOME BACKEND TESTS FAILED - See details above")
+    
+    return overall_success
 
 if __name__ == "__main__":
     main()

@@ -328,14 +328,28 @@ class PollService {
     }
   }
 
-  // Get user's own polls
+  // Get user's polls using dedicated endpoint
   async getUserPolls(userId, options = {}) {
-    // For now, filter from all polls
-    // In the future, this could be a dedicated endpoint
+    const { limit = 50, offset = 0 } = options;
     try {
-      const allPolls = await this.getPolls(options);
+      const params = new URLSearchParams({ limit: limit.toString(), offset: offset.toString() });
+      const response = await fetch(`${this.baseURL}/users/${userId}/polls?${params}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const polls = data.polls || data;
+        console.log(`📋 getUserPolls: ${polls.length} polls loaded for user ${userId}`);
+        return polls.map(poll => this.transformPollData(poll));
+      }
+      
+      // Fallback to general feed if dedicated endpoint fails
+      console.warn('⚠️ getUserPolls endpoint failed, falling back to general feed filter');
+      const allPolls = await this.getPolls({ limit: 100 });
       return allPolls
-        .filter(poll => poll.author.id === userId)
+        .filter(poll => poll.author?.id === userId || poll.author?.username === userId)
         .map(poll => this.transformPollData(poll));
     } catch (error) {
       console.error('Error fetching user polls:', error);

@@ -7909,3 +7909,7 @@ agent_communication:
     - agent: "testing"
     - message: "🎵 MUSIC SEARCH 200 LIMIT TESTING COMPLETED SUCCESSFULLY (2025-01-28): Comprehensive testing confirms the music search endpoint is working perfectly. TESTING RESULTS: ✅ Authentication working (login with backendtest@test.com), ✅ Bad Bunny query: 199 results (limit=200 and default), ✅ Drake query: 200 results, ✅ Taylor Swift query: 200 results, ✅ Default behavior: correctly defaults to 200 when no limit specified, ✅ Response format: proper JSON with success:true, total count, results array, ✅ All queries return >20 results as required, ✅ Multiple different artist searches work correctly. CONCLUSION: Music search endpoint fully operational with 200 result limit. Users can now find comprehensive music catalogs instead of being limited to 20 results. The implementation meets all specified requirements."
 
+
+
+    - agent: "main"
+    - message: "🔧 FIX: Publicaciones en perfiles ajenos mostraban 'No hay publicaciones disponibles' al hacer click. CAUSA RAÍZ: handlePollClick usaba userPolls (doble filtro con userId del URL) que podía quedar vacío por inconsistencias UUID/username. ADEMÁS loadUserPolls dependía del feed general (ultra-fast) que podía no incluir todos los posts del usuario. SOLUCIÓN: 1) handlePollClick ahora usa polls directamente (misma fuente que la cuadrícula), 2) Nuevo endpoint GET /api/users/{user_id}/polls para cargar polls por autor directamente desde DB, 3) getUserPolls en pollService.js usa el endpoint dedicado con fallback al feed general."
