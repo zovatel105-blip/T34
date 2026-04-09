@@ -51,6 +51,7 @@ export const musicLibrary = [
     cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop&crop=center',
     category: 'Reggaeton',
     isOriginal: false,
+    isTrending: true,
     uses: 7200000,
     waveform: [0.8, 0.6, 0.9, 0.7, 0.8, 0.9, 0.5, 0.8, 0.6, 0.9, 0.7, 0.8, 0.5, 0.9, 0.6, 0.8, 0.7, 0.9, 0.5, 0.8]
   },
@@ -63,6 +64,7 @@ export const musicLibrary = [
     cover: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&crop=center',
     category: 'Reggaeton',
     isOriginal: false,
+    isTrending: true,
     uses: 6800000,
     waveform: [0.7, 0.8, 0.6, 0.9, 0.5, 0.8, 0.7, 0.9, 0.4, 0.8, 0.6, 0.9, 0.7, 0.8, 0.5, 0.9, 0.6, 0.8, 0.7, 0.9]
   },
