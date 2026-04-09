@@ -198,7 +198,8 @@ export const UploadProvider = ({ children }) => {
           await challengeService.createChallenge({
             title: (title || '').trim(), description: (title || '').trim(),
             participant_ids: selectedUsers.map(u => u.id),
-            challenge_type: challengeType || null, deadline: null, creator_poll_id: newPoll.id
+            challenge_type: challengeType || null, deadline: null, creator_poll_id: newPoll.id,
+            required_layout: contentData.layout || null
           }, token);
           if (toast) toast({ title: "🏆 ¡Challenge creado!" });
         } catch (err) { console.error('Challenge create error:', err); }

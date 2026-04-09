@@ -9,6 +9,7 @@ import MusicSelector from '../components/MusicSelector';
 import UserMentionInput from '../components/UserMentionInput';
 import { fileToBase64 } from '../services/mockData';
 import pollService from '../services/pollService';
+import challengeService from '../services/challengeService';
 import InlineCrop from '../components/InlineCrop';
 import config from '../config/config';
 import { 
@@ -592,7 +593,7 @@ const ContentCreationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
   const { enterTikTokMode, exitTikTokMode, hideRightNavigationBar, showRightNavigationBar } = useTikTok();
   const fileInputRef = useRef(null);
 
@@ -631,6 +632,7 @@ const ContentCreationPage = () => {
   const [showMusicSelector, setShowMusicSelector] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState(null);
   const [options, setOptions] = useState([]); // Changed from images to options
+  const [challengeRequiredLayout, setChallengeRequiredLayout] = useState(null); // Layout forzado por challenge
   // Title removed - now handled in publication page
   const [mentionInputValues, setMentionInputValues] = useState({}); // Track mention input text for each option
   const [isCreating, setIsCreating] = useState(false);
@@ -671,6 +673,31 @@ const ContentCreationPage = () => {
       });
     }
   }, [location.state, toast]);
+
+  // Cargar layout requerido del challenge cuando un participante se une
+  useEffect(() => {
+    const loadChallengeLayout = async () => {
+      if (!joiningChallengeId) return;
+      try {
+        const challenge = await challengeService.getChallengeDetails(joiningChallengeId, token);
+        if (challenge?.required_layout) {
+          const requiredLayout = LAYOUT_OPTIONS.find(l => l.id === challenge.required_layout);
+          if (requiredLayout) {
+            setSelectedLayout(requiredLayout);
+            setChallengeRequiredLayout(requiredLayout);
+            console.log('🎯 Layout del challenge forzado:', requiredLayout.id);
+            toast({
+              title: "📐 Layout del Challenge",
+              description: `Este challenge requiere el layout: ${requiredLayout.name}`,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading challenge layout:', error);
+      }
+    };
+    loadChallengeLayout();
+  }, [joiningChallengeId, token, toast]);
 
   const handleClose = () => {
     // Si viene de un challenge, volver a los challenges activos
@@ -1368,16 +1395,25 @@ const ContentCreationPage = () => {
           {/* Layout Button */}
           <div className="relative">
             <button
-              onClick={() => setShowLayoutMenu(!showLayoutMenu)}
-              className="w-10 h-10 sm:w-12 sm:h-12 bg-black/70 backdrop-blur-sm hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all shadow-lg border border-white/10"
+              onClick={() => {
+                if (challengeRequiredLayout) {
+                  toast({
+                    title: "🔒 Layout bloqueado",
+                    description: `El creador del challenge eligió: ${challengeRequiredLayout.name}`,
+                  });
+                  return;
+                }
+                setShowLayoutMenu(!showLayoutMenu);
+              }}
+              className={`w-10 h-10 sm:w-12 sm:h-12 ${challengeRequiredLayout ? 'bg-yellow-600/70' : 'bg-black/70'} backdrop-blur-sm hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all shadow-lg border ${challengeRequiredLayout ? 'border-yellow-400/30' : 'border-white/10'}`}
             >
               <div className="scale-75 sm:scale-90">
                 <LayoutIcon type={selectedLayout.id} />
               </div>
             </button>
 
-            {/* Layout Menu */}
-            {showLayoutMenu && (
+            {/* Layout Menu - hidden when layout is locked by challenge */}
+            {showLayoutMenu && !challengeRequiredLayout && (
               <div className="absolute right-full top-0 mr-2 sm:mr-3 w-16 sm:w-20 bg-black/20 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden z-50 border border-white/10">
                 <div className="py-2">
                   {LAYOUT_OPTIONS.map((layout) => (

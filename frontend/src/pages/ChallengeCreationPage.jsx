@@ -16,6 +16,7 @@ const ChallengeCreationPage = () => {
 
   // El poll_id viene desde ContentCreationPage después de crear el contenido
   const creatorPollId = location.state?.pollId;
+  const creatorLayout = location.state?.layout; // Layout seleccionado por el creador
 
   const [description, setDescription] = useState('');
   const [challengeType, setChallengeType] = useState('');
@@ -141,7 +142,8 @@ const ChallengeCreationPage = () => {
         participant_ids: selectedUsers.map(u => u.id),
         challenge_type: challengeType || null,
         deadline: null,
-        creator_poll_id: creatorPollId
+        creator_poll_id: creatorPollId,
+        required_layout: creatorLayout || null
       };
 
       const createdChallenge = await challengeService.createChallenge(challengeData, token);

@@ -6180,16 +6180,21 @@ async def get_ultra_fast_feed(
                 if creator_doc:
                     creator = {k: v for k, v in creator_doc.items() if k != "_id"}
             
-            # Determinar layout según número de participantes
-            num_participants = len(challenge_options)
-            if num_participants == 2:
-                challenge_layout = "vs-horizontal"
-            elif num_participants == 3:
-                challenge_layout = "vs-stack"
-            elif num_participants == 4:
-                challenge_layout = "vs-grid-2x2"
+            # Determinar layout: usar required_layout del challenge o auto-calcular
+            stored_layout = challenge.get("required_layout")
+            if stored_layout:
+                challenge_layout = stored_layout
             else:
-                challenge_layout = "vs-grid"
+                # Fallback: auto-calcular según número de participantes
+                num_participants = len(challenge_options)
+                if num_participants == 2:
+                    challenge_layout = "vs-horizontal"
+                elif num_participants == 3:
+                    challenge_layout = "vs-stack"
+                elif num_participants == 4:
+                    challenge_layout = "vs-grid-2x2"
+                else:
+                    challenge_layout = "vs-grid"
             
             # 🎵 Resolve music from challenge polls
             challenge_music_info = None
@@ -6844,16 +6849,20 @@ async def get_following_polls(
             if not creator:
                 continue
             
-            # Layout según participantes
-            num_participants = len(challenge_options)
-            if num_participants == 2:
-                challenge_layout = "vs-horizontal"
-            elif num_participants == 3:
-                challenge_layout = "vs-stack"
-            elif num_participants == 4:
-                challenge_layout = "vs-grid-2x2"
+            # Layout: usar required_layout del challenge o auto-calcular
+            stored_layout = challenge.get("required_layout")
+            if stored_layout:
+                challenge_layout = stored_layout
             else:
-                challenge_layout = "vs-grid"
+                num_participants = len(challenge_options)
+                if num_participants == 2:
+                    challenge_layout = "vs-horizontal"
+                elif num_participants == 3:
+                    challenge_layout = "vs-stack"
+                elif num_participants == 4:
+                    challenge_layout = "vs-grid-2x2"
+                else:
+                    challenge_layout = "vs-grid"
             
             # Música del challenge
             challenge_music_info = None
@@ -10567,6 +10576,7 @@ async def create_challenge(
             creator_avatar_url=current_user.avatar_url,
             participants=all_participants,
             challenge_type=challenge_data.challenge_type,
+            required_layout=challenge_data.required_layout or creator_poll.get("layout"),  # Use explicit or from creator's poll
             deadline=challenge_data.deadline,
             status=ChallengeStatus.PENDING
         )

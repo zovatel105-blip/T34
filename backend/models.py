@@ -588,6 +588,7 @@ class Challenge(BaseModel):
     min_participants: int = 2  # Mínimo 2 para que se active
     status: ChallengeStatus = ChallengeStatus.PENDING
     challenge_type: Optional[str] = None  # dance, art, cooking, etc.
+    required_layout: Optional[str] = None  # Layout obligatorio para todos los participantes
     deadline: Optional[datetime] = None  # Fecha límite (opcional)
     published_poll_id: Optional[str] = None  # ID del poll final publicado
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -602,6 +603,7 @@ class ChallengeCreate(BaseModel):
     challenge_type: Optional[str] = None
     deadline: Optional[datetime] = None
     creator_poll_id: str  # ID del poll que el creador ya subió
+    required_layout: Optional[str] = None  # Layout que todos los participantes deben usar
     
     @validator('participant_ids')
     def validate_participants(cls, v):
@@ -624,6 +626,7 @@ class ChallengeResponse(BaseModel):
     participants: List[ChallengeParticipant]
     status: ChallengeStatus
     challenge_type: Optional[str] = None
+    required_layout: Optional[str] = None  # Layout obligatorio para participantes
     deadline: Optional[datetime] = None
     published_poll_id: Optional[str] = None
     created_at: datetime
