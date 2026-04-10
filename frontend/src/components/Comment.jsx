@@ -178,7 +178,7 @@ const Comment = ({
         {/* Avatar */}
         <Avatar className="w-10 h-10 flex-shrink-0">
           <AvatarImage src={comment.user.avatar_url} />
-          <AvatarFallback>
+          <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
             <User className="w-5 h-5" />
           </AvatarFallback>
         </Avatar>

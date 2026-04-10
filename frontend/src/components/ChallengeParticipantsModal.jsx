@@ -74,7 +74,7 @@ const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challe
                   src={participant.avatar_url || undefined}
                   className="object-cover"
                 />
-                <AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white flex items-center justify-center">
                   <User className="w-5 h-5" />
                 </AvatarFallback>
               </Avatar>

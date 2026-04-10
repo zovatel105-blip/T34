@@ -83,7 +83,7 @@ const UserButton = ({ user, percentage, isSelected, isWinner, onClick, onUserCli
             : "ring-white/30 shadow-lg"
       )}>
         <AvatarImage src={user.avatar} className="object-cover" />
-        <AvatarFallback>
+        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center">
           <User className="w-5 h-5" />
         </AvatarFallback>
       </Avatar>
@@ -706,7 +706,7 @@ const TikTokPollCard = ({
                               src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
                               className="object-cover" 
                             />
-                            <AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
                               <User className="w-4 h-4" />
                             </AvatarFallback>
                           </Avatar>
@@ -721,7 +721,7 @@ const TikTokPollCard = ({
                           src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
                           className="object-cover" 
                         />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
                           <User className="w-5 h-5" />
                         </AvatarFallback>
                       </Avatar>
@@ -878,7 +878,7 @@ const TikTokPollCard = ({
                                   >
                                     <Avatar className="w-4 h-4 mr-1 border border-white/50">
                                       <AvatarImage src={mentionedUser.avatar_url} />
-                                      <AvatarFallback className="text-[8px]">
+                                      <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
                                         <User className="w-2 h-2" />
                                       </AvatarFallback>
                                     </Avatar>
@@ -975,7 +975,7 @@ const TikTokPollCard = ({
                                   >
                                     <Avatar className="w-3 h-3 mr-0.5 border border-white/50">
                                       <AvatarImage src={mentionedUser.avatar_url} />
-                                      <AvatarFallback className="text-[7px]">
+                                      <AvatarFallback className="bg-gray-400 text-white text-[7px] flex items-center justify-center">
                                         <User className="w-2 h-2" />
                                       </AvatarFallback>
                                     </Avatar>

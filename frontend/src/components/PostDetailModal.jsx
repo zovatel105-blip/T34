@@ -158,7 +158,7 @@ const PostDetailModal = ({
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={authorAvatar} className="object-cover" />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white">
                       <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
