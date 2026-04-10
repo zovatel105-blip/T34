@@ -15,11 +15,52 @@ const CommentsModal = ({
   commentsEnabled = true
 }) => {
   const modalRef = useRef(null);
+  const scrollRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
   const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
   
-  // Ref para rastrear si este modal específico ocultó la barra de navegación
   const didHideNavRef = useRef(false);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e) => {
+    const scrollEl = scrollRef.current;
+    if (scrollEl && scrollEl.scrollTop > 0) return;
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (modalRef.current) modalRef.current.style.transition = 'none';
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      e.preventDefault();
+      currentTranslateY.current = deltaY;
+      if (modalRef.current) modalRef.current.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      isDragging.current = false;
+      if (modalRef.current) {
+        modalRef.current.style.transition = 'transform 0.2s ease-out';
+        modalRef.current.style.transform = 'translateY(0)';
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (modalRef.current) modalRef.current.style.transition = 'transform 0.3s ease-out';
+    if (currentTranslateY.current > 80) {
+      if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
+      setTimeout(onClose, 300);
+    } else {
+      if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
+    }
+    currentTranslateY.current = 0;
+  };
 
   // Detectar si es móvil
   useEffect(() => {
@@ -125,6 +166,9 @@ const CommentsModal = ({
               damping: 30,
               duration: 0.4 
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
             <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
@@ -147,7 +191,7 @@ const CommentsModal = ({
             </div>
             
             {/* Contenido */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div ref={scrollRef} className="flex-1 flex flex-col overflow-hidden overflow-y-auto">
               {!commentsEnabled ? (
                 <div className="flex-1 flex items-center justify-center p-8">
                   <p className="text-zinc-500 text-center text-base">
