@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import CommentSection from './CommentSection';
 import { cn } from '../lib/utils';
+import { useTikTok } from '../contexts/TikTokContext';
 
 const PostDetailModal = ({ 
   isOpen, 
@@ -17,6 +18,24 @@ const PostDetailModal = ({
   const dragStartY = useRef(0);
   const currentTranslateY = useRef(0);
   const isDragging = useRef(false);
+  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+  const didHideNavRef = useRef(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      hideRightNavigationBar();
+      didHideNavRef.current = true;
+    } else if (didHideNavRef.current) {
+      showRightNavigationBar();
+      didHideNavRef.current = false;
+    }
+    return () => {
+      if (didHideNavRef.current) {
+        showRightNavigationBar();
+        didHideNavRef.current = false;
+      }
+    };
+  }, [isOpen, hideRightNavigationBar, showRightNavigationBar]);
 
   const handleTouchStart = (e) => {
     dragStartY.current = e.touches[0].clientY;
