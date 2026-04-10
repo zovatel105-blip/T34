@@ -268,8 +268,25 @@ const PostDetailModal = ({
             .post-detail-dark-comments .comment-section .bg-gray-100 {
               background: rgba(255,255,255,0.05) !important;
             }
-            .post-detail-dark-comments .comment-section [class*="from-gray-100"][class*="to-gray-200"] {
+            .post-detail-dark-comments .comment-section [data-slot="avatar-fallback"],
+            .post-detail-dark-comments span.bg-gradient-to-br {
               background: linear-gradient(to bottom right, rgb(82 82 91), rgb(63 63 70)) !important;
+              color: rgb(161 161 170) !important;
+              --tw-gradient-from: rgb(82 82 91) !important;
+              --tw-gradient-to: rgb(63 63 70) !important;
+            }
+            .post-detail-dark-comments .bg-muted {
+              background: rgb(63 63 70) !important;
+              color: rgb(161 161 170) !important;
+            }
+            .post-detail-dark-comments .from-gray-100 {
+              --tw-gradient-from: rgb(82 82 91) !important;
+              background: linear-gradient(to bottom right, rgb(82 82 91), rgb(63 63 70)) !important;
+            }
+            .post-detail-dark-comments .to-gray-200 {
+              --tw-gradient-to: rgb(63 63 70) !important;
+            }
+            .post-detail-dark-comments .text-gray-600 {
               color: rgb(161 161 170) !important;
             }
           `}</style>
