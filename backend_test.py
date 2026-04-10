@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://easy-ffmpeg.preview.emergentagent.com"
+BASE_URL = "https://opacity-live-search.preview.emergentagent.com"
 TEST_USER = {
     "email": "backendtest@test.com",
     "password": "test1234",
