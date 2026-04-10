@@ -37,7 +37,12 @@ const PostDetailModal = ({
     };
   }, [isOpen, hideRightNavigationBar, showRightNavigationBar]);
 
+  const scrollRef = useRef(null);
+
   const handleTouchStart = (e) => {
+    // Solo permitir drag si el scroll está arriba del todo
+    const scrollEl = scrollRef.current;
+    if (scrollEl && scrollEl.scrollTop > 0) return;
     dragStartY.current = e.touches[0].clientY;
     currentTranslateY.current = 0;
     isDragging.current = true;
@@ -48,12 +53,21 @@ const PostDetailModal = ({
     if (!isDragging.current) return;
     const deltaY = e.touches[0].clientY - dragStartY.current;
     if (deltaY > 0) {
+      e.preventDefault();
       currentTranslateY.current = deltaY;
       if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      // User is scrolling up, cancel drag
+      isDragging.current = false;
+      if (sheetRef.current) {
+        sheetRef.current.style.transition = 'transform 0.2s ease-out';
+        sheetRef.current.style.transform = 'translateY(0)';
+      }
     }
   };
 
   const handleTouchEnd = () => {
+    if (!isDragging.current) return;
     isDragging.current = false;
     if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
     if (currentTranslateY.current > 80) {
@@ -126,20 +140,19 @@ const PostDetailModal = ({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Handle Bar */}
-            <div 
-              className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+            <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
             >
               <div className="w-10 h-1 bg-zinc-600 rounded-full" />
             </div>
             
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
               {/* Post Header */}
               <div className="px-4 pt-2 pb-4">
                 {/* Author */}
@@ -161,7 +174,7 @@ const PostDetailModal = ({
                         e.stopPropagation();
                         onFollow();
                       }}
-                      className="px-5 py-1.5 rounded-lg border border-white/40 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+                      className="px-5 py-1.5 rounded-full border border-white/40 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
                     >
                       Seguir
                     </button>
