@@ -317,9 +317,9 @@ const TikTokVotingCard = ({
                       className={cn(
                         "absolute inset-x-0 bottom-0 transition-all duration-700 ease-out",
                         isSelected 
-                          ? "bg-gradient-to-t from-blue-500/10 via-blue-500/5 to-transparent"
+                          ? "bg-gradient-to-t from-blue-500/5 via-blue-500/[0.02] to-transparent"
                           : isWinner
-                            ? "bg-gradient-to-t from-green-500/10 via-green-500/5 to-transparent"
+                            ? "bg-gradient-to-t from-green-500/5 via-green-500/[0.02] to-transparent"
                             : "bg-gradient-to-t from-gray-500/8 via-gray-500/3 to-transparent"
                       )}
                       initial={{ height: 0 }}
