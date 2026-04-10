@@ -125,7 +125,7 @@ const PostDetailModal = ({
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/30"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
