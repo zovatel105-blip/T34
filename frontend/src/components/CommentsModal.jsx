@@ -110,7 +110,7 @@ const CommentsModal = ({
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative bg-white shadow-2xl overflow-hidden flex flex-col",
+              "relative bg-zinc-900 shadow-2xl overflow-hidden flex flex-col",
               isMobile 
                 ? "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom" 
                 : "w-full max-w-2xl max-h-[92vh] rounded-2xl"
@@ -126,19 +126,19 @@ const CommentsModal = ({
               duration: 0.4 
             }}
           >
-            {/* Handle superior - ambos móvil y desktop */}
-            <div className="w-full py-2 flex justify-center bg-white flex-shrink-0">
+            {/* Handle superior */}
+            <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
               <div className={cn(
-                "bg-gray-300 rounded-full",
+                "bg-zinc-600 rounded-full",
                 isMobile ? "w-10 h-1" : "w-12 h-1"
               )} />
             </div>
 
-            {/* Header minimalista centrado */}
-            <div className="sticky top-0 z-10 bg-white px-4 sm:px-6 py-3 flex-shrink-0">
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-zinc-900 px-4 sm:px-6 py-3 flex-shrink-0">
               <div className="flex items-center justify-center">
                 <h2 className={cn(
-                  "font-semibold text-gray-900 text-center",
+                  "font-semibold text-white text-center",
                   isMobile ? "text-base" : "text-lg"
                 )}>
                   Comentarios
@@ -146,22 +146,21 @@ const CommentsModal = ({
               </div>
             </div>
             
-            {/* Contenido que ocupa todo el espacio restante */}
+            {/* Contenido */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {!commentsEnabled ? (
-                // Mensaje cuando los comentarios están deshabilitados
                 <div className="flex-1 flex items-center justify-center p-8">
-                  <p className="text-gray-500 text-center text-base">
+                  <p className="text-zinc-500 text-center text-base">
                     Este creador desactivó los comentarios
                   </p>
                 </div>
               ) : (
-                // Sección de comentarios normal
                 <CommentSection
                   pollId={pollId}
                   isVisible={isOpen}
                   maxHeight="100%"
                   showHeader={false}
+                  darkMode={true}
                 />
               )}
             </div>
