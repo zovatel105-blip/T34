@@ -257,7 +257,7 @@ const ChallengeCreationPage = () => {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
-                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                        <AvatarFallback>
                           {selectedUser.display_name?.[0]?.toUpperCase() || selectedUser.username?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
@@ -316,7 +316,7 @@ const ChallengeCreationPage = () => {
                         >
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
-                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                            <AvatarFallback>
                               {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
                             </AvatarFallback>
                           </Avatar>

@@ -35,7 +35,7 @@ const NotificationItem = ({ type, user, message, time, poll, isNew = false }) =>
           <div className="flex-shrink-0">
             <Avatar className="w-10 h-10">
               <AvatarImage src={`https://github.com/${user}.png`} alt={user} />
-              <AvatarFallback className="flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600">
+              <AvatarFallback>
                 <User className="w-5 h-5" />
               </AvatarFallback>
             </Avatar>

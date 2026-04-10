@@ -1967,7 +1967,7 @@ const ProfilePage = () => {
                           <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             <Avatar className="w-full h-full rounded-full">
                               <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                              <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                              <AvatarFallback>
                                 <User className="w-8 h-8 sm:w-10 sm:h-10" />
                               </AvatarFallback>
                             </Avatar>
@@ -1977,7 +1977,7 @@ const ProfilePage = () => {
                         <div className="w-full h-full bg-white rounded-full overflow-hidden">
                           <Avatar className="w-full h-full rounded-full">
                             <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                            <AvatarFallback>
                               <User className="w-8 h-8 sm:w-10 sm:h-10" />
                             </AvatarFallback>
                           </Avatar>

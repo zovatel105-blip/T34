@@ -109,7 +109,7 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
           >
             <Avatar className="w-6 h-6 border border-white shadow-sm">
               <AvatarImage src={user.avatar_url} />
-              <AvatarFallback className="bg-gray-400 text-white flex items-center justify-center">
+              <AvatarFallback>
                 <User className="w-3 h-3" />
               </AvatarFallback>
             </Avatar>
@@ -425,7 +425,7 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
                 : "ring-white/50"
           )}>
             <AvatarImage src={option.user?.avatar} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xs">
+            <AvatarFallback className="font-bold text-xs">
               {option.user?.displayName?.charAt(0) || option.id.toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -772,7 +772,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                       <div className="w-full h-full bg-white rounded-full overflow-hidden">
                         <Avatar className="w-full h-full cursor-pointer">
                           <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
+                          <AvatarFallback className="font-semibold text-sm">
                             {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -781,7 +781,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                   ) : (
                     <Avatar className="ring-2 ring-blue-500/20 w-10 h-10 cursor-pointer">
                       <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
+                      <AvatarFallback className="font-semibold text-sm">
                         {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -1020,7 +1020,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                     <div className="w-full h-full bg-white rounded-full overflow-hidden">
                       <Avatar className="w-full h-full cursor-pointer">
                         <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                        <AvatarFallback className="font-semibold">
                           {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -1029,7 +1029,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                 ) : (
                   <Avatar className="ring-2 ring-blue-500/20">
                     <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                    <AvatarFallback className="font-semibold">
                       {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

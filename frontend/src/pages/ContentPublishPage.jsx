@@ -681,7 +681,7 @@ const ContentPublishPage = () => {
                             <div className="flex items-center gap-2">
                               <Avatar className="w-8 h-8">
                                 <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
-                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                <AvatarFallback className="text-xs">
                                   {selectedUser.display_name?.[0]?.toUpperCase() || selectedUser.username?.[0]?.toUpperCase() || 'U'}
                                 </AvatarFallback>
                               </Avatar>
@@ -742,7 +742,7 @@ const ContentPublishPage = () => {
                                 >
                                   <Avatar className="w-8 h-8">
                                     <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
-                                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                    <AvatarFallback className="text-xs">
                                       {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
                                     </AvatarFallback>
                                   </Avatar>

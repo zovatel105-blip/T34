@@ -447,7 +447,7 @@ const CarouselLayout = ({
                           >
                             <Avatar className="w-3 h-3 mr-1 border border-white/50">
                               <AvatarImage src={mentionedUser.avatar_url} />
-                              <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
+                              <AvatarFallback className="text-[8px]">
                                 <User className="w-2 h-2" />
                               </AvatarFallback>
                             </Avatar>

@@ -241,7 +241,7 @@ const CompletedBattleCard = ({ battle, isActive, onUserClick }) => {
                 >
                   <Avatar className="w-16 h-16 ring-4 ring-yellow-500 shadow-lg shadow-yellow-500/30">
                     <AvatarImage src={winner.avatar} alt={winner.displayName} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+                    <AvatarFallback>
                       <User className="w-6 h-6" />
                     </AvatarFallback>
                   </Avatar>
@@ -272,7 +272,7 @@ const CompletedBattleCard = ({ battle, isActive, onUserClick }) => {
               >
                 <Avatar className="w-16 h-16 ring-2 ring-gray-500 opacity-80">
                   <AvatarImage src={loser.avatar} alt={loser.displayName} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white">
+                  <AvatarFallback>
                     <User className="w-6 h-6" />
                   </AvatarFallback>
                 </Avatar>

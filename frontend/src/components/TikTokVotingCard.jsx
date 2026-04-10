@@ -219,7 +219,7 @@ const TikTokVotingCard = ({
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10 ring-2 ring-white/30">
             <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} />
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white font-bold">
+            <AvatarFallback className="font-bold">
               {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -386,7 +386,7 @@ const TikTokVotingCard = ({
                   <div className="absolute bottom-3 left-3 z-10">
                     <Avatar className="w-6 h-6 ring-1 ring-white/50">
                       <AvatarImage src={option.user?.avatar} />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white font-bold text-xs">
+                      <AvatarFallback className="font-bold text-xs">
                         {((option.user?.displayName || option.user?.username || optionNumber || 'U') + '').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
