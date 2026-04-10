@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import CommentSection from './CommentSection';
-import { cn } from '../lib/utils';
 import { useTikTok } from '../contexts/TikTokContext';
 
 const PostDetailModal = ({ 
@@ -195,14 +194,15 @@ const PostDetailModal = ({
               {/* Separator */}
               <div className="border-t border-zinc-800" />
 
-              {/* Comments - dark mode override */}
-              <div className="post-detail-dark-comments">
+              {/* Comments */}
+              <div>
                 {commentsEnabled ? (
                   <CommentSection
                     pollId={poll.id}
                     isVisible={isOpen}
                     maxHeight="100%"
                     showHeader={false}
+                    darkMode={true}
                   />
                 ) : (
                   <div className="flex items-center justify-center p-8">
@@ -214,63 +214,6 @@ const PostDetailModal = ({
               </div>
             </div>
           </motion.div>
-
-          {/* Dark mode CSS overrides for CommentSection */}
-          <style>{`
-            .post-detail-dark-comments .comment-section {
-              background: transparent !important;
-            }
-            .post-detail-dark-comments .comment-section .comment-header {
-              background: transparent !important;
-              border-color: rgb(39 39 42) !important;
-            }
-            .post-detail-dark-comments .comment-section .comment-header h3,
-            .post-detail-dark-comments .comment-section .comment-header p {
-              color: rgb(161 161 170) !important;
-            }
-            .post-detail-dark-comments .comment-list {
-              background: transparent !important;
-            }
-            .post-detail-dark-comments .comment-section h3 {
-              color: rgb(228 228 231) !important;
-            }
-            .post-detail-dark-comments .comment-section p {
-              color: rgb(161 161 170) !important;
-            }
-            .post-detail-dark-comments .comment-section span {
-              color: rgb(161 161 170) !important;
-            }
-            .post-detail-dark-comments .comment-section .font-semibold,
-            .post-detail-dark-comments .comment-section .font-bold,
-            .post-detail-dark-comments .comment-section .font-medium {
-              color: rgb(228 228 231) !important;
-            }
-            .post-detail-dark-comments div[class*="bg-white"] {
-              background: transparent !important;
-            }
-            .post-detail-dark-comments div[class*="border-gray"] {
-              border-color: rgb(39 39 42) !important;
-            }
-            .post-detail-dark-comments .comment-section input,
-            .post-detail-dark-comments .comment-section textarea {
-              background: rgba(255,255,255,0.08) !important;
-              color: white !important;
-              border-color: rgb(63 63 70) !important;
-            }
-            .post-detail-dark-comments .comment-section input::placeholder,
-            .post-detail-dark-comments .comment-section textarea::placeholder {
-              color: rgb(113 113 122) !important;
-            }
-            /* Avatar fallbacks - force dark gradient on ALL spans inside avatar containers */
-            .post-detail-dark-comments span[class*="rounded-full"][class*="items-center"] {
-              background-image: none !important;
-              background: rgb(63 63 70) !important;
-              color: rgb(161 161 170) !important;
-            }
-            .post-detail-dark-comments button[class*="text-blue"] {
-              color: rgb(96 165 250) !important;
-            }
-          `}</style>
         </div>
       )}
     </AnimatePresence>
