@@ -6,6 +6,7 @@ import MusicPlayer from './MusicPlayer';
 import MusicDisplay from './MusicDisplay';
 import CustomLogo from './CustomLogo';
 import CommentsModal from './CommentsModal';
+import PostDetailModal from './PostDetailModal';
 import ShareModal from './ShareModal';
 import PostManagementMenu from './PostManagementMenu';
 import FeedMenu from './FeedMenu';
@@ -145,6 +146,7 @@ const TikTokPollCard = ({
 }) => {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showPostDetailModal, setShowPostDetailModal] = useState(false);
   const [showVotersModal, setShowVotersModal] = useState(false);
   const [showChallengeParticipants, setShowChallengeParticipants] = useState(false);
   const [audioContextActivated, setAudioContextActivated] = useState(false);
@@ -237,7 +239,10 @@ const TikTokPollCard = ({
     if (!isActive && showCommentsModal) {
       setShowCommentsModal(false);
     }
-  }, [isActive, showCommentsModal]);
+    if (!isActive && showPostDetailModal) {
+      setShowPostDetailModal(false);
+    }
+  }, [isActive, showCommentsModal, showPostDetailModal]);
   
   // Feed menu state
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
@@ -245,11 +250,11 @@ const TikTokPollCard = ({
   
   // 🔒 Notificar al padre cuando un modal se abre/cierra para bloquear el swipe
   useEffect(() => {
-    const isAnyModalOpen = showCommentsModal || showVotersModal || isMenuOpen;
+    const isAnyModalOpen = showCommentsModal || showPostDetailModal || showVotersModal || isMenuOpen;
     if (onModalStateChange) {
       onModalStateChange(isAnyModalOpen);
     }
-  }, [showCommentsModal, showVotersModal, isMenuOpen, onModalStateChange]);
+  }, [showCommentsModal, showPostDetailModal, showVotersModal, isMenuOpen, onModalStateChange]);
   
   const navigate = useNavigate();
   const { followUser, unfollowUser, isFollowing, getFollowStatus, followStateVersion } = useFollow();
@@ -774,7 +779,13 @@ const TikTokPollCard = ({
         </div>
         
         <div className="mt-3">
-          <h2 className="text-white text-sm leading-tight text-left line-clamp-2">
+          <h2 
+            className="text-white text-sm leading-tight text-left line-clamp-2 cursor-pointer active:opacity-70"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPostDetailModal(true);
+            }}
+          >
             {renderTextWithHashtags(poll.title, navigate)}
           </h2>
         </div>
@@ -1406,6 +1417,23 @@ const TikTokPollCard = ({
         pollId={poll.id}
         pollTitle={poll.title}
         pollAuthor={poll.author?.display_name || poll.author?.username || 'Usuario'}
+        commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
+      />
+
+      {/* Modal de detalle del post (al tocar título) */}
+      <PostDetailModal
+        isOpen={showPostDetailModal}
+        onClose={() => setShowPostDetailModal(false)}
+        poll={poll}
+        isFollowing={isFollowing(authorUserId)}
+        onFollow={() => {
+          const userToFollow = poll.authorUser || { 
+            username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
+            displayName: poll.author?.display_name || poll.author?.username || 'Usuario',
+            id: authorUserId 
+          };
+          handleFollowUser(userToFollow);
+        }}
         commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
       />
 

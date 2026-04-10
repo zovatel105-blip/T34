@@ -1,0 +1,263 @@
+import React, { useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, ChevronDown } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import CommentSection from './CommentSection';
+import { cn } from '../lib/utils';
+
+const PostDetailModal = ({ 
+  isOpen, 
+  onClose, 
+  poll,
+  isFollowing = false,
+  onFollow,
+  commentsEnabled = true
+}) => {
+  const sheetRef = useRef(null);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e) => {
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
+    if (currentTranslateY.current > 80) {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+      setTimeout(onClose, 300);
+    } else {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+    }
+    currentTranslateY.current = 0;
+  };
+
+  const handleMouseDown = (e) => {
+    const startY = e.clientY;
+    let translateY = 0;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+    const onMouseMove = (ev) => {
+      const delta = ev.clientY - startY;
+      if (delta > 0) {
+        translateY = delta;
+        if (sheetRef.current) sheetRef.current.style.transform = `translateY(${delta}px)`;
+      }
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
+      if (translateY > 80) {
+        if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+        setTimeout(onClose, 300);
+      } else {
+        if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+      }
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  if (!isOpen || !poll) return null;
+
+  const authorName = poll.author?.display_name || poll.author?.username || poll.authorUser?.displayName || 'Usuario';
+  const authorAvatar = poll.author?.avatar_url || poll.authorUser?.avatar;
+  const authorUsername = poll.author?.username || poll.authorUser?.username || authorName;
+
+  const formatDate = () => {
+    if (poll.created_at) {
+      const date = new Date(poll.created_at);
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    }
+    return poll.timeAgo || '';
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          
+          {/* Bottom Sheet */}
+          <motion.div
+            ref={sheetRef}
+            className="relative z-10 bg-zinc-900 rounded-t-3xl w-full max-h-[80vh] flex flex-col"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            {/* Handle Bar */}
+            <div 
+              className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+            >
+              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+            </div>
+            
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              {/* Post Header */}
+              <div className="px-4 pt-2 pb-4">
+                {/* Author */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 p-[2px]">
+                        <Avatar className="w-full h-full">
+                          <AvatarImage src={authorAvatar} className="object-cover" />
+                          <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                            <User className="w-4 h-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <span className="text-white font-bold text-base flex-1">
+                    {authorUsername}
+                  </span>
+                  
+                  {!isFollowing && onFollow && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFollow();
+                      }}
+                      className="px-5 py-1.5 rounded-lg border border-white/40 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+                    >
+                      Seguir
+                    </button>
+                  )}
+                </div>
+
+                {/* Post Title */}
+                <p className="text-white text-base leading-relaxed mb-3">
+                  {poll.title}
+                </p>
+
+                {/* Date */}
+                <p className="text-zinc-500 text-sm mb-1">
+                  {formatDate()}
+                </p>
+
+                {/* Ver traducción */}
+                <button className="text-zinc-400 text-sm font-medium hover:text-white transition-colors">
+                  Ver traducción
+                </button>
+              </div>
+
+              {/* Separator */}
+              <div className="border-t border-zinc-800" />
+
+              {/* Comments header */}
+              <div className="px-4 py-3 flex items-center gap-1">
+                <span className="text-white font-semibold text-sm">Para ti</span>
+                <ChevronDown className="w-4 h-4 text-white" />
+              </div>
+
+              {/* Comments - dark mode override */}
+              <div className="post-detail-dark-comments">
+                {commentsEnabled ? (
+                  <CommentSection
+                    pollId={poll.id}
+                    isVisible={isOpen}
+                    maxHeight="100%"
+                    showHeader={false}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center p-8">
+                    <p className="text-zinc-500 text-center text-sm">
+                      Los comentarios están desactivados
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Dark mode CSS overrides for CommentSection */}
+          <style>{`
+            .post-detail-dark-comments .comment-section {
+              background: transparent !important;
+            }
+            .post-detail-dark-comments .comment-section .comment-header {
+              background: transparent !important;
+              border-color: rgb(39 39 42) !important;
+            }
+            .post-detail-dark-comments .comment-section .comment-header h3,
+            .post-detail-dark-comments .comment-section .comment-header p {
+              color: rgb(161 161 170) !important;
+            }
+            .post-detail-dark-comments .comment-list {
+              background: transparent !important;
+            }
+            .post-detail-dark-comments .comment-section h3.text-xl {
+              color: rgb(228 228 231) !important;
+            }
+            .post-detail-dark-comments .comment-section .text-gray-500,
+            .post-detail-dark-comments .comment-section .text-gray-400,
+            .post-detail-dark-comments .comment-section .text-gray-600 {
+              color: rgb(113 113 122) !important;
+            }
+            .post-detail-dark-comments .comment-section .text-gray-900,
+            .post-detail-dark-comments .comment-section .text-gray-800,
+            .post-detail-dark-comments .comment-section .text-gray-700 {
+              color: rgb(228 228 231) !important;
+            }
+            .post-detail-dark-comments .comment-section .bg-white {
+              background: transparent !important;
+            }
+            .post-detail-dark-comments .comment-section .border-gray-100,
+            .post-detail-dark-comments .comment-section .border-gray-200 {
+              border-color: rgb(39 39 42) !important;
+            }
+            .post-detail-dark-comments .comment-section .hover\\:bg-gray-50:hover {
+              background: rgba(255,255,255,0.05) !important;
+            }
+            .post-detail-dark-comments .comment-section input,
+            .post-detail-dark-comments .comment-section textarea {
+              background: rgba(255,255,255,0.08) !important;
+              color: white !important;
+              border-color: rgb(63 63 70) !important;
+            }
+            .post-detail-dark-comments .comment-section input::placeholder,
+            .post-detail-dark-comments .comment-section textarea::placeholder {
+              color: rgb(113 113 122) !important;
+            }
+            .post-detail-dark-comments .comment-section .bg-gray-50,
+            .post-detail-dark-comments .comment-section .bg-gray-100 {
+              background: rgba(255,255,255,0.05) !important;
+            }
+          `}</style>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default PostDetailModal;
