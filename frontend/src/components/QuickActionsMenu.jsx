@@ -272,31 +272,31 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       id: 'moments',
       icon: StoryPlusIcon,
       label: 'Historias',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: 'shadow-orange-500/20',
-      glowColor: 'rgba(249,115,22,0.25)',
-      position: { x: -28, y: 8 }, // SUBIDO: 8px más arriba
+      color: 'bg-orange-500/50 backdrop-blur-sm hover:bg-orange-500/65',
+      borderColor: 'border-orange-400/40',
+      shadowColor: 'shadow-orange-500/30',
+      glowColor: 'rgba(249,115,22,0.35)',
+      position: { x: -28, y: 8 },
     },
     {
       id: 'search',
       icon: Search,
       label: 'Buscar',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: 'shadow-blue-500/20',
-      glowColor: 'rgba(59,130,246,0.25)',
-      position: { x: -35, y: -13 }, // SUBIDO: 8px más arriba
+      color: 'bg-blue-500/50 backdrop-blur-sm hover:bg-blue-500/65',
+      borderColor: 'border-blue-400/40',
+      shadowColor: 'shadow-blue-500/30',
+      glowColor: 'rgba(59,130,246,0.35)',
+      position: { x: -35, y: -13 },
     },
     {
       id: 'live',
       icon: TikTokLiveIcon,
       label: 'LIVE',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: 'shadow-red-500/20',
-      glowColor: 'rgba(239,68,68,0.25)',
-      position: { x: -8, y: 16 }, // AJUSTADO: manteniendo distancia proporcional
+      color: 'bg-red-500/50 backdrop-blur-sm hover:bg-red-500/65',
+      borderColor: 'border-red-400/40',
+      shadowColor: 'shadow-red-500/30',
+      glowColor: 'rgba(239,68,68,0.35)',
+      position: { x: -8, y: 16 },
     }
   ];
 
