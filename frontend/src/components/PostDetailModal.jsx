@@ -268,6 +268,10 @@ const PostDetailModal = ({
             .post-detail-dark-comments .comment-section .bg-gray-100 {
               background: rgba(255,255,255,0.05) !important;
             }
+            .post-detail-dark-comments .comment-section [class*="from-gray-100"][class*="to-gray-200"] {
+              background: linear-gradient(to bottom right, rgb(82 82 91), rgb(63 63 70)) !important;
+              color: rgb(161 161 170) !important;
+            }
           `}</style>
         </div>
       )}
