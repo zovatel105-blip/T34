@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Facebook, MessageCircle, Copy, ExternalLink } from 'lucide-react';
@@ -7,6 +7,40 @@ import { toast } from '../hooks/use-toast';
 
 const ShareModal = ({ isOpen, onClose, content }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const sheetRef = useRef(null);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e) => {
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  };
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      isDragging.current = false;
+      if (sheetRef.current) { sheetRef.current.style.transition = 'transform 0.2s ease-out'; sheetRef.current.style.transform = 'translateY(0)'; }
+    }
+  };
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
+    if (currentTranslateY.current > 80) {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+      setTimeout(onClose, 300);
+    } else {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+    }
+    currentTranslateY.current = 0;
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -175,6 +209,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           onClick={onClose}
         >
           <motion.div
+            ref={sheetRef}
             initial={
               isMobile 
                 ? { y: "100%", opacity: 1 }
@@ -202,6 +237,9 @@ const ShareModal = ({ isOpen, onClose, content }) => {
                 : "bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
             }
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={isMobile ? handleTouchStart : undefined}
+            onTouchMove={isMobile ? handleTouchMove : undefined}
+            onTouchEnd={isMobile ? handleTouchEnd : undefined}
             style={isMobile ? { 
               paddingBottom: `max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))`
             } : {}}

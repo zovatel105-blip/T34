@@ -19,6 +19,42 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+  const scrollRef = useRef(null);
+
+  const handleTouchStart = (e) => {
+    if (scrollRef.current && scrollRef.current.scrollTop > 0) return;
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (modalRef.current) modalRef.current.style.transition = 'none';
+  };
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      e.preventDefault();
+      currentTranslateY.current = deltaY;
+      if (modalRef.current) modalRef.current.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      isDragging.current = false;
+      if (modalRef.current) { modalRef.current.style.transition = 'transform 0.2s ease-out'; modalRef.current.style.transform = 'translateY(0)'; }
+    }
+  };
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (modalRef.current) modalRef.current.style.transition = 'transform 0.3s ease-out';
+    if (currentTranslateY.current > 80) {
+      if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
+      setTimeout(onClose, 300);
+    } else {
+      if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
+    }
+    currentTranslateY.current = 0;
+  };
 
   // Detectar si es móvil
   useEffect(() => {
@@ -199,6 +235,9 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
               damping: 30,
               duration: 0.4 
             }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
             <div className="w-full py-2 flex justify-center bg-white flex-shrink-0">

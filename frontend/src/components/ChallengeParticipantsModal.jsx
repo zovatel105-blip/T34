@@ -1,15 +1,45 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, User, Trophy } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { cn } from '../lib/utils';
 
-/**
- * Modal that shows all participants of a Challenge.
- * Opens when user taps the participant tag in the feed.
- */
 const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challengeTitle = '' }) => {
   const navigate = useNavigate();
+  const sheetRef = useRef(null);
+  const dragStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handleTouchStart = (e) => {
+    dragStartY.current = e.touches[0].clientY;
+    currentTranslateY.current = 0;
+    isDragging.current = true;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  };
+  const handleTouchMove = (e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - dragStartY.current;
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      isDragging.current = false;
+      if (sheetRef.current) { sheetRef.current.style.transition = 'transform 0.2s ease-out'; sheetRef.current.style.transform = 'translateY(0)'; }
+    }
+  };
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
+    if (currentTranslateY.current > 80) {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+      setTimeout(onClose, 300);
+    } else {
+      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+    }
+    currentTranslateY.current = 0;
+  };
 
   if (!isOpen) return null;
 
@@ -31,7 +61,13 @@ const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challe
       />
 
       {/* Modal content */}
-      <div className="relative z-10 w-full max-w-md bg-zinc-900 rounded-t-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+      <div 
+        ref={sheetRef}
+        className="relative z-10 w-full max-w-md bg-zinc-900 rounded-t-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-300"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Handle bar (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="w-10 h-1 bg-zinc-600 rounded-full" />
