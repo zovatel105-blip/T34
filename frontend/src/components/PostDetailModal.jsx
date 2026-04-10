@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import CommentSection from './CommentSection';
 import { cn } from '../lib/utils';
@@ -125,18 +125,12 @@ const PostDetailModal = ({
               <div className="px-4 pt-2 pb-4">
                 {/* Author */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="relative">
-                    <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
-                      <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 p-[2px]">
-                        <Avatar className="w-full h-full">
-                          <AvatarImage src={authorAvatar} className="object-cover" />
-                          <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white">
-                            <User className="w-4 h-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    </div>
-                  </div>
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={authorAvatar} className="object-cover" />
+                    <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                      <User className="w-4 h-4" />
+                    </AvatarFallback>
+                  </Avatar>
                   
                   <span className="text-white font-bold text-base flex-1">
                     {authorUsername}
@@ -161,24 +155,13 @@ const PostDetailModal = ({
                 </p>
 
                 {/* Date */}
-                <p className="text-zinc-500 text-sm mb-1">
+                <p className="text-zinc-500 text-sm">
                   {formatDate()}
                 </p>
-
-                {/* Ver traducción */}
-                <button className="text-zinc-400 text-sm font-medium hover:text-white transition-colors">
-                  Ver traducción
-                </button>
               </div>
 
               {/* Separator */}
               <div className="border-t border-zinc-800" />
-
-              {/* Comments header */}
-              <div className="px-4 py-3 flex items-center gap-1">
-                <span className="text-white font-semibold text-sm">Para ti</span>
-                <ChevronDown className="w-4 h-4 text-white" />
-              </div>
 
               {/* Comments - dark mode override */}
               <div className="post-detail-dark-comments">
