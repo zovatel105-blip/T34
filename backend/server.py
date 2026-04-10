@@ -6603,10 +6603,11 @@ async def get_following_polls(
     polls = await polls_cursor.to_list(limit)
     
     if not polls:
-        return []
+        # Don't return early - still need to check for published challenges below
+        polls = []
     
     # Get all author IDs (should all be in following_user_ids but let's be safe)
-    author_ids = list(set(poll["author_id"] for poll in polls))
+    author_ids = list(set(poll["author_id"] for poll in polls)) if polls else []
     authors_cursor = db.users.find({"id": {"$in": author_ids}})
     authors_list = await authors_cursor.to_list(len(author_ids))
     # Remove _id to avoid ObjectId serialization issues
