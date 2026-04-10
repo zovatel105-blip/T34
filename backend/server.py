@@ -6973,9 +6973,6 @@ async def get_user_polls(
         polls_cursor = db.polls.find(filter_query).sort("created_at", -1).skip(offset).limit(limit)
         polls = await polls_cursor.to_list(limit)
         
-        if not polls:
-            return {"polls": [], "total": 0}
-        
         # Get author info
         author_data = {k: v for k, v in target_user.items() if k != "_id"}
         
