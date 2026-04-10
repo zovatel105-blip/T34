@@ -317,10 +317,10 @@ const TikTokVotingCard = ({
                       className={cn(
                         "absolute inset-x-0 bottom-0 transition-all duration-700 ease-out",
                         isSelected 
-                          ? "bg-gradient-to-t from-blue-500/25 via-blue-500/15 to-transparent"
+                          ? "bg-gradient-to-t from-blue-500/15 via-blue-500/8 to-transparent"
                           : isWinner
-                            ? "bg-gradient-to-t from-green-500/25 via-green-500/15 to-transparent"
-                            : "bg-gradient-to-t from-gray-500/20 via-gray-500/10 to-transparent"
+                            ? "bg-gradient-to-t from-green-500/15 via-green-500/8 to-transparent"
+                            : "bg-gradient-to-t from-gray-500/12 via-gray-500/5 to-transparent"
                       )}
                       initial={{ height: 0 }}
                       animate={{ height: `${Math.max(percentage, 15)}%` }}
