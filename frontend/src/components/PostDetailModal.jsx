@@ -231,28 +231,25 @@ const PostDetailModal = ({
             .post-detail-dark-comments .comment-list {
               background: transparent !important;
             }
-            .post-detail-dark-comments .comment-section h3.text-xl {
+            .post-detail-dark-comments .comment-section h3 {
               color: rgb(228 228 231) !important;
             }
-            .post-detail-dark-comments .comment-section .text-gray-500,
-            .post-detail-dark-comments .comment-section .text-gray-400,
-            .post-detail-dark-comments .comment-section .text-gray-600 {
-              color: rgb(113 113 122) !important;
+            .post-detail-dark-comments .comment-section p {
+              color: rgb(161 161 170) !important;
             }
-            .post-detail-dark-comments .comment-section .text-gray-900,
-            .post-detail-dark-comments .comment-section .text-gray-800,
-            .post-detail-dark-comments .comment-section .text-gray-700 {
+            .post-detail-dark-comments .comment-section span {
+              color: rgb(161 161 170) !important;
+            }
+            .post-detail-dark-comments .comment-section .font-semibold,
+            .post-detail-dark-comments .comment-section .font-bold,
+            .post-detail-dark-comments .comment-section .font-medium {
               color: rgb(228 228 231) !important;
             }
-            .post-detail-dark-comments .comment-section .bg-white {
+            .post-detail-dark-comments div[class*="bg-white"] {
               background: transparent !important;
             }
-            .post-detail-dark-comments .comment-section .border-gray-100,
-            .post-detail-dark-comments .comment-section .border-gray-200 {
+            .post-detail-dark-comments div[class*="border-gray"] {
               border-color: rgb(39 39 42) !important;
-            }
-            .post-detail-dark-comments .comment-section .hover\\:bg-gray-50:hover {
-              background: rgba(255,255,255,0.05) !important;
             }
             .post-detail-dark-comments .comment-section input,
             .post-detail-dark-comments .comment-section textarea {
@@ -264,30 +261,14 @@ const PostDetailModal = ({
             .post-detail-dark-comments .comment-section textarea::placeholder {
               color: rgb(113 113 122) !important;
             }
-            .post-detail-dark-comments .comment-section .bg-gray-50,
-            .post-detail-dark-comments .comment-section .bg-gray-100 {
-              background: rgba(255,255,255,0.05) !important;
-            }
-            .post-detail-dark-comments .comment-section [data-slot="avatar-fallback"],
-            .post-detail-dark-comments span.bg-gradient-to-br {
-              background: linear-gradient(to bottom right, rgb(82 82 91), rgb(63 63 70)) !important;
-              color: rgb(161 161 170) !important;
-              --tw-gradient-from: rgb(82 82 91) !important;
-              --tw-gradient-to: rgb(63 63 70) !important;
-            }
-            .post-detail-dark-comments .bg-muted {
+            /* Avatar fallbacks - force dark gradient on ALL spans inside avatar containers */
+            .post-detail-dark-comments span[class*="rounded-full"][class*="items-center"] {
+              background-image: none !important;
               background: rgb(63 63 70) !important;
               color: rgb(161 161 170) !important;
             }
-            .post-detail-dark-comments .from-gray-100 {
-              --tw-gradient-from: rgb(82 82 91) !important;
-              background: linear-gradient(to bottom right, rgb(82 82 91), rgb(63 63 70)) !important;
-            }
-            .post-detail-dark-comments .to-gray-200 {
-              --tw-gradient-to: rgb(63 63 70) !important;
-            }
-            .post-detail-dark-comments .text-gray-600 {
-              color: rgb(161 161 170) !important;
+            .post-detail-dark-comments button[class*="text-blue"] {
+              color: rgb(96 165 250) !important;
             }
           `}</style>
         </div>
