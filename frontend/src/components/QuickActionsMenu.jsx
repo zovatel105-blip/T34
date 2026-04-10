@@ -272,27 +272,30 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       id: 'moments',
       icon: StoryPlusIcon,
       label: 'Historias',
-      color: 'bg-orange-500/40 backdrop-blur-md hover:bg-orange-500/55',
-      borderColor: 'border-orange-300/60',
-      shadowColor: 'shadow-orange-500/30',
+      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
+      borderColor: 'border-white/20',
+      shadowColor: 'shadow-orange-500/20',
+      glowColor: 'rgba(249,115,22,0.25)',
       position: { x: -28, y: 8 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'search',
       icon: Search,
       label: 'Buscar',
-      color: 'bg-blue-500/40 backdrop-blur-md hover:bg-blue-500/55',
-      borderColor: 'border-blue-300/60',
-      shadowColor: 'shadow-blue-500/30',
+      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
+      borderColor: 'border-white/20',
+      shadowColor: 'shadow-blue-500/20',
+      glowColor: 'rgba(59,130,246,0.25)',
       position: { x: -35, y: -13 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'live',
       icon: TikTokLiveIcon,
       label: 'LIVE',
-      color: 'bg-red-500/40 backdrop-blur-md hover:bg-red-500/55',
-      borderColor: 'border-red-300/60',
-      shadowColor: 'shadow-red-500/30',
+      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
+      borderColor: 'border-white/20',
+      shadowColor: 'shadow-red-500/20',
+      glowColor: 'rgba(239,68,68,0.25)',
       position: { x: -8, y: 16 }, // AJUSTADO: manteniendo distancia proporcional
     }
   ];
@@ -339,6 +342,7 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
                   ? `translate(${action.position.x}px, ${action.position.y}px) scale(${isSelected ? 1.25 : 1})` 
                   : 'translate(0px, 0px) scale(0)',
                 transitionDelay: isVisible ? `${index * 100}ms` : '0ms',
+                boxShadow: action.glowColor ? `0 0 12px 2px ${action.glowColor}` : undefined,
               }}
             >
               <Icon 
