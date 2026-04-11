@@ -760,8 +760,8 @@ const FollowingPage = () => {
                         <div 
                           className="absolute inset-0 rounded-full overflow-hidden"
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 34px 35px, transparent 9px, black 10px)',
-                            maskImage: 'radial-gradient(circle at 34px 35px, transparent 9px, black 10px)'
+                            WebkitMaskImage: 'radial-gradient(circle at 33px 33px, transparent 12px, black 13px)',
+                            maskImage: 'radial-gradient(circle at 33px 33px, transparent 12px, black 13px)'
                           }}
                         >
                           {story.userAvatar ? (
