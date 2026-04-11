@@ -718,46 +718,34 @@ const FollowingPage = () => {
               zIndex: 9999,
             }}
           >
-            {/* Stories horizontales deslizables */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide max-w-[200px] pr-1">
-              {displayStories.map((story, index) => {
-                const isOwnStory = story.isOwnStory;
+            {/* Solo mostrar historia propia (botón para abrir overlay) */}
+            <div className="flex items-center gap-2 pr-1">
+              {displayStories.filter(s => s.isOwnStory).map((story, index) => {
                 const hasStories = story.storiesCount > 0;
+                const originalIndex = displayStories.findIndex(s => s.userId === story.userId);
                 
                 return (
                   <button
                     key={story.userId}
-                    onClick={() => handleStoryClick(index)}
+                    onClick={() => handleStoryClick(originalIndex)}
                     className="flex-shrink-0 relative"
                   >
-                    {/* Story ring container - Solo mostrar borde cuando HAY historias */}
                     {hasStories ? (
-                      // Usuario con historias - Mostrar borde de colores o gris según si fue visto
                       <div className={`w-10 h-10 rounded-full p-[2px] ${
                         !story.hasViewed
                           ? 'bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]'
                           : 'bg-gray-300'
                       }`}>
-                        {/* Separación negra entre el anillo y el avatar */}
                         <div className="w-full h-full bg-black rounded-full p-[2px]">
-                          {/* Avatar container */}
                           <div className="w-full h-full bg-black rounded-full overflow-hidden relative">
-                            {/* Avatar image if available */}
                             {story.userAvatar ? (
                               <img
                                 src={story.userAvatar}
                                 alt={story.username}
                                 className="w-full h-full rounded-full object-cover"
-                                onError={(e) => {
-                                  // Fallback to user icon
-                                  e.target.style.display = 'none';
-                                  if (e.target.nextSibling) {
-                                    e.target.nextSibling.style.display = 'flex';
-                                  }
-                                }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
                               />
                             ) : null}
-                            {/* Fallback gradient avatar with user icon */}
                             <div 
                               className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
                               style={{ display: story.userAvatar ? 'none' : 'flex' }}
@@ -768,26 +756,16 @@ const FollowingPage = () => {
                         </div>
                       </div>
                     ) : (
-                      // Usuario sin historias - SIN borde, solo avatar con botón +
                       <div className="w-10 h-10 relative">
-                        {/* Avatar container */}
                         <div className="w-full h-full rounded-full overflow-hidden">
-                          {/* Avatar image if available */}
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
                               alt={story.username}
                               className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                // Fallback to user icon
-                                e.target.style.display = 'none';
-                                if (e.target.nextSibling) {
-                                  e.target.nextSibling.style.display = 'flex';
-                                }
-                              }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
                             />
                           ) : null}
-                          {/* Fallback gradient avatar with user icon */}
                           <div 
                             className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
                             style={{ display: story.userAvatar ? 'none' : 'flex' }}
@@ -795,13 +773,9 @@ const FollowingPage = () => {
                             <User className="w-4 h-4" />
                           </div>
                         </div>
-                        
-                        {/* Plus button for own story when no stories exist - positioned to overlap slightly */}
-                        {isOwnStory && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center border-[2.5px] border-black shadow-lg">
-                            <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                          </div>
-                        )}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center border-[2.5px] border-black shadow-lg">
+                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        </div>
                       </div>
                     )}
                   </button>
