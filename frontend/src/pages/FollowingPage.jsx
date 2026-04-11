@@ -756,12 +756,12 @@ const FollowingPage = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative" style={{ width: '52px', height: '52px' }}>
+                      <div className="relative" style={{ width: '40px', height: '40px' }}>
                         <div 
                           className="absolute inset-0 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300"
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)',
-                            maskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)'
+                            WebkitMaskImage: 'radial-gradient(circle at 32px 35px, transparent 7px, black 8px)',
+                            maskImage: 'radial-gradient(circle at 32px 35px, transparent 7px, black 8px)'
                           }}
                         >
                           {story.userAvatar ? (
@@ -773,15 +773,15 @@ const FollowingPage = () => {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <User className="w-6 h-6 text-gray-500" />
+                              <User className="w-5 h-5 text-gray-500" />
                             </div>
                           )}
                         </div>
                         <div 
-                          className="absolute w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-1px', right: '2px', zIndex: 2 }}
+                          className="absolute w-3 h-3 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
+                          style={{ bottom: '-1px', right: '1px', zIndex: 2 }}
                         >
-                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                          <Plus className="w-2 h-2 text-white" strokeWidth={3} />
                         </div>
                       </div>
                     )}
