@@ -757,13 +757,7 @@ const FollowingPage = () => {
                       </div>
                     ) : (
                       <div className="relative" style={{ width: '40px', height: '40px' }}>
-                        <div 
-                          className="absolute inset-0 rounded-full overflow-hidden"
-                          style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 33px 33px, transparent 12px, black 13px)',
-                            maskImage: 'radial-gradient(circle at 33px 33px, transparent 12px, black 13px)'
-                          }}
-                        >
+                        <div className="w-full h-full rounded-full overflow-hidden">
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
@@ -781,7 +775,7 @@ const FollowingPage = () => {
                         </div>
                         <div 
                           className="absolute w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-1px', right: '-1px', zIndex: 2 }}
+                          style={{ bottom: '-4px', right: '-4px', zIndex: 2 }}
                         >
                           <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
