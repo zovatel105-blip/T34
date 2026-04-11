@@ -362,11 +362,12 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
               Cancel
             </button>
             
-            {/* Botón Save - verde como solicitado */}
+            {/* Botón Save - púrpura como guardar cambios del perfil */}
             <button
               onClick={handleCropImage}
               disabled={loading}
-              className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-xl transition-all duration-200 max-w-[150px]"
+              className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-4 rounded-xl transition-all duration-200 max-w-[150px]"
+              style={{backgroundColor: '#B061FF', boxShadow: '0 10px 15px -3px rgba(176, 97, 255, 0.25)'}}
             >
               {loading ? 'Saving...' : 'Save'}
             </button>
