@@ -760,8 +760,8 @@ const FollowingPage = () => {
                         <div 
                           className="absolute inset-0 rounded-full overflow-hidden"
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 34px 34px, transparent 11px, black 12px)',
-                            maskImage: 'radial-gradient(circle at 34px 34px, transparent 11px, black 12px)'
+                            WebkitMaskImage: 'radial-gradient(circle at 34px 35px, transparent 9px, black 10px)',
+                            maskImage: 'radial-gradient(circle at 34px 35px, transparent 9px, black 10px)'
                           }}
                         >
                           {story.userAvatar ? (
@@ -780,10 +780,10 @@ const FollowingPage = () => {
                           </div>
                         </div>
                         <div 
-                          className="absolute w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-2px', right: '-2px', zIndex: 2 }}
+                          className="absolute w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
+                          style={{ bottom: '-1px', right: '-1px', zIndex: 2 }}
                         >
-                          <Plus className="w-3 h-3 text-white" strokeWidth={2.5} />
+                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
                       </div>
                     )}
