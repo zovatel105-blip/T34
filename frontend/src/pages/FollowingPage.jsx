@@ -756,26 +756,30 @@ const FollowingPage = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative" style={{ width: '40px', height: '40px' }}>
-                        <div className="w-full h-full rounded-full overflow-hidden">
+                      <div className="relative" style={{ width: '52px', height: '52px' }}>
+                        <div 
+                          className="absolute inset-0 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300"
+                          style={{
+                            WebkitMaskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)',
+                            maskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)'
+                          }}
+                        >
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
                               alt={story.username}
-                              className="w-full h-full rounded-full object-cover"
+                              className="w-full h-full object-cover"
                               onError={(e) => { e.target.style.display = 'none'; }}
                             />
-                          ) : null}
-                          <div 
-                            className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
-                            style={{ display: story.userAvatar ? 'none' : 'flex' }}
-                          >
-                            <User className="w-4 h-4" />
-                          </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="w-6 h-6 text-gray-500" />
+                            </div>
+                          )}
                         </div>
                         <div 
                           className="absolute w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-4px', right: '-4px', zIndex: 2 }}
+                          style={{ bottom: '-1px', right: '2px', zIndex: 2 }}
                         >
                           <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
