@@ -15,10 +15,29 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
   const [loading, setLoading] = useState(false);
 
   // Configuración del crop circular
-  const CANVAS_SIZE = 330; // Aumentado de 300 a 330px para círculo más grande
-  const CROP_SIZE = 330; // Círculo del mismo tamaño que el canvas
-  const MIN_SCALE = 0.3; // Reducido para mostrar más imagen completa inicialmente
-  const MAX_SCALE = 4; // Aumentado para mejor control de zoom
+  const CANVAS_SIZE = 330;
+  const CROP_SIZE = 330;
+  const MAX_SCALE = 4;
+
+  // Calcular escala mínima que cubre todo el círculo
+  const getMinCoverScale = (img) => {
+    if (!img) return 0.3;
+    return Math.max(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
+  };
+
+  // Restringir posición para que la imagen siempre cubra el círculo
+  const clampPosition = (pos, img, currentScale) => {
+    if (!img) return pos;
+    const scaledW = img.width * currentScale;
+    const scaledH = img.height * currentScale;
+    const radius = CANVAS_SIZE / 2;
+    const maxOffsetX = Math.max(0, (scaledW / 2) - radius);
+    const maxOffsetY = Math.max(0, (scaledH / 2) - radius);
+    return {
+      x: Math.max(-maxOffsetX, Math.min(maxOffsetX, pos.x)),
+      y: Math.max(-maxOffsetY, Math.min(maxOffsetY, pos.y))
+    };
+  };
 
   useEffect(() => {
     if (initialImage) {
@@ -113,28 +132,17 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
   };
 
   const handleZoomOut = () => {
-    const newScale = Math.max(scale * 0.8, MIN_SCALE);
+    const minScale = getMinCoverScale(image);
+    const newScale = Math.max(scale * 0.8, minScale);
+    const newPos = clampPosition(position, image, newScale);
     setScale(newScale);
-    drawCanvas(image, newScale, position);
+    setPosition(newPos);
+    drawCanvas(image, newScale, newPos);
   };
 
   const handleReset = () => {
     if (image) {
-      const imageAspect = image.width / image.height;
-      let initialScale;
-      
-      // Reset para mostrar imagen completa en formato 9:16
-      const targetAspect = 9/16; // 0.5625
-      
-      if (imageAspect <= targetAspect) {
-        // Imagen vertical o cuadrada - escalar por ancho para mostrar completa
-        initialScale = (CANVAS_SIZE * 0.7) / image.width;
-      } else {
-        // Imagen horizontal - escalar por altura para mostrar completa  
-        initialScale = (CANVAS_SIZE * 0.7) / image.height;
-      }
-      
-      const newScale = Math.max(initialScale, MIN_SCALE);
+      const newScale = getMinCoverScale(image);
       const newPosition = { x: 0, y: 0 };
       setScale(newScale);
       setPosition(newPosition);
@@ -154,10 +162,10 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
     
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
-    const newPosition = {
+    const newPosition = clampPosition({
       x: lastPanPoint.x + deltaX,
       y: lastPanPoint.y + deltaY
-    };
+    }, image, scale);
     
     setPosition(newPosition);
     drawCanvas(image, scale, newPosition);
@@ -203,10 +211,10 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
       // Drag con un dedo
       const deltaX = touches[0].clientX - dragStart.x;
       const deltaY = touches[0].clientY - dragStart.y;
-      const newPosition = {
+      const newPosition = clampPosition({
         x: lastPanPoint.x + deltaX,
         y: lastPanPoint.y + deltaY
-      };
+      }, image, scale);
       
       setPosition(newPosition);
       drawCanvas(image, scale, newPosition);
@@ -214,10 +222,13 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
       // Zoom con dos dedos
       const distance = getTouchDistance(touches);
       if (lastTouchDistance > 0) {
+        const minScale = getMinCoverScale(image);
         const scaleChange = distance / lastTouchDistance;
-        const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * scaleChange));
+        const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * scaleChange));
+        const newPos = clampPosition(position, image, newScale);
         setScale(newScale);
-        drawCanvas(image, newScale, position);
+        setPosition(newPos);
+        drawCanvas(image, newScale, newPos);
       }
       setLastTouchDistance(distance);
     }
