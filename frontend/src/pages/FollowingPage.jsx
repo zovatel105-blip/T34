@@ -737,7 +737,7 @@ const FollowingPage = () => {
                           : 'bg-gray-400/50'
                       }`}>
                         <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
-                          <div className="w-full h-full rounded-full overflow-hidden relative border border-gray-500/30">
+                          <div className="w-full h-full rounded-full overflow-hidden relative">
                             {story.userAvatar ? (
                               <img
                                 src={story.userAvatar}
@@ -757,7 +757,13 @@ const FollowingPage = () => {
                       </div>
                     ) : (
                       <div className="w-10 h-10 relative">
-                        <div className="w-full h-full rounded-full overflow-hidden border border-gray-500/30">
+                        <div 
+                          className="w-full h-full rounded-full overflow-hidden"
+                          style={{
+                            WebkitMaskImage: 'radial-gradient(circle at 85% 85%, transparent 9px, black 10px)',
+                            maskImage: 'radial-gradient(circle at 85% 85%, transparent 9px, black 10px)'
+                          }}
+                        >
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
@@ -773,7 +779,7 @@ const FollowingPage = () => {
                             <User className="w-4 h-4" />
                           </div>
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center border-[2px] border-gray-700 shadow-lg">
+                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center shadow-lg">
                           <Plus className="w-3 h-3 text-white" strokeWidth={2.5} />
                         </div>
                       </div>
