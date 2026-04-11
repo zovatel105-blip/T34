@@ -198,7 +198,7 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+    <div className="fixed inset-0 bg-white z-[60] flex flex-col">
       
       {/* Header móvil con botón volver */}
       <div 
