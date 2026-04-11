@@ -779,7 +779,7 @@ const FollowingPage = () => {
                         </div>
                         <div 
                           className="absolute w-3 h-3 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-1px', right: '1px', zIndex: 2 }}
+                          style={{ bottom: '-1px', right: '2px', zIndex: 2 }}
                         >
                           <Plus className="w-2 h-2 text-white" strokeWidth={3} />
                         </div>
