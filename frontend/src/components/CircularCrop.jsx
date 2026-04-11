@@ -54,7 +54,7 @@ const CircularCrop = ({ isOpen, onClose, onImageCropped, initialImage = null }) 
       const initialScale = Math.max(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
       
       // Asegurar que la escala permita ver la imagen completa
-      const finalScale = Math.max(initialScale, MIN_SCALE);
+      const finalScale = Math.max(initialScale, getMinCoverScale(img));
       setScale(finalScale);
       setPosition({ x: 0, y: 0 });
       drawCanvas(img, finalScale, { x: 0, y: 0 });
