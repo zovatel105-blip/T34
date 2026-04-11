@@ -734,10 +734,10 @@ const FollowingPage = () => {
                       <div className={`w-10 h-10 rounded-full p-[2px] ${
                         !story.hasViewed
                           ? 'bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]'
-                          : 'bg-gray-300'
+                          : 'bg-gray-400/50'
                       }`}>
-                        <div className="w-full h-full bg-black/30 rounded-full p-[2px]">
-                          <div className="w-full h-full bg-black/30 rounded-full overflow-hidden relative">
+                        <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
+                          <div className="w-full h-full rounded-full overflow-hidden relative border border-gray-500/30">
                             {story.userAvatar ? (
                               <img
                                 src={story.userAvatar}
@@ -757,7 +757,7 @@ const FollowingPage = () => {
                       </div>
                     ) : (
                       <div className="w-10 h-10 relative">
-                        <div className="w-full h-full rounded-full overflow-hidden">
+                        <div className="w-full h-full rounded-full overflow-hidden border border-gray-500/30">
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
@@ -773,8 +773,8 @@ const FollowingPage = () => {
                             <User className="w-4 h-4" />
                           </div>
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center border-[2.5px] border-transparent shadow-lg">
-                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center border-[2px] border-gray-700 shadow-lg">
+                          <Plus className="w-3 h-3 text-white" strokeWidth={2.5} />
                         </div>
                       </div>
                     )}
