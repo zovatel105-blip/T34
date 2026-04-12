@@ -168,7 +168,7 @@ const Comment = ({
 
   return (
     <motion.div
-      className="comment-thread py-3 px-3 border border-gray-200 rounded-lg"
+      className="comment-thread py-3 px-3 border border-white/20 rounded-lg"
       data-comment-id={comment.id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -188,14 +188,14 @@ const Comment = ({
           <div className="flex items-start justify-between mb-1">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 text-sm">
+                <span className="font-bold text-white text-sm">
                   {comment.user.display_name || comment.user.username}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-white/40">
                   {formatTimeAgo(comment.created_at)}
                 </span>
                 {comment.is_edited && (
-                  <span className="text-xs text-gray-400">(editado)</span>
+                  <span className="text-xs text-white/30">(editado)</span>
                 )}
               </div>
               
@@ -211,13 +211,13 @@ const Comment = ({
                   />
                 </div>
               ) : (
-                <p className="text-gray-900 text-sm leading-relaxed mt-1">
+                <p className="text-white/90 text-sm leading-relaxed mt-1">
                   {comment.content}
                 </p>
               )}
               
               {/* Likes count y acciones */}
-              <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+              <div className="flex items-center gap-4 text-xs text-white/50 mt-2">
                 {comment.likes > 0 && (
                   <span className="font-semibold">{comment.likes} Me gusta</span>
                 )}
@@ -225,7 +225,7 @@ const Comment = ({
                 {canReply && (
                   <button
                     onClick={() => setShowReplyForm(!showReplyForm)}
-                    className="font-semibold hover:text-gray-700"
+                    className="font-semibold hover:text-white/80"
                   >
                     Responder
                   </button>
@@ -235,13 +235,13 @@ const Comment = ({
                   <>
                     <button
                       onClick={() => setShowEditForm(true)}
-                      className="font-semibold hover:text-gray-700"
+                      className="font-semibold hover:text-white/80"
                     >
                       Editar
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="font-semibold hover:text-red-500"
+                      className="font-semibold hover:text-red-400"
                     >
                       Eliminar
                     </button>
@@ -252,7 +252,7 @@ const Comment = ({
                 <div className="relative ml-auto">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="hover:text-gray-700"
+                    className="hover:text-white/80"
                   >
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
@@ -260,7 +260,7 @@ const Comment = ({
                   <AnimatePresence>
                     {showMenu && (
                       <motion.div 
-                        className="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
+                        className="absolute right-0 top-6 bg-gray-800 border border-white/20 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
@@ -268,7 +268,7 @@ const Comment = ({
                       >
                         <button
                           onClick={() => setShowMenu(false)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-white/80 hover:bg-white/10"
                         >
                           <Flag className="w-4 h-4" />
                           Reportar
@@ -283,7 +283,7 @@ const Comment = ({
               {hasReplies && (
                 <button
                   onClick={() => setShowReplies(!showReplies)}
-                  className="flex items-center gap-2 text-xs text-gray-500 font-semibold hover:text-gray-700 mt-2"
+                  className="flex items-center gap-2 text-xs text-white/50 font-semibold hover:text-white/80 mt-2"
                 >
                   {showReplies ? (
                     <>Ocultar respuestas ({comment.reply_count})</>
