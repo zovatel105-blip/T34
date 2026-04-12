@@ -1998,6 +1998,7 @@ const ProfilePage = () => {
             {/* Sección de perfil con desvanecimiento progresivo al hacer scroll (solo perfiles ajenos) */}
             <div 
               ref={profileHeaderSectionRef}
+              className="space-y-6 sm:space-y-8"
               style={!isOwnProfile ? {
                 opacity: profileHeaderOpacity,
                 transform: `translateY(${(1 - profileHeaderOpacity) * -10}px)`,
@@ -2268,8 +2269,9 @@ const ProfilePage = () => {
             {/* Línea separadora sutil */}
             <div className="w-full h-px bg-gray-100 max-w-sm mx-auto"></div>
 
+            </div>{/* Close profileHeaderSectionRef wrapper */}
+
           </div>
-          </div>{/* Close profileHeaderSectionRef wrapper */}
 
           {/* Mensaje de solicitud pendiente - Diseño según imagen de referencia */}
           {followRequestPending && !isOwnProfile && (
