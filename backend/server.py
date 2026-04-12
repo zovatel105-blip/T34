@@ -1127,6 +1127,89 @@ async def search_music_realtime(
             'results': []
         }
 
+
+@api_router.get("/music/trending")
+async def get_trending_music(
+    limit: int = 20,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get trending music from iTunes - varies each time"""
+    # Pool of trending search terms that rotate randomly
+    trending_searches = [
+        "top hits 2025", "reggaeton 2025", "bad bunny", "karol g",
+        "feid", "morad", "quevedo", "rosalia", "rauw alejandro",
+        "peso pluma", "junior h", "myke towers", "anuel aa",
+        "ozuna", "daddy yankee", "j balvin", "shakira",
+        "bizarrap", "duki", "nicky jam", "sech",
+        "trending latin", "trap latino", "urbano español",
+        "latin pop 2025", "reggaeton nuevos", "perreo",
+        "trap 2025", "latin urban", "dembow 2025"
+    ]
+    
+    # Pick 3 random search terms each time
+    selected_terms = random.sample(trending_searches, min(3, len(trending_searches)))
+    
+    all_results = []
+    seen_ids = set()
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            for term in selected_terms:
+                try:
+                    url = "https://itunes.apple.com/search"
+                    params = {
+                        'term': term,
+                        'media': 'music',
+                        'entity': 'song',
+                        'limit': 10,
+                        'country': 'US'
+                    }
+                    response = await client.get(url, params=params, timeout=8)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if 'results' in data:
+                        for result in data['results']:
+                            track_id = result.get('trackId')
+                            preview_url = result.get('previewUrl')
+                            if preview_url and track_id and track_id not in seen_ids:
+                                seen_ids.add(track_id)
+                                all_results.append({
+                                    'id': f"itunes_{track_id}",
+                                    'title': result.get('trackName', 'Unknown'),
+                                    'artist': result.get('artistName', 'Unknown'),
+                                    'preview_url': preview_url,
+                                    'cover': result.get('artworkUrl100', '').replace('100x100', '400x400'),
+                                    'duration': 30,
+                                    'category': result.get('primaryGenreName', 'Music'),
+                                    'isOriginal': False,
+                                    'isTrending': True,
+                                    'uses': random.randint(100000, 9000000),
+                                    'source': 'iTunes'
+                                })
+                except Exception as e:
+                    print(f"Error fetching trending for '{term}': {e}")
+                    continue
+        
+        # Shuffle and limit
+        random.shuffle(all_results)
+        all_results = all_results[:limit]
+        
+        return {
+            'success': True,
+            'results': all_results,
+            'total': len(all_results)
+        }
+    except Exception as e:
+        print(f"Error in trending music: {e}")
+        return {
+            'success': False,
+            'results': [],
+            'total': 0,
+            'message': str(e)
+        }
+
+
 @api_router.get("/music/library-with-previews")
 async def get_music_library_with_real_previews(
     limit: int = 20,
