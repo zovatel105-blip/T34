@@ -404,8 +404,9 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             isMobile ? "px-4 py-1 text-xs" : "px-6 py-1.5 text-sm",
                             voter.is_following
                               ? 'bg-white/20 text-white hover:bg-white/30'
-                              : 'bg-white text-black hover:bg-white/90'
+                              : 'text-white hover:brightness-110'
                           )}
+                          style={!voter.is_following ? {backgroundColor: '#B061FF'} : {}}
                         >
                           {voter.is_following ? 'Siguiendo' : 'Seguir'}
                         </Button>
