@@ -260,10 +260,10 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
           
           {/* Bottom Sheet Content */}
           <div className="fixed bottom-0 left-0 right-0 z-[10000] animate-in slide-in-from-bottom duration-300">
-            <div className="bg-white rounded-t-3xl shadow-2xl overflow-hidden max-w-lg mx-auto">
+            <div className="bg-zinc-900 rounded-t-3xl shadow-2xl overflow-hidden max-w-lg mx-auto">
               {/* Handle Bar */}
               <div className="flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1 bg-gray-300 rounded-full" />
+                <div className="w-12 h-1 bg-zinc-600 rounded-full" />
               </div>
 
               {/* Menu Options */}
@@ -274,14 +274,14 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     setShowEditDialog(true);
                     handleSetIsOpen(false);
                   }}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4"
                 >
-                  <Edit className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                  <div className="text-gray-900 text-base font-medium">Editar título/descripción</div>
+                  <Edit className="w-6 h-6 text-zinc-400 flex-shrink-0" />
+                  <div className="text-white text-base font-medium">Editar título/descripción</div>
                 </button>
 
                 {/* Separador */}
-                <div className="my-2 border-t border-gray-100" />
+                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Fijar en perfil */}
                 <button
@@ -290,10 +290,10 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     handleSetIsOpen(false);
                   }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
                 >
-                  <Pin className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                  <div className="text-gray-900 text-base font-medium">
+                  <Pin className="w-6 h-6 text-zinc-400 flex-shrink-0" />
+                  <div className="text-white text-base font-medium">
                     {poll.is_pinned ? 'Desanclar del perfil' : 'Fijar en perfil'}
                   </div>
                 </button>
@@ -305,16 +305,16 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     handleSetIsOpen(false);
                   }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
                 >
-                  <Archive className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                  <div className="text-gray-900 text-base font-medium">
+                  <Archive className="w-6 h-6 text-zinc-400 flex-shrink-0" />
+                  <div className="text-white text-base font-medium">
                     {poll.is_archived ? 'Desarchivar publicación' : 'Archivar publicación'}
                   </div>
                 </button>
 
                 {/* Separador */}
-                <div className="my-2 border-t border-gray-100" />
+                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Hacer publicación privada/pública */}
                 <button
@@ -323,23 +323,23 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     handleSetIsOpen(false);
                   }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
                 >
                   {poll.is_private ? (
                     <>
-                      <Globe className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                      <div className="text-gray-900 text-base font-medium">Hacer publicación pública</div>
+                      <Globe className="w-6 h-6 text-zinc-400 flex-shrink-0" />
+                      <div className="text-white text-base font-medium">Hacer publicación pública</div>
                     </>
                   ) : (
                     <>
-                      <Lock className="w-6 h-6 text-gray-600 flex-shrink-0" />
-                      <div className="text-gray-900 text-base font-medium">Hacer publicación privada</div>
+                      <Lock className="w-6 h-6 text-zinc-400 flex-shrink-0" />
+                      <div className="text-white text-base font-medium">Hacer publicación privada</div>
                     </>
                   )}
                 </button>
 
                 {/* Separador */}
-                <div className="my-2 border-t border-gray-100" />
+                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Permitir/Deshabilitar comentarios */}
                 <button
@@ -348,14 +348,14 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     handleSetIsOpen(false);
                   }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
                 >
-                  <MessageCircle className="w-6 h-6 text-gray-600 flex-shrink-0" />
+                  <MessageCircle className="w-6 h-6 text-zinc-400 flex-shrink-0" />
                   <div className="flex flex-col">
-                    <div className="text-gray-900 text-base font-medium">
+                    <div className="text-white text-base font-medium">
                       {poll.comments_enabled || poll.commentsEnabled ? 'Deshabilitar comentarios' : 'Habilitar comentarios'}
                     </div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-zinc-500 text-xs">
                       {poll.comments_enabled || poll.commentsEnabled ? 'Los comentarios se ocultarán' : 'Los comentarios serán visibles'}
                     </div>
                   </div>
@@ -368,25 +368,25 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     handleSetIsOpen(false);
                   }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
                 >
                   {poll.show_vote_count || poll.showVoteCount ? (
-                    <EyeOff className="w-6 h-6 text-gray-600 flex-shrink-0" />
+                    <EyeOff className="w-6 h-6 text-zinc-400 flex-shrink-0" />
                   ) : (
-                    <Eye className="w-6 h-6 text-gray-600 flex-shrink-0" />
+                    <Eye className="w-6 h-6 text-zinc-400 flex-shrink-0" />
                   )}
                   <div className="flex flex-col">
-                    <div className="text-gray-900 text-base font-medium">
+                    <div className="text-white text-base font-medium">
                       {poll.show_vote_count || poll.showVoteCount ? 'Ocultar conteo de votos' : 'Mostrar conteo de votos'}
                     </div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-zinc-500 text-xs">
                       {poll.show_vote_count || poll.showVoteCount ? 'Los números de votos se ocultarán' : 'Los números de votos serán visibles'}
                     </div>
                   </div>
                 </button>
 
                 {/* Separador */}
-                <div className="my-2 border-t border-gray-100" />
+                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Eliminar publicación */}
                 <button
@@ -394,7 +394,7 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                     setShowDeleteDialog(true);
                     handleSetIsOpen(false);
                   }}
-                  className="w-full px-6 py-4 text-left hover:bg-red-50 active:bg-red-100/50 transition-colors duration-150 flex items-center gap-4"
+                  className="w-full px-6 py-4 text-left hover:bg-red-950/30 active:bg-red-900/30 transition-colors duration-150 flex items-center gap-4"
                 >
                   <Trash2 className="w-6 h-6 text-red-500 flex-shrink-0" />
                   <div className="text-red-500 text-base font-medium">Eliminar publicación</div>

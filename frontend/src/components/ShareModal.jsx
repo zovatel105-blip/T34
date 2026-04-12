@@ -233,8 +233,8 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             }}
             className={
               isMobile
-                ? "bg-white rounded-t-3xl p-6 w-full fixed bottom-0 left-0 right-0 max-h-[60vh] overflow-y-auto"
-                : "bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
+                ? "bg-zinc-900 rounded-t-3xl p-6 w-full fixed bottom-0 left-0 right-0 max-h-[60vh] overflow-y-auto"
+                : "bg-zinc-900 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
             }
             onClick={(e) => e.stopPropagation()}
             onTouchStart={isMobile ? handleTouchStart : undefined}
@@ -246,12 +246,12 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           >
             {/* Drag Indicator for Mobile */}
             {isMobile && (
-              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+              <div className="w-12 h-1 bg-zinc-600 rounded-full mx-auto mb-4"></div>
             )}
 
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-white">
                 Compartir {type === 'poll' ? 'Votación' : 'Perfil'}
               </h3>
               {!isMobile && (
@@ -267,10 +267,10 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             </div>
 
             {/* Content Preview */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">{title}</h4>
-              <p className="text-sm text-gray-600 mb-2">{description}</p>
-              <p className="text-xs text-gray-500 truncate">{url}</p>
+            <div className="mb-6 p-4 bg-zinc-800 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">{title}</h4>
+              <p className="text-sm text-zinc-400 mb-2">{description}</p>
+              <p className="text-xs text-zinc-500 truncate">{url}</p>
             </div>
 
             {/* Platform Options */}
@@ -312,11 +312,11 @@ const ShareModal = ({ isOpen, onClose, content }) => {
 
             {/* Mobile Close Button */}
             {isMobile && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="mt-6 pt-4 border-t border-zinc-800">
                 <Button
                   variant="outline"
                   onClick={onClose}
-                  className="w-full py-3 text-gray-700 border-gray-300 hover:bg-gray-50"
+                  className="w-full py-3 text-zinc-300 border-zinc-700 hover:bg-zinc-800"
                 >
                   Cerrar
                 </Button>
