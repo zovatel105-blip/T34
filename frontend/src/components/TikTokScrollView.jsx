@@ -688,10 +688,10 @@ const TikTokPollCard = ({
                         ? "p-[1.5px] bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]" 
                         : authorHasStories && !authorStoriesData?.has_unviewed
                         ? "p-[1.5px] bg-gray-300"
-                        : "ring-3 ring-yellow-400 shadow-lg shadow-yellow-400/50"
+                        : ""
                     )}
                   >
-                    {/* Inner white border for story ring effect */}
+                    {/* Inner border for story ring effect */}
                     {authorHasStories && (
                       <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
                         <div className="w-full h-full bg-white rounded-full overflow-hidden">
@@ -708,17 +708,21 @@ const TikTokPollCard = ({
                       </div>
                     )}
                     
-                    {/* Normal avatar when no stories */}
+                    {/* Normal avatar when no stories - same visual size */}
                     {!authorHasStories && (
-                      <Avatar className="w-full h-full rounded-full">
-                        <AvatarImage 
-                          src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
-                          className="object-cover" 
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-                          <User className="w-5 h-5" />
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="w-full h-full bg-transparent rounded-full overflow-hidden p-[1.5px]">
+                        <div className="w-full h-full bg-white rounded-full overflow-hidden">
+                          <Avatar className="w-full h-full rounded-full">
+                            <AvatarImage 
+                              src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                              className="object-cover" 
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                              <User className="w-4 h-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </div>
                     )}
                   </button>
 
