@@ -106,6 +106,7 @@ const ProfilePage = () => {
   const [followRequestPending, setFollowRequestPending] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [profileHeaderOpacity, setProfileHeaderOpacity] = useState(1);
+  const [showHeaderCover, setShowHeaderCover] = useState(false);
   const profileInfoRef = useRef(null);
   const profileHeaderSectionRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -136,37 +137,29 @@ const ProfilePage = () => {
   // Detectar scroll para mostrar/ocultar mini header con efecto progresivo
   useEffect(() => {
     const handleScroll = () => {
-      const headerSection = profileHeaderSectionRef.current;
-      if (!headerSection) return;
+      const scrollY = window.scrollY;
       
-      const rect = headerSection.getBoundingClientRect();
-      const headerHeight = headerSection.offsetHeight;
+      // Umbral para empezar a desvanecer (cuando la sección de perfil empieza a salir)
+      const fadeStart = 100;  // Empieza a desvanecer a 100px de scroll
+      const fadeEnd = 280;    // Completamente desvanecido a 280px
       
-      // Calculate how much of the header has scrolled past
-      // Start fading when the bottom of header section approaches the sticky header
-      const fadeStartOffset = headerHeight * 0.3; // Start fading at 30% scrolled
-      const fadeEndOffset = headerHeight * 0.8; // Fully faded at 80% scrolled
+      // Cobertura: activa cuando hay scroll suficiente para tapar contenido entre header y tabs
+      setShowHeaderCover(scrollY > 60);
       
-      const scrollProgress = -rect.top; // How far we've scrolled past the top of the section
-      
-      if (scrollProgress <= fadeStartOffset) {
-        // Not yet scrolled enough - full opacity
+      if (scrollY <= fadeStart) {
         setProfileHeaderOpacity(1);
         setShowStickyHeader(false);
-      } else if (scrollProgress >= fadeEndOffset) {
-        // Fully scrolled past - hidden
+      } else if (scrollY >= fadeEnd) {
         setProfileHeaderOpacity(0);
         setShowStickyHeader(true);
       } else {
-        // Progressive fade
-        const progress = (scrollProgress - fadeStartOffset) / (fadeEndOffset - fadeStartOffset);
+        const progress = (scrollY - fadeStart) / (fadeEnd - fadeStart);
         setProfileHeaderOpacity(Math.max(0, 1 - progress));
-        setShowStickyHeader(progress > 0.5);
+        setShowStickyHeader(progress > 0.6);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Run once on mount to set initial state
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
@@ -1894,7 +1887,14 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40 shadow-[0_4px_6px_-1px_rgba(255,255,255,1)]">
+          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40 relative">
+            {/* Cobertura blanca para tapar contenido al hacer scroll en perfiles ajenos */}
+            {!isOwnProfile && showHeaderCover && (
+              <div 
+                className="absolute left-0 right-0 top-full bg-white pointer-events-none" 
+                style={{ height: '400px', zIndex: 40 }}
+              />
+            )}
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
@@ -2001,8 +2001,8 @@ const ProfilePage = () => {
               className="space-y-6 sm:space-y-8 relative z-0"
               style={!isOwnProfile ? {
                 opacity: profileHeaderOpacity,
-                transform: `translateY(${(1 - profileHeaderOpacity) * -10}px)`,
-                transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+                transition: 'opacity 0.2s ease-out',
+                ...(profileHeaderOpacity === 0 ? { visibility: 'hidden', maxHeight: 0, overflow: 'hidden', margin: 0, padding: 0 } : {}),
               } : undefined}
             >
             {/* Avatar con métricas alrededor en diseño 3x3 */}
@@ -2290,7 +2290,7 @@ const ProfilePage = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               
               {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY debajo del header */}
-              <div className="px-1 sm:px-2 mb-1 sticky top-0 z-20 pb-1 pt-[60px] bg-white">
+              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-50 pb-1 pt-3 bg-white">
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 
@@ -2342,7 +2342,7 @@ const ProfilePage = () => {
               </div>
 
               {/* Contenido de tabs - Con padding lateral mínimo */}
-              <div className="mt-0">
+              <div className="mt-0 relative z-0 overflow-hidden">
                 <TabsContent value="polls" className="mt-0">
                   {polls.length === 0 && (!isOwnProfile || activeUploads.length === 0) ? (
                     <div className="text-center py-16 space-y-6 px-1 sm:px-2">
