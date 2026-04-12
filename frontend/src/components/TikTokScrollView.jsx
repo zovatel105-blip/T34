@@ -683,47 +683,27 @@ const TikTokPollCard = ({
                   <button
                     onClick={handleAvatarClick}
                     className={cn(
-                      "w-12 h-12 rounded-full overflow-hidden relative transition-transform duration-200 hover:scale-110",
+                      "w-12 h-12 rounded-full overflow-hidden relative transition-transform duration-200 hover:scale-110 p-[1.5px]",
                       authorHasStories && authorStoriesData?.has_unviewed
-                        ? "p-[1.5px] bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]" 
+                        ? "bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]" 
                         : authorHasStories && !authorStoriesData?.has_unviewed
-                        ? "p-[1.5px] bg-gray-300"
-                        : ""
+                        ? "bg-gray-300"
+                        : "bg-transparent"
                     )}
                   >
-                    {/* Inner border for story ring effect */}
-                    {authorHasStories && (
-                      <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
-                        <div className="w-full h-full bg-white rounded-full overflow-hidden">
-                          <Avatar className="w-full h-full rounded-full">
-                            <AvatarImage 
-                              src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
-                              className="object-cover" 
-                            />
-                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-                              <User className="w-4 h-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
+                    <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
+                      <div className="w-full h-full bg-white rounded-full overflow-hidden">
+                        <Avatar className="w-full h-full rounded-full">
+                          <AvatarImage 
+                            src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                            className="object-cover" 
+                          />
+                          <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                            <User className="w-4 h-4" />
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
-                    )}
-                    
-                    {/* Normal avatar when no stories - same visual size */}
-                    {!authorHasStories && (
-                      <div className="w-full h-full bg-transparent rounded-full overflow-hidden p-[1.5px]">
-                        <div className="w-full h-full bg-white rounded-full overflow-hidden">
-                          <Avatar className="w-full h-full rounded-full">
-                            <AvatarImage 
-                              src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
-                              className="object-cover" 
-                            />
-                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-                              <User className="w-4 h-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </button>
 
                   {/* Botón separado para seguir */}
