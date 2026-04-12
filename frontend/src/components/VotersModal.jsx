@@ -260,14 +260,14 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
 
               <div className="flex items-center justify-center gap-8 pt-4">
                 <div className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-white" strokeWidth={1.5} />
+                  <Vote className="w-5 h-5 text-white" strokeWidth={1.5} />
                   <span className="text-lg font-normal text-white">
                     {totalVotes.toLocaleString()}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-white" strokeWidth={1.5} />
+                  <Play className="w-5 h-5 text-white" strokeWidth={1.5} />
                   <span className="text-lg font-normal text-white">
                     {views.toLocaleString()}
                   </span>
@@ -337,7 +337,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                         <Button
                           onClick={() => handleFollowToggle(voter.id, voter.is_following)}
                           className={cn(
-                            "ml-3 rounded-lg font-semibold transition-all flex-shrink-0 h-[38px] px-7 text-[14px]",
+                            "ml-3 rounded-full font-semibold transition-all flex-shrink-0 h-[38px] px-7 text-[14px]",
                             voter.is_following
                               ? 'bg-white/15 text-white hover:bg-white/25'
                               : 'text-white hover:brightness-110'
