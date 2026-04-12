@@ -706,7 +706,7 @@ const FollowingPage = () => {
   // Renderizado móvil (TikTok mode)
   if (isMobile || isTikTokMode) {
     return (
-      <>
+      <div className="fixed inset-0 bg-black" style={{ zIndex: 0 }}>
         {/* Stories tabs deslizables - Solo mostrar si hay historias reales */}
         {displayStories.length > 0 && (
           <div 
@@ -918,7 +918,7 @@ const FollowingPage = () => {
             scrollbar-width: none;
           }
         `}</style>
-      </>
+      </div>
     );
   }
 

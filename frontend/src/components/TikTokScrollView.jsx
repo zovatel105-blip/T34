@@ -1883,13 +1883,14 @@ const TikTokScrollView = ({
   }
 
   return (
-    <div className="fixed z-50 bg-black overflow-hidden transition-all duration-300 ease-out"
+    <div className="fixed z-50 bg-black overflow-hidden"
          style={{
-           top: storiesOverlayOpen ? '90px' : '0px',
+           top: storiesOverlayOpen ? '87px' : '0px',
            left: '0px',
            right: '0px',
            bottom: '0px',
            width: '100vw',
+           transition: 'top 0.3s ease-out',
          }}>
 
       {/* Active Challenges Button - Visible when showActiveChallengesButton is true */}
