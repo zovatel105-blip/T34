@@ -756,7 +756,7 @@ const TikTokPollCard = ({
 
         </div>
         
-        <div className="mt-3">
+        <div className="mt-1">
           <h2 
             className="text-white text-sm leading-tight text-left line-clamp-2 cursor-pointer active:opacity-70"
             onClick={(e) => {
