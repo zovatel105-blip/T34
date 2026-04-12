@@ -228,7 +228,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             className={cn(
               "relative shadow-2xl overflow-hidden flex flex-col",
               isMobile 
-                ? "w-full h-[85vh] rounded-t-3xl bg-zinc-900" 
+                ? "w-full max-h-[85vh] rounded-t-3xl bg-zinc-900" 
                 : "w-full max-w-md max-h-[90vh] rounded-2xl bg-zinc-900"
             )}
             variants={modalVariants}
