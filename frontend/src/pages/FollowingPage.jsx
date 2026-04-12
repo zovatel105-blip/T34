@@ -858,13 +858,18 @@ const FollowingPage = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className={`rounded-full p-[3px] ${
+                      <div className={`rounded-full ${
                         hasUnviewed
-                          ? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'
+                          ? ''
                           : hasStories
                             ? 'bg-gray-500'
                             : 'bg-transparent'
-                      }`} style={{width: '72px', height: '72px'}}>
+                      }`} style={{
+                        width: '72px', 
+                        height: '72px',
+                        padding: '2px',
+                        ...(hasUnviewed ? {background: 'linear-gradient(135deg, #6366F1, #8B5CF6, #B061FF)'} : {})
+                      }}>
                         <div className="w-full h-full rounded-full p-[2px] bg-black">
                           <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                             {story.userAvatar ? (
