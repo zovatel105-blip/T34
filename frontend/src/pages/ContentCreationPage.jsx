@@ -648,7 +648,7 @@ const MusicBottomSheet = ({ onClose, children }) => {
       {/* Bottom Sheet */}
       <div 
         ref={sheetRef}
-        className="relative z-10 bg-black/20 backdrop-blur-xl rounded-t-3xl w-full max-h-[50vh] flex flex-col border-t border-white/10"
+        className="relative z-10 bg-zinc-900 rounded-t-3xl w-full max-h-[50vh] flex flex-col"
         style={{ transition: 'transform 0.3s ease-out' }}
       >
         {/* Handle Bar - draggable area */}
