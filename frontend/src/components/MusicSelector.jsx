@@ -123,24 +123,25 @@ const MusicSelector = ({ onSelectMusic, selectedMusic, pollTitle = '' }) => {
     loadPopularMusic();
   }, []);
 
-  // Load popular/trending music
+  // Load popular/trending music - shuffled each time
   const loadPopularMusic = async () => {
     setIsLoadingPopular(true);
     try {
-      const result = await musicService.getPopularMusic(20);
-      if (result.success) {
-        setPopularMusic(result.results);
+      const result = await musicService.getTrendingMusic(20);
+      if (result.success && result.results?.length > 0) {
+        // Shuffle results from API
+        const shuffled = [...result.results].sort(() => Math.random() - 0.5);
+        setPopularMusic(shuffled);
       } else {
-        // Fallback to static library if service fails
-        const staticTrending = getTrendingMusic();
-        setPopularMusic(staticTrending);
-        console.warn('Using static music as fallback:', result.message);
+        // Fallback to full static library shuffled
+        const allMusic = [...musicLibrary].sort(() => Math.random() - 0.5);
+        setPopularMusic(allMusic);
       }
     } catch (error) {
       console.error('Error loading popular music:', error);
-      // Fallback to static library
-      const staticTrending = getTrendingMusic();
-      setPopularMusic(staticTrending);
+      // Fallback to full static library shuffled
+      const allMusic = [...musicLibrary].sort(() => Math.random() - 0.5);
+      setPopularMusic(allMusic);
     }
     setIsLoadingPopular(false);
   };
