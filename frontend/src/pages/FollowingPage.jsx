@@ -804,9 +804,14 @@ const FollowingPage = () => {
 
         {/* Stories Overlay - Instagram style (arriba, empuja contenido) */}
         <div 
-          className={`fixed top-0 left-0 right-0 z-[99999] bg-black border-b border-white/10 transition-all duration-300 ease-out overflow-hidden ${
-            showStoriesOverlay ? 'max-h-[105px] opacity-100' : 'max-h-0 opacity-0 border-b-0'
+          className={`fixed top-0 left-0 right-0 z-[99999] bg-black transition-all duration-300 ease-out ${
+            showStoriesOverlay ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
+          style={{
+            height: showStoriesOverlay ? '90px' : '0px',
+            overflow: 'hidden',
+            transition: 'height 0.3s ease-out, opacity 0.3s ease-out'
+          }}
         >
           <div className="pt-2 pb-2 px-0">
             {/* Historias horizontales */}

@@ -585,13 +585,7 @@ const TikTokPollCard = ({
   const winningOption = getWinningOption();
 
   return (
-    <div className="w-full min-h-screen h-screen flex flex-col relative bg-black overflow-hidden" 
-         style={{
-           height: '100vh',
-           height: '100dvh', // Dynamic viewport height for better mobile support
-           maxHeight: '100vh',
-           maxHeight: '100dvh'
-         }}>
+    <div className="w-full h-full flex flex-col relative bg-black overflow-hidden">
 
 
       {/* Header - Fixed at top with safe area */}
@@ -1891,7 +1885,7 @@ const TikTokScrollView = ({
   return (
     <div className="fixed z-50 bg-black overflow-hidden transition-all duration-300 ease-out"
          style={{
-           top: storiesOverlayOpen ? '105px' : '0px',
+           top: storiesOverlayOpen ? '90px' : '0px',
            left: '0px',
            right: '0px',
            bottom: '0px',
