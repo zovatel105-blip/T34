@@ -154,21 +154,26 @@ const Comment = ({
   };
 
   const formatTimeAgo = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
+    // Si el string no tiene timezone, asumir UTC
+    const dateUTC = dateString.endsWith('Z') || dateString.includes('+') ? date : new Date(dateString + 'Z');
     const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
+    const diffInSeconds = Math.floor((now - dateUTC) / 1000);
     
+    if (diffInSeconds < 0) return 'ahora';
     if (diffInSeconds < 60) return 'ahora';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}min`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}sem`;
     
-    return date.toLocaleDateString('es', { month: 'short', day: 'numeric' });
+    return dateUTC.toLocaleDateString('es', { month: 'short', day: 'numeric' });
   };
 
   return (
     <motion.div
-      className="comment-thread py-3 px-3 border border-white/20 rounded-lg"
+      className="comment-thread py-3 px-3"
       data-comment-id={comment.id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
