@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -104,6 +104,8 @@ const ProfilePage = () => {
   const [newSocialName, setNewSocialName] = useState('');
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [followRequestPending, setFollowRequestPending] = useState(false);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const profileInfoRef = useRef(null);
   
   // Colores disponibles para las plataformas
   const availableColors = [
@@ -127,6 +129,18 @@ const ProfilePage = () => {
 
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
+
+  // Detectar scroll para mostrar/ocultar mini header
+  useEffect(() => {
+    const el = profileInfoRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // 🏆 Load own profile stats (includes challenge votes)
   useEffect(() => {
@@ -2028,7 +2042,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Nombre, profesión y biografía */}
-            <div className="text-center space-y-3 max-w-sm mx-auto">
+            <div ref={profileInfoRef} className="text-center space-y-3 max-w-sm mx-auto">
               <div className="w-16 h-px bg-gray-200 mx-auto"></div>
               
               <div className="space-y-2">
@@ -2185,9 +2199,10 @@ const ProfilePage = () => {
               
               {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY */}
               <div className="px-1 sm:px-2 mb-1 sticky top-0 z-30 bg-white pb-1 pt-1">
-                {/* Mini header con avatar + seguir cuando se hace scroll */}
-                <div className="flex items-center justify-between px-2 pb-2">
-                  <div className="flex items-center gap-2">
+                {/* Mini header con avatar + seguir - solo al hacer scroll */}
+                {showStickyHeader && (
+                  <div className="flex items-center justify-between px-2 pb-2">
+                    <div className="flex items-center gap-2">
                     {!isOwnProfile && (
                       <button onClick={() => navigate(-1)} className="p-1">
                         <ArrowLeft className="w-4 h-4 text-gray-700" />
@@ -2215,6 +2230,7 @@ const ProfilePage = () => {
                     </Button>
                   )}
                 </div>
+                )}
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 
