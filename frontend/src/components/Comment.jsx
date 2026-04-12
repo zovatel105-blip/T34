@@ -297,23 +297,25 @@ const Comment = ({
         
         {/* Likes/Dislikes a la derecha */}
         <div className="flex items-center gap-2 ml-1 flex-shrink-0">
-          <motion.button
-            onClick={handleLike}
-            disabled={isLiking}
-            className={cn(
-              "p-0.5 transition-all duration-200",
-              comment.user_liked ? "text-red-500" : "text-white/30 hover:text-red-500"
+          <div className="flex flex-col items-center">
+            <motion.button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={cn(
+                "p-0.5 transition-all duration-200",
+                comment.user_liked ? "text-red-500" : "text-white/30 hover:text-red-500"
+              )}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Heart className={cn(
+                "w-4 h-4",
+                comment.user_liked && "fill-current"
+              )} />
+            </motion.button>
+            {comment.likes > 0 && (
+              <span className="text-[10px] text-white/40">{comment.likes}</span>
             )}
-            whileTap={{ scale: 0.9 }}
-          >
-            <Heart className={cn(
-              "w-4 h-4",
-              comment.user_liked && "fill-current"
-            )} />
-          </motion.button>
-          {comment.likes > 0 && (
-            <span className="text-[11px] text-white/40">{comment.likes}</span>
-          )}
+          </div>
           <motion.button
             onClick={handleDislike}
             disabled={isDisliking}
