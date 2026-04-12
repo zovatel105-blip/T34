@@ -464,26 +464,8 @@ const CommentSection = ({
             )}
           </AnimatePresence>
 
-          {/* Emojis rápidos */}
-          <div className="flex items-center justify-around px-4 py-2">
-            {quickEmojis.map((emoji, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (inputRef.current) {
-                    inputRef.current.value += emoji;
-                    inputRef.current.focus();
-                  }
-                }}
-                className="text-xl hover:scale-125 transition-transform p-1"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-
           {/* Input con avatar y botón enviar */}
-          <div className="flex items-center gap-3 px-4 pb-4 pt-1">
+          <div className="flex items-center gap-3 px-4 pb-4 pt-2">
             <Avatar className="w-8 h-8 flex-shrink-0">
               <AvatarImage src={user.avatar_url} alt={user.username} />
               <AvatarFallback className={`flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-gray-600 to-gray-700 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
@@ -523,17 +505,6 @@ const CommentSection = ({
                 maxLength={500}
                 disabled={submitting}
               />
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
-              >
-                {submitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                )}
-              </button>
             </form>
           </div>
         </div>
