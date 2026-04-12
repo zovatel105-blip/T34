@@ -2201,18 +2201,17 @@ const ProfilePage = () => {
                     </Avatar>
                     <span className="font-semibold text-sm text-gray-900">{isOwnProfile ? authUser?.username : viewedUser?.username}</span>
                   </div>
-                  {!isOwnProfile && (
+                  {!isOwnProfile && viewedUser && (
                     <Button
-                      onClick={handleFollowToggle}
-                      disabled={followLoading}
+                      onClick={() => handleFollowToggle(viewedUser)}
                       size="sm"
                       className={`h-8 rounded-lg text-xs font-semibold px-4 ${
-                        isFollowing
+                        isFollowing(viewedUser?.id)
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           : 'bg-rose-500 text-white hover:bg-rose-600'
                       }`}
                     >
-                      {isFollowing ? 'Siguiendo' : 'Seguir'}
+                      {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
                     </Button>
                   )}
                 </div>
