@@ -1909,41 +1909,40 @@ const ProfilePage = () => {
                     padding: showStickyHeader ? undefined : '12px',
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="p-1 -ml-1">
-                      <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={2} />
-                    </button>
+                  {/* Flecha atrás - izquierda */}
+                  <button onClick={() => navigate(-1)} className="p-1 -ml-1 flex-shrink-0">
+                    <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={2} />
+                  </button>
+
+                  {/* Avatar centrado + nombre pequeño debajo */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
                     <Avatar className="w-8 h-8 ring-1 ring-gray-200">
                       <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
                       <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
                         <User className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-bold text-[15px] text-gray-900 truncate max-w-[120px]">
+                    <span className="text-[10px] text-gray-500 font-medium mt-0.5 truncate max-w-[100px]">
                       {displayUser?.displayName || displayUser?.username || 'usuario'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  {/* Botón Seguir - derecha, púrpura, pastilla */}
+                  <div className="flex-shrink-0">
                     {viewedUser && (
                       <Button
                         onClick={() => handleFollowToggle(viewedUser)}
                         size="sm"
-                        className={`h-[34px] rounded-md text-[13px] font-bold px-5 border-0 shadow-none ${
+                        className={`h-[32px] rounded-full text-[13px] font-bold px-5 border-0 shadow-none ${
                           isFollowing(viewedUser?.id)
                             ? 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                             : 'text-white hover:brightness-110'
                         }`}
-                        style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#FE2C55'} : {}}
+                        style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#B061FF'} : {}}
                       >
                         {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
                       </Button>
                     )}
-                    <button 
-                      className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                      onClick={() => shareProfile(displayUser)}
-                    >
-                      <Share2 className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
-                    </button>
                   </div>
                 </div>
               )}
