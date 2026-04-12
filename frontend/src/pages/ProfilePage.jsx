@@ -1894,7 +1894,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40">
+          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40 shadow-[0_4px_6px_-1px_rgba(255,255,255,1)]">
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
@@ -1998,7 +1998,7 @@ const ProfilePage = () => {
             {/* Sección de perfil con desvanecimiento progresivo al hacer scroll (solo perfiles ajenos) */}
             <div 
               ref={profileHeaderSectionRef}
-              className="space-y-6 sm:space-y-8"
+              className="space-y-6 sm:space-y-8 relative z-0"
               style={!isOwnProfile ? {
                 opacity: profileHeaderOpacity,
                 transform: `translateY(${(1 - profileHeaderOpacity) * -10}px)`,
@@ -2290,7 +2290,7 @@ const ProfilePage = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               
               {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY debajo del header */}
-              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-30 bg-white pb-1 pt-3">
+              <div className="px-1 sm:px-2 mb-1 sticky top-0 z-20 pb-1 pt-[60px] bg-white">
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 
