@@ -397,8 +397,8 @@ const CarouselLayout = ({
                 </div>
               )}
 
-              {/* WINNER/SELECTED SIMILAR UI - Solo visible cuando NO es thumbnail */}
-              {!isThumbnail && mobile && poll.userVote && (
+              {/* WINNER/SELECTED SIMILAR UI - Solo visible cuando NO es thumbnail ni momento */}
+              {!isThumbnail && !isMoment && mobile && poll.userVote && (
                 <div>
                   {percentage > 0 && (
                     <div
