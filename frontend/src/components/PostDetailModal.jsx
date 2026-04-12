@@ -151,7 +151,7 @@ const PostDetailModal = ({
             </div>
             
             {/* Scrollable Content */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
+            <div ref={scrollRef} className="overflow-y-auto overscroll-contain">
               {/* Post Header */}
               <div className="px-4 pt-2 pb-4">
                 {/* Author */}

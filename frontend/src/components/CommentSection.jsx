@@ -391,7 +391,7 @@ const CommentSection = ({
             </div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="empty-state flex flex-col items-center justify-center p-8 py-16">
+          <div className="empty-state flex flex-col items-center justify-center p-6 py-8">
             <div className="text-center">
               <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Todavía no hay comentarios</h3>
               <p className={`text-base ${darkMode ? 'text-zinc-400' : 'text-gray-500'}`}>
