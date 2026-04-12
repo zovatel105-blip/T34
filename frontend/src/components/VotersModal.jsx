@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Vote, Loader2, User } from 'lucide-react';
+import { Play, Vote, Loader2, User, Search, Heart, Eye } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   const [totalVotes, setTotalVotes] = useState(0);
   const [views, setViews] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const modalRef = useRef(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,6 +73,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   useEffect(() => {
     if (isOpen && pollId) {
       loadVoters();
+      setSearchQuery('');
     }
   }, [isOpen, pollId]);
 
@@ -85,7 +87,6 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevenir scroll del body
       document.body.style.overflow = 'hidden';
     }
 
@@ -111,8 +112,6 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Voters data loaded:', data.voters?.length, 'voters');
-        console.log('Sample voter:', data.voters?.[0]);
         setVoters(data.voters || []);
         setTotalVotes(data.total_votes || 0);
         setViews(data.views || 0);
@@ -152,7 +151,6 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       );
 
       if (response.ok) {
-        // Update local state
         setVoters(voters.map(voter => 
           voter.id === userId 
             ? { ...voter, is_following: !isFollowing }
@@ -176,16 +174,24 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
     }
   };
 
-  // Click outside para cerrar
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
     }
   };
 
+  // Filtrar votantes por búsqueda
+  const filteredVoters = voters.filter(voter => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (voter.username || '').toLowerCase().includes(q) ||
+      (voter.display_name || '').toLowerCase().includes(q)
+    );
+  });
+
   if (!isOpen) return null;
 
-  // Variantes de animación (igual que CommentsModal)
   const modalVariants = {
     hidden: isMobile 
       ? { opacity: 0, y: "100%" } 
@@ -205,7 +211,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       <div className="fixed inset-0 z-[9999]">
         {/* Backdrop */}
         <motion.div
-          className="absolute inset-0 bg-black/30"
+          className="absolute inset-0 bg-black/40"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -240,107 +246,61 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
-            <div className="w-full py-2 flex justify-center flex-shrink-0">
-              <div className={cn(
-                "bg-white/30 rounded-full",
-                isMobile ? "w-10 h-1" : "w-12 h-1"
-              )} />
+            <div className="w-full py-3 flex justify-center flex-shrink-0">
+              <div className="w-10 h-1 bg-white/30 rounded-full" />
             </div>
 
-            {/* Header con título y stats */}
+            {/* Header - Título y stats */}
             <div className="px-4 sm:px-6 pb-4 flex-shrink-0">
-              {/* Título centrado */}
-              <div className="py-4 border-b border-white/10">
-                <h2 className={cn(
-                  "font-semibold text-white text-center leading-tight",
-                  isMobile ? "text-base" : "text-lg"
-                )}>
+              <div className="pb-4 border-b border-white/10">
+                <h2 className="font-semibold text-white text-center text-base leading-tight">
                   Votos y<br />reproducciones
                 </h2>
               </div>
 
-              {/* Stats */}
-              <div className="flex items-center justify-center gap-8 sm:gap-12 pt-4">
+              <div className="flex items-center justify-center gap-8 pt-4">
                 <div className="flex items-center gap-2">
-                  <Vote 
-                    className={cn(
-                      "text-white",
-                      isMobile ? "w-5 h-5" : "w-6 h-6"
-                    )}
-                    strokeWidth={1.5}
-                  />
-                  <span className={cn(
-                    "font-normal text-white",
-                    isMobile ? "text-lg" : "text-xl"
-                  )}>
+                  <Heart className="w-5 h-5 text-white" strokeWidth={1.5} />
+                  <span className="text-lg font-normal text-white">
                     {totalVotes.toLocaleString()}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Play 
-                    className={cn(
-                      "text-white",
-                      isMobile ? "w-5 h-5" : "w-6 h-6"
-                    )}
-                    strokeWidth={1.5}
-                  />
-                  <span className={cn(
-                    "font-normal text-white",
-                    isMobile ? "text-lg" : "text-xl"
-                  )}>
+                  <Eye className="w-5 h-5 text-white" strokeWidth={1.5} />
+                  <span className="text-lg font-normal text-white">
                     {views.toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Voters list */}
+            {/* Lista de votantes */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className={cn(
-                    "text-white/40 animate-spin mb-3",
-                    isMobile ? "w-6 h-6" : "w-8 h-8"
-                  )} />
-                  <p className={cn(
-                    "text-white/50",
-                    isMobile ? "text-xs" : "text-sm"
-                  )}>
-                    Cargando votantes...
-                  </p>
+                  <Loader2 className="w-6 h-6 text-white/40 animate-spin mb-3" />
+                  <p className="text-white/50 text-xs">Cargando votantes...</p>
                 </div>
-              ) : voters.length === 0 ? (
+              ) : filteredVoters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
-                  <div className={cn(
-                    "bg-white/10 rounded-full flex items-center justify-center mb-3",
-                    isMobile ? "w-12 h-12" : "w-16 h-16"
-                  )}>
-                    <Vote className={cn(
-                      "text-white/40",
-                      isMobile ? "w-6 h-6" : "w-8 h-8"
-                    )} />
+                  <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mb-3">
+                    <Vote className="w-7 h-7 text-white/40" />
                   </div>
-                  <p className={cn(
-                    "text-white/50 text-center",
-                    isMobile ? "text-xs" : "text-sm"
-                  )}>
+                  <p className="text-white/50 text-center text-sm">
                     Aún no hay votos en esta publicación
                   </p>
                 </div>
               ) : (
-                <div className="px-4 sm:px-6 pb-2">
-                  {voters.map((voter) => (
+                <div className="px-4 sm:px-6">
+                  {filteredVoters.map((voter) => (
                     <div
                       key={voter.id}
-                      className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0"
+                      className="flex items-center justify-between py-3"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar
-                          className={cn(
-                            "cursor-pointer ring-2 ring-white/20 flex-shrink-0",
-                            isMobile ? "w-10 h-10" : "w-12 h-12"
-                          )}
+                          className="w-14 h-14 cursor-pointer flex-shrink-0"
                           onClick={() => {
                             onClose();
                             navigate(`/profile/${voter.username}`);
@@ -350,16 +310,10 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             src={voter.avatar_url} 
                             alt={voter.display_name}
                             crossOrigin="anonymous"
-                            onError={(e) => {
-                              console.log('Avatar load error for:', voter.username, voter.avatar_url);
-                              e.target.style.display = 'none';
-                            }}
-                            onLoad={(e) => {
-                              console.log('Avatar loaded successfully for:', voter.username);
-                            }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
                           />
-                          <AvatarFallback className="bg-white/10 text-white/60 flex items-center justify-center">
-                            <User className={cn(isMobile ? "w-5 h-5" : "w-6 h-6")} />
+                          <AvatarFallback className="bg-white/10 text-white/50 flex items-center justify-center">
+                            <User className="w-7 h-7" />
                           </AvatarFallback>
                         </Avatar>
                         
@@ -370,40 +324,22 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             navigate(`/profile/${voter.username}`);
                           }}
                         >
-                          <div className="flex items-center gap-1">
-                            <p className={cn(
-                              "font-semibold text-white truncate",
-                              isMobile ? "text-sm" : "text-base"
-                            )}>
-                              {voter.display_name}
-                            </p>
-                            {voter.is_verified && (
-                              <svg className={cn(
-                                "text-blue-400 flex-shrink-0",
-                                isMobile ? "w-3.5 h-3.5" : "w-4 h-4"
-                              )} viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                              </svg>
-                            )}
-                          </div>
-                          <p className={cn(
-                            "text-white/50 truncate",
-                            isMobile ? "text-xs" : "text-sm"
-                          )}>
-                            @{voter.username}
+                          <p className="font-bold text-[15px] text-white truncate">
+                            {voter.username}
+                          </p>
+                          <p className="text-[13px] text-white/50 truncate">
+                            {voter.display_name}
                           </p>
                         </div>
                       </div>
 
-                      {/* Solo mostrar botón de seguir si NO es el usuario actual */}
                       {currentUser && voter.id !== currentUser.id && (
                         <Button
                           onClick={() => handleFollowToggle(voter.id, voter.is_following)}
                           className={cn(
-                            "ml-3 rounded-full font-semibold transition-all flex-shrink-0",
-                            isMobile ? "px-4 py-1 text-xs" : "px-6 py-1.5 text-sm",
+                            "ml-3 rounded-lg font-semibold transition-all flex-shrink-0 h-[38px] px-7 text-[14px]",
                             voter.is_following
-                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              ? 'bg-white/15 text-white hover:bg-white/25'
                               : 'text-white hover:brightness-110'
                           )}
                           style={!voter.is_following ? {backgroundColor: '#B061FF'} : {}}
