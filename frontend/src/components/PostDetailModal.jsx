@@ -158,7 +158,7 @@ const PostDetailModal = ({
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={authorAvatar} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <AvatarFallback className="bg-white text-gray-600">
                       <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
@@ -173,7 +173,8 @@ const PostDetailModal = ({
                         e.stopPropagation();
                         onFollow();
                       }}
-                      className="px-5 py-1.5 rounded-full border border-white/40 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+                      className="px-5 py-1.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-colors"
+                      style={{ backgroundColor: '#B061FF' }}
                     >
                       Seguir
                     </button>
