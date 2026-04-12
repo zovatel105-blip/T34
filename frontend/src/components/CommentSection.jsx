@@ -499,7 +499,7 @@ const CommentSection = ({
                 placeholder={replyingTo ? `@${replyingTo.user.username}` : "Añade un comentario..."}
                 className={`flex-1 px-4 py-2.5 rounded-full text-sm focus:outline-none transition-all ${
                   darkMode 
-                    ? 'bg-zinc-900 border-none text-white placeholder:text-zinc-500' 
+                    ? 'bg-zinc-900 border border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500' 
                     : 'border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 }`}
                 maxLength={500}
