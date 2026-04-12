@@ -224,9 +224,9 @@ div:hover {
 .tiktok-profile-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  gap: 1px;
   width: 100%;
-  padding: 0 4px; /* Pequeño padding lateral */
+  padding: 0;
   margin: 0;
 }
 

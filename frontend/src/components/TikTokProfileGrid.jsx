@@ -69,13 +69,13 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
       {isOwnProfile && activeUploads.map((upload) => (
         <motion.div
           key={`upload-${upload.id}`}
-          className="tiktok-profile-grid-item relative overflow-hidden rounded-lg"
+          className="tiktok-profile-grid-item relative overflow-hidden"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="w-full h-full relative bg-gray-900 rounded-lg flex flex-col items-center justify-center">
+          <div className="w-full h-full relative bg-gray-900 flex flex-col items-center justify-center">
             {/* Thumbnail preview */}
             {upload.thumbnail && (
               <img
@@ -127,16 +127,15 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
         return (
           <motion.div
             key={poll.id}
-            className="tiktok-profile-grid-item group relative overflow-hidden rounded-lg"
+            className="tiktok-profile-grid-item group relative overflow-hidden"
             onClick={() => onPollClick && onPollClick(poll)}
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
           >
-            {/* Thumbnail or static image representation */}
-            <div className="w-full h-full relative bg-gray-100 rounded-lg z-0">
+            {/* Thumbnail */}
+            <div className="w-full h-full relative bg-black z-0">
               {(() => {
                 const thumbnail = getPostThumbnail(poll);
                 const isVideo = hasVideoContent(poll);
@@ -146,9 +145,8 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                     <img
                       src={uploadService.getPublicUrl(thumbnail, { width: 300, height: 400, quality: 70 })}
                       alt={poll.title || 'Post thumbnail'}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover"
                       style={(() => {
-                        // Find the option with media to get transform
                         const imageOption = poll.options?.find(opt => 
                           opt.media_url && (opt.media_url.includes('.jpg') || opt.media_url.includes('.png') || opt.media_url.includes('.gif'))
                         );
@@ -159,7 +157,6 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                         } : {};
                       })()}
                       onError={(e) => {
-                        // Fallback to layout renderer if thumbnail fails
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'block';
                       }}
@@ -167,53 +164,37 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                   );
                 }
                 
-                // Fallback: Render static version of layout
                 return (
                   <div className="w-full h-full" style={{ display: thumbnail ? 'none' : 'block' }}>
                     <LayoutRenderer 
                       poll={poll} 
                       onVote={handleDummyVote} 
-                      isActive={false} // Not active in profile grid
-                      disableVideo={true} // Prevent video autoplay
-                      isThumbnail={true} // 🖼️ Ocultar indicadores de progreso en miniaturas
+                      isActive={false}
+                      disableVideo={true}
+                      isThumbnail={true}
                     />
                   </div>
                 );
               })()}
             </div>
 
-            {/* Dark overlay for better text visibility */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors pointer-events-none z-10" />
-
-            {/* Play Button (responsive for touch) */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <motion.div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white ml-0.5" />
-              </motion.div>
+            {/* View/vote count - bottom left */}
+            <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-[13px] font-semibold pointer-events-none z-30" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+              <Play className="w-3.5 h-3.5 fill-white" />
+              <span>{formatViewCount(voteCount)}</span>
             </div>
 
-            {/* Video indicator - top right */}
-            {hasVideoContent(poll) && (
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none z-20">
-                <Video className="w-3 h-3" />
+            {/* Post management menu for own profile */}
+            {isOwnProfile && onUpdatePoll && onDeletePoll && (
+              <div className="absolute top-1 right-1 z-40">
+                <PostManagementMenu 
+                  poll={poll}
+                  onUpdate={onUpdatePoll}
+                  onDelete={onDeletePoll}
+                  currentUser={currentUser}
+                />
               </div>
             )}
-
-            {/* Vote count overlay - bottom left */}
-            {voteCount > 0 && poll.show_vote_count !== false && (
-              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium pointer-events-none z-30">
-                <Vote className="w-3 h-3" />
-                <span>{formatViewCount(voteCount)}</span>
-              </div>
-            )}
-
-            {/* Debug indicator removed */}
-
-            {/* Poll title overlay removed from profile grid */}
           </motion.div>
         );
       })}
