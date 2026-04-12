@@ -778,8 +778,8 @@ const FollowingPage = () => {
                           )}
                         </div>
                         <div 
-                          className="absolute w-3 h-3 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-1px', right: '2px', zIndex: 2 }}
+                          className="absolute w-3 h-3 rounded-full flex items-center justify-center shadow-lg"
+                          style={{ bottom: '-1px', right: '2px', zIndex: 2, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
                         >
                           <Plus className="w-2 h-2 text-white" strokeWidth={3} />
                         </div>
@@ -851,8 +851,8 @@ const FollowingPage = () => {
                           )}
                         </div>
                         <div 
-                          className="absolute w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '0px', right: '4px', zIndex: 2 }}
+                          className="absolute w-5 h-5 rounded-full flex items-center justify-center shadow-lg"
+                          style={{ bottom: '0px', right: '4px', zIndex: 2, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
                         >
                           <Plus className="w-3 h-3 text-white" strokeWidth={3} />
                         </div>
