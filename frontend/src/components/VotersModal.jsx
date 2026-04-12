@@ -211,7 +211,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       <div className="fixed inset-0 z-[9999]">
         {/* Backdrop */}
         <motion.div
-          className="absolute inset-0 bg-black/40"
+          className="absolute inset-0 bg-black/70 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -226,10 +226,10 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative shadow-2xl overflow-hidden flex flex-col backdrop-blur-xl border-t border-white/10",
+              "relative shadow-2xl overflow-hidden flex flex-col",
               isMobile 
-                ? "w-full h-[85vh] rounded-t-3xl bg-black/40" 
-                : "w-full max-w-md max-h-[90vh] rounded-2xl bg-black/40"
+                ? "w-full h-[85vh] rounded-t-3xl bg-zinc-900" 
+                : "w-full max-w-md max-h-[90vh] rounded-2xl bg-zinc-900"
             )}
             variants={modalVariants}
             initial="hidden"
@@ -247,7 +247,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
           >
             {/* Handle superior */}
             <div className="w-full py-3 flex justify-center flex-shrink-0">
-              <div className="w-10 h-1 bg-white/30 rounded-full" />
+              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
             </div>
 
             {/* Header - Título y stats */}
