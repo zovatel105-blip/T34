@@ -1863,52 +1863,78 @@ const ProfilePage = () => {
       {!isTikTokMode && (
         <div className="min-h-screen bg-white">
           
-          {/* Header minimalista */}
+          {/* Header minimalista - cambia a compacto al hacer scroll */}
           <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40">
-            <div className="px-3 sm:px-6 py-4">
-              <div className="flex items-center justify-between relative">
-                {/* Botón atrás (izquierda) */}
-                {!isOwnProfile && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-10 h-10 rounded-full hover:bg-gray-50 p-0"
-                    onClick={() => navigate(-1)}
-                  >
-                    <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                  </Button>
-                )}
-                {isOwnProfile && <div className="w-10"></div>}
-                
-                {/* Username centrado */}
-                <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
-                  <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
-                  {displayUser?.verified && (
-                    <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
+            <div className="px-3 sm:px-6 py-3">
+              {showStickyHeader ? (
+                /* Versión compacta al hacer scroll */
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {!isOwnProfile && (
+                      <button onClick={() => navigate(-1)} className="p-1">
+                        <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                      </button>
+                    )}
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
+                      <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
+                        {displayUser?.displayName?.[0] || displayUser?.username?.[0] || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-semibold text-sm text-gray-900">@{displayUser?.username || 'usuario'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isOwnProfile && viewedUser && (
+                      <Button
+                        onClick={() => handleFollowToggle(viewedUser)}
+                        size="sm"
+                        className={`h-8 rounded-lg text-xs font-semibold px-4 ${
+                          isFollowing(viewedUser?.id)
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'text-white hover:opacity-90'
+                        }`}
+                        style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#B061FF'} : {}}
+                      >
+                        {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
+                      </Button>
+                    )}
+                    {isOwnProfile ? (
+                      <Button variant="ghost" size="sm" className="w-9 h-9 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
+                        <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" className="w-9 h-9 rounded-full hover:bg-gray-50 p-0" onClick={() => shareProfile(displayUser)}>
+                        <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Versión normal */
+                <div className="flex items-center justify-between relative">
+                  {!isOwnProfile && (
+                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => navigate(-1)}>
+                      <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                    </Button>
+                  )}
+                  {isOwnProfile && <div className="w-10"></div>}
+                  <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
+                    <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
+                    {displayUser?.verified && (
+                      <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
+                    )}
+                  </div>
+                  {isOwnProfile ? (
+                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
+                      <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => shareProfile(displayUser)}>
+                      <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                    </Button>
                   )}
                 </div>
-                
-                {/* Acción contextual (derecha) */}
-                {isOwnProfile ? (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" 
-                    onClick={handleSettingsClick}
-                  >
-                    <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" 
-                    onClick={() => shareProfile(displayUser)}
-                  >
-                    <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </header>
 
@@ -2197,40 +2223,8 @@ const ProfilePage = () => {
           <div className="pb-24">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               
-              {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY */}
-              <div className="px-1 sm:px-2 mb-1 sticky top-0 z-30 bg-white pb-1 pt-1">
-                {/* Mini header con avatar + seguir - solo al hacer scroll */}
-                {showStickyHeader && (
-                  <div className="flex items-center justify-between px-2 pb-2">
-                    <div className="flex items-center gap-2">
-                    {!isOwnProfile && (
-                      <button onClick={() => navigate(-1)} className="p-1">
-                        <ArrowLeft className="w-4 h-4 text-gray-700" />
-                      </button>
-                    )}
-                    <Avatar className="w-7 h-7">
-                      <AvatarImage src={isOwnProfile ? authUser?.avatar_url : viewedUser?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
-                        {isOwnProfile ? (authUser?.display_name?.[0] || authUser?.username?.[0] || '?') : (viewedUser?.display_name?.[0] || viewedUser?.username?.[0] || '?')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-semibold text-sm text-gray-900">{isOwnProfile ? authUser?.username : viewedUser?.username}</span>
-                  </div>
-                  {!isOwnProfile && viewedUser && (
-                    <Button
-                      onClick={() => handleFollowToggle(viewedUser)}
-                      size="sm"
-                      className={`h-8 rounded-lg text-xs font-semibold px-4 ${
-                        isFollowing(viewedUser?.id)
-                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-rose-500 text-white hover:bg-rose-600'
-                      }`}
-                    >
-                      {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
-                    </Button>
-                  )}
-                </div>
-                )}
+              {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY debajo del header */}
+              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-30 bg-white pb-1 pt-1">
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 
