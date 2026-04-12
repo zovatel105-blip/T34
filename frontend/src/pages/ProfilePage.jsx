@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -105,7 +105,10 @@ const ProfilePage = () => {
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [followRequestPending, setFollowRequestPending] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [profileHeaderOpacity, setProfileHeaderOpacity] = useState(1);
   const profileInfoRef = useRef(null);
+  const profileHeaderSectionRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   
   // Colores disponibles para las plataformas
   const availableColors = [
@@ -130,17 +133,44 @@ const ProfilePage = () => {
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
 
-  // Detectar scroll para mostrar/ocultar mini header
+  // Detectar scroll para mostrar/ocultar mini header con efecto progresivo
   useEffect(() => {
-    const el = profileInfoRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    const handleScroll = () => {
+      const headerSection = profileHeaderSectionRef.current;
+      if (!headerSection) return;
+      
+      const rect = headerSection.getBoundingClientRect();
+      const headerHeight = headerSection.offsetHeight;
+      
+      // Calculate how much of the header has scrolled past
+      // Start fading when the bottom of header section approaches the sticky header
+      const fadeStartOffset = headerHeight * 0.3; // Start fading at 30% scrolled
+      const fadeEndOffset = headerHeight * 0.8; // Fully faded at 80% scrolled
+      
+      const scrollProgress = -rect.top; // How far we've scrolled past the top of the section
+      
+      if (scrollProgress <= fadeStartOffset) {
+        // Not yet scrolled enough - full opacity
+        setProfileHeaderOpacity(1);
+        setShowStickyHeader(false);
+      } else if (scrollProgress >= fadeEndOffset) {
+        // Fully scrolled past - hidden
+        setProfileHeaderOpacity(0);
+        setShowStickyHeader(true);
+      } else {
+        // Progressive fade
+        const progress = (scrollProgress - fadeStartOffset) / (fadeEndOffset - fadeStartOffset);
+        setProfileHeaderOpacity(Math.max(0, 1 - progress));
+        setShowStickyHeader(progress > 0.5);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Run once on mount to set initial state
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [viewedUser, loading]);
 
   // 🏆 Load own profile stats (includes challenge votes)
   useEffect(() => {
@@ -1865,74 +1895,99 @@ const ProfilePage = () => {
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
           <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40">
-            <div className="px-3 sm:px-6 py-3">
-              {showStickyHeader ? (
-                /* Versión compacta al hacer scroll */
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {!isOwnProfile && (
-                      <button onClick={() => navigate(-1)} className="p-1">
-                        <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                      </button>
-                    )}
-                    <Avatar className="w-8 h-8">
+            <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
+              {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
+              {!isOwnProfile && (
+                <div 
+                  className="flex items-center justify-between transition-all duration-300 ease-out"
+                  style={{
+                    opacity: showStickyHeader ? 1 : 0,
+                    transform: showStickyHeader ? 'translateY(0)' : 'translateY(-8px)',
+                    position: showStickyHeader ? 'relative' : 'absolute',
+                    pointerEvents: showStickyHeader ? 'auto' : 'none',
+                    inset: showStickyHeader ? undefined : 0,
+                    padding: showStickyHeader ? undefined : '12px',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => navigate(-1)} className="p-1 -ml-1">
+                      <ArrowLeft className="w-5 h-5 text-gray-900" strokeWidth={2} />
+                    </button>
+                    <Avatar className="w-8 h-8 ring-1 ring-gray-200">
                       <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
                       <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
-                        {displayUser?.displayName?.[0] || displayUser?.username?.[0] || '?'}
+                        <User className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold text-sm text-gray-900">@{displayUser?.username || 'usuario'}</span>
+                    <span className="font-bold text-[15px] text-gray-900 truncate max-w-[120px]">
+                      {displayUser?.displayName || displayUser?.username || 'usuario'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {!isOwnProfile && viewedUser && (
+                    {viewedUser && (
                       <Button
                         onClick={() => handleFollowToggle(viewedUser)}
                         size="sm"
-                        className={`h-8 rounded-lg text-xs font-semibold px-4 ${
+                        className={`h-[34px] rounded-md text-[13px] font-bold px-5 border-0 shadow-none ${
                           isFollowing(viewedUser?.id)
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'text-white hover:opacity-90'
+                            ? 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            : 'text-white hover:brightness-110'
                         }`}
-                        style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#B061FF'} : {}}
+                        style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#FE2C55'} : {}}
                       >
                         {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
                       </Button>
                     )}
-                    {isOwnProfile ? (
-                      <Button variant="ghost" size="sm" className="w-9 h-9 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                        <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" className="w-9 h-9 rounded-full hover:bg-gray-50 p-0" onClick={() => shareProfile(displayUser)}>
-                        <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                      </Button>
-                    )}
+                    <button 
+                      className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                      onClick={() => shareProfile(displayUser)}
+                    >
+                      <Share2 className="w-5 h-5 text-gray-900" strokeWidth={1.5} />
+                    </button>
                   </div>
                 </div>
-              ) : (
-                /* Versión normal */
+              )}
+
+              {/* Versión normal - visible inicialmente */}
+              {isOwnProfile ? (
+                /* Header para perfil propio - siempre visible */
                 <div className="flex items-center justify-between relative">
-                  {!isOwnProfile && (
-                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => navigate(-1)}>
-                      <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                    </Button>
-                  )}
-                  {isOwnProfile && <div className="w-10"></div>}
+                  <div className="w-10"></div>
                   <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
                     <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
                     {displayUser?.verified && (
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
                   </div>
-                  {isOwnProfile ? (
-                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                      <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                    </Button>
-                  ) : (
-                    <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => shareProfile(displayUser)}>
-                      <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
-                    </Button>
-                  )}
+                  <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
+                    <Settings className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                  </Button>
+                </div>
+              ) : (
+                /* Header normal para perfil ajeno - se oculta progresivamente */
+                <div 
+                  className="flex items-center justify-between relative transition-all duration-300 ease-out"
+                  style={{
+                    opacity: showStickyHeader ? 0 : 1,
+                    transform: showStickyHeader ? 'translateY(8px)' : 'translateY(0)',
+                    position: showStickyHeader ? 'absolute' : 'relative',
+                    pointerEvents: showStickyHeader ? 'none' : 'auto',
+                    inset: showStickyHeader ? 0 : undefined,
+                    padding: showStickyHeader ? '12px' : undefined,
+                  }}
+                >
+                  <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                  </Button>
+                  <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
+                    <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
+                    {displayUser?.verified && (
+                      <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={() => shareProfile(displayUser)}>
+                    <Share2 className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                  </Button>
                 </div>
               )}
             </div>
@@ -1941,6 +1996,15 @@ const ProfilePage = () => {
           {/* Contenido principal con jerarquía silenciosa */}
           <div className="px-3 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
             
+            {/* Sección de perfil con desvanecimiento progresivo al hacer scroll (solo perfiles ajenos) */}
+            <div 
+              ref={profileHeaderSectionRef}
+              style={!isOwnProfile ? {
+                opacity: profileHeaderOpacity,
+                transform: `translateY(${(1 - profileHeaderOpacity) * -10}px)`,
+                transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+              } : undefined}
+            >
             {/* Avatar con métricas alrededor en diseño 3x3 */}
             <div className="relative max-w-sm mx-auto w-full">
               <div className="grid grid-cols-3 gap-1 sm:gap-2 items-center">
@@ -2206,6 +2270,7 @@ const ProfilePage = () => {
             <div className="w-full h-px bg-gray-100 max-w-sm mx-auto"></div>
 
           </div>
+          </div>{/* Close profileHeaderSectionRef wrapper */}
 
           {/* Mensaje de solicitud pendiente - Diseño según imagen de referencia */}
           {followRequestPending && !isOwnProfile && (

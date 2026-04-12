@@ -10,6 +10,11 @@
 - Password: test123
 - Username: testfix
 
+## Test User (created for testing)
+- Email: test@test.com
+- Password: test123
+- Username: testuser
+
 ## Kiki User (created by real user)
 - Email: kiki@gmail.com
 - Password: unknown (user-created)
@@ -20,3 +25,8 @@
 - Email: Alfa@gmail.com
 - Password: unknown (user-created)
 - Username: Alfa
+
+## Ruby User (created by real user)
+- Email: ruby@gmail.com
+- Password: unknown (user-created)
+- Username: Ruby
