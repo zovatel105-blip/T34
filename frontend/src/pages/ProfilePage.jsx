@@ -2194,12 +2194,12 @@ const ProfilePage = () => {
                       </button>
                     )}
                     <Avatar className="w-7 h-7">
-                      <AvatarImage src={profileUser?.avatar_url} />
+                      <AvatarImage src={isOwnProfile ? authUser?.avatar_url : viewedUser?.avatar_url} />
                       <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
-                        {profileUser?.display_name?.[0] || profileUser?.username?.[0] || '?'}
+                        {isOwnProfile ? (authUser?.display_name?.[0] || authUser?.username?.[0] || '?') : (viewedUser?.display_name?.[0] || viewedUser?.username?.[0] || '?')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold text-sm text-gray-900">{profileUser?.username}</span>
+                    <span className="font-semibold text-sm text-gray-900">{isOwnProfile ? authUser?.username : viewedUser?.username}</span>
                   </div>
                   {!isOwnProfile && (
                     <Button
