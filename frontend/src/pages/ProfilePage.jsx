@@ -105,8 +105,6 @@ const ProfilePage = () => {
   const [newSocialUrl, setNewSocialUrl] = useState('');
   const [followRequestPending, setFollowRequestPending] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
-  const [profileHeaderOpacity, setProfileHeaderOpacity] = useState(1);
-  const [showHeaderCover, setShowHeaderCover] = useState(false);
   const profileInfoRef = useRef(null);
   const profileHeaderSectionRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -134,35 +132,31 @@ const ProfilePage = () => {
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
 
-  // Detectar scroll para mostrar/ocultar mini header con efecto progresivo
+  // Reset scroll al entrar a un nuevo perfil
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setShowStickyHeader(false);
+  }, [userId]);
+
+  // Detectar scroll para mostrar/ocultar mini header compacto
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      
-      // Umbral para empezar a desvanecer (cuando la sección de perfil empieza a salir)
-      const fadeStart = 100;  // Empieza a desvanecer a 100px de scroll
-      const fadeEnd = 280;    // Completamente desvanecido a 280px
-      
-      // Cobertura: activa cuando hay scroll suficiente para tapar contenido entre header y tabs
-      setShowHeaderCover(scrollY > 60);
-      
-      if (scrollY <= fadeStart) {
-        setProfileHeaderOpacity(1);
-        setShowStickyHeader(false);
-      } else if (scrollY >= fadeEnd) {
-        setProfileHeaderOpacity(0);
-        setShowStickyHeader(true);
-      } else {
-        const progress = (scrollY - fadeStart) / (fadeEnd - fadeStart);
-        setProfileHeaderOpacity(Math.max(0, 1 - progress));
-        setShowStickyHeader(progress > 0.6);
-      }
+      const el = profileHeaderSectionRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Mostrar compact header cuando la sección de perfil sale de la vista
+      const shouldShow = rect.bottom < 60;
+      setShowStickyHeader(shouldShow);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    // Delay initial check to ensure DOM is rendered
+    const timer = setTimeout(handleScroll, 100);
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+    };
   }, [viewedUser, loading]);
 
   // 🏆 Load own profile stats (includes challenge votes)
@@ -1887,14 +1881,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40 relative">
-            {/* Cobertura blanca para tapar contenido al hacer scroll en perfiles ajenos */}
-            {!isOwnProfile && showHeaderCover && (
-              <div 
-                className="absolute left-0 right-0 top-full bg-white pointer-events-none" 
-                style={{ height: '400px', zIndex: 40 }}
-              />
-            )}
+          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40">
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
@@ -1998,12 +1985,7 @@ const ProfilePage = () => {
             {/* Sección de perfil con desvanecimiento progresivo al hacer scroll (solo perfiles ajenos) */}
             <div 
               ref={profileHeaderSectionRef}
-              className="space-y-6 sm:space-y-8 relative z-0"
-              style={!isOwnProfile ? {
-                opacity: profileHeaderOpacity,
-                transition: 'opacity 0.2s ease-out',
-                ...(profileHeaderOpacity === 0 ? { visibility: 'hidden', maxHeight: 0, overflow: 'hidden', margin: 0, padding: 0 } : {}),
-              } : undefined}
+              className="space-y-6 sm:space-y-8"
             >
             {/* Avatar con métricas alrededor en diseño 3x3 */}
             <div className="relative max-w-sm mx-auto w-full">
