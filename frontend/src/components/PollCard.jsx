@@ -760,7 +760,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                   className={cn(
                     "group relative transition-transform duration-200 hover:scale-105",
                     authorHasStories && authorStoriesData?.has_unviewed
-                      ? "w-10 h-10 rounded-full overflow-hidden p-[1.5px] bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]"
+                      ? "w-10 h-10 rounded-full overflow-hidden p-[1.5px] bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]"
                       : authorHasStories && !authorStoriesData?.has_unviewed
                       ? "w-10 h-10 rounded-full overflow-hidden p-[1.5px] bg-gray-300"
                       : ""
@@ -1008,7 +1008,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                 className={cn(
                   "group relative transition-transform duration-200 hover:scale-105",
                   authorHasStories && authorStoriesData?.has_unviewed
-                    ? "w-12 h-12 rounded-full overflow-hidden p-[1.5px] bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]"
+                    ? "w-12 h-12 rounded-full overflow-hidden p-[1.5px] bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]"
                     : authorHasStories && !authorStoriesData?.has_unviewed
                     ? "w-12 h-12 rounded-full overflow-hidden p-[1.5px] bg-gray-300"
                     : ""

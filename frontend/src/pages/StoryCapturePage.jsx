@@ -511,7 +511,7 @@ const StoryCapturePage = () => {
               <div className={`rounded-full transition-all duration-200 ${
                 isRecording 
                   ? 'w-10 h-10 bg-white' 
-                  : 'w-16 h-16 bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]'
+                  : 'w-16 h-16 bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
               }`} />
             </button>
           </div>

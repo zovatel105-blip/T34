@@ -733,7 +733,7 @@ const FollowingPage = () => {
                     {hasStories ? (
                       <div className={`w-10 h-10 rounded-full p-[2px] ${
                         !story.hasViewed
-                          ? 'bg-gradient-to-tr from-[#00FFFF] via-[#8A2BE2] to-[#000000]'
+                          ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
                           : 'bg-gray-400/50'
                       }`}>
                         <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
