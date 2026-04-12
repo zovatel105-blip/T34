@@ -2290,7 +2290,7 @@ const ProfilePage = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               
               {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY debajo del header */}
-              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-30 bg-white pb-1 pt-1">
+              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-30 bg-white pb-1 pt-3">
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 
