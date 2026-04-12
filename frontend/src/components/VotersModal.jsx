@@ -205,7 +205,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       <div className="fixed inset-0 z-[9999]">
         {/* Backdrop */}
         <motion.div
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          className="absolute inset-0 bg-black/30"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -220,10 +220,10 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative bg-white shadow-2xl overflow-hidden flex flex-col",
+              "relative shadow-2xl overflow-hidden flex flex-col backdrop-blur-xl border-t border-white/10",
               isMobile 
-                ? "w-full h-[85vh] rounded-t-3xl" 
-                : "w-full max-w-md max-h-[90vh] rounded-2xl"
+                ? "w-full h-[85vh] rounded-t-3xl bg-black/40" 
+                : "w-full max-w-md max-h-[90vh] rounded-2xl bg-black/40"
             )}
             variants={modalVariants}
             initial="hidden"
@@ -240,19 +240,19 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
-            <div className="w-full py-2 flex justify-center bg-white flex-shrink-0">
+            <div className="w-full py-2 flex justify-center flex-shrink-0">
               <div className={cn(
-                "bg-gray-300 rounded-full",
+                "bg-white/30 rounded-full",
                 isMobile ? "w-10 h-1" : "w-12 h-1"
               )} />
             </div>
 
             {/* Header con título y stats */}
-            <div className="bg-white px-4 sm:px-6 pb-4 flex-shrink-0">
+            <div className="px-4 sm:px-6 pb-4 flex-shrink-0">
               {/* Título centrado */}
-              <div className="py-4 border-b border-gray-200">
+              <div className="py-4 border-b border-white/10">
                 <h2 className={cn(
-                  "font-semibold text-gray-900 text-center leading-tight",
+                  "font-semibold text-white text-center leading-tight",
                   isMobile ? "text-base" : "text-lg"
                 )}>
                   Votos y<br />reproducciones
@@ -264,13 +264,13 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                 <div className="flex items-center gap-2">
                   <Vote 
                     className={cn(
-                      "text-gray-900",
+                      "text-white",
                       isMobile ? "w-5 h-5" : "w-6 h-6"
                     )}
                     strokeWidth={1.5}
                   />
                   <span className={cn(
-                    "font-normal text-gray-900",
+                    "font-normal text-white",
                     isMobile ? "text-lg" : "text-xl"
                   )}>
                     {totalVotes.toLocaleString()}
@@ -280,13 +280,13 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                 <div className="flex items-center gap-2">
                   <Play 
                     className={cn(
-                      "text-gray-900",
+                      "text-white",
                       isMobile ? "w-5 h-5" : "w-6 h-6"
                     )}
                     strokeWidth={1.5}
                   />
                   <span className={cn(
-                    "font-normal text-gray-900",
+                    "font-normal text-white",
                     isMobile ? "text-lg" : "text-xl"
                   )}>
                     {views.toLocaleString()}
@@ -296,15 +296,15 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             </div>
 
             {/* Voters list */}
-            <div className="flex-1 overflow-y-auto">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <Loader2 className={cn(
-                    "text-gray-400 animate-spin mb-3",
+                    "text-white/40 animate-spin mb-3",
                     isMobile ? "w-6 h-6" : "w-8 h-8"
                   )} />
                   <p className={cn(
-                    "text-gray-500",
+                    "text-white/50",
                     isMobile ? "text-xs" : "text-sm"
                   )}>
                     Cargando votantes...
@@ -313,16 +313,16 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
               ) : voters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
                   <div className={cn(
-                    "bg-gray-100 rounded-full flex items-center justify-center mb-3",
+                    "bg-white/10 rounded-full flex items-center justify-center mb-3",
                     isMobile ? "w-12 h-12" : "w-16 h-16"
                   )}>
                     <Vote className={cn(
-                      "text-gray-400",
+                      "text-white/40",
                       isMobile ? "w-6 h-6" : "w-8 h-8"
                     )} />
                   </div>
                   <p className={cn(
-                    "text-gray-500 text-center",
+                    "text-white/50 text-center",
                     isMobile ? "text-xs" : "text-sm"
                   )}>
                     Aún no hay votos en esta publicación
@@ -333,12 +333,12 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                   {voters.map((voter) => (
                     <div
                       key={voter.id}
-                      className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
+                      className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar
                           className={cn(
-                            "cursor-pointer ring-2 ring-gray-100 flex-shrink-0",
+                            "cursor-pointer ring-2 ring-white/20 flex-shrink-0",
                             isMobile ? "w-10 h-10" : "w-12 h-12"
                           )}
                           onClick={() => {
@@ -358,7 +358,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                               console.log('Avatar loaded successfully for:', voter.username);
                             }}
                           />
-                          <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                          <AvatarFallback className="bg-white/10 text-white/60 flex items-center justify-center">
                             <User className={cn(isMobile ? "w-5 h-5" : "w-6 h-6")} />
                           </AvatarFallback>
                         </Avatar>
@@ -372,14 +372,14 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                         >
                           <div className="flex items-center gap-1">
                             <p className={cn(
-                              "font-semibold text-gray-900 truncate",
+                              "font-semibold text-white truncate",
                               isMobile ? "text-sm" : "text-base"
                             )}>
                               {voter.display_name}
                             </p>
                             {voter.is_verified && (
                               <svg className={cn(
-                                "text-blue-500 flex-shrink-0",
+                                "text-blue-400 flex-shrink-0",
                                 isMobile ? "w-3.5 h-3.5" : "w-4 h-4"
                               )} viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
@@ -387,7 +387,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             )}
                           </div>
                           <p className={cn(
-                            "text-gray-500 truncate",
+                            "text-white/50 truncate",
                             isMobile ? "text-xs" : "text-sm"
                           )}>
                             @{voter.username}
@@ -403,8 +403,8 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             "ml-3 rounded-full font-semibold transition-all flex-shrink-0",
                             isMobile ? "px-4 py-1 text-xs" : "px-6 py-1.5 text-sm",
                             voter.is_following
-                              ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              : 'bg-white text-black hover:bg-white/90'
                           )}
                         >
                           {voter.is_following ? 'Siguiendo' : 'Seguir'}
