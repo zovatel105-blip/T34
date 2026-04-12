@@ -1499,7 +1499,8 @@ const TikTokScrollView = ({
   onIndexChange = null,
   emptyMessage = 'No hay publicaciones disponibles',
   emptySubMessage = 'Vuelve más tarde para ver nuevo contenido',
-  onSwipeStart = null
+  onSwipeStart = null,
+  storiesOverlayOpen = false
 }) => {
   const containerRef = useRef(null);
   const swiperRef = useRef(null);
@@ -1888,12 +1889,13 @@ const TikTokScrollView = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-hidden"
+    <div className="fixed z-50 bg-black overflow-hidden transition-all duration-300 ease-out"
          style={{
-           height: '100vh',
-           height: '100dvh',
+           top: storiesOverlayOpen ? '105px' : '0px',
+           left: '0px',
+           right: '0px',
+           bottom: '0px',
            width: '100vw',
-           width: '100dvw'
          }}>
 
       {/* Active Challenges Button - Visible when showActiveChallengesButton is true */}
@@ -1968,10 +1970,8 @@ const TikTokScrollView = ({
         ref={containerRef}
         className="w-full h-full overflow-hidden"
         style={{
-          height: '100vh',
-          height: '100dvh',
-          width: '100vw',
-          width: '100dvw',
+          width: '100%',
+          height: '100%',
           position: 'relative'
         }}
       >
@@ -2000,8 +2000,7 @@ const TikTokScrollView = ({
           initialSlide={initialIndex}
           className="h-full w-full"
           style={{
-            height: '100vh',
-            height: '100dvh',
+            height: '100%',
           }}
         >
           {preloadedPolls.map((poll, index) => (

@@ -901,6 +901,7 @@ const FollowingPage = () => {
           showLogo={false}
           showCloseButton={false}
           onSwipeStart={() => setShowStoriesOverlay(false)}
+          storiesOverlayOpen={showStoriesOverlay}
         />
 
         <style jsx>{`

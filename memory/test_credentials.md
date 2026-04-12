@@ -30,3 +30,9 @@
 - Email: ruby@gmail.com
 - Password: unknown (user-created)
 - Username: Ruby
+
+## Test User (for following page testing)
+- Email: test_user@test.com
+- Password: test123
+- Username: testuser
+- Display Name: Test User
