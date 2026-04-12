@@ -808,14 +808,14 @@ const FollowingPage = () => {
             showStoriesOverlay ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
-            height: showStoriesOverlay ? '90px' : '0px',
+            height: showStoriesOverlay ? '115px' : '0px',
             overflow: 'hidden',
             transition: 'height 0.3s ease-out, opacity 0.3s ease-out'
           }}
         >
-          <div className="pt-2 pb-2 px-0">
+          <div className="pt-2 pb-1 px-0">
             {/* Historias horizontales */}
-            <div className="flex items-start gap-3 overflow-x-auto scrollbar-hide px-2 pt-0.5 pb-0.5">
+            <div className="flex items-start gap-4 overflow-x-auto scrollbar-hide px-3 pt-0.5 pb-0.5">
               {displayStories.map((story, index) => {
                 const isOwnStory = story.isOwnStory;
                 const hasStories = story.storiesCount > 0;
@@ -825,16 +825,16 @@ const FollowingPage = () => {
                   <button
                     key={story.userId}
                     onClick={() => handleOverlayStoryClick(index)}
-                    className="flex-shrink-0 flex flex-col items-center gap-1 w-[60px]"
+                    className="flex-shrink-0 flex flex-col items-center gap-1 w-[76px]"
                   >
-                    {/* Avatar con anillo */}
+                    {/* Avatar con anillo - Tamaño grande como Instagram */}
                     {isOwnStory && !hasStories ? (
-                      <div className="relative" style={{width: '52px', height: '52px'}}>
+                      <div className="relative" style={{width: '72px', height: '72px'}}>
                         <div 
                           className="absolute inset-0 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300"
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)',
-                            maskImage: 'radial-gradient(circle at 42px 45px, transparent 9px, black 10px)'
+                            WebkitMaskImage: 'radial-gradient(circle at 58px 62px, transparent 11px, black 12px)',
+                            maskImage: 'radial-gradient(circle at 58px 62px, transparent 11px, black 12px)'
                           }}
                         >
                           {story.userAvatar ? (
@@ -846,26 +846,26 @@ const FollowingPage = () => {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <User className="w-6 h-6 text-gray-500" />
+                              <User className="w-8 h-8 text-gray-500" />
                             </div>
                           )}
                         </div>
                         <div 
-                          className="absolute w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
-                          style={{ bottom: '-1px', right: '2px', zIndex: 2 }}
+                          className="absolute w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg"
+                          style={{ bottom: '0px', right: '4px', zIndex: 2 }}
                         >
-                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                          <Plus className="w-3 h-3 text-white" strokeWidth={3} />
                         </div>
                       </div>
                     ) : (
-                      <div className={`rounded-full p-[2px] ${
+                      <div className={`rounded-full p-[3px] ${
                         hasUnviewed
-                          ? 'bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500'
+                          ? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'
                           : hasStories
                             ? 'bg-gray-500'
                             : 'bg-transparent'
-                      }`} style={{width: '52px', height: '52px'}}>
-                        <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
+                      }`} style={{width: '72px', height: '72px'}}>
+                        <div className="w-full h-full rounded-full p-[2px] bg-black">
                           <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
                             {story.userAvatar ? (
                               <img
@@ -876,7 +876,7 @@ const FollowingPage = () => {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <User className="w-6 h-6 text-gray-500" />
+                                <User className="w-8 h-8 text-gray-500" />
                               </div>
                             )}
                           </div>
@@ -884,8 +884,8 @@ const FollowingPage = () => {
                       </div>
                     )}
                     
-                    <span className="text-white text-[10px] font-medium truncate w-full text-center">
-                      {isOwnStory ? 'Crear' : (story.username || 'Usuario')}
+                    <span className="text-white text-[11px] font-medium truncate w-full text-center">
+                      {isOwnStory ? 'Tu historia' : (story.username || 'Usuario')}
                     </span>
                   </button>
                 );

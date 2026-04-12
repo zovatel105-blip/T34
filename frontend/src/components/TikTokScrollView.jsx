@@ -1885,7 +1885,7 @@ const TikTokScrollView = ({
   return (
     <div className="fixed z-50 bg-black overflow-hidden"
          style={{
-           top: storiesOverlayOpen ? '87px' : '0px',
+           top: storiesOverlayOpen ? '112px' : '0px',
            left: '0px',
            right: '0px',
            bottom: '0px',
