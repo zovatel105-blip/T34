@@ -26,7 +26,11 @@ const CommentSection = ({
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [newCommentId, setNewCommentId] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
   const commentListRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const quickEmojis = ['❤️', '🙌', '🔥', '👏', '🐴', '😍', '🥺', '😂'];
 
   // Función para hacer scroll hacia un comentario y centrarlo
   const scrollToComment = useCallback((commentId) => {
@@ -244,6 +248,24 @@ const CommentSection = ({
     return await handleAddComment(content, parentCommentId);
   };
 
+  // Manejar click en "Responder" de un comentario
+  const handleReplyClick = (comment) => {
+    setReplyingTo(comment);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.value = `@${comment.user.username} `;
+      }
+    }, 100);
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
   // Editar comentario
   const handleEditComment = async (commentId, content) => {
     if (!isAuthenticated) return;
@@ -388,6 +410,7 @@ const CommentSection = ({
                   onEdit={handleEditComment}
                   onDelete={handleDeleteComment}
                   onLike={handleCommentLike}
+                  onReplyClick={handleReplyClick}
                   depth={0}
                   maxDepth={3}
                 />
@@ -419,10 +442,48 @@ const CommentSection = ({
         )}
       </div>
       
-      {/* Área de comentario flotante en la parte inferior - SIEMPRE */}
+      {/* Área de comentario flotante en la parte inferior */}
       {user && (
-        <div className={`border-t p-4 flex-shrink-0 ${darkMode ? 'bg-transparent border-zinc-800' : 'bg-white border-gray-100'}`}>
-          <div className="flex items-center gap-3">
+        <div className={`border-t flex-shrink-0 ${darkMode ? 'bg-transparent border-zinc-800' : 'bg-white border-gray-100'}`}>
+          {/* Indicador de respuesta */}
+          <AnimatePresence>
+            {replyingTo && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className={`flex items-center justify-between px-4 py-2 border-b ${darkMode ? 'border-zinc-800' : 'border-gray-100'}`}
+              >
+                <span className={`text-sm ${darkMode ? 'text-white/60' : 'text-gray-500'}`}>
+                  Respondiendo a <span className={`font-semibold ${darkMode ? 'text-white/90' : 'text-gray-900'}`}>{replyingTo.user.username}</span>
+                </span>
+                <button onClick={cancelReply} className={`p-1 ${darkMode ? 'text-white/40 hover:text-white/70' : 'text-gray-400 hover:text-gray-600'}`}>
+                  ✕
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Emojis rápidos */}
+          <div className="flex items-center justify-around px-4 py-2">
+            {quickEmojis.map((emoji, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (inputRef.current) {
+                    inputRef.current.value += emoji;
+                    inputRef.current.focus();
+                  }
+                }}
+                className="text-xl hover:scale-125 transition-transform p-1"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* Input con avatar y botón enviar */}
+          <div className="flex items-center gap-3 px-4 pb-4 pt-1">
             <Avatar className="w-8 h-8 flex-shrink-0">
               <AvatarImage src={user.avatar_url} alt={user.username} />
               <AvatarFallback className={`flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-gray-600 to-gray-700 text-white' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
@@ -430,51 +491,50 @@ const CommentSection = ({
               </AvatarFallback>
             </Avatar>
             
-            <div className="flex-1">
-              <form 
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const content = e.target.content.value.trim();
-                  if (!content) return;
-                  
-                  try {
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const content = inputRef.current?.value?.trim();
+                if (!content) return;
+                
+                try {
+                  if (replyingTo) {
+                    await handleAddComment(content, replyingTo.id);
+                    setReplyingTo(null);
+                  } else {
                     await handleAddComment(content);
-                    e.target.reset();
-                  } catch (error) {
-                    // Error ya manejado en handleAddComment
                   }
-                }}
-                className="flex items-center gap-2"
+                  if (inputRef.current) inputRef.current.value = '';
+                } catch (error) {
+                  // Error ya manejado
+                }
+              }}
+              className="flex-1 flex items-center gap-2"
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder={replyingTo ? `@${replyingTo.user.username}` : "Añade un comentario..."}
+                className={`flex-1 px-4 py-2.5 border rounded-full text-sm focus:outline-none transition-all ${
+                  darkMode 
+                    ? 'bg-white/10 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500' 
+                    : 'border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                }`}
+                maxLength={500}
+                disabled={submitting}
+              />
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
               >
-                <input
-                  name="content"
-                  type="text"
-                  placeholder="Añade un comentario..."
-                  className={`flex-1 px-4 py-2 border rounded-full text-sm focus:outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-white/10 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-700' 
-                      : 'border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
-                  }`}
-                  maxLength={500}
-                  disabled={submitting}
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className={`p-2 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    darkMode 
-                      ? 'text-blue-400 hover:text-blue-300 hover:bg-white/10' 
-                      : 'text-blue-500 hover:text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </button>
-              </form>
-            </div>
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}

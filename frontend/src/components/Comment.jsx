@@ -81,6 +81,7 @@ const Comment = ({
   onEdit, 
   onDelete, 
   onLike, 
+  onReplyClick,
   depth = 0, 
   maxDepth = 3 
 }) => {
@@ -224,7 +225,7 @@ const Comment = ({
           <div className="flex items-center gap-3 text-[11px] text-white/40 mt-1">
             {canReply && (
               <button
-                onClick={() => setShowReplyForm(!showReplyForm)}
+                onClick={() => onReplyClick ? onReplyClick(comment) : setShowReplyForm(!showReplyForm)}
                 className="font-semibold hover:text-white/70"
               >
                 Responder
@@ -362,6 +363,7 @@ const Comment = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onLike={onLike}
+                onReplyClick={onReplyClick}
                 depth={depth + 1}
                 maxDepth={maxDepth}
               />
