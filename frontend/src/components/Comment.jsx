@@ -296,8 +296,8 @@ const Comment = ({
         </div>
         
         {/* Likes/Dislikes a la derecha */}
-        <div className="flex items-center gap-2 ml-1 flex-shrink-0">
-          <div className="flex flex-col items-center">
+        <div className="flex items-start gap-2 ml-1 flex-shrink-0">
+          <div className="flex flex-col items-center w-5">
             <motion.button
               onClick={handleLike}
               disabled={isLiking}
@@ -316,20 +316,22 @@ const Comment = ({
               <span className="text-[10px] text-white/40">{comment.likes}</span>
             )}
           </div>
-          <motion.button
-            onClick={handleDislike}
-            disabled={isDisliking}
-            className={cn(
-              "p-0.5 transition-all duration-200",
-              comment.user_disliked ? "text-blue-500" : "text-white/30 hover:text-blue-500"
-            )}
-            whileTap={{ scale: 0.9 }}
-          >
-            <HeartCrack className={cn(
-              "w-4 h-4",
-              comment.user_disliked && "fill-current"
-            )} />
-          </motion.button>
+          <div className="flex flex-col items-center w-5">
+            <motion.button
+              onClick={handleDislike}
+              disabled={isDisliking}
+              className={cn(
+                "p-0.5 transition-all duration-200",
+                comment.user_disliked ? "text-blue-500" : "text-white/30 hover:text-blue-500"
+              )}
+              whileTap={{ scale: 0.9 }}
+            >
+              <HeartCrack className={cn(
+                "w-4 h-4",
+                comment.user_disliked && "fill-current"
+              )} />
+            </motion.button>
+          </div>
         </div>
       </div>
       
