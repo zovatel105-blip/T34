@@ -295,7 +295,7 @@ const Comment = ({
         </div>
         
         {/* Likes/Dislikes a la derecha */}
-        <div className="flex flex-col items-center gap-0.5 ml-1 flex-shrink-0">
+        <div className="flex items-center gap-2 ml-1 flex-shrink-0">
           <motion.button
             onClick={handleLike}
             disabled={isLiking}
