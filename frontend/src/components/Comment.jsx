@@ -173,165 +173,146 @@ const Comment = ({
 
   return (
     <motion.div
-      className="comment-thread py-3 px-3"
+      className="comment-thread py-2 px-4"
       data-comment-id={comment.id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay: depth * 0.1 }}
     >
       <div className="comment-item flex gap-3">
-        {/* Avatar */}
-        <Avatar className="w-10 h-10 flex-shrink-0">
+        {/* Avatar pequeño */}
+        <Avatar className="w-8 h-8 flex-shrink-0 mt-0.5">
           <AvatarImage src={comment.user.avatar_url} />
           <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
-            <User className="w-5 h-5" />
+            <User className="w-4 h-4" />
           </AvatarFallback>
         </Avatar>
         
+        {/* Contenido central */}
         <div className="flex-1 min-w-0">
-          {/* Header con nombre, tiempo y botones like/dislike */}
-          <div className="flex items-start justify-between mb-1">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-sm">
-                  {comment.user.display_name || comment.user.username}
-                </span>
-                <span className="text-xs text-white/40">
-                  {formatTimeAgo(comment.created_at)}
-                </span>
-                {comment.is_edited && (
-                  <span className="text-xs text-white/30">(editado)</span>
-                )}
-              </div>
-              
-              {/* Contenido del comentario */}
-              {showEditForm ? (
-                <div className="mt-2">
-                  <CommentForm
-                    onSubmit={handleEdit}
-                    onCancel={() => setShowEditForm(false)}
-                    placeholder="Editar comentario..."
-                    initialValue={comment.content}
-                    isEditing={true}
-                  />
-                </div>
-              ) : (
-                <p className="text-white/90 text-sm leading-relaxed mt-1">
-                  {comment.content}
-                </p>
-              )}
-              
-              {/* Likes count y acciones */}
-              <div className="flex items-center gap-4 text-xs text-white/50 mt-2">
-                {comment.likes > 0 && (
-                  <span className="font-semibold">{comment.likes} Me gusta</span>
-                )}
-                
-                {canReply && (
-                  <button
-                    onClick={() => setShowReplyForm(!showReplyForm)}
-                    className="font-semibold hover:text-white/80"
-                  >
-                    Responder
-                  </button>
-                )}
-                
-                {isAuthor && (
-                  <>
-                    <button
-                      onClick={() => setShowEditForm(true)}
-                      className="font-semibold hover:text-white/80"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="font-semibold hover:text-red-400"
-                    >
-                      Eliminar
-                    </button>
-                  </>
-                )}
-                
-                {/* Menú de 3 puntos */}
-                <div className="relative ml-auto">
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="hover:text-white/80"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
-                  
-                  <AnimatePresence>
-                    {showMenu && (
-                      <motion.div 
-                        className="absolute right-0 top-6 bg-gray-800 border border-white/20 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <button
-                          onClick={() => setShowMenu(false)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-white/80 hover:bg-white/10"
-                        >
-                          <Flag className="w-4 h-4" />
-                          Reportar
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              
-              {/* Ver respuestas */}
-              {hasReplies && (
-                <button
-                  onClick={() => setShowReplies(!showReplies)}
-                  className="flex items-center gap-2 text-xs text-white/50 font-semibold hover:text-white/80 mt-2"
-                >
-                  {showReplies ? (
-                    <>Ocultar respuestas ({comment.reply_count})</>
-                  ) : (
-                    <>Ver {comment.reply_count} respuesta{comment.reply_count !== 1 ? 's' : ''} más</>
-                  )}
-                </button>
-              )}
+          {/* Nombre y hora */}
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-white text-[13px]">
+              {comment.user.display_name || comment.user.username}
+            </span>
+            <span className="text-[11px] text-white/40">
+              {formatTimeAgo(comment.created_at)}
+            </span>
+            {comment.is_edited && (
+              <span className="text-[11px] text-white/30">(editado)</span>
+            )}
+          </div>
+          
+          {/* Texto del comentario */}
+          {showEditForm ? (
+            <div className="mt-1">
+              <CommentForm
+                onSubmit={handleEdit}
+                onCancel={() => setShowEditForm(false)}
+                placeholder="Editar comentario..."
+                initialValue={comment.content}
+                isEditing={true}
+              />
             </div>
+          ) : (
+            <p className="text-white/90 text-[13px] leading-snug mt-0.5">
+              {comment.content}
+            </p>
+          )}
+          
+          {/* Acciones compactas */}
+          <div className="flex items-center gap-3 text-[11px] text-white/40 mt-1">
+            {canReply && (
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="font-semibold hover:text-white/70"
+              >
+                Responder
+              </button>
+            )}
             
-            {/* Botones de like y dislike a la derecha */}
-            <div className="flex items-center gap-2 ml-3">
-              <motion.button
-                onClick={handleLike}
-                disabled={isLiking}
-                className={cn(
-                  "p-1 transition-all duration-200",
-                  comment.user_liked ? "text-red-500" : "text-gray-400 hover:text-red-500"
-                )}
-                whileTap={{ scale: 0.9 }}
+            {isAuthor && (
+              <>
+                <button
+                  onClick={() => setShowEditForm(true)}
+                  className="font-semibold hover:text-white/70"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="font-semibold hover:text-red-400"
+                >
+                  Eliminar
+                </button>
+              </>
+            )}
+            
+            {/* Menú de 3 puntos */}
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="hover:text-white/70"
               >
-                <Heart className={cn(
-                  "w-4 h-4",
-                  comment.user_liked && "fill-current"
-                )} />
-              </motion.button>
+                <MoreHorizontal className="w-3.5 h-3.5" />
+              </button>
               
-              <motion.button
-                onClick={handleDislike}
-                disabled={isDisliking}
-                className={cn(
-                  "p-1 transition-all duration-200",
-                  comment.user_disliked ? "text-blue-500" : "text-gray-400 hover:text-blue-500"
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div 
+                    className="absolute right-0 top-5 bg-gray-800 border border-white/20 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <button
+                      onClick={() => setShowMenu(false)}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+                    >
+                      <Flag className="w-4 h-4" />
+                      Reportar
+                    </button>
+                  </motion.div>
                 )}
-                whileTap={{ scale: 0.9 }}
-              >
-                <HeartCrack className={cn(
-                  "w-4 h-4",
-                  comment.user_disliked && "fill-current"
-                )} />
-              </motion.button>
+              </AnimatePresence>
             </div>
           </div>
+          
+          {/* Ver respuestas */}
+          {hasReplies && (
+            <button
+              onClick={() => setShowReplies(!showReplies)}
+              className="flex items-center gap-1 text-[11px] text-white/40 font-semibold hover:text-white/70 mt-1"
+            >
+              {showReplies ? (
+                <>Ocultar respuestas ({comment.reply_count})</>
+              ) : (
+                <>Ver {comment.reply_count} respuesta{comment.reply_count !== 1 ? 's' : ''} más</>
+              )}
+            </button>
+          )}
+        </div>
+        
+        {/* Likes a la derecha */}
+        <div className="flex flex-col items-center gap-0.5 ml-1 flex-shrink-0">
+          <motion.button
+            onClick={handleLike}
+            disabled={isLiking}
+            className={cn(
+              "p-0.5 transition-all duration-200",
+              comment.user_liked ? "text-red-500" : "text-white/30 hover:text-red-500"
+            )}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Heart className={cn(
+              "w-4 h-4",
+              comment.user_liked && "fill-current"
+            )} />
+          </motion.button>
+          {comment.likes > 0 && (
+            <span className="text-[11px] text-white/40">{comment.likes}</span>
+          )}
         </div>
       </div>
       
