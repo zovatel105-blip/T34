@@ -745,7 +745,7 @@ const TikTokPollCard = ({
                         animation: 'followBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
                       }}
                     >
-                      <CheckCircle className="w-3 h-3 text-green-500" />
+                      <CheckCircle className="w-3 h-3 text-indigo-500" />
                     </div>
                   )}
                 </div>
