@@ -766,7 +766,7 @@ const FollowingPage = () => {
                           ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
                           : 'bg-gray-300'
                       }`}>
-                        <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
+                        <div className="w-full h-full bg-transparent rounded-full overflow-hidden p-[2px]">
                           <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             {story.userAvatar ? (
                               <img
