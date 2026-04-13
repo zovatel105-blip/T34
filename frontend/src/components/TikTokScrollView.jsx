@@ -682,23 +682,39 @@ const TikTokPollCard = ({
                   {/* Avatar para navegar al perfil o abrir historias */}
                   <button
                     onClick={handleAvatarClick}
-                    className="w-12 h-12 relative transition-transform duration-200 hover:scale-110"
-                  >
-                    {/* Anillo gradiente con centro transparente */}
-                    {authorHasStories && (
-                      <div className={`absolute inset-0 rounded-full ${
-                        authorStoriesData?.has_unviewed
-                          ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                          : 'bg-gray-300'
-                      }`}
-                        style={{
-                          WebkitMaskImage: 'radial-gradient(circle, transparent 20px, black 22px)',
-                          maskImage: 'radial-gradient(circle, transparent 20px, black 22px)'
-                        }}
-                      />
+                    className={cn(
+                      "w-12 h-12 rounded-full relative transition-transform duration-200 hover:scale-110",
+                      authorHasStories
+                        ? ""
+                        : "overflow-hidden"
                     )}
-                    {/* Avatar */}
-                    <div className={`absolute rounded-full overflow-hidden ${authorHasStories ? '' : 'inset-0'}`} style={authorHasStories ? { inset: '4px' } : {}}>
+                  >
+                    {authorHasStories ? (
+                      <>
+                        {/* Anillo con centro transparente */}
+                        <div className={`absolute inset-0 rounded-full ${
+                          authorStoriesData?.has_unviewed
+                            ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
+                            : 'bg-gray-300'
+                        }`}
+                          style={{
+                            WebkitMaskImage: 'radial-gradient(circle, transparent 20px, black 22px)',
+                            maskImage: 'radial-gradient(circle, transparent 20px, black 22px)'
+                          }}
+                        />
+                        <div className="absolute rounded-full overflow-hidden" style={{ inset: '4px' }}>
+                          <Avatar className="w-full h-full rounded-full">
+                            <AvatarImage 
+                              src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                              className="object-cover" 
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                              <User className="w-4 h-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </>
+                    ) : (
                       <Avatar className="w-full h-full rounded-full">
                         <AvatarImage 
                           src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
@@ -708,7 +724,7 @@ const TikTokPollCard = ({
                           <User className="w-4 h-4" />
                         </AvatarFallback>
                       </Avatar>
-                    </div>
+                    )}
                   </button>
 
                   {/* Botón separado para seguir */}
