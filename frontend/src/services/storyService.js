@@ -121,6 +121,22 @@ class StoryService {
     
     return response.json();
   }
+
+  // Get story viewers (only owner can see)
+  async getStoryViewers(storyId) {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/api/stories/${storyId}/viewers`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch story viewers');
+    }
+    
+    return response.json();
+  }
 }
 
 export default new StoryService();

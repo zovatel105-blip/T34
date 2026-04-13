@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, User } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, User, Eye } from 'lucide-react';
 import AppConfig from '../config/config';
+import { useAuth } from '../contexts/AuthContext';
+import storyService from '../services/storyService';
 
 // Add CSS animation for marquee effect
 const marqueeStyles = `
@@ -32,7 +34,12 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
+  const [viewers, setViewers] = useState([]);
+  const [viewersLoading, setViewersLoading] = useState(false);
+  const [viewersCount, setViewersCount] = useState(0);
   const audioRef = useRef(null); // Reference for background music
+  const { user: currentUser } = useAuth();
 
   const currentGroup = storiesGroups[currentUserIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
@@ -100,6 +107,36 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
       audioRef.current.volume = isMuted ? 0 : 1;
     }
   }, [isMuted]);
+
+  // Load viewers count when viewing own story
+  useEffect(() => {
+    const isOwnStory = currentUser && currentGroup?.user?.id === currentUser.id;
+    if (isOwnStory && currentStory?.id) {
+      storyService.getStoryViewers(currentStory.id)
+        .then(data => {
+          setViewersCount(data.total || 0);
+          setViewers(data.viewers || []);
+        })
+        .catch(() => {
+          setViewersCount(0);
+          setViewers([]);
+        });
+    }
+  }, [currentStory, currentGroup, currentUser]);
+
+  const handleShowViewers = async () => {
+    setShowViewers(true);
+    setViewersLoading(true);
+    try {
+      const data = await storyService.getStoryViewers(currentStory.id);
+      setViewers(data.viewers || []);
+      setViewersCount(data.total || 0);
+    } catch {
+      setViewers([]);
+    } finally {
+      setViewersLoading(false);
+    }
+  };
   
   // Helper function to get full URL
   const getFullMediaUrl = (url) => {
@@ -391,6 +428,77 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
         >
           <ChevronRight className="w-6 h-6 text-white" />
         </button>
+      )}
+
+      {/* Viewers counter - only for own stories */}
+      {currentUser && currentGroup?.user?.id === currentUser.id && (
+        <button
+          onClick={(e) => { e.stopPropagation(); handleShowViewers(); }}
+          className="absolute bottom-6 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 transition-colors"
+        >
+          <Eye className="w-4 h-4 text-white" />
+          <span className="text-white text-sm font-medium">{viewersCount} viewers</span>
+        </button>
+      )}
+
+      {/* Viewers modal */}
+      {showViewers && (
+        <div className="absolute inset-0 z-30 flex items-end" onClick={() => setShowViewers(false)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <div 
+            className="relative w-full bg-zinc-900 rounded-t-3xl max-h-[60vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+          >
+            {/* Handle */}
+            <div className="w-full py-2 flex justify-center">
+              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+            </div>
+            
+            {/* Header */}
+            <div className="px-4 py-3 flex items-center justify-center border-b border-zinc-800">
+              <h2 className="font-semibold text-white text-base">Viewers</h2>
+            </div>
+
+            {/* Viewers list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {viewersLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </div>
+              ) : viewers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
+                  <Eye className="w-10 h-10 mb-3 opacity-50" />
+                  <p className="text-sm">No hay viewers aún</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {viewers.map((viewer, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
+                        {viewer.user?.avatar_url ? (
+                          <img
+                            src={viewer.user.avatar_url}
+                            alt={viewer.user.username}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-zinc-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white text-sm font-medium">{viewer.user?.display_name || viewer.user?.username || 'Usuario'}</p>
+                        <p className="text-zinc-500 text-xs">@{viewer.user?.username}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
