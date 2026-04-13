@@ -1414,7 +1414,7 @@ const TikTokPollCard = ({
         isOpen={showPostDetailModal}
         onClose={() => setShowPostDetailModal(false)}
         poll={poll}
-        isFollowing={isFollowing(authorUserId)}
+        isFollowing={isFollowing(authorUserId) || (currentUser && authorUserId === currentUser.id)}
         onFollow={() => {
           const userToFollow = poll.authorUser || { 
             username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
