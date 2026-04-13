@@ -38,7 +38,8 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [viewers, setViewers] = useState([]);
   const [viewersLoading, setViewersLoading] = useState(false);
   const [viewersCount, setViewersCount] = useState(0);
-  const audioRef = useRef(null); // Reference for background music
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const audioRef = useRef(null);
   const { user: currentUser } = useAuth();
 
   const currentGroup = storiesGroups[currentUserIndex];
@@ -449,17 +450,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
             {/* Delete and close buttons */}
             <div className="w-full flex justify-between items-center px-4 mb-4">
               <button 
-                onClick={async () => {
-                  if (window.confirm('¿Eliminar esta historia?')) {
-                    try {
-                      await storyService.deleteStory(currentStory.id);
-                      setShowViewers(false);
-                      onClose();
-                    } catch (err) {
-                      console.error('Error deleting story:', err);
-                    }
-                  }
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="p-1"
               >
                 <Trash2 className="w-7 h-7 text-white" />
@@ -548,6 +539,67 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
               )}
             </div>
           </div>
+          {/* Delete confirmation modal */}
+          {showDeleteConfirm && (
+            <div className="absolute inset-0 z-40 flex items-end justify-center">
+              <div 
+                className="absolute inset-0 bg-black/70 backdrop-blur-md"
+                onClick={() => setShowDeleteConfirm(false)}
+              />
+              <div 
+                className="relative w-full bg-zinc-900 rounded-t-3xl overflow-hidden"
+                style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+              >
+                {/* Handle */}
+                <div className="w-full py-2 flex justify-center">
+                  <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+                </div>
+
+                {/* Header */}
+                <div className="px-4 py-3 flex items-center justify-center">
+                  <h2 className="font-semibold text-white text-base">Eliminar historia</h2>
+                </div>
+
+                {/* Options */}
+                <div className="px-4 pb-8 flex flex-col gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await storyService.deleteStory(currentStory.id);
+                        setShowDeleteConfirm(false);
+                        setShowViewers(false);
+                        onClose();
+                      } catch (err) {
+                        console.error('Error deleting story:', err);
+                      }
+                    }}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <Trash2 className="w-5 h-5 text-red-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">Eliminar</p>
+                      <p className="text-xs text-zinc-400">Esta acción no se puede deshacer</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-zinc-600/30 flex items-center justify-center">
+                      <X className="w-5 h-5 text-zinc-300" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">Cancelar</p>
+                      <p className="text-xs text-zinc-400">Mantener la historia</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
