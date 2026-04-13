@@ -102,9 +102,17 @@ const FollowingPage = () => {
             url: story.media_url,
             caption: story.text_overlays?.[0]?.text || null,
             timeAgo: formatTimeAgo(new Date(story.created_at)),
-            viewedByMe: story.viewed_by_me
+            viewedByMe: story.viewed_by_me,
+            music: story.music || null
           }))
         }));
+
+        // Sort: unviewed stories first, then viewed
+        transformedStories.sort((a, b) => {
+          if (!a.hasViewed && b.hasViewed) return -1;
+          if (a.hasViewed && !b.hasViewed) return 1;
+          return 0;
+        });
 
         setRealStories(transformedStories);
       } catch (err) {
@@ -208,6 +216,12 @@ const FollowingPage = () => {
       return;
     }
     
+    // If own story with stories, open overlay to show all stories
+    if (story.isOwnStory && story.storiesCount > 0) {
+      setShowStoriesOverlay(true);
+      return;
+    }
+    
     // Otherwise, open story viewer
     setSelectedStoryIndex(index);
     setShowStoryViewer(true);
@@ -259,9 +273,15 @@ const FollowingPage = () => {
             url: story.media_url,
             caption: story.text_overlays?.[0]?.text || null,
             timeAgo: formatTimeAgo(new Date(story.created_at)),
-            viewedByMe: story.viewed_by_me
+            viewedByMe: story.viewed_by_me,
+            music: story.music || null
           }))
         }));
+        transformedStories.sort((a, b) => {
+          if (!a.hasViewed && b.hasViewed) return -1;
+          if (a.hasViewed && !b.hasViewed) return 1;
+          return 0;
+        });
         setRealStories(transformedStories);
       }).catch(err => {
         console.error('Error reloading stories:', err);
