@@ -720,9 +720,10 @@ const TikTokPollCard = ({
                         console.log('📝 userToFollow object:', userToFollow);
                         handleFollowUser(userToFollow);
                       }}
-                      className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 rounded-full p-1 shadow-lg cursor-pointer transition-colors duration-200 hover:scale-110"
+                      className="absolute bottom-0 right-0 rounded-full p-0.5 shadow-lg cursor-pointer transition-colors duration-200 hover:scale-110 hover:opacity-90"
+                      style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
                     >
-                      <Plus className="w-3 h-3 text-white" />
+                      <Plus className="w-2.5 h-2.5 text-white" />
                     </button>
                   )}
                   
