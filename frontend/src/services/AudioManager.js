@@ -122,6 +122,22 @@ class AudioManager {
   }
 
   /**
+   * Reanuda el audio pausado con fadeIn
+   */
+  async resume() {
+    if (this.currentAudio && this.currentAudio.paused && this.currentAudio.src) {
+      try {
+        await this.currentAudio.play();
+        this.isPlaying = true;
+        await this.fadeIn();
+        console.log('▶️ AudioManager: Audio resumed');
+      } catch (error) {
+        console.error('❌ AudioManager: Error resuming audio:', error);
+      }
+    }
+  }
+
+  /**
    * Detiene completamente el audio - MEJORADO para sincronización
    */
   async stop() {

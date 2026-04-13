@@ -231,7 +231,7 @@ const FollowingPage = () => {
     
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
-    audioManager.stop(); // Pause feed audio when opening stories
+    audioManager.pause(); // Pause feed audio when opening stories
   };
 
   const handleAddStory = () => {
@@ -255,12 +255,13 @@ const FollowingPage = () => {
     
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
-    audioManager.stop(); // Pause feed audio when opening stories
+    audioManager.pause(); // Pause feed audio when opening stories
   };
 
   const handleCloseStoryViewer = () => {
     setShowStoryViewer(false);
     setSelectedStoryIndex(0);
+    audioManager.resume(); // Resume feed audio when closing stories
     
     // Reload stories to update viewed status
     if (isAuthenticated) {
