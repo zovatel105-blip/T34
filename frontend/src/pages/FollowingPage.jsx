@@ -16,7 +16,7 @@ import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, ArrowLeft, Users, User } from 'lucide-react';
+import { Plus, ArrowLeft, Users, User, Eye, PlusCircle, X } from 'lucide-react';
 
 const FollowingPage = () => {
   const navigate = useNavigate();
@@ -48,6 +48,7 @@ const FollowingPage = () => {
   const [loadingStories, setLoadingStories] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
+  const [showOwnStoryModal, setShowOwnStoryModal] = useState(false);
 
   // Load following users' polls from backend
   useEffect(() => {
@@ -220,9 +221,9 @@ const FollowingPage = () => {
       return;
     }
     
-    // If own story with stories, open overlay to show all stories
+    // If own story with stories, show modal to choose view or create
     if (story.isOwnStory && story.storiesCount > 0) {
-      setShowStoriesOverlay(true);
+      setShowOwnStoryModal(true);
       return;
     }
     
@@ -835,6 +836,72 @@ const FollowingPage = () => {
             onClose={handleCloseStoryViewer}
             initialUserIndex={selectedStoryIndex}
           />,
+          document.body
+        )}
+
+        {/* Modal para historia propia - Ver o Crear */}
+        {showOwnStoryModal && createPortal(
+          <div 
+            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowOwnStoryModal(false)}
+          >
+            <div 
+              className="bg-white rounded-2xl p-6 mx-4 w-full max-w-[280px] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              style={{ animation: 'followBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}
+            >
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-bold text-gray-900">Tu historia</h3>
+                <button 
+                  onClick={() => setShowOwnStoryModal(false)}
+                  className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowOwnStoryModal(false);
+                    // Find own story in rawStoriesData
+                    const rawIndex = rawStoriesData.findIndex(g => g.user?.id === user?.id);
+                    if (rawIndex !== -1) {
+                      setSelectedStoryIndex(rawIndex);
+                      setShowStoryViewer(true);
+                      audioManager.pause();
+                      hideRightNavigationBar();
+                    }
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+                >
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-indigo-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 text-sm">Ver historia</p>
+                    <p className="text-xs text-gray-500">Ver tu historia actual</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowOwnStoryModal(false);
+                    navigate('/story-creation');
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+                >
+                  <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                    <PlusCircle className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 text-sm">Crear historia</p>
+                    <p className="text-xs text-gray-500">Añadir nueva historia</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>,
           document.body
         )}
 
