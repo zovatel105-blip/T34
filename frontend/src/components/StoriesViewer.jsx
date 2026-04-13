@@ -234,7 +234,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
     `${currentStory.music.artist || 'Unknown Artist'} • ${currentStory.music.title || 'Unknown Song'}` : '';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-[100000] bg-black">
       {/* Inject marquee animation styles */}
       <style>{marqueeStyles}</style>
       
