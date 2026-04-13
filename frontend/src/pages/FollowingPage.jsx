@@ -848,64 +848,72 @@ const FollowingPage = () => {
 
         {/* Modal para historia propia - Ver o Crear */}
         {showOwnStoryModal && createPortal(
-          <div 
-            className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowOwnStoryModal(false)}
-          >
+          <div className="fixed inset-0 z-[100000]">
+            {/* Backdrop */}
             <div 
-              className="bg-white rounded-2xl p-6 mx-4 w-full max-w-[280px] shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-              style={{ animation: 'followBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}
-            >
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold text-gray-900">Tu historia</h3>
-                <button 
-                  onClick={() => setShowOwnStoryModal(false)}
-                  className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
-              
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    setShowOwnStoryModal(false);
-                    // Find own story in rawStoriesData
-                    const rawIndex = rawStoriesData.findIndex(g => g.user?.id === user?.id);
-                    if (rawIndex !== -1) {
-                      setSelectedStoryIndex(rawIndex);
-                      setShowStoryViewer(true);
-                      audioManager.pause();
-                      hideRightNavigationBar();
-                    }
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
-                >
-                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                    <Eye className="w-5 h-5 text-indigo-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900 text-sm">Ver historia</p>
-                    <p className="text-xs text-gray-500">Ver tu historia actual</p>
-                  </div>
-                </button>
+              className="absolute inset-0 bg-black/70 backdrop-blur-md"
+              style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+              onClick={() => setShowOwnStoryModal(false)}
+            />
+            
+            {/* Modal Container - desde abajo */}
+            <div className="flex h-full items-end justify-center">
+              <div 
+                className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+                style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+              >
+                {/* Handle superior */}
+                <div className="w-full py-2 flex justify-center bg-zinc-900">
+                  <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+                </div>
 
-                <button
-                  onClick={() => {
-                    setShowOwnStoryModal(false);
-                    navigate('/story-creation');
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
-                >
-                  <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
-                    <PlusCircle className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900 text-sm">Crear historia</p>
-                    <p className="text-xs text-gray-500">Añadir nueva historia</p>
-                  </div>
-                </button>
+                {/* Header */}
+                <div className="px-4 py-3 flex items-center justify-center">
+                  <h2 className="font-semibold text-white text-base">Tu historia</h2>
+                </div>
+
+                {/* Opciones */}
+                <div className="px-4 pb-8 flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      setShowOwnStoryModal(false);
+                      setShowStoriesOverlay(false);
+                      const rawIndex = rawStoriesData.findIndex(g => g.user?.id === user?.id);
+                      if (rawIndex !== -1) {
+                        setSelectedStoryIndex(rawIndex);
+                        setShowStoryViewer(true);
+                        audioManager.pause();
+                        hideRightNavigationBar();
+                      }
+                    }}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <Eye className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">Ver historia</p>
+                      <p className="text-xs text-zinc-400">Ver tu historia actual</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowOwnStoryModal(false);
+                      setShowStoriesOverlay(false);
+                      navigate('/story-creation');
+                    }}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <PlusCircle className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">Crear historia</p>
+                      <p className="text-xs text-zinc-400">Añadir nueva historia</p>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>,
