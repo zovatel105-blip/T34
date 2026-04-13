@@ -769,12 +769,12 @@ const FollowingPage = () => {
                             : 'bg-gray-300'
                         }`}
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle, transparent calc(50% - 2px), black calc(50% - 1px))',
-                            maskImage: 'radial-gradient(circle, transparent calc(50% - 2px), black calc(50% - 1px))'
+                            WebkitMaskImage: 'radial-gradient(circle, transparent calc(50% - 3px), black calc(50% - 1.5px))',
+                            maskImage: 'radial-gradient(circle, transparent calc(50% - 3px), black calc(50% - 1.5px))'
                           }}
                         />
                         {/* Avatar centrado con gap transparente */}
-                        <div className="absolute inset-[3px] rounded-full overflow-hidden bg-white">
+                        <div className="absolute rounded-full overflow-hidden bg-white" style={{ inset: '4.5px' }}>
                           {story.userAvatar ? (
                             <img
                               src={story.userAvatar}
