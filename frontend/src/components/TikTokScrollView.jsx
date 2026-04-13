@@ -720,7 +720,7 @@ const TikTokPollCard = ({
                         console.log('📝 userToFollow object:', userToFollow);
                         handleFollowUser(userToFollow);
                       }}
-                      className="absolute bottom-0 right-0 rounded-full p-[2px] shadow-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:opacity-90 active:scale-95"
+                      className="absolute bottom-0.5 right-0.5 rounded-full p-[2px] shadow-lg cursor-pointer transition-all duration-200 hover:scale-125 hover:opacity-90 active:scale-95"
                       style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
                     >
                       <Plus className="w-3 h-3 text-white stroke-[3]" />
@@ -740,7 +740,7 @@ const TikTokPollCard = ({
                   {/* Indicador de siguiendo con animación */}
                   {isFollowing(authorUserId) && (
                     <div 
-                      className="absolute bottom-0 right-0 bg-green-500 rounded-full p-[2px] shadow-lg"
+                      className="absolute bottom-0.5 right-0.5 bg-green-500 rounded-full p-[2px] shadow-lg"
                       style={{
                         animation: 'followBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
                       }}
