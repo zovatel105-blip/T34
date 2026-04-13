@@ -757,41 +757,29 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
             <div className="flex items-center justify-between p-4 pb-3 flex-shrink-0 bg-white/90 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <button
-                  className={cn(
-                    "group relative transition-transform duration-200 hover:scale-105",
-                    authorHasStories ? "w-10 h-10" : ""
-                  )}
+                  className="group relative transition-transform duration-200 hover:scale-105 w-10 h-10 rounded-full"
                   onClick={handleAvatarClick}
                 >
-                  {authorHasStories ? (
-                    <>
-                      <div className={`absolute inset-0 rounded-full ${
-                        authorStoriesData?.has_unviewed
-                          ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                          : 'bg-gray-300'
-                      }`}
-                        style={{
-                          WebkitMaskImage: 'radial-gradient(circle, transparent 17px, black 18.5px)',
-                          maskImage: 'radial-gradient(circle, transparent 17px, black 18.5px)'
-                        }}
-                      />
-                      <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
-                        <Avatar className="w-full h-full cursor-pointer">
-                          <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
-                            {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    </>
-                  ) : (
-                    <Avatar className="ring-2 ring-blue-500/20 w-10 h-10 cursor-pointer">
+                  {authorHasStories && (
+                    <div className={`absolute inset-0 rounded-full ${
+                      authorStoriesData?.has_unviewed
+                        ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
+                        : 'bg-gray-300'
+                    }`}
+                      style={{
+                        WebkitMaskImage: 'radial-gradient(circle, transparent 18.5px, black 18.5px)',
+                        maskImage: 'radial-gradient(circle, transparent 18.5px, black 18.5px)'
+                      }}
+                    />
+                  )}
+                  <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
+                    <Avatar className="w-full h-full cursor-pointer">
                       <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
                         {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                  )}
+                  </div>
                 </button>
                 <div>
                   <h3 className="font-semibold text-gray-900 text-sm">{poll.author?.display_name || poll.author?.username || 'Usuario'}</h3>
@@ -1011,41 +999,29 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
           <div className="flex items-center justify-between p-4 pb-2">
             <div className="flex items-center gap-3">
               <button
-                className={cn(
-                  "group relative transition-transform duration-200 hover:scale-105",
-                  authorHasStories ? "w-12 h-12" : ""
-                )}
+                className="group relative transition-transform duration-200 hover:scale-105 w-12 h-12 rounded-full"
                 onClick={handleAvatarClick}
               >
-                {authorHasStories ? (
-                  <>
-                    <div className={`absolute inset-0 rounded-full ${
-                      authorStoriesData?.has_unviewed
-                        ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                        : 'bg-gray-300'
-                    }`}
-                      style={{
-                        WebkitMaskImage: 'radial-gradient(circle, transparent 20px, black 22px)',
-                        maskImage: 'radial-gradient(circle, transparent 20px, black 22px)'
-                      }}
-                    />
-                    <div className="absolute rounded-full overflow-hidden" style={{ inset: '4px' }}>
-                      <Avatar className="w-full h-full cursor-pointer">
-                        <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                          {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </>
-                ) : (
-                  <Avatar className="ring-2 ring-blue-500/20">
+                {authorHasStories && (
+                  <div className={`absolute inset-0 rounded-full ${
+                    authorStoriesData?.has_unviewed
+                      ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
+                      : 'bg-gray-300'
+                  }`}
+                    style={{
+                      WebkitMaskImage: 'radial-gradient(circle, transparent 22.5px, black 22.5px)',
+                      maskImage: 'radial-gradient(circle, transparent 22.5px, black 22.5px)'
+                    }}
+                  />
+                )}
+                <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
+                  <Avatar className="w-full h-full cursor-pointer">
                     <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
                       {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                )}
+                </div>
               </button>
               <div>
                 <h3 className="font-semibold text-gray-900">{poll.author?.display_name || poll.author?.username || 'Usuario'}</h3>
