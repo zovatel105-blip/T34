@@ -9,6 +9,7 @@ import StoriesViewer from '../components/StoriesViewer';
 import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
 import storyService from '../services/storyService';
+import audioManager from '../services/AudioManager';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -230,6 +231,7 @@ const FollowingPage = () => {
     
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
+    audioManager.stop(); // Pause feed audio when opening stories
   };
 
   const handleAddStory = () => {
@@ -253,6 +255,7 @@ const FollowingPage = () => {
     
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
+    audioManager.stop(); // Pause feed audio when opening stories
   };
 
   const handleCloseStoryViewer = () => {
