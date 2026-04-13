@@ -224,8 +224,11 @@ const FollowingPage = () => {
       return;
     }
     
-    // Otherwise, open story viewer
-    setSelectedStoryIndex(index);
+    // Find the correct index in rawStoriesData
+    const rawIndex = rawStoriesData.findIndex(g => g.user?.id === story.userId);
+    if (rawIndex === -1) return;
+    
+    setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
   };
 
@@ -244,15 +247,11 @@ const FollowingPage = () => {
       return;
     }
     
-    if (story.isOwnStory && story.storiesCount > 0) {
-      // View own stories
-      setSelectedStoryIndex(index);
-      setShowStoryViewer(true);
-      return;
-    }
+    // Find the correct index in rawStoriesData
+    const rawIndex = rawStoriesData.findIndex(g => g.user?.id === story.userId);
+    if (rawIndex === -1) return;
     
-    // View other user's stories
-    setSelectedStoryIndex(index);
+    setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
   };
 
