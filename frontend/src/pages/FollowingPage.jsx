@@ -221,9 +221,9 @@ const FollowingPage = () => {
       return;
     }
     
-    // If own story with stories, show modal to choose view or create
+    // If own story with stories, open overlay to show all stories
     if (story.isOwnStory && story.storiesCount > 0) {
-      setShowOwnStoryModal(true);
+      setShowStoriesOverlay(true);
       return;
     }
     
@@ -244,13 +244,20 @@ const FollowingPage = () => {
 
   const handleOverlayStoryClick = (index) => {
     const story = displayStories[index];
-    setShowStoriesOverlay(false);
     
     if (story.isOwnStory && story.storiesCount === 0) {
-      // Navigate to story creation
+      setShowStoriesOverlay(false);
       navigate('/story-creation');
       return;
     }
+    
+    // Own story with stories - show modal to choose view or create
+    if (story.isOwnStory && story.storiesCount > 0) {
+      setShowOwnStoryModal(true);
+      return;
+    }
+    
+    setShowStoriesOverlay(false);
     
     // Find the correct index in rawStoriesData
     const rawIndex = rawStoriesData.findIndex(g => g.user?.id === story.userId);
@@ -258,7 +265,7 @@ const FollowingPage = () => {
     
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
-    audioManager.pause(); // Pause feed audio when opening stories
+    audioManager.pause();
     hideRightNavigationBar();
   };
 
