@@ -761,27 +761,33 @@ const FollowingPage = () => {
                     className="flex-shrink-0 relative"
                   >
                     {hasStories ? (
-                      <div className={`w-10 h-10 rounded-full overflow-hidden p-[1.5px] ${
-                        !story.hasViewed
-                          ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                          : 'bg-gray-300'
-                      }`}>
-                        <div className="w-full h-full bg-transparent rounded-full overflow-hidden p-[2px]">
-                          <div className="w-full h-full bg-white rounded-full overflow-hidden">
-                            {story.userAvatar ? (
-                              <img
-                                src={story.userAvatar}
-                                alt={story.username}
-                                className="w-full h-full rounded-full object-cover"
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            ) : null}
-                            <div 
-                              className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
-                              style={{ display: story.userAvatar ? 'none' : 'flex' }}
-                            >
-                              <User className="w-4 h-4" />
-                            </div>
+                      <div className="relative w-10 h-10">
+                        {/* Anillo gradiente - solo el borde visible via mask */}
+                        <div className={`absolute inset-0 rounded-full ${
+                          !story.hasViewed
+                            ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
+                            : 'bg-gray-300'
+                        }`}
+                          style={{
+                            WebkitMaskImage: 'radial-gradient(circle, transparent 17px, black 18.5px)',
+                            maskImage: 'radial-gradient(circle, transparent 17px, black 18.5px)'
+                          }}
+                        />
+                        {/* Avatar con gap transparente alrededor */}
+                        <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
+                          {story.userAvatar ? (
+                            <img
+                              src={story.userAvatar}
+                              alt={story.username}
+                              className="w-full h-full rounded-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : null}
+                          <div 
+                            className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
+                            style={{ display: story.userAvatar ? 'none' : 'flex' }}
+                          >
+                            <User className="w-4 h-4" />
                           </div>
                         </div>
                       </div>
