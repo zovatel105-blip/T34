@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
 import PollCard from '../components/PollCard';
@@ -821,13 +822,14 @@ const FollowingPage = () => {
           </div>
         )}
 
-        {/* Story Viewer Modal */}
-        {showStoryViewer && rawStoriesData.length > 0 && (
+        {/* Story Viewer Modal - Portal to escape stacking context */}
+        {showStoryViewer && rawStoriesData.length > 0 && createPortal(
           <StoriesViewer
             storiesGroups={rawStoriesData}
             onClose={handleCloseStoryViewer}
             initialUserIndex={selectedStoryIndex}
-          />
+          />,
+          document.body
         )}
 
         {/* Stories Overlay - Instagram style (arriba, empuja contenido) */}
