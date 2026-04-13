@@ -761,13 +761,13 @@ const FollowingPage = () => {
                     className="flex-shrink-0 relative"
                   >
                     {hasStories ? (
-                      <div className={`w-10 h-10 rounded-full p-[2px] ${
+                      <div className={`w-10 h-10 rounded-full overflow-hidden p-[1.5px] ${
                         !story.hasViewed
                           ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                          : 'bg-gray-400/50'
+                          : 'bg-gray-300'
                       }`}>
-                        <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
-                          <div className="w-full h-full rounded-full overflow-hidden relative">
+                        <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
+                          <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             {story.userAvatar ? (
                               <img
                                 src={story.userAvatar}
