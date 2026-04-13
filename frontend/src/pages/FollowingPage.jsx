@@ -757,13 +757,13 @@ const FollowingPage = () => {
                     className="flex-shrink-0 relative"
                   >
                     {hasStories ? (
-                      <div className={`w-10 h-10 rounded-full p-[2px] ${
+                      <div className={`w-12 h-12 rounded-full overflow-hidden p-[1.5px] ${
                         !story.hasViewed
                           ? 'bg-gradient-to-tr from-[#6366F1] via-[#8B5CF6] to-[#B061FF]'
-                          : 'bg-gray-400/50'
+                          : 'bg-gray-300'
                       }`}>
-                        <div className="w-full h-full rounded-full p-[1.5px]" style={{ background: 'transparent' }}>
-                          <div className="w-full h-full rounded-full overflow-hidden relative">
+                        <div className="w-full h-full bg-black rounded-full overflow-hidden p-[2px]">
+                          <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             {story.userAvatar ? (
                               <img
                                 src={story.userAvatar}
@@ -782,12 +782,12 @@ const FollowingPage = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative" style={{ width: '40px', height: '40px' }}>
+                      <div className="relative w-12 h-12">
                         <div 
                           className="absolute inset-0 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300"
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle at 32px 35px, transparent 7px, black 8px)',
-                            maskImage: 'radial-gradient(circle at 32px 35px, transparent 7px, black 8px)'
+                            WebkitMaskImage: 'radial-gradient(circle at 38px 42px, transparent 8px, black 9px)',
+                            maskImage: 'radial-gradient(circle at 38px 42px, transparent 8px, black 9px)'
                           }}
                         >
                           {story.userAvatar ? (
@@ -799,15 +799,15 @@ const FollowingPage = () => {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <User className="w-5 h-5 text-gray-500" />
+                              <User className="w-4 h-4 text-gray-500" />
                             </div>
                           )}
                         </div>
                         <div 
-                          className="absolute w-3 h-3 rounded-full flex items-center justify-center shadow-lg"
+                          className="absolute w-3.5 h-3.5 rounded-full flex items-center justify-center shadow-lg"
                           style={{ bottom: '-1px', right: '2px', zIndex: 2, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
                         >
-                          <Plus className="w-2 h-2 text-white" strokeWidth={3} />
+                          <Plus className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                         </div>
                       </div>
                     )}
