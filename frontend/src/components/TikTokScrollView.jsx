@@ -692,8 +692,8 @@ const TikTokPollCard = ({
                           : 'bg-gray-300'
                       }`}
                         style={{
-                          WebkitMaskImage: 'radial-gradient(circle, transparent 21.5px, black 21.5px)',
-                          maskImage: 'radial-gradient(circle, transparent 21.5px, black 21.5px)'
+                          WebkitMaskImage: 'radial-gradient(circle, transparent 22.5px, black 23px)',
+                          maskImage: 'radial-gradient(circle, transparent 22.5px, black 23px)'
                         }}
                       />
                     )}

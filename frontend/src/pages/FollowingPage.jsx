@@ -769,8 +769,8 @@ const FollowingPage = () => {
                             : 'bg-gray-300'
                         }`}
                           style={{
-                            WebkitMaskImage: 'radial-gradient(circle, transparent 17.5px, black 17.5px)',
-                            maskImage: 'radial-gradient(circle, transparent 17.5px, black 17.5px)'
+                            WebkitMaskImage: 'radial-gradient(circle, transparent 18.5px, black 19px)',
+                            maskImage: 'radial-gradient(circle, transparent 18.5px, black 19px)'
                           }}
                         />
                         {/* Avatar con gap transparente alrededor */}
