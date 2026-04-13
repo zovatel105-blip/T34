@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, User, Eye } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, User, Eye, Trash2 } from 'lucide-react';
 import AppConfig from '../config/config';
 import { useAuth } from '../contexts/AuthContext';
 import storyService from '../services/storyService';
@@ -441,14 +441,29 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
         </button>
       )}
 
-      {/* Viewers modal - full screen with thumbnails and white sheet */}
+      {/* Viewers modal - full screen with thumbnails and dark sheet */}
       {showViewers && (
         <div className="absolute inset-0 z-30 flex flex-col bg-black">
           {/* Top dark section with story thumbnails */}
           <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-6">
-            {/* Close and delete buttons */}
+            {/* Delete and close buttons */}
             <div className="w-full flex justify-between items-center px-4 mb-4">
-              <div className="w-8" />
+              <button 
+                onClick={async () => {
+                  if (window.confirm('¿Eliminar esta historia?')) {
+                    try {
+                      await storyService.deleteStory(currentStory.id);
+                      setShowViewers(false);
+                      onClose();
+                    } catch (err) {
+                      console.error('Error deleting story:', err);
+                    }
+                  }
+                }}
+                className="p-1"
+              >
+                <Trash2 className="w-7 h-7 text-white" />
+              </button>
               <button onClick={() => setShowViewers(false)} className="p-1">
                 <X className="w-7 h-7 text-white" />
               </button>
@@ -481,36 +496,36 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
             </div>
           </div>
 
-          {/* White bottom sheet */}
+          {/* Dark bottom sheet - same style as comments modal */}
           <div 
-            className="flex-1 bg-white rounded-t-3xl flex flex-col overflow-hidden"
+            className="flex-1 bg-zinc-900 rounded-t-3xl flex flex-col overflow-hidden"
             style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
           >
             {/* Handle */}
             <div className="w-full py-3 flex justify-center">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
             </div>
             
             {/* Header */}
             <div className="px-4 pb-3">
-              <h2 className="font-bold text-black text-lg text-center">Viewers</h2>
+              <h2 className="font-semibold text-white text-base text-center">Viewers</h2>
             </div>
 
             {/* Viewers list */}
             <div className="flex-1 overflow-y-auto px-4">
               {viewersLoading ? (
                 <div className="flex justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
                 </div>
               ) : viewers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
                   <p className="text-base">No viewers yet</p>
                 </div>
               ) : (
                 <div className="space-y-4 pb-6">
                   {viewers.map((viewer, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
                         {viewer.user?.avatar_url ? (
                           <img
                             src={viewer.user.avatar_url}
@@ -519,13 +534,13 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-gray-400" />
+                            <User className="w-5 h-5 text-zinc-400" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="text-black text-sm font-semibold">{viewer.user?.display_name || viewer.user?.username || 'Usuario'}</p>
-                        <p className="text-gray-500 text-xs">@{viewer.user?.username}</p>
+                        <p className="text-white text-sm font-semibold">{viewer.user?.display_name || viewer.user?.username || 'Usuario'}</p>
+                        <p className="text-zinc-500 text-xs">@{viewer.user?.username}</p>
                       </div>
                     </div>
                   ))}
