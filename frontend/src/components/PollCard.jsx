@@ -767,8 +767,8 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                         : 'bg-gray-300'
                     }`}
                       style={{
-                        WebkitMaskImage: 'radial-gradient(circle, transparent 18.5px, black 18.5px)',
-                        maskImage: 'radial-gradient(circle, transparent 18.5px, black 18.5px)'
+                        WebkitMaskImage: 'radial-gradient(circle, transparent 17.5px, black 17.5px)',
+                        maskImage: 'radial-gradient(circle, transparent 17.5px, black 17.5px)'
                       }}
                     />
                   )}
@@ -1009,8 +1009,8 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                       : 'bg-gray-300'
                   }`}
                     style={{
-                      WebkitMaskImage: 'radial-gradient(circle, transparent 22.5px, black 22.5px)',
-                      maskImage: 'radial-gradient(circle, transparent 22.5px, black 22.5px)'
+                      WebkitMaskImage: 'radial-gradient(circle, transparent 21.5px, black 21.5px)',
+                      maskImage: 'radial-gradient(circle, transparent 21.5px, black 21.5px)'
                     }}
                   />
                 )}
