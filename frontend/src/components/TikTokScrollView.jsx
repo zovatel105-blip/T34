@@ -740,12 +740,12 @@ const TikTokPollCard = ({
                   {/* Indicador de siguiendo con animación */}
                   {isFollowing(authorUserId) && (
                     <div 
-                      className="absolute bottom-1 right-1 bg-green-500 rounded-full p-[2px] shadow-lg"
+                      className="absolute bottom-1 right-1 bg-white rounded-full p-[2px] shadow-lg"
                       style={{
                         animation: 'followBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
                       }}
                     >
-                      <CheckCircle className="w-3 h-3 text-white" />
+                      <CheckCircle className="w-3 h-3 text-green-500" />
                     </div>
                   )}
                 </div>
