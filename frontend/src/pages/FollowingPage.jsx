@@ -34,7 +34,7 @@ const FollowingPage = () => {
   const overlaySwipeRef = useRef(null);
   const { toast } = useToast();
   const { trackAction } = useAddiction();
-  const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
+  const { enterTikTokMode, exitTikTokMode, isTikTokMode, hideRightNavigationBar, showRightNavigationBar } = useTikTok();
   const { shareModal, sharePoll, closeShareModal } = useShare();
   const { isAuthenticated, user } = useAuth();
 
@@ -232,6 +232,7 @@ const FollowingPage = () => {
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
     audioManager.pause(); // Pause feed audio when opening stories
+    hideRightNavigationBar();
   };
 
   const handleAddStory = () => {
@@ -256,12 +257,14 @@ const FollowingPage = () => {
     setSelectedStoryIndex(rawIndex);
     setShowStoryViewer(true);
     audioManager.pause(); // Pause feed audio when opening stories
+    hideRightNavigationBar();
   };
 
   const handleCloseStoryViewer = () => {
     setShowStoryViewer(false);
     setSelectedStoryIndex(0);
     audioManager.resume(); // Resume feed audio when closing stories
+    showRightNavigationBar();
     
     // Reload stories to update viewed status
     if (isAuthenticated) {
