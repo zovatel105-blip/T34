@@ -441,41 +441,76 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
         </button>
       )}
 
-      {/* Viewers modal */}
+      {/* Viewers modal - full screen with thumbnails and white sheet */}
       {showViewers && (
-        <div className="absolute inset-0 z-30 flex items-end" onClick={() => setShowViewers(false)}>
-          <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 z-30 flex flex-col bg-black">
+          {/* Top dark section with story thumbnails */}
+          <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-6">
+            {/* Close and delete buttons */}
+            <div className="w-full flex justify-between items-center px-4 mb-4">
+              <div className="w-8" />
+              <button onClick={() => setShowViewers(false)} className="p-1">
+                <X className="w-7 h-7 text-white" />
+              </button>
+            </div>
+            
+            {/* Story thumbnails */}
+            <div className="flex items-center gap-3">
+              {currentGroup.stories.map((story, idx) => (
+                <div 
+                  key={idx}
+                  className={`w-24 h-36 rounded-lg overflow-hidden border-2 ${
+                    idx === currentStoryIndex ? 'border-white' : 'border-transparent opacity-60'
+                  }`}
+                >
+                  {story.media_type === 'image' ? (
+                    <img
+                      src={getFullMediaUrl(story.media_url)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <video
+                      src={getFullMediaUrl(story.media_url)}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* White bottom sheet */}
           <div 
-            className="relative w-full bg-zinc-900 rounded-t-3xl max-h-[60vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+            className="flex-1 bg-white rounded-t-3xl flex flex-col overflow-hidden"
             style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
           >
             {/* Handle */}
-            <div className="w-full py-2 flex justify-center">
-              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+            <div className="w-full py-3 flex justify-center">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
             
             {/* Header */}
-            <div className="px-4 py-3 flex items-center justify-center border-b border-zinc-800">
-              <h2 className="font-semibold text-white text-base">Viewers</h2>
+            <div className="px-4 pb-3">
+              <h2 className="font-bold text-black text-lg text-center">Viewers</h2>
             </div>
 
             {/* Viewers list */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="flex-1 overflow-y-auto px-4">
               {viewersLoading ? (
                 <div className="flex justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                 </div>
               ) : viewers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
-                  <Eye className="w-10 h-10 mb-3 opacity-50" />
-                  <p className="text-sm">No hay viewers aún</p>
+                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                  <p className="text-base">No viewers yet</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4 pb-6">
                   {viewers.map((viewer, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                         {viewer.user?.avatar_url ? (
                           <img
                             src={viewer.user.avatar_url}
@@ -484,13 +519,13 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-zinc-400" />
+                            <User className="w-5 h-5 text-gray-400" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="text-white text-sm font-medium">{viewer.user?.display_name || viewer.user?.username || 'Usuario'}</p>
-                        <p className="text-zinc-500 text-xs">@{viewer.user?.username}</p>
+                        <p className="text-black text-sm font-semibold">{viewer.user?.display_name || viewer.user?.username || 'Usuario'}</p>
+                        <p className="text-gray-500 text-xs">@{viewer.user?.username}</p>
                       </div>
                     </div>
                   ))}
