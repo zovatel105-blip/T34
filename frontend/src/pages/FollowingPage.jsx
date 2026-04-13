@@ -5,7 +5,7 @@ import PollCard from '../components/PollCard';
 import CommentsModal from '../components/CommentsModal';
 import ShareModal from '../components/ShareModal';
 import CustomLogo from '../components/CustomLogo';
-import StoryViewer from '../components/StoryViewer';
+import StoriesViewer from '../components/StoriesViewer';
 import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
 import storyService from '../services/storyService';
@@ -42,6 +42,7 @@ const FollowingPage = () => {
   
   // Stories state - Real stories from backend
   const [realStories, setRealStories] = useState([]);
+  const [rawStoriesData, setRawStoriesData] = useState([]); // Raw backend data for StoriesViewer
   const [loadingStories, setLoadingStories] = useState(false);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
@@ -115,6 +116,7 @@ const FollowingPage = () => {
         });
 
         setRealStories(transformedStories);
+        setRawStoriesData(storiesData); // Keep raw data for StoriesViewer
       } catch (err) {
         console.error('Error loading stories:', err);
         // Don't show error toast, just fail silently for stories
@@ -283,6 +285,7 @@ const FollowingPage = () => {
           return 0;
         });
         setRealStories(transformedStories);
+        setRawStoriesData(storiesData);
       }).catch(err => {
         console.error('Error reloading stories:', err);
       });
@@ -813,12 +816,11 @@ const FollowingPage = () => {
         )}
 
         {/* Story Viewer Modal */}
-        {showStoryViewer && displayStories.length > 0 && (
-          <StoryViewer
-            stories={displayStories}
-            initialIndex={selectedStoryIndex}
+        {showStoryViewer && rawStoriesData.length > 0 && (
+          <StoriesViewer
+            storiesGroups={rawStoriesData}
             onClose={handleCloseStoryViewer}
-            onStoryView={handleStoryView}
+            initialUserIndex={selectedStoryIndex}
           />
         )}
 
