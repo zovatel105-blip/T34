@@ -108,13 +108,13 @@ const FollowersPage = () => {
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header - same style as Activity */}
-      <div className="flex-shrink-0 bg-white px-4 pt-3 pb-3 border-b border-gray-100">
+      <div className="flex-shrink-0 bg-white px-4 pt-3 pb-3">
         <div className="flex items-center justify-center relative">
           <button onClick={() => navigate('/messages')}
             className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-800" />
           </button>
-          <h1 className="text-xl font-bold text-black">Nuevos Seguidores</h1>
+          <h1 className="text-xl font-normal text-black">Nuevos Seguidores</h1>
         </div>
       </div>
 
