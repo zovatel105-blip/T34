@@ -4,29 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 
-// Colores para los anillos de avatar
-const RING_COLORS = [
-  'from-pink-500 via-red-500 to-yellow-500',
-  'from-purple-500 via-pink-500 to-red-500',
-  'from-blue-500 via-cyan-500 to-teal-500',
-  'from-orange-500 via-red-500 to-pink-500',
-  'from-green-500 via-teal-500 to-cyan-500',
-  'from-indigo-500 via-purple-500 to-pink-500',
-];
-
-const getRandomRing = (id) => {
-  const index = (id || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % RING_COLORS.length;
-  return RING_COLORS[index];
-};
-
 const ActivityPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activities, setActivities] = useState([]);
-  const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
-  const [followingStatus, setFollowingStatus] = useState({});
 
   const apiRequest = useCallback(async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
@@ -62,122 +45,38 @@ const ActivityPage = () => {
     }
   };
 
-  const checkFollowStatus = useCallback(async (userIds) => {
-    const statuses = {};
-    for (const uid of userIds) {
-      try {
-        const res = await apiRequest(`/api/users/${uid}/follow-status`);
-        statuses[uid] = res.is_following || false;
-      } catch {
-        statuses[uid] = false;
-      }
-    }
-    setFollowingStatus(prev => ({ ...prev, ...statuses }));
-  }, [apiRequest]);
-
-  const handleFollowBack = async (userId) => {
-    try {
-      if (followingStatus[userId]) {
-        await apiRequest(`/api/users/${userId}/follow`, { method: 'DELETE' });
-        setFollowingStatus(prev => ({ ...prev, [userId]: false }));
-      } else {
-        await apiRequest(`/api/users/${userId}/follow`, { method: 'POST' });
-        setFollowingStatus(prev => ({ ...prev, [userId]: true }));
-      }
-    } catch (error) {
-      console.error('Error toggling follow:', error);
-    }
-  };
-
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
       setLoading(true);
-
-      const [followersData, activitiesData] = await Promise.all([
-        apiRequest('/api/users/followers/recent').catch(() => []),
-        apiRequest('/api/users/activity/recent').catch(() => [])
-      ]);
-
-      setFollowers(followersData || []);
+      const activitiesData = await apiRequest('/api/users/activity/recent').catch(() => []);
       setActivities(activitiesData || []);
-
-      const followerIds = (followersData || []).map(f => f.id);
-      if (followerIds.length > 0) {
-        checkFollowStatus(followerIds);
-      }
-
       await apiRequest('/api/users/activity/mark-read', { method: 'POST' }).catch(() => {});
-      await apiRequest('/api/users/followers/mark-read', { method: 'POST' }).catch(() => {});
     } catch (error) {
       console.error('Error loading activity:', error);
     } finally {
       setLoading(false);
     }
-  }, [user, apiRequest, checkFollowStatus]);
+  }, [user, apiRequest]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const getAllItems = () => {
-    const items = [];
-
-    followers.forEach(f => {
-      items.push({
-        id: `follow-${f.id}`,
-        type: 'follow',
-        user: {
-          id: f.id,
-          username: f.username,
-          display_name: f.display_name,
-          avatar_url: f.avatar_url,
-        },
-        created_at: f.followed_at,
-        unread: f.unread,
-      });
-    });
-
-    activities.forEach(a => {
-      items.push({
-        id: `activity-${a.id}`,
-        type: a.type,
-        user: a.user,
-        created_at: a.created_at,
-        unread: a.unread,
-        content_preview: a.content_preview,
-        comment_preview: a.comment_preview,
-        vote_option: a.vote_option,
-        poll_id: a.poll_id,
-        poll_thumbnail: a.poll_thumbnail,
-      });
-    });
-
-    items.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    return items;
-  };
+  useEffect(() => { loadData(); }, [loadData]);
 
   const getFilteredItems = () => {
-    const all = getAllItems();
     switch (activeTab) {
-      case 'votes': return all.filter(i => i.type === 'vote');
-      case 'likes': return all.filter(i => i.type === 'like');
-      case 'comments': return all.filter(i => i.type === 'comment');
-      case 'mentions': return all.filter(i => i.type === 'mention');
-      default: return all;
+      case 'votes': return activities.filter(i => i.type === 'vote');
+      case 'likes': return activities.filter(i => i.type === 'like');
+      case 'comments': return activities.filter(i => i.type === 'comment');
+      case 'mentions': return activities.filter(i => i.type === 'mention');
+      default: return activities;
     }
   };
 
-  const getCounts = () => {
-    const all = getAllItems();
-    return {
-      votes: all.filter(i => i.type === 'vote').length,
-      likes: all.filter(i => i.type === 'like').length,
-      comments: all.filter(i => i.type === 'comment').length,
-      mentions: all.filter(i => i.type === 'mention').length,
-      total: all.length,
-    };
-  };
+  const getCounts = () => ({
+    votes: activities.filter(i => i.type === 'vote').length,
+    likes: activities.filter(i => i.type === 'like').length,
+    comments: activities.filter(i => i.type === 'comment').length,
+    mentions: activities.filter(i => i.type === 'mention').length,
+  });
 
   const filteredItems = getFilteredItems();
   const counts = getCounts();
@@ -190,94 +89,29 @@ const ActivityPage = () => {
     { key: 'mentions', label: 'Mentions', count: counts.mentions },
   ];
 
-  // Avatar component - ring only shown if user has active story
-  const Avatar = ({ avatarUrl, name, id, hasStory = false }) => {
-    if (hasStory) {
-      const ring = getRandomRing(id);
-      return (
-        <div className={`w-12 h-12 rounded-full bg-gradient-to-tr ${ring} p-[1.5px] flex-shrink-0`}>
-          <div className="w-full h-full rounded-full bg-white p-[1.5px]">
-            <div className="w-full h-full rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
-                />
-              ) : null}
-              <div
-                className="w-full h-full flex items-center justify-center text-gray-500"
-                style={{ display: avatarUrl ? 'none' : 'flex' }}
-              >
-                <User className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={name}
-            className="w-full h-full object-cover"
-            onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
-          />
-        ) : null}
-        <div
-          className="w-full h-full flex items-center justify-center text-gray-500"
-          style={{ display: avatarUrl ? 'none' : 'flex' }}
-        >
-          <User className="w-5 h-5" />
-        </div>
+  const Avatar = ({ avatarUrl, name }) => (
+    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
+      ) : null}
+      <div className="w-full h-full flex items-center justify-center text-gray-500"
+        style={{ display: avatarUrl ? 'none' : 'flex' }}>
+        <User className="w-5 h-5" />
       </div>
-    );
-  };
+    </div>
+  );
 
   const renderItem = (item) => {
     const username = item.user?.username || item.user?.display_name || 'Usuario';
     const time = formatTime(item.created_at);
-
-    if (item.type === 'follow') {
-      return (
-        <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-          <div onClick={() => navigate(`/profile/${item.user.id}`)} className="cursor-pointer">
-            <Avatar avatarUrl={item.user.avatar_url} name={username} id={item.user.id} />
-          </div>
-          <div className="flex-1 min-w-0 ml-3">
-            <p className="text-sm">
-              <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${item.user.id}`)}>
-                {username}
-              </span>
-            </p>
-            <p className="text-sm text-gray-500">
-              started following you. <span className="text-gray-400">{time}</span>
-            </p>
-          </div>
-          <button
-            onClick={() => handleFollowBack(item.user.id)}
-            className={`ml-3 px-5 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors ${
-              followingStatus[item.user.id]
-                ? 'bg-gray-200 text-gray-700'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-          >
-            {followingStatus[item.user.id] ? 'Following' : 'Follow back'}
-          </button>
-        </div>
-      );
-    }
 
     if (item.type === 'comment') {
       const commentText = item.comment_preview || 'Comentó tu publicación';
       return (
         <div key={item.id} className="flex items-start px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm leading-relaxed">
@@ -306,7 +140,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm">
@@ -331,7 +165,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm">
@@ -351,7 +185,7 @@ const ActivityPage = () => {
     return (
       <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
         <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-          <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+          <Avatar avatarUrl={item.user?.avatar_url} name={username} />
         </div>
         <div className="flex-1 min-w-0 ml-3">
           <p className="text-sm">
@@ -377,10 +211,8 @@ const ActivityPage = () => {
       {/* Header */}
       <div className="flex-shrink-0 bg-white px-4 pt-3 pb-2 border-b border-gray-100">
         <div className="flex items-center justify-center relative mb-3">
-          <button
-            onClick={() => navigate('/messages')}
-            className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
+          <button onClick={() => navigate('/messages')}
+            className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-800" />
           </button>
           <h1 className="text-xl font-bold text-black">Activity</h1>
@@ -389,22 +221,15 @@ const ActivityPage = () => {
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
           {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                activeTab === tab.key
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+                activeTab === tab.key ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}>
               {tab.label}
               {tab.count > 0 && (
                 <span className={`min-w-[20px] h-5 rounded-full flex items-center justify-center text-xs font-bold px-1.5 ${
                   activeTab === tab.key ? 'bg-white text-black' : 'bg-red-500 text-white'
-                }`}>
-                  {tab.count}
-                </span>
+                }`}>{tab.count}</span>
               )}
             </button>
           ))}
@@ -424,19 +249,14 @@ const ActivityPage = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Sin actividad</h3>
             <p className="text-gray-500 text-sm">
-              Los likes, comentarios, seguidores y menciones aparecerán aquí
+              Los likes, comentarios, votos y menciones aparecerán aquí
             </p>
           </div>
         ) : (
           <div className="pt-3 pb-20">
-            {/* Section Header */}
             <div className="px-4 mb-3">
-              <h2 className="text-base font-bold text-black">
-                New ({filteredItems.length})
-              </h2>
+              <h2 className="text-base font-bold text-black">New ({filteredItems.length})</h2>
             </div>
-
-            {/* Activity Items */}
             {filteredItems.map(item => renderItem(item))}
           </div>
         )}
