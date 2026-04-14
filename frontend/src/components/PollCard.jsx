@@ -14,6 +14,7 @@ import ShareModal from './ShareModal';
 import { useShare } from '../hooks/useShare';
 import storyService from '../services/storyService';
 import StoriesViewer from './StoriesViewer';
+import audioManager from '../services/AudioManager';
 
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
@@ -619,6 +620,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
     
     // If has stories and has unviewed stories, open story viewer
     if (authorStoriesData && authorStoriesData.has_unviewed) {
+      audioManager.pause(); // Pause feed audio when opening stories
       setShowAuthorStoryViewer(true);
     } else {
       // Navigate to profile if no stories or all stories viewed
@@ -632,6 +634,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
   // Handle story viewer close - reload stories to update viewed status
   const handleStoryViewerClose = async () => {
     setShowAuthorStoryViewer(false);
+    audioManager.resume(); // Resume feed audio when closing stories
     // Reload stories to update viewed status
     try {
       const authorId = poll.author?.id;

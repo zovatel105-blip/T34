@@ -311,6 +311,7 @@ const TikTokPollCard = ({
     
     // If has stories and has unviewed stories, open story viewer
     if (authorStoriesData && authorStoriesData.has_unviewed) {
+      audioManager.pause(); // Pause feed audio when opening stories
       setShowAuthorStoryViewer(true);
     } else {
       // Navigate to profile if no stories or all stories viewed
@@ -321,6 +322,7 @@ const TikTokPollCard = ({
   // Handle story viewer close - reload stories to update viewed status
   const handleStoryViewerClose = async () => {
     setShowAuthorStoryViewer(false);
+    audioManager.resume(); // Resume feed audio when closing stories
     // Reload stories to update viewed status
     try {
       if (authorUserId) {
