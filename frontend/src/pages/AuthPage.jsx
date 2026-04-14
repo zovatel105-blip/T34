@@ -25,7 +25,7 @@ const AuthPage = () => {
     if (isLogin) {
       // Login: accept email or username
       if (!formData.email.trim()) {
-        newErrors.email = 'Email o nombre de usuario requerido';
+        newErrors.email = 'Email requerido';
       }
     } else {
       // Register: require valid email
