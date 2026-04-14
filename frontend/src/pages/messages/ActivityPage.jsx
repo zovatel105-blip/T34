@@ -157,10 +157,10 @@ const ActivityPage = () => {
   const counts = getCounts();
 
   const tabs = [
-    { key: 'all', label: 'All activity', count: null },
-    { key: 'likes', label: 'Likes', count: counts.likes },
-    { key: 'comments', label: 'Comments', count: counts.comments },
-    { key: 'mentions', label: 'Mentions', count: counts.mentions },
+    { key: 'all', label: 'Toda la actividad', count: null },
+    { key: 'likes', label: 'Me gusta', count: counts.likes },
+    { key: 'comments', label: 'Comentarios', count: counts.comments },
+    { key: 'mentions', label: 'Menciones', count: counts.mentions },
   ];
 
   // Avatar with gradient ring - matching reference exactly
@@ -221,7 +221,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-[13px] text-gray-500 leading-snug mt-0.5">
-              started following you.  <span className="text-gray-400">{time}</span>
+              empezó a seguirte.  <span className="text-gray-400">{time}</span>
             </p>
           </div>
           <button
@@ -232,7 +232,7 @@ const ActivityPage = () => {
                 : 'bg-[#0095F6] text-white active:bg-blue-700'
             }`}
           >
-            {followingStatus[item.user.id] ? 'Following' : 'Follow back'}
+            {followingStatus[item.user.id] ? 'Siguiendo' : 'Seguir'}
           </button>
         </div>
       );
@@ -252,7 +252,7 @@ const ActivityPage = () => {
                 {username}
               </p>
               <p className="text-[13px] text-gray-500 leading-relaxed mt-0.5">
-                Commented: {commentText}  <span className="text-gray-400">{time}</span>
+                Comentó: {commentText}  <span className="text-gray-400">{time}</span>
               </p>
             </div>
             {item.poll_thumbnail && (
@@ -282,7 +282,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-[13px] text-gray-500 leading-snug mt-0.5">
-              liked your post.  <span className="text-gray-400">{time}</span>
+              le gustó tu publicación.  <span className="text-gray-400">{time}</span>
             </p>
           </div>
           {item.poll_thumbnail && (
@@ -306,7 +306,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-[13px] text-gray-500 leading-snug mt-0.5">
-              voted on your poll{item.vote_option ? `: "${item.vote_option}"` : ''}.  <span className="text-gray-400">{time}</span>
+              votó en tu encuesta{item.vote_option ? `: "${item.vote_option}"` : ''}.  <span className="text-gray-400">{time}</span>
             </p>
           </div>
         </div>
@@ -324,7 +324,7 @@ const ActivityPage = () => {
             {username}
           </p>
           <p className="text-[13px] text-gray-500 leading-snug mt-0.5">
-            mentioned you in a post.  <span className="text-gray-400">{time}</span>
+            te mencionó en una publicación.  <span className="text-gray-400">{time}</span>
           </p>
         </div>
         {item.poll_thumbnail && (
@@ -348,7 +348,7 @@ const ActivityPage = () => {
           >
             <ArrowLeft className="h-6 w-6 text-black" strokeWidth={2} />
           </button>
-          <h1 className="text-[22px] font-bold text-black tracking-tight">Activity</h1>
+          <h1 className="text-[22px] font-bold text-black tracking-tight">Actividad</h1>
         </div>
 
         {/* Filter Tabs - matching reference exactly */}
@@ -399,7 +399,7 @@ const ActivityPage = () => {
             {/* Section Header */}
             <div className="px-5 mb-3">
               <h2 className="text-[17px] font-bold text-black">
-                New ({filteredItems.length})
+                Nuevo ({filteredItems.length})
               </h2>
             </div>
 
