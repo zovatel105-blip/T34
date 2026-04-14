@@ -32,7 +32,13 @@ const marqueeStyles = `
 
 const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(() => {
+    const group = storiesGroups[initialUserIndex];
+    if (!group?.stories) return 0;
+    // Start from first unviewed story, or last story if all viewed (own stories)
+    const firstUnviewed = group.stories.findIndex(s => !s.viewed_by_me);
+    return firstUnviewed >= 0 ? firstUnviewed : group.stories.length - 1;
+  });
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [showViewers, setShowViewers] = useState(false);
