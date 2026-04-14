@@ -132,7 +132,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 md:px-6">
+    <div className="h-screen bg-white flex items-center justify-center px-4 md:px-6 overflow-hidden">
       {/* Background geometric elements - Hidden on mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none hidden md:block">
         <div className="absolute top-0 left-0 w-32 h-32 border border-gray-100 rotate-45 -translate-x-16 -translate-y-16" />
