@@ -160,6 +160,7 @@ const ActivityPage = () => {
   const getFilteredItems = () => {
     const all = getAllItems();
     switch (activeTab) {
+      case 'votes': return all.filter(i => i.type === 'vote');
       case 'likes': return all.filter(i => i.type === 'like');
       case 'comments': return all.filter(i => i.type === 'comment');
       case 'mentions': return all.filter(i => i.type === 'mention');
@@ -170,6 +171,7 @@ const ActivityPage = () => {
   const getCounts = () => {
     const all = getAllItems();
     return {
+      votes: all.filter(i => i.type === 'vote').length,
       likes: all.filter(i => i.type === 'like').length,
       comments: all.filter(i => i.type === 'comment').length,
       mentions: all.filter(i => i.type === 'mention').length,
@@ -182,36 +184,55 @@ const ActivityPage = () => {
 
   const tabs = [
     { key: 'all', label: 'All activity', count: null },
+    { key: 'votes', label: 'Votes', count: counts.votes },
     { key: 'likes', label: 'Likes', count: counts.likes },
     { key: 'comments', label: 'Comments', count: counts.comments },
     { key: 'mentions', label: 'Mentions', count: counts.mentions },
   ];
 
-  // Avatar component with colored ring
-  const AvatarWithRing = ({ avatarUrl, name, id, size = 'md' }) => {
-    const ring = getRandomRing(id);
-    const sizeClass = size === 'lg' ? 'w-14 h-14' : 'w-12 h-12';
-    const innerSize = size === 'lg' ? 'w-[50px] h-[50px]' : 'w-[42px] h-[42px]';
-
-    return (
-      <div className={`${sizeClass} rounded-full bg-gradient-to-tr ${ring} p-[2.5px] flex-shrink-0`}>
-        <div className={`${innerSize} rounded-full bg-white p-[2px]`}>
-          <div className="w-full h-full rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={name}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-              />
-            ) : null}
-            <div
-              className="w-full h-full flex items-center justify-center text-gray-500"
-              style={{ display: avatarUrl ? 'none' : 'flex' }}
-            >
-              <User className="w-5 h-5" />
+  // Avatar component - ring only shown if user has active story
+  const Avatar = ({ avatarUrl, name, id, hasStory = false }) => {
+    if (hasStory) {
+      const ring = getRandomRing(id);
+      return (
+        <div className={`w-12 h-12 rounded-full bg-gradient-to-tr ${ring} p-[1.5px] flex-shrink-0`}>
+          <div className="w-full h-full rounded-full bg-white p-[1.5px]">
+            <div className="w-full h-full rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
+                />
+              ) : null}
+              <div
+                className="w-full h-full flex items-center justify-center text-gray-500"
+                style={{ display: avatarUrl ? 'none' : 'flex' }}
+              >
+                <User className="w-5 h-5" />
+              </div>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={name}
+            className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
+          />
+        ) : null}
+        <div
+          className="w-full h-full flex items-center justify-center text-gray-500"
+          style={{ display: avatarUrl ? 'none' : 'flex' }}
+        >
+          <User className="w-5 h-5" />
         </div>
       </div>
     );
@@ -225,7 +246,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user.id}`)} className="cursor-pointer">
-            <AvatarWithRing avatarUrl={item.user.avatar_url} name={username} id={item.user.id} />
+            <Avatar avatarUrl={item.user.avatar_url} name={username} id={item.user.id} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm">
@@ -256,7 +277,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-start px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <AvatarWithRing avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm leading-relaxed">
@@ -285,7 +306,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <AvatarWithRing avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm">
@@ -310,7 +331,7 @@ const ActivityPage = () => {
       return (
         <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-            <AvatarWithRing avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+            <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
           </div>
           <div className="flex-1 min-w-0 ml-3">
             <p className="text-sm">
@@ -330,7 +351,7 @@ const ActivityPage = () => {
     return (
       <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
         <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
-          <AvatarWithRing avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
+          <Avatar avatarUrl={item.user?.avatar_url} name={username} id={item.user?.id} />
         </div>
         <div className="flex-1 min-w-0 ml-3">
           <p className="text-sm">
