@@ -79,6 +79,9 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
       audioRef.current.currentTime = 0;
     }
 
+    // Don't play audio if viewers modal is open
+    if (showViewers) return;
+
     // Play new audio if story has music
     if (currentStory.music && currentStory.music.preview_url) {
       console.log('🎵 [StoriesViewer] Story has music:', currentStory.music);
@@ -103,7 +106,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
         audioRef.current = null;
       }
     };
-  }, [currentUserIndex, currentStoryIndex, currentStory]);
+  }, [currentUserIndex, currentStoryIndex, currentStory, showViewers]);
 
   // Handle mute/unmute for background music
   useEffect(() => {
