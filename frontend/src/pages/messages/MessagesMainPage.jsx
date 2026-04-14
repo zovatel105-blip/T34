@@ -1139,7 +1139,7 @@ const MessagesMainPage = () => {
                 <Users className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
-                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('followers')}
                   </span>
                 )}
@@ -1152,7 +1152,7 @@ const MessagesMainPage = () => {
                 <Bell className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('activity')}
                   </span>
                 )}
@@ -1165,7 +1165,7 @@ const MessagesMainPage = () => {
                 <MessageCircle className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium text-gray-700">Solicitud</span>
                 {getSegmentBadgeCount('messages') && (
-                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('messages')}
                   </span>
                 )}
