@@ -195,9 +195,10 @@ const AuthPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base font-light text-black placeholder-gray-400 placeholder:font-light bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
+                className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                   errors.email ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                 }`}
+                style={{ fontFamily: 'inherit', fontWeight: 400 }}
                 placeholder={isLogin ? 'Email o usuario' : 'Email'}
                 disabled={loading}
                 autoComplete={isLogin ? 'username' : 'email'}
