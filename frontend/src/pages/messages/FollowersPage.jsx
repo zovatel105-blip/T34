@@ -165,8 +165,9 @@ const FollowersPage = () => {
                     className={`ml-3 px-5 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-colors ${
                       isFollowing
                         ? 'bg-gray-200 text-gray-700'
-                        : 'bg-black text-white'
+                        : 'text-white'
                     }`}
+                    style={!isFollowing ? { backgroundColor: '#B061FF' } : {}}
                   >
                     {isFollowing ? 'Siguiendo' : 'Seguir'}
                   </button>
