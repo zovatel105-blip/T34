@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">VotaTok</string>
-    <string name="title_activity_main">VotaTok</string>
-    <string name="package_name">com.votatok.app</string>
-    <string name="custom_url_scheme">com.votatok.app</string>
+    <string name="app_name">Twyk</string>
+    <string name="title_activity_main">Twyk</string>
+    <string name="package_name">com.twyk.app</string>
+    <string name="custom_url_scheme">com.twyk.app</string>
 </resources>

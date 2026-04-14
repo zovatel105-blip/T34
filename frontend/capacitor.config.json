@@ -1,6 +1,6 @@
 {
-  "appId": "com.votatok.app",
-  "appName": "VotaTok",
+  "appId": "com.twyk.app",
+  "appName": "Twyk",
   "webDir": "build",
   "server": {
     "androidScheme": "https",

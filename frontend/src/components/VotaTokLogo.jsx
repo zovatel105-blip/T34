@@ -4,8 +4,8 @@ const VotaTokLogo = ({ size = 80, className = "" }) => {
   return (
     <div className={`inline-flex items-center justify-center ${className}`}>
       <img 
-        src="/votatuk-logo.png" 
-        alt="VotaTok Logo"
+        src="/icon-512x512.png" 
+        alt="Twyk Logo"
         width={size}
         height={size}
         className="object-contain"
@@ -20,8 +20,8 @@ export const VotaTokSimpleLogo = ({ size = 50, className = "" }) => {
   return (
     <div className={`inline-flex items-center justify-center ${className}`}>
       <img 
-        src="/votatuk-logo.png" 
-        alt="VotaTok Logo"
+        src="/icon-512x512.png" 
+        alt="Twyk Logo"
         width={size}
         height={size}
         className="object-contain rounded-xl"
@@ -38,11 +38,8 @@ export const VotaTokLogoWithText = ({ size = 40, showText = true, className = ""
       <VotaTokSimpleLogo size={size} />
       {showText && (
         <div className="flex flex-col">
-          <span className="text-xl font-bold bg-gradient-to-r from-pink-500 to-cyan-400 bg-clip-text text-transparent">
-            VotaTok
-          </span>
-          <span className="text-xs text-gray-500 -mt-1">
-            TikTok Style Polls
+          <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-400 bg-clip-text text-transparent">
+            Twyk
           </span>
         </div>
       )}
