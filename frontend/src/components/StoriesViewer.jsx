@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Volume2, VolumeX, Music, User, Eye, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AppConfig from '../config/config';
 import { useAuth } from '../contexts/AuthContext';
 import storyService from '../services/storyService';
@@ -41,6 +42,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const audioRef = useRef(null);
   const viewedStoriesRef = useRef(new Set());
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   const currentGroup = storiesGroups[currentUserIndex];
@@ -519,7 +521,16 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
               ) : (
                 <div className="space-y-4 pb-6">
                   {viewers.map((viewer, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
+                    <div 
+                      key={idx} 
+                      className="flex items-center gap-3 cursor-pointer active:bg-zinc-800 rounded-xl px-2 py-1 -mx-2 transition-colors"
+                      onClick={() => {
+                        if (viewer.user?.id) {
+                          onClose();
+                          navigate(`/profile/${viewer.user.id}`);
+                        }
+                      }}
+                    >
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
                         {viewer.user?.avatar_url ? (
                           <img

@@ -11945,6 +11945,10 @@ async def view_story(
         if not story:
             raise HTTPException(status_code=404, detail="Story not found")
         
+        # Don't record the owner viewing their own story
+        if story["user_id"] == current_user.id:
+            return {"success": True, "message": "Owner view not recorded"}
+        
         # Atomic upsert to prevent race condition duplicates
         result = await db.story_views.update_one(
             {"story_id": story_id, "user_id": current_user.id},
@@ -12017,8 +12021,11 @@ async def get_story_viewers(
         if story["user_id"] != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to view story viewers")
         
-        # Get all views
-        views_cursor = db.story_views.find({"story_id": story_id}).sort("created_at", -1)
+        # Get all views (exclude the story owner)
+        views_cursor = db.story_views.find({
+            "story_id": story_id,
+            "user_id": {"$ne": story["user_id"]}
+        }).sort("created_at", -1)
         views = await views_cursor.to_list(length=1000)
         
         if not views:
