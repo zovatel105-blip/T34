@@ -219,11 +219,11 @@ const ActivityPage = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 px-1">
           {tabs.map(tab => (
             <div key={tab.key} className="relative flex-shrink-0">
               {tab.count > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white px-1 z-10">
+                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white px-1 z-10">
                   {tab.count}
                 </span>
               )}
