@@ -15,6 +15,7 @@ import { useShare } from '../hooks/useShare';
 import storyService from '../services/storyService';
 import StoriesViewer from './StoriesViewer';
 import audioManager from '../services/AudioManager';
+import { useAuth } from '../contexts/AuthContext';
 
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
@@ -465,6 +466,7 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
 
 const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen = false }) => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const { getSocialProof, socialProofData } = useAddiction();
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -624,9 +626,15 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
       setShowAuthorStoryViewer(true);
     } else {
       // Navigate to profile if no stories or all stories viewed
-      const username = poll.author?.username || poll.author?.display_name?.toLowerCase().replace(/\s+/g, '_');
-      if (username) {
-        navigate(`/profile/${username}`);
+      const authorId = poll.author?.id;
+      // If it's the current user, navigate without param so isOwnProfile works
+      if (authUser && (authorId === authUser.id)) {
+        navigate('/profile');
+      } else {
+        const username = poll.author?.username || poll.author?.display_name?.toLowerCase().replace(/\s+/g, '_');
+        if (username) {
+          navigate(`/profile/${username}`);
+        }
       }
     }
   };

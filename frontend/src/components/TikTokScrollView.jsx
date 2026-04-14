@@ -518,7 +518,12 @@ const TikTokPollCard = ({
   };
 
   const handleUserClick = (user) => {
-    navigate(`/profile/${user.username}`);
+    // If it's the current user, navigate without param so isOwnProfile works
+    if (authUser && (user.id === authUser.id || user.username === authUser.username)) {
+      navigate('/profile');
+    } else {
+      navigate(`/profile/${user.username}`);
+    }
   };
 
   const handleFollowUser = async (user) => {
