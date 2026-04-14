@@ -35,9 +35,9 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(() => {
     const group = storiesGroups[initialUserIndex];
     if (!group?.stories) return 0;
-    // Start from first unviewed story, or last story if all viewed (own stories)
+    // Start from first unviewed story, or from the beginning if all viewed
     const firstUnviewed = group.stories.findIndex(s => !s.viewed_by_me);
-    return firstUnviewed >= 0 ? firstUnviewed : group.stories.length - 1;
+    return firstUnviewed >= 0 ? firstUnviewed : 0;
   });
   const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
