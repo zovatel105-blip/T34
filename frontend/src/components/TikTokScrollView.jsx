@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, useAnimation, PanInfo } from 'framer-motion';
 import PollCard from './PollCard';
@@ -1450,13 +1451,14 @@ const TikTokPollCard = ({
         content={shareModal.content}
       />
       
-      {/* Story Viewer */}
-      {showAuthorStoryViewer && authorStoriesData && (
+      {/* Story Viewer - Portal to escape stacking context */}
+      {showAuthorStoryViewer && authorStoriesData && createPortal(
         <StoriesViewer
           storiesGroups={[authorStoriesData]}
           onClose={handleStoryViewerClose}
           initialUserIndex={0}
-        />
+        />,
+        document.body
       )}
     </div>
   );

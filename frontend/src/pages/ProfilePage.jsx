@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -2894,13 +2895,14 @@ const ProfilePage = () => {
         />
       )}
 
-      {/* Story Viewer */}
-      {showStoryViewer && userStoriesData && (
+      {/* Story Viewer - Portal to escape stacking context */}
+      {showStoryViewer && userStoriesData && createPortal(
         <StoriesViewer
           storiesGroups={[userStoriesData]}
           onClose={handleStoryViewerClose}
           initialUserIndex={0}
-        />
+        />,
+        document.body
       )}
 
       {/* Create Story Modal - REMOVED */}

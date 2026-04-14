@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
@@ -1209,13 +1210,14 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
         content={shareModal.content}
       />
       
-      {/* Story Viewer */}
-      {showAuthorStoryViewer && authorStoriesData && (
+      {/* Story Viewer - Portal to escape stacking context */}
+      {showAuthorStoryViewer && authorStoriesData && createPortal(
         <StoriesViewer
           storiesGroups={[authorStoriesData]}
           onClose={handleStoryViewerClose}
           initialUserIndex={0}
-        />
+        />,
+        document.body
       )}
     </motion.div>
   );
