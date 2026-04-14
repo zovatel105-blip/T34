@@ -186,7 +186,7 @@ const AuthPage = () => {
           {/* Email/Username Field - Twyk style */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-black hidden md:block">
-              {isLogin ? 'Email o nombre de usuario' : 'Email'}
+              Email
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
