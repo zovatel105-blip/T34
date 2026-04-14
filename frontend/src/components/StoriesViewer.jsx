@@ -477,8 +477,6 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
                   key={idx}
                   onClick={() => {
                     setCurrentStoryIndex(idx);
-                    setShowViewers(false);
-                    if (audioRef.current) audioRef.current.play().catch(() => {});
                   }}
                   className={`w-24 h-36 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
                     idx === currentStoryIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-80'
