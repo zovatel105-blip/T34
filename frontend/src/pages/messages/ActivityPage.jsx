@@ -221,17 +221,19 @@ const ActivityPage = () => {
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
           {tabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                activeTab === tab.key ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}>
-              {tab.label}
+            <div key={tab.key} className="relative flex-shrink-0">
               {tab.count > 0 && (
-                <span className={`min-w-[20px] h-5 rounded-full flex items-center justify-center text-xs font-bold px-1.5 ${
-                  activeTab === tab.key ? 'bg-white text-black' : 'bg-red-500 text-white'
-                }`}>{tab.count}</span>
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white px-1 z-10">
+                  {tab.count}
+                </span>
               )}
-            </button>
+              <button onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeTab === tab.key ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}>
+                {tab.label}
+              </button>
+            </div>
           ))}
         </div>
       </div>
