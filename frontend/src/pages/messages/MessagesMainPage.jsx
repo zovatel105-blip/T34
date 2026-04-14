@@ -313,6 +313,22 @@ const MessagesMainPage = () => {
     }
   }, [user]);
 
+  // Refrescar badges cuando la página vuelve a enfocarse (al volver de subpáginas)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) loadSegmentData();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
+
+  // Refrescar badges cuando cambia la ruta (volver de subpáginas)
+  useEffect(() => {
+    if (user && location.pathname === '/messages') {
+      loadSegmentData();
+    }
+  }, [location.pathname, user]);
+
   // Manejar apertura de conversación desde navegación
   useEffect(() => {
     if (location.state?.openConversation) {

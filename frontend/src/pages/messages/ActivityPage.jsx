@@ -72,10 +72,10 @@ const ActivityPage = () => {
   };
 
   const getCounts = () => ({
-    votes: activities.filter(i => i.type === 'vote').length,
-    likes: activities.filter(i => i.type === 'like').length,
-    comments: activities.filter(i => i.type === 'comment').length,
-    mentions: activities.filter(i => i.type === 'mention').length,
+    votes: activities.filter(i => i.type === 'vote' && i.unread).length,
+    likes: activities.filter(i => i.type === 'like' && i.unread).length,
+    comments: activities.filter(i => i.type === 'comment' && i.unread).length,
+    mentions: activities.filter(i => i.type === 'mention' && i.unread).length,
   });
 
   const filteredItems = getFilteredItems();
@@ -256,9 +256,11 @@ const ActivityPage = () => {
           </div>
         ) : (
           <div className="pt-3 pb-20">
-            <div className="px-4 mb-3">
-              <h2 className="text-base font-bold text-black">New ({filteredItems.length})</h2>
-            </div>
+            {filteredItems.filter(i => i.unread).length > 0 && (
+              <div className="px-4 mb-3">
+                <h2 className="text-base font-bold text-black">New ({filteredItems.filter(i => i.unread).length})</h2>
+              </div>
+            )}
             {filteredItems.map(item => renderItem(item))}
           </div>
         )}
