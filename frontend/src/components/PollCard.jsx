@@ -769,7 +769,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
             <div className="flex items-center justify-between p-4 pb-3 flex-shrink-0 bg-white/90 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <button
-                  className="group relative transition-transform duration-200 hover:scale-105 w-10 h-10 rounded-full"
+                  className="group relative w-10 h-10 rounded-full"
                   onClick={handleAvatarClick}
                 >
                   {authorHasStories && (
@@ -1011,7 +1011,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
           <div className="flex items-center justify-between p-4 pb-2">
             <div className="flex items-center gap-3">
               <button
-                className="group relative transition-transform duration-200 hover:scale-105 w-12 h-12 rounded-full"
+                className="group relative w-12 h-12 rounded-full"
                 onClick={handleAvatarClick}
               >
                 {authorHasStories && (

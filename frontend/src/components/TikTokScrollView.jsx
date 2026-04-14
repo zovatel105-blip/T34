@@ -73,7 +73,7 @@ const UserButton = ({ user, percentage, isSelected, isWinner, onClick, onUserCli
         e.stopPropagation();
         onUserClick(user);
       }}
-      className="group relative transition-transform duration-200 hover:scale-110"
+      className="group relative"
     >
       <Avatar className={cn(
         "w-12 h-12 transition-all duration-200 ring-2",
@@ -690,7 +690,7 @@ const TikTokPollCard = ({
                   {/* Avatar para navegar al perfil o abrir historias */}
                   <button
                     onClick={handleAvatarClick}
-                    className="w-12 h-12 rounded-full relative transition-transform duration-200 hover:scale-110"
+                    className="w-12 h-12 rounded-full relative"
                   >
                     {/* Anillo con centro transparente */}
                     {authorHasStories && (
