@@ -1418,7 +1418,12 @@ const MessagesMainPage = () => {
             {messages.map((message, index) => {
               const isOwnMessage = message.sender_id === user?.id;
               const isSystemMessage = message.isSystemMessage || message.sender_id === 'system';
-              const showAvatar = !isOwnMessage && !isSystemMessage && (index === 0 || messages[index - 1].sender_id !== message.sender_id);
+              
+              // Avatar shows on LAST message of a group (bottom of group like reference)
+              const isLastInGroup = !isOwnMessage && !isSystemMessage && (index === messages.length - 1 || messages[index + 1]?.sender_id !== message.sender_id || messages[index + 1]?.isSystemMessage);
+              
+              // Tighter spacing for consecutive messages from same sender
+              const isSameSenderAsPrev = index > 0 && messages[index - 1].sender_id === message.sender_id && !messages[index - 1].isSystemMessage;
               
               // Determinar si necesitamos mostrar un separador de fecha
               const showDateSeparator = (() => {
@@ -1523,63 +1528,43 @@ const MessagesMainPage = () => {
                       </div>
                     </div>
                   )}
-                  <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-                  <div className={`flex items-end space-x-2 max-w-xs lg:max-w-md ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    {/* Avatar para mensajes de otros usuarios */}
-                    {showAvatar && !isOwnMessage && renderAvatar(
+                  <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${isSameSenderAsPrev ? 'mt-1' : 'mt-4'}`}>
+                  <div className={`flex items-end space-x-2 max-w-[75%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    {/* Avatar for received messages - only on last message of group */}
+                    {isLastInGroup && !isOwnMessage && renderAvatar(
                       message.sender?.avatar_url, 
                       message.sender?.display_name, 
                       message.sender?.username,
-                      'w-8 h-8'
+                      'w-7 h-7'
                     )}
                     
-                    {/* Spacer cuando no se muestra avatar */}
-                    {!showAvatar && !isOwnMessage && <div className="w-8" />}
+                    {/* Spacer when avatar not shown */}
+                    {!isLastInGroup && !isOwnMessage && <div className="w-7" />}
                     
-                    {/* Mensaje */}
-                    <div className={`relative px-4 py-2 rounded-2xl ${
+                    {/* Message bubble - pill shape */}
+                    <div className={`relative px-4 py-2.5 ${
                       isOwnMessage 
                         ? message.status === 'chat_request' 
-                          ? 'bg-yellow-100 text-gray-800 border-2 border-yellow-400' 
-                          : 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}>
+                          ? 'bg-yellow-100 text-gray-800 border-2 border-yellow-400 rounded-full' 
+                          : 'text-white rounded-full'
+                        : 'bg-gray-200 text-gray-900 rounded-full'
+                    }`}
+                    style={isOwnMessage && message.status !== 'chat_request' ? { backgroundColor: '#B061FF' } : {}}
+                    >
                       <p className="text-sm">{message.content}</p>
-                      
-                      {/* Indicador de estado para mensajes propios */}
-                      {isOwnMessage && message.status && (
-                        <div className="absolute -bottom-1 -right-1">
-                          {message.status === 'sending' && (
-                            <div className="w-3 h-3 bg-gray-400 rounded-full animate-pulse" title="Enviando..."></div>
-                          )}
-                          {message.status === 'sent' && (
-                            <div className="w-3 h-3 bg-green-500 rounded-full" title="Enviado"></div>
-                          )}
-                          {message.status === 'chat_request' && (
-                            <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" title="Solicitud de chat enviada"></div>
-                          )}
-                          {message.status === 'failed' && (
-                            <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer" title="Error al enviar"></div>
-                          )}
-                        </div>
-                      )}
                     </div>
+
+                    {/* Read receipt for own messages - small checkmark on last message */}
+                    {isOwnMessage && index === messages.length - 1 && message.status === 'sent' && (
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Timestamp */}
-                  <div className={`text-xs text-gray-400 mt-1 ${isOwnMessage ? 'text-right mr-2' : 'text-left ml-2'}`}>
-                    {(() => {
-                      if (!message.timestamp) return '';
-                      // Asegurar que el timestamp se interprete como UTC
-                      const dateStr = message.timestamp.endsWith('Z') ? message.timestamp : message.timestamp + 'Z';
-                      return new Date(dateStr).toLocaleTimeString('es-ES', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      });
-                    })()}
                   </div>
-                </div>
-              </React.Fragment>
+                </React.Fragment>
               );
             })}
           </div>
