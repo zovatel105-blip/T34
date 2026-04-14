@@ -415,3 +415,22 @@ div:hover {
     opacity: 1;
   }
 }
+
+/* Force consistent placeholder styling across all input types */
+input::placeholder {
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  font-size: inherit !important;
+  opacity: 1;
+}
+input::-webkit-input-placeholder {
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  font-size: inherit !important;
+}
+input::-moz-placeholder {
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  font-size: inherit !important;
+}
+
