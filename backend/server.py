@@ -11812,9 +11812,8 @@ async def get_stories(
             # Convert stories to StoryResponse
             story_responses = []
             has_unviewed = False
-            is_own_stories = (user_id == current_user.id)
             for story in user_stories:
-                viewed_by_me = is_own_stories or (story["id"] in viewed_story_ids)
+                viewed_by_me = story["id"] in viewed_story_ids
                 if not viewed_by_me:
                     has_unviewed = True
                 
@@ -11904,9 +11903,8 @@ async def get_user_stories(
         # Convert stories to StoryResponse
         story_responses = []
         has_unviewed = False
-        is_own_stories = (user_id == current_user.id)
         for story in stories:
-            viewed_by_me = is_own_stories or (story["id"] in viewed_story_ids)
+            viewed_by_me = story["id"] in viewed_story_ids
             if not viewed_by_me:
                 has_unviewed = True
             
@@ -11947,9 +11945,8 @@ async def view_story(
         if not story:
             raise HTTPException(status_code=404, detail="Story not found")
         
-        # Don't record the owner viewing their own story
-        if story["user_id"] == current_user.id:
-            return {"success": True, "message": "Owner view not recorded"}
+        # Don't count owner's view in views_count, but record it for ring status
+        is_owner = story["user_id"] == current_user.id
         
         # Atomic upsert to prevent race condition duplicates
         result = await db.story_views.update_one(
@@ -11964,11 +11961,12 @@ async def view_story(
         )
         
         if result.upserted_id:
-            # Only increment if this was a new view (not a duplicate)
-            await db.stories.update_one(
-                {"id": story_id},
-                {"$inc": {"views_count": 1}}
-            )
+            # Only increment views_count for non-owner views
+            if not is_owner:
+                await db.stories.update_one(
+                    {"id": story_id},
+                    {"$inc": {"views_count": 1}}
+                )
             return {"success": True, "message": "Story viewed"}
         else:
             return {"success": True, "message": "Already viewed"}
