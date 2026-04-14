@@ -417,20 +417,30 @@ div:hover {
 }
 
 /* Force consistent placeholder styling across all input types */
-input::placeholder {
+input[type="text"]::placeholder,
+input[type="email"]::placeholder {
   font-family: inherit !important;
-  font-weight: 400 !important;
+  font-weight: 300 !important;
+  font-size: inherit !important;
+  opacity: 1;
+  -webkit-text-stroke: 0 !important;
+}
+input[type="text"]::-webkit-input-placeholder,
+input[type="email"]::-webkit-input-placeholder {
+  font-family: inherit !important;
+  font-weight: 300 !important;
+  font-size: inherit !important;
+  -webkit-text-stroke: 0 !important;
+}
+input[type="password"]::placeholder {
+  font-family: inherit !important;
+  font-weight: 300 !important;
   font-size: inherit !important;
   opacity: 1;
 }
-input::-webkit-input-placeholder {
+input[type="password"]::-webkit-input-placeholder {
   font-family: inherit !important;
-  font-weight: 400 !important;
-  font-size: inherit !important;
-}
-input::-moz-placeholder {
-  font-family: inherit !important;
-  font-weight: 400 !important;
+  font-weight: 300 !important;
   font-size: inherit !important;
 }
 
