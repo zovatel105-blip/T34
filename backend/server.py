@@ -1825,9 +1825,9 @@ async def login(login_data: UserLogin, request: Request):
     if is_email:
         user_data = await db.users.find_one({"email": login_identifier})
     else:
-        # Search by username (case-insensitive)
+        # Search by username (case-insensitive, ignore leading/trailing spaces)
         user_data = await db.users.find_one({
-            "username": {"$regex": f"^{login_identifier}$", "$options": "i"}
+            "username": {"$regex": f"^\\s*{login_identifier}\\s*$", "$options": "i"}
         })
     
     if not user_data:
