@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { MoreHorizontal, MoreVertical, EyeOff, UserX, Bell, BellOff, Flag, X } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -27,7 +27,12 @@ const FeedMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Notify parent when menu opens/closes
+  // Swipe-to-close state
+  const sheetRef = useRef(null);
+  const touchStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+  
   const handleSetIsOpen = (value) => {
     setIsOpen(value);
     if (onOpenChange) {
@@ -41,19 +46,50 @@ const FeedMenu = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Swipe handlers
+  const handleTouchStart = useCallback((e) => {
+    touchStartY.current = e.touches[0].clientY;
+    isDragging.current = true;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'none';
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isDragging.current = false;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    }
+    if (currentTranslateY.current > 100) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(100%)`;
+      }
+      setTimeout(() => handleSetIsOpen(false), 200);
+    } else {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = 'translateY(0)';
+      }
+    }
+    currentTranslateY.current = 0;
+  }, []);
+
   const handleNotInterested = async () => {
     try {
-      console.log('🚫 FeedMenu: handleNotInterested called for poll:', poll.id);
-      console.log('🚫 FeedMenu: onNotInterested function:', typeof onNotInterested);
-      console.log('🚫 FeedMenu: localStorage token exists:', !!localStorage.getItem('token'));
-      
       if (!onNotInterested) {
         throw new Error('onNotInterested handler not provided');
       }
-      
-      const result = await onNotInterested(poll.id);
-      console.log('✅ FeedMenu: Successfully marked as not interested, result:', result);
-      
+      await onNotInterested(poll.id);
       toast({
         title: "Contenido ocultado",
         description: "Este tipo de contenido aparecerá menos en tu feed",
@@ -61,8 +97,6 @@ const FeedMenu = ({
       });
       handleSetIsOpen(false);
     } catch (error) {
-      console.error('❌ FeedMenu: Error in handleNotInterested:', error);
-      console.error('❌ FeedMenu: Error stack:', error.stack);
       toast({
         title: "Error",
         description: error.message || "No se pudo ocultar el contenido",
@@ -74,23 +108,12 @@ const FeedMenu = ({
 
   const handleHideUser = async () => {
     try {
-      console.log('👤 FeedMenu: handleHideUser called');
-      console.log('👤 FeedMenu: poll.author:', poll.author);
-      console.log('👤 FeedMenu: poll.authorUser:', poll.authorUser);
-      
       const authorUsername = poll.author?.username || poll.authorUser?.username || 'usuario';
       const authorId = poll.author?.id || poll.authorUser?.id || poll.author?.username;
-      
-      console.log('👤 FeedMenu: authorId:', authorId);
-      console.log('👤 FeedMenu: onHideUser function:', typeof onHideUser);
-      
       if (!onHideUser) {
         throw new Error('onHideUser handler not provided');
       }
-      
       await onHideUser(authorId);
-      console.log('✅ FeedMenu: Successfully hidden user');
-      
       toast({
         title: "Usuario ocultado",
         description: `Ya no verás contenido de @${authorUsername}`,
@@ -98,7 +121,6 @@ const FeedMenu = ({
       });
       handleSetIsOpen(false);
     } catch (error) {
-      console.error('❌ FeedMenu: Error in handleHideUser:', error);
       toast({
         title: "Error", 
         description: error.message || "No se pudo ocultar al usuario",
@@ -157,7 +179,6 @@ const FeedMenu = ({
         duration: 3000,
       });
       
-      // Reset state
       setShowReportModal(false);
       setSelectedReportCategory(null);
       setReportComment('');
@@ -192,74 +213,85 @@ const FeedMenu = ({
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999]"
+            style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
             onClick={() => handleSetIsOpen(false)}
           />
           
-          {/* Bottom Sheet Content */}
-          <div className="fixed bottom-0 left-0 right-0 z-[10000] animate-in slide-in-from-bottom duration-300">
-            <div className="bg-zinc-900 rounded-t-3xl shadow-2xl overflow-hidden max-w-lg mx-auto">
+          {/* Bottom Sheet Content - same style as "Tu historia" modal */}
+          <div className="fixed inset-0 z-[10000] flex items-end justify-center">
+            <div 
+              ref={sheetRef}
+              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               {/* Handle Bar */}
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1 bg-zinc-600 rounded-full" />
-              </div>
-              
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-zinc-800">
-                <h3 className="text-white font-semibold text-lg">Opciones del contenido</h3>
+              <div className="w-full py-2 flex justify-center bg-zinc-900">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
 
-              {/* Menu Options */}
-              <div className="py-2">
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Opciones del contenido</h2>
+              </div>
+
+              {/* Menu Options - card style like "Tu historia" */}
+              <div className="px-4 pb-8 flex flex-col gap-3">
                 {/* No me interesa */}
                 <button
                   onClick={handleNotInterested}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors"
                 >
-                  <EyeOff className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-white text-base font-medium">No me interesa</div>
-                    <div className="text-zinc-500 text-sm mt-0.5">Este contenido aparecerá menos</div>
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <EyeOff className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">No me interesa</p>
+                    <p className="text-xs text-zinc-400">Este contenido aparecerá menos</p>
                   </div>
                 </button>
 
                 {/* Ocultar usuario */}
                 <button
                   onClick={handleHideUser}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors"
                 >
-                  <UserX className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-white text-base font-medium">Ocultar usuario</div>
-                    <div className="text-zinc-500 text-sm mt-0.5">No mostrar contenido de este usuario</div>
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <UserX className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">Ocultar usuario</p>
+                    <p className="text-xs text-zinc-400">No mostrar contenido de este usuario</p>
                   </div>
                 </button>
 
                 {/* Activar/Desactivar notificaciones */}
                 <button
                   onClick={handleToggleNotifications}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors"
                 >
-                  {isNotificationEnabled ? (
-                    <BellOff className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  ) : (
-                    <Bell className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
-                    <div className="text-white text-base font-medium">
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    {isNotificationEnabled ? (
+                      <BellOff className="w-5 h-5 text-zinc-300" />
+                    ) : (
+                      <Bell className="w-5 h-5 text-zinc-300" />
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">
                       {isNotificationEnabled ? 'Desactivar notificaciones' : 'Activar notificaciones'}
-                    </div>
-                    <div className="text-zinc-500 text-sm mt-0.5">
+                    </p>
+                    <p className="text-xs text-zinc-400">
                       {isNotificationEnabled 
                         ? 'Dejar de recibir alertas de este usuario'
                         : 'Recibir alertas cuando publique contenido'
                       }
-                    </div>
+                    </p>
                   </div>
                 </button>
-
-                {/* Separador */}
-                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Reportar */}
                 <button
@@ -267,18 +299,17 @@ const FeedMenu = ({
                     setShowReportModal(true);
                     handleSetIsOpen(false);
                   }}
-                  className="w-full px-6 py-4 text-left hover:bg-red-950/30 active:bg-red-900/30 transition-colors duration-150 flex items-center gap-4"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-red-950/30 active:bg-red-900/40 transition-colors"
                 >
-                  <Flag className="w-6 h-6 text-red-500 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-red-500 text-base font-medium">Reportar</div>
-                    <div className="text-zinc-500 text-sm mt-0.5">Contenido inapropiado o spam</div>
+                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <Flag className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-red-400 text-sm">Reportar</p>
+                    <p className="text-xs text-zinc-400">Contenido inapropiado o spam</p>
                   </div>
                 </button>
               </div>
-              
-              {/* Safe Area Bottom Padding (for mobile notch/home bar) */}
-              <div className="h-6" />
             </div>
           </div>
         </>,
@@ -309,7 +340,6 @@ const FeedMenu = ({
 
             {/* Content */}
             <div className="p-6 space-y-6">
-              {/* Categories */}
               <div>
                 <h3 className="text-white font-medium mb-4">¿Cuál es el problema?</h3>
                 <div className="space-y-2">
@@ -334,7 +364,6 @@ const FeedMenu = ({
                 </div>
               </div>
 
-              {/* Comment */}
               <div>
                 <label className="block text-white font-medium mb-2">
                   Detalles adicionales (opcional)
@@ -352,7 +381,6 @@ const FeedMenu = ({
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowReportModal(false)}

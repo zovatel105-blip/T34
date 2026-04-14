@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   MoreVertical, 
@@ -31,7 +31,12 @@ import { useToast } from '../hooks/use-toast';
 const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfile, className, onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Notify parent when menu opens/closes
+  // Swipe-to-close state
+  const sheetRef = useRef(null);
+  const touchStartY = useRef(0);
+  const currentTranslateY = useRef(0);
+  const isDragging = useRef(false);
+
   const handleSetIsOpen = (value) => {
     setIsOpen(value);
     if (onOpenChange) {
@@ -44,19 +49,54 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
   const [editDescription, setEditDescription] = useState(poll.description || '');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Swipe handlers
+  const handleTouchStart = useCallback((e) => {
+    touchStartY.current = e.touches[0].clientY;
+    isDragging.current = true;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'none';
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY > 0) {
+      currentTranslateY.current = deltaY;
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(${deltaY}px)`;
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isDragging.current = false;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    }
+    if (currentTranslateY.current > 100) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = `translateY(100%)`;
+      }
+      setTimeout(() => handleSetIsOpen(false), 200);
+    } else {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = 'translateY(0)';
+      }
+    }
+    currentTranslateY.current = 0;
+  }, []);
   
-  // New handlers for comments and vote count
   const handleToggleComments = async () => {
     setIsLoading(true);
     try {
       const updatedPoll = {
         ...poll,
         comments_enabled: !poll.comments_enabled,
-        commentsEnabled: !poll.comments_enabled // Support both naming conventions
+        commentsEnabled: !poll.comments_enabled
       };
-      
       await onUpdate(poll.id, updatedPoll);
-      
       toast({
         title: "Éxito",
         description: poll.comments_enabled ? "Comentarios deshabilitados" : "Comentarios habilitados"
@@ -78,11 +118,9 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
       const updatedPoll = {
         ...poll,
         show_vote_count: !poll.show_vote_count,
-        showVoteCount: !poll.show_vote_count // Support both naming conventions
+        showVoteCount: !poll.show_vote_count
       };
-      
       await onUpdate(poll.id, updatedPoll);
-      
       toast({
         title: "Éxito",
         description: poll.show_vote_count ? "Conteo de votos oculto" : "Conteo de votos visible"
@@ -98,7 +136,6 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
     }
   };
 
-  // Show menu only in own profile - more reliable than ID matching
   if (!currentUser || !isOwnProfile) {
     return null;
   }
@@ -112,7 +149,6 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
       });
       return;
     }
-
     setIsLoading(true);
     try {
       const updatedPoll = {
@@ -120,10 +156,8 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
         title: editTitle.trim(),
         description: editDescription.trim()
       };
-      
       await onUpdate(poll.id, updatedPoll);
       setShowEditDialog(false);
-      
       toast({
         title: "Éxito",
         description: "Publicación editada correctamente"
@@ -142,13 +176,8 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
   const handlePin = async () => {
     setIsLoading(true);
     try {
-      const updatedPoll = {
-        ...poll,
-        is_pinned: !poll.is_pinned
-      };
-      
+      const updatedPoll = { ...poll, is_pinned: !poll.is_pinned };
       await onUpdate(poll.id, updatedPoll);
-      
       toast({
         title: "Éxito",
         description: poll.is_pinned ? "Publicación desanclada" : "Publicación anclada en el perfil"
@@ -167,13 +196,8 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
   const handleArchive = async () => {
     setIsLoading(true);
     try {
-      const updatedPoll = {
-        ...poll,
-        is_archived: !poll.is_archived
-      };
-      
+      const updatedPoll = { ...poll, is_archived: !poll.is_archived };
       await onUpdate(poll.id, updatedPoll);
-      
       toast({
         title: "Éxito",
         description: poll.is_archived ? "Publicación desarchivada" : "Publicación archivada"
@@ -192,13 +216,8 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
   const handlePrivacy = async () => {
     setIsLoading(true);
     try {
-      const updatedPoll = {
-        ...poll,
-        is_private: !poll.is_private
-      };
-      
+      const updatedPoll = { ...poll, is_private: !poll.is_private };
       await onUpdate(poll.id, updatedPoll);
-      
       toast({
         title: "Éxito",
         description: poll.is_private ? "Publicación hecha pública" : "Publicación hecha privada"
@@ -219,7 +238,6 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
     try {
       await onDelete(poll.id);
       setShowDeleteDialog(false);
-      
       toast({
         title: "Éxito",
         description: "Publicación eliminada permanentemente"
@@ -244,7 +262,6 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
           handleSetIsOpen(!isOpen);
         }}
         className={className || "flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"}
-        style={!className ? {} : {}}
       >
         <MoreVertical className="post-management-icon w-5 h-5" />
       </button>
@@ -254,155 +271,142 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] animate-in fade-in duration-200"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999]"
+            style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
             onClick={() => handleSetIsOpen(false)}
           />
           
-          {/* Bottom Sheet Content */}
-          <div className="fixed bottom-0 left-0 right-0 z-[10000] animate-in slide-in-from-bottom duration-300">
-            <div className="bg-zinc-900 rounded-t-3xl shadow-2xl overflow-hidden max-w-lg mx-auto">
+          {/* Bottom Sheet Content - with swipe to close */}
+          <div className="fixed inset-0 z-[10000] flex items-end justify-center">
+            <div 
+              ref={sheetRef}
+              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               {/* Handle Bar */}
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-12 h-1 bg-zinc-600 rounded-full" />
+              <div className="w-full py-2 flex justify-center bg-zinc-900">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
 
-              {/* Menu Options */}
-              <div className="py-2">
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Gestionar publicación</h2>
+              </div>
+
+              {/* Menu Options - card style like "Tu historia" */}
+              <div className="px-4 pb-8 flex flex-col gap-3">
                 {/* Editar título/descripción */}
                 <button
                   onClick={() => {
                     setShowEditDialog(true);
                     handleSetIsOpen(false);
                   }}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors"
                 >
-                  <Edit className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="text-white text-base font-medium">Editar título/descripción</div>
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <Edit className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">Editar título/descripción</p>
+                  </div>
                 </button>
-
-                {/* Separador */}
-                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Fijar en perfil */}
                 <button
-                  onClick={() => {
-                    handlePin();
-                    handleSetIsOpen(false);
-                  }}
+                  onClick={() => { handlePin(); handleSetIsOpen(false); }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  <Pin className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="text-white text-base font-medium">
-                    {poll.is_pinned ? 'Desanclar del perfil' : 'Fijar en perfil'}
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <Pin className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">{poll.is_pinned ? 'Desanclar del perfil' : 'Fijar en perfil'}</p>
                   </div>
                 </button>
 
                 {/* Archivar publicación */}
                 <button
-                  onClick={() => {
-                    handleArchive();
-                    handleSetIsOpen(false);
-                  }}
+                  onClick={() => { handleArchive(); handleSetIsOpen(false); }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  <Archive className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="text-white text-base font-medium">
-                    {poll.is_archived ? 'Desarchivar publicación' : 'Archivar publicación'}
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <Archive className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">{poll.is_archived ? 'Desarchivar publicación' : 'Archivar publicación'}</p>
                   </div>
                 </button>
-
-                {/* Separador */}
-                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Hacer publicación privada/pública */}
                 <button
-                  onClick={() => {
-                    handlePrivacy();
-                    handleSetIsOpen(false);
-                  }}
+                  onClick={() => { handlePrivacy(); handleSetIsOpen(false); }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  {poll.is_private ? (
-                    <>
-                      <Globe className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                      <div className="text-white text-base font-medium">Hacer publicación pública</div>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                      <div className="text-white text-base font-medium">Hacer publicación privada</div>
-                    </>
-                  )}
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    {poll.is_private ? <Globe className="w-5 h-5 text-zinc-300" /> : <Lock className="w-5 h-5 text-zinc-300" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">{poll.is_private ? 'Hacer publicación pública' : 'Hacer publicación privada'}</p>
+                  </div>
                 </button>
 
-                {/* Separador */}
-                <div className="my-2 border-t border-zinc-800" />
-
-                {/* Permitir/Deshabilitar comentarios */}
+                {/* Deshabilitar/Habilitar comentarios */}
                 <button
-                  onClick={() => {
-                    handleToggleComments();
-                    handleSetIsOpen(false);
-                  }}
+                  onClick={() => { handleToggleComments(); handleSetIsOpen(false); }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  <MessageCircle className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  <div className="flex flex-col">
-                    <div className="text-white text-base font-medium">
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-zinc-300" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">
                       {poll.comments_enabled || poll.commentsEnabled ? 'Deshabilitar comentarios' : 'Habilitar comentarios'}
-                    </div>
-                    <div className="text-zinc-500 text-xs">
+                    </p>
+                    <p className="text-xs text-zinc-400">
                       {poll.comments_enabled || poll.commentsEnabled ? 'Los comentarios se ocultarán' : 'Los comentarios serán visibles'}
-                    </div>
+                    </p>
                   </div>
                 </button>
 
-                {/* Mostrar/Ocultar conteo de votos */}
+                {/* Ocultar/Mostrar conteo de votos */}
                 <button
-                  onClick={() => {
-                    handleToggleVoteCount();
-                    handleSetIsOpen(false);
-                  }}
+                  onClick={() => { handleToggleVoteCount(); handleSetIsOpen(false); }}
                   disabled={isLoading}
-                  className="w-full px-6 py-4 text-left hover:bg-zinc-800 active:bg-zinc-700 transition-colors duration-150 flex items-center gap-4 disabled:opacity-50"
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 active:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  {poll.show_vote_count || poll.showVoteCount ? (
-                    <EyeOff className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  ) : (
-                    <Eye className="w-6 h-6 text-zinc-400 flex-shrink-0" />
-                  )}
-                  <div className="flex flex-col">
-                    <div className="text-white text-base font-medium">
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    {poll.show_vote_count || poll.showVoteCount ? <EyeOff className="w-5 h-5 text-zinc-300" /> : <Eye className="w-5 h-5 text-zinc-300" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-white text-sm">
                       {poll.show_vote_count || poll.showVoteCount ? 'Ocultar conteo de votos' : 'Mostrar conteo de votos'}
-                    </div>
-                    <div className="text-zinc-500 text-xs">
+                    </p>
+                    <p className="text-xs text-zinc-400">
                       {poll.show_vote_count || poll.showVoteCount ? 'Los números de votos se ocultarán' : 'Los números de votos serán visibles'}
-                    </div>
+                    </p>
                   </div>
                 </button>
-
-                {/* Separador */}
-                <div className="my-2 border-t border-zinc-800" />
 
                 {/* Eliminar publicación */}
                 <button
-                  onClick={() => {
-                    setShowDeleteDialog(true);
-                    handleSetIsOpen(false);
-                  }}
-                  className="w-full px-6 py-4 text-left hover:bg-red-950/30 active:bg-red-900/30 transition-colors duration-150 flex items-center gap-4"
+                  onClick={() => { setShowDeleteDialog(true); handleSetIsOpen(false); }}
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-red-950/30 active:bg-red-900/40 transition-colors"
                 >
-                  <Trash2 className="w-6 h-6 text-red-500 flex-shrink-0" />
-                  <div className="text-red-500 text-base font-medium">Eliminar publicación</div>
+                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <Trash2 className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-red-400 text-sm">Eliminar publicación</p>
+                  </div>
                 </button>
               </div>
-              
-              {/* Safe Area Bottom Padding (for mobile notch/home bar) */}
-              <div className="h-6" />
             </div>
           </div>
         </>,
@@ -418,7 +422,6 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
               Modifica el título y descripción de tu publicación.
             </DialogDescription>
           </DialogHeader>
-          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">Título/Pregunta</Label>
@@ -429,11 +432,8 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                 placeholder="¿Cuál es tu pregunta?"
                 maxLength={200}
               />
-              <p className="text-xs text-gray-500">
-                {editTitle.length}/200 caracteres
-              </p>
+              <p className="text-xs text-gray-500">{editTitle.length}/200 caracteres</p>
             </div>
-            
             <div className="grid gap-2">
               <Label htmlFor="description">Descripción (opcional)</Label>
               <Textarea
@@ -444,18 +444,11 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
                 maxLength={500}
                 rows={3}
               />
-              <p className="text-xs text-gray-500">
-                {editDescription.length}/500 caracteres
-              </p>
+              <p className="text-xs text-gray-500">{editDescription.length}/500 caracteres</p>
             </div>
           </div>
-          
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowEditDialog(false)}
-              disabled={isLoading}
-            >
+            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={isLoading}>
               Cancelar
             </Button>
             <Button onClick={handleEdit} disabled={isLoading}>
@@ -475,20 +468,11 @@ const PostManagementMenu = ({ poll, onUpdate, onDelete, currentUser, isOwnProfil
               junto con todos sus votos y comentarios.
             </DialogDescription>
           </DialogHeader>
-          
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-              disabled={isLoading}
-            >
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
               {isLoading ? 'Eliminando...' : 'Eliminar permanentemente'}
             </Button>
           </DialogFooter>
