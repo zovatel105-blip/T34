@@ -198,7 +198,7 @@ const AuthPage = () => {
                 className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                   errors.email ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                 }`}
-                placeholder={isLogin ? 'username or email' : 'Email'}
+                placeholder={isLogin ? 'username, email' : 'Email'}
                 disabled={loading}
                 autoComplete={isLogin ? 'username' : 'email'}
               />
