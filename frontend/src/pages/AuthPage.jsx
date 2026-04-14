@@ -376,7 +376,7 @@ const AuthPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-6">
           <p className="text-gray-400 text-xs">
             Al continuar, aceptas nuestros términos y política de privacidad
           </p>
