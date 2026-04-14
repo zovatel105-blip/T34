@@ -40,6 +40,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const [viewersCount, setViewersCount] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const audioRef = useRef(null);
+  const viewedStoriesRef = useRef(new Set());
   const { user: currentUser } = useAuth();
 
   const currentGroup = storiesGroups[currentUserIndex];
@@ -209,12 +210,14 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
 
   // Mark story as viewed
   useEffect(() => {
-    if (currentStory && !currentStory.viewed_by_me) {
+    if (currentStory && !currentStory.viewed_by_me && !viewedStoriesRef.current.has(currentStory.id)) {
       markAsViewed(currentStory.id);
     }
   }, [currentStory]);
 
   const markAsViewed = async (storyId) => {
+    if (viewedStoriesRef.current.has(storyId)) return;
+    viewedStoriesRef.current.add(storyId);
     try {
       const token = localStorage.getItem('token');
       const backendUrl = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
@@ -227,6 +230,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
       });
     } catch (error) {
       console.error('Error marking story as viewed:', error);
+      viewedStoriesRef.current.delete(storyId);
     }
   };
 
@@ -296,7 +300,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-30 pt-4 px-4">
         <div className="flex items-center justify-between mt-3">
-          <div className="flex flex-col gap-0 flex-1">
+          <div className="flex flex-col gap-0 flex-1 min-w-0 overflow-hidden">
             {/* User info row */}
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
@@ -347,7 +351,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Mute/Unmute button - only show if story has music */}
             {currentStory.music && currentStory.music.preview_url && (
               <button

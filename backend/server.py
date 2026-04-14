@@ -157,6 +157,45 @@ try:
 except Exception as e:
     print(f"⚠️  Database optimizer initialization failed: {e}")
 
+# Create unique index on story_views to prevent duplicate views
+async def init_story_views_index():
+    try:
+        # First, clean up existing duplicates
+        pipeline = [
+            {"$group": {"_id": {"story_id": "$story_id", "user_id": "$user_id"}, "count": {"$sum": 1}, "ids": {"$push": "$_id"}}},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        duplicates = await db.story_views.aggregate(pipeline).to_list(1000)
+        for dup in duplicates:
+            # Keep the first, delete the rest
+            ids_to_delete = dup["ids"][1:]
+            await db.story_views.delete_many({"_id": {"$in": ids_to_delete}})
+            # Fix the views_count for the story
+            actual_count = await db.story_views.count_documents({"story_id": dup["_id"]["story_id"]})
+            await db.stories.update_one(
+                {"id": dup["_id"]["story_id"]},
+                {"$set": {"views_count": actual_count}}
+            )
+        if duplicates:
+            print(f"🧹 Cleaned up {len(duplicates)} duplicate story views")
+        
+        # Then create the unique index
+        await db.story_views.create_index(
+            [("story_id", 1), ("user_id", 1)],
+            unique=True,
+            background=True
+        )
+        print("✅ Unique index on story_views (story_id, user_id) created")
+    except Exception as e:
+        print(f"⚠️  Story views index creation: {e}")
+
+import asyncio
+try:
+    loop = asyncio.get_event_loop()
+    loop.create_task(init_story_views_index())
+except RuntimeError:
+    pass
+
 # File upload configuration using config
 config.create_upload_directories()
 UPLOAD_DIR = config.UPLOAD_BASE_DIR
@@ -11906,30 +11945,27 @@ async def view_story(
         if not story:
             raise HTTPException(status_code=404, detail="Story not found")
         
-        # Check if already viewed
-        existing_view = await db.story_views.find_one({
-            "story_id": story_id,
-            "user_id": current_user.id
-        })
+        # Atomic upsert to prevent race condition duplicates
+        result = await db.story_views.update_one(
+            {"story_id": story_id, "user_id": current_user.id},
+            {"$setOnInsert": {
+                "id": str(uuid.uuid4()),
+                "story_id": story_id,
+                "user_id": current_user.id,
+                "created_at": datetime.utcnow()
+            }},
+            upsert=True
+        )
         
-        if existing_view:
+        if result.upserted_id:
+            # Only increment if this was a new view (not a duplicate)
+            await db.stories.update_one(
+                {"id": story_id},
+                {"$inc": {"views_count": 1}}
+            )
+            return {"success": True, "message": "Story viewed"}
+        else:
             return {"success": True, "message": "Already viewed"}
-        
-        # Create view record
-        view_doc = StoryView(
-            story_id=story_id,
-            user_id=current_user.id
-        )
-        
-        await db.story_views.insert_one(view_doc.dict())
-        
-        # Increment views count
-        await db.stories.update_one(
-            {"id": story_id},
-            {"$inc": {"views_count": 1}}
-        )
-        
-        return {"success": True, "message": "Story viewed"}
         
     except HTTPException:
         raise
