@@ -125,7 +125,7 @@ class StoryService {
   // Get story viewers (only owner can see)
   async getStoryViewers(storyId) {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/api/stories/${storyId}/viewers`, {
+    const response = await fetch(`${API_URL}/api/stories/${storyId}/views`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
