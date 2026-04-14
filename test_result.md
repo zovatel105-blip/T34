@@ -7913,3 +7913,38 @@ agent_communication:
 
     - agent: "main"
     - message: "🔧 FIX: Publicaciones en perfiles ajenos mostraban 'No hay publicaciones disponibles' al hacer click. CAUSA RAÍZ: handlePollClick usaba userPolls (doble filtro con userId del URL) que podía quedar vacío por inconsistencias UUID/username. ADEMÁS loadUserPolls dependía del feed general (ultra-fast) que podía no incluir todos los posts del usuario. SOLUCIÓN: 1) handlePollClick ahora usa polls directamente (misma fuente que la cuadrícula), 2) Nuevo endpoint GET /api/users/{user_id}/polls para cargar polls por autor directamente desde DB, 3) getUserPolls en pollService.js usa el endpoint dedicado con fallback al feed general."
+
+    - agent: "main"
+    - message: "🔑 LOGIN CON NOMBRE DE USUARIO IMPLEMENTADO: Modificado backend y frontend para permitir inicio de sesión con email O username. BACKEND: 1) UserLogin model cambiado email de EmailStr a str, 2) Endpoint POST /api/auth/login ahora busca por email (si contiene @) o por username (case-insensitive regex). FRONTEND: 1) AuthContext.js login() ya no valida formato email estricto, 2) AuthPage.jsx validación permite username en modo login, placeholder actualizado, input type='text' en login. ARCHIVOS: models.py, server.py, AuthContext.js, AuthPage.jsx. TESTING: Probar login con email existente Y con username existente. Credenciales test: demo@example.com/demo123 (username: demo_user)."
+
+backend:
+  - task: "Login with email or username"
+    implemented: true
+    working: "NA"
+    file: "server.py, models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Implemented login by email or username. UserLogin model accepts str instead of EmailStr. Login endpoint searches by email (contains @) or username (case-insensitive regex). Need to test with demo@example.com/demo123 and username demo_user/demo123."
+
+frontend:
+  - task: "Login form accepts email or username"
+    implemented: true
+    working: "NA"
+    file: "AuthPage.jsx, AuthContext.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Updated login form to accept email or username. Validation relaxed for login mode. Placeholder says 'Email o nombre de usuario'."
+
+test_plan:
+  current_focus:
+    - "Login with email or username"
+  test_all: false
+  test_priority: "high_first"

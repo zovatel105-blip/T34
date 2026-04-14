@@ -85,7 +85,7 @@ class UserCreate(BaseModel):
     avatar_url: Optional[str] = None  # Permitir avatares durante el registro
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str  # Accepts email or username
     password: str
 
 class UserResponse(BaseModel):

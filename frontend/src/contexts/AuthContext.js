@@ -294,32 +294,27 @@ export const AuthProvider = ({ children }) => {
   }, [getBackendUrl, setAuthData, parseError]);
 
   // Enhanced login function
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (identifier, password) => {
     setLoginLoading(true);
     setError(null);
     
     try {
       // Input validation
-      if (!email || !password) {
-        throw new Error('Email and password are required');
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error('Please enter a valid email address');
+      if (!identifier || !password) {
+        throw new Error('Email/username and password are required');
       }
 
       const backendUrl = getBackendUrl();
       const loginUrl = `${backendUrl}/api/auth/login`;
       
-      console.log('🔍 LOGIN ATTEMPT:', { email, url: loginUrl });
+      console.log('🔍 LOGIN ATTEMPT:', { identifier, url: loginUrl });
 
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: identifier, password }),
       });
 
       if (!response.ok) {

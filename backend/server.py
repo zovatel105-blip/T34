@@ -1809,9 +1809,10 @@ async def login(login_data: UserLogin, request: Request):
     user_agent = request.headers.get("user-agent", "")
     
     # Check rate limiting
-    if not await check_rate_limit(login_data.email, ip_address):
+    login_identifier = login_data.email.strip()
+    if not await check_rate_limit(login_identifier, ip_address):
         await track_login_attempt(
-            login_data.email, ip_address, user_agent, 
+            login_identifier, ip_address, user_agent, 
             False, "Rate limit exceeded"
         )
         raise HTTPException(
@@ -1819,31 +1820,39 @@ async def login(login_data: UserLogin, request: Request):
             detail="Too many failed login attempts. Please try again later."
         )
     
-    # Find user
-    user_data = await db.users.find_one({"email": login_data.email})
+    # Find user by email OR username
+    is_email = "@" in login_identifier
+    if is_email:
+        user_data = await db.users.find_one({"email": login_identifier})
+    else:
+        # Search by username (case-insensitive)
+        user_data = await db.users.find_one({
+            "username": {"$regex": f"^{login_identifier}$", "$options": "i"}
+        })
+    
     if not user_data:
         await track_login_attempt(
-            login_data.email, ip_address, user_agent,
-            False, "Email not found"
+            login_identifier, ip_address, user_agent,
+            False, "User not found"
         )
         raise HTTPException(
             status_code=400,
-            detail="Incorrect email or password"
+            detail="Incorrect email/username or password"
         )
     
     # Verify password (skip for OAuth users)
     if user_data.get("hashed_password") and not verify_password(login_data.password, user_data["hashed_password"]):
         await track_login_attempt(
-            login_data.email, ip_address, user_agent,
+            login_identifier, ip_address, user_agent,
             False, "Invalid password"
         )
         raise HTTPException(
             status_code=400,
-            detail="Incorrect email or password"
+            detail="Incorrect email/username or password"
         )
     elif not user_data.get("hashed_password"):
         await track_login_attempt(
-            login_data.email, ip_address, user_agent,
+            login_identifier, ip_address, user_agent,
             False, "OAuth user attempted regular login"
         )
         raise HTTPException(
@@ -1875,7 +1884,7 @@ async def login(login_data: UserLogin, request: Request):
     )
     
     # Track successful login
-    await track_login_attempt(login_data.email, ip_address, user_agent, True)
+    await track_login_attempt(login_identifier, ip_address, user_agent, True)
     
     # Generate token
     access_token = create_access_token(data={"sub": user_data["id"]})

@@ -22,10 +22,18 @@ const AuthPage = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+    if (isLogin) {
+      // Login: accept email or username
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email o nombre de usuario requerido';
+      }
+    } else {
+      // Register: require valid email
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email requerido';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        newErrors.email = 'Email inválido';
+      }
     }
     
     if (!formData.password.trim()) {
@@ -103,8 +111,8 @@ const AuthPage = () => {
   const handleAuthError = (error) => {
     let errorMessage = error;
     
-    if (error.toLowerCase().includes('incorrect email or password')) {
-      errorMessage = 'Email o contraseña incorrectos';
+    if (error.toLowerCase().includes('incorrect email') || error.toLowerCase().includes('incorrect email/username')) {
+      errorMessage = 'Email/usuario o contraseña incorrectos';
     } else if (error.toLowerCase().includes('user already exists') || error.toLowerCase().includes('email already registered')) {
       errorMessage = 'Email ya registrado';
       setErrors({ email: errorMessage });
@@ -113,6 +121,8 @@ const AuthPage = () => {
       errorMessage = 'Usuario ya existe';
       setErrors({ username: errorMessage });
       return;
+    } else if (error.toLowerCase().includes('social login') || error.toLowerCase().includes('google sign-in')) {
+      errorMessage = 'Esta cuenta usa inicio de sesión con Google. Usa el botón de Google.';
     }
     
     setErrors({ general: errorMessage });
@@ -173,23 +183,24 @@ const AuthPage = () => {
             </div>
           )}
 
-          {/* Email Field - Twyk style */}
+          {/* Email/Username Field - Twyk style */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-black hidden md:block">
-              Email
+              {isLogin ? 'Email o nombre de usuario' : 'Email'}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
               <input
-                type="email"
+                type={isLogin ? 'text' : 'email'}
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                   errors.email ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                 }`}
-                placeholder="username, email or mobile number"
+                placeholder={isLogin ? 'Email o nombre de usuario' : 'Email'}
                 disabled={loading}
+                autoComplete={isLogin ? 'username' : 'email'}
               />
             </div>
             {errors.email && (
