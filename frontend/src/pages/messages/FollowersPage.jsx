@@ -136,11 +136,6 @@ const FollowersPage = () => {
           </div>
         ) : (
           <div className="pt-3 pb-20">
-            {followers.filter(f => f.unread).length > 0 && (
-              <div className="px-4 mb-3">
-                <h2 className="text-base font-bold text-black">New ({followers.filter(f => f.unread).length})</h2>
-              </div>
-            )}
 
             {followers.map(follower => {
               const username = follower.username || follower.display_name || 'Usuario';

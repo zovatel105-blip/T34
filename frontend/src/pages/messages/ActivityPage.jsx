@@ -82,7 +82,7 @@ const ActivityPage = () => {
   const counts = getCounts();
 
   const tabs = [
-    { key: 'all', label: 'All activity', count: null },
+    { key: 'all', label: 'All activity', count: activities.length > 0 ? activities.length : null },
     { key: 'votes', label: 'Votes', count: counts.votes },
     { key: 'likes', label: 'Likes', count: counts.likes },
     { key: 'comments', label: 'Comments', count: counts.comments },
@@ -256,11 +256,6 @@ const ActivityPage = () => {
           </div>
         ) : (
           <div className="pt-3 pb-20">
-            {filteredItems.filter(i => i.unread).length > 0 && (
-              <div className="px-4 mb-3">
-                <h2 className="text-base font-bold text-black">New ({filteredItems.filter(i => i.unread).length})</h2>
-              </div>
-            )}
             {filteredItems.map(item => renderItem(item))}
           </div>
         )}

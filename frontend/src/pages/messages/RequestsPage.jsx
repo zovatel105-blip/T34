@@ -122,11 +122,6 @@ const RequestsPage = () => {
           </div>
         ) : (
           <div className="pt-3 pb-20">
-            {requests.filter(r => r.unread).length > 0 && (
-              <div className="px-4 mb-3">
-                <h2 className="text-base font-bold text-black">New ({requests.filter(r => r.unread).length})</h2>
-              </div>
-            )}
 
             {requests.map(request => {
               const username = request.sender?.display_name || request.sender?.username || 'Usuario';
