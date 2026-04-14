@@ -131,6 +131,10 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
   const handleShowViewers = async () => {
     setShowViewers(true);
     setViewersLoading(true);
+    // Pause background music when opening viewers modal
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
     try {
       const data = await storyService.getStoryViewers(currentStory.id);
       setViewers(data.viewers || []);
@@ -461,7 +465,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
               >
                 <Trash2 className="w-7 h-7 text-white" />
               </button>
-              <button onClick={() => setShowViewers(false)} className="p-1">
+              <button onClick={() => { setShowViewers(false); if (audioRef.current) audioRef.current.play().catch(() => {}); }} className="p-1">
                 <X className="w-7 h-7 text-white" />
               </button>
             </div>
@@ -471,8 +475,13 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
               {currentGroup.stories.map((story, idx) => (
                 <div 
                   key={idx}
-                  className={`w-24 h-36 rounded-lg overflow-hidden border-2 ${
-                    idx === currentStoryIndex ? 'border-white' : 'border-transparent opacity-60'
+                  onClick={() => {
+                    setCurrentStoryIndex(idx);
+                    setShowViewers(false);
+                    if (audioRef.current) audioRef.current.play().catch(() => {});
+                  }}
+                  className={`w-24 h-36 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                    idx === currentStoryIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-80'
                   }`}
                 >
                   {story.media_type === 'image' ? (

@@ -11812,8 +11812,9 @@ async def get_stories(
             # Convert stories to StoryResponse
             story_responses = []
             has_unviewed = False
+            is_own_stories = (user_id == current_user.id)
             for story in user_stories:
-                viewed_by_me = story["id"] in viewed_story_ids
+                viewed_by_me = is_own_stories or (story["id"] in viewed_story_ids)
                 if not viewed_by_me:
                     has_unviewed = True
                 
@@ -11903,8 +11904,9 @@ async def get_user_stories(
         # Convert stories to StoryResponse
         story_responses = []
         has_unviewed = False
+        is_own_stories = (user_id == current_user.id)
         for story in stories:
-            viewed_by_me = story["id"] in viewed_story_ids
+            viewed_by_me = is_own_stories or (story["id"] in viewed_story_ids)
             if not viewed_by_me:
                 has_unviewed = True
             
