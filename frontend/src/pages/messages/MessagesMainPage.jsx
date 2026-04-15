@@ -1145,45 +1145,36 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
-            <div className="flex items-center space-x-1">
+          <div className="flex-shrink-0 bg-white px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-4">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <Users className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Nuevos</span>
+                Nuevos
                 {getSegmentBadgeCount('followers') && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
-                    {getSegmentBadgeCount('followers')}
-                  </span>
+                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <Bell className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Actividad</span>
+                Actividad
                 {getSegmentBadgeCount('activity') && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
-                    {getSegmentBadgeCount('activity')}
-                  </span>
+                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <MessageCircle className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Solicitud</span>
+                Solicitudes
                 {getSegmentBadgeCount('messages') && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
-                    {getSegmentBadgeCount('messages')}
-                  </span>
+                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
             </div>
