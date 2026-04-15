@@ -52,16 +52,6 @@ const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challe
     }
   };
 
-  // Colores para los íconos de cada participante
-  const participantColors = [
-    { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
-    { bg: 'bg-indigo-500/20', text: 'text-indigo-400' },
-    { bg: 'bg-purple-500/20', text: 'text-purple-400' },
-    { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
-    { bg: 'bg-pink-500/20', text: 'text-pink-400' },
-    { bg: 'bg-cyan-500/20', text: 'text-cyan-400' },
-  ];
-
   return (
     <div className="fixed inset-0 z-[100000]">
       {/* Backdrop */}
@@ -87,58 +77,71 @@ const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challe
           </div>
 
           {/* Header */}
-          <div className="px-4 py-3 flex items-center justify-center">
-            <h2 className="font-semibold text-white text-base">
-              {challengeTitle || 'Participantes del Challenge'}
-            </h2>
+          <div className="flex items-center justify-center px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <h3 className="text-white font-semibold text-base">
+                Participantes del Challenge
+              </h3>
+            </div>
           </div>
 
-          {/* Participantes */}
-          <div className="px-4 pb-8 flex flex-col gap-3 max-h-[60vh] overflow-y-auto overscroll-contain">
-            {participants.map((participant, index) => {
-              const color = participantColors[index % participantColors.length];
-              return (
-                <button
-                  key={participant.id || index}
-                  onClick={() => handleParticipantClick(participant)}
-                  className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
-                >
-                  {/* Avatar o ícono con color */}
-                  {participant.avatar_url ? (
-                    <Avatar className="w-10 h-10 rounded-full flex-shrink-0">
-                      <AvatarImage
-                        src={participant.avatar_url}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className={cn("flex items-center justify-center", color.bg)}>
-                        <User className={cn("w-5 h-5", color.text)} />
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", color.bg)}>
-                      <User className={cn("w-5 h-5", color.text)} />
-                    </div>
-                  )}
+          {/* Challenge title */}
+          {challengeTitle && (
+            <div className="px-4 pb-3">
+              <p className="text-zinc-400 text-sm">{challengeTitle}</p>
+            </div>
+          )}
 
-                  {/* Info */}
-                  <div className="text-left flex-1 min-w-0">
-                    <p className="font-semibold text-white text-sm truncate">
-                      {participant.display_name || participant.username || 'Usuario'}
-                    </p>
+          {/* Participants list */}
+          <div className="px-4 pb-4 flex flex-col gap-3 max-h-[60vh] overflow-y-auto overscroll-contain">
+            {participants.map((participant, index) => (
+              <button
+                key={participant.id || index}
+                onClick={() => handleParticipantClick(participant)}
+                className="w-full flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] transition-all"
+              >
+                {/* Avatar — mismo estilo que el perfil */}
+                <Avatar className="w-11 h-11 rounded-full flex-shrink-0">
+                  <AvatarImage
+                    src={participant.avatar_url || undefined}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
+                    <User className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Info */}
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">
+                    {participant.display_name || participant.username || 'Usuario'}
+                  </p>
+                  {participant.username && (
                     <p className="text-xs text-zinc-400 truncate">
-                      {participant.username ? `@${participant.username}` : `Participante ${index + 1}`}
+                      @{participant.username}
                     </p>
-                  </div>
-
-                  {/* Badge de posición */}
-                  {index === 0 && (
-                    <div className="flex-shrink-0">
-                      <Trophy className="w-4 h-4 text-yellow-400" />
-                    </div>
                   )}
-                </button>
-              );
-            })}
+                </div>
+
+                {/* Index badge */}
+                <div className={cn(
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
+                  index === 0
+                    ? "bg-yellow-500/20 text-yellow-400"
+                    : "bg-zinc-700 text-zinc-400"
+                )}>
+                  {index + 1}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3">
+            <p className="text-zinc-500 text-xs text-center">
+              {participants.length} participante{participants.length !== 1 ? 's' : ''} en este challenge
+            </p>
           </div>
         </div>
       </div>
