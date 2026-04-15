@@ -369,6 +369,31 @@ async def create_security_notification(user_id: str, notification_type: str, tit
     )
     await db.security_notifications.insert_one(notification.dict())
 
+# ── App Notifications (like, comment, follow, vote, achievement) ──
+async def create_app_notification(
+    recipient_id: str,
+    sender_id: str,
+    notif_type: str,
+    message: str,
+    poll_id: str = None,
+    poll_title: str = None
+):
+    """Create an in-app notification. Types: like, comment, follow, vote, achievement"""
+    if recipient_id == sender_id:
+        return  # Don't notify yourself
+    notification = {
+        "id": str(uuid.uuid4()),
+        "recipient_id": recipient_id,
+        "sender_id": sender_id,
+        "type": notif_type,
+        "message": message,
+        "poll_id": poll_id,
+        "poll_title": poll_title,
+        "is_read": False,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    await db.app_notifications.insert_one(notification)
+
 async def create_session(user_id: str, device_id: str, ip_address: str, user_agent: str) -> str:
     """Create a new user session"""
     session_token = str(uuid.uuid4())
@@ -2023,6 +2048,64 @@ async def mark_notification_read(
     
     return {"message": "Notification marked as read"}
 
+# ── App Notifications Endpoints ──
+@api_router.get("/notifications")
+async def get_app_notifications(
+    limit: int = 50,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get user's app notifications (like, comment, follow, vote, achievement)"""
+    notifications = await db.app_notifications.find({
+        "recipient_id": current_user.id
+    }).sort("created_at", -1).to_list(limit)
+
+    # Enrich with sender info
+    enriched = []
+    for n in notifications:
+        sender = await db.users.find_one({"id": n.get("sender_id")})
+        n["sender_username"] = sender.get("username", "Usuario") if sender else "Sistema"
+        n["sender_avatar"] = sender.get("profile_image", "") if sender else ""
+        n.pop("_id", None)
+        enriched.append(n)
+
+    return enriched
+
+@api_router.get("/notifications/unread-count")
+async def get_unread_notifications_count(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get count of unread notifications"""
+    count = await db.app_notifications.count_documents({
+        "recipient_id": current_user.id,
+        "is_read": False
+    })
+    return {"count": count}
+
+@api_router.put("/notifications/mark-read")
+async def mark_all_notifications_read(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Mark all notifications as read"""
+    await db.app_notifications.update_many(
+        {"recipient_id": current_user.id, "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_app_notification_read(
+    notification_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Mark a single notification as read"""
+    result = await db.app_notifications.update_one(
+        {"id": notification_id, "recipient_id": current_user.id},
+        {"$set": {"is_read": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification marked as read"}
+
 @api_router.get("/auth/security/devices")
 async def get_user_devices(current_user: UserResponse = Depends(get_current_user)):
     """Get user's trusted devices"""
@@ -3629,6 +3712,14 @@ async def follow_user(user_id: str, current_user: UserResponse = Depends(get_cur
     if reverse_cache_key in follow_status_cache:
         del follow_status_cache[reverse_cache_key]
     
+    # ── Notification: follow ──
+    asyncio.ensure_future(create_app_notification(
+        recipient_id=user_id,
+        sender_id=current_user.id,
+        notif_type="follow",
+        message="comenzó a seguirte"
+    ))
+
     return {"message": "Successfully followed user", "follow_id": follow_data.id}
 
 @api_router.delete("/users/{user_id}/follow")
@@ -4902,6 +4993,23 @@ async def create_comment(
     # Insertar en la base de datos
     await db.comments.insert_one(comment.dict())
     
+    # ── Notification: comment ──
+    if is_challenge:
+        author_id = challenge.get("author_id") or challenge.get("created_by")
+        content_title = challenge.get("title", "")
+    else:
+        author_id = poll.get("author_id")
+        content_title = poll.get("title", "")
+    if author_id:
+        asyncio.ensure_future(create_app_notification(
+            recipient_id=author_id,
+            sender_id=current_user.id,
+            notif_type="comment",
+            message="comentó en tu votación",
+            poll_id=poll_id,
+            poll_title=content_title
+        ))
+
     # Incrementar el contador de comentarios
     if is_challenge:
         await db.challenges.update_one(
@@ -7924,6 +8032,18 @@ async def vote_on_poll(
             user_id=current_user.id
         )
         await db.votes.insert_one(vote.dict())
+        
+        # ── Notification: vote (only for new votes) ──
+        poll_author_id = poll.get("author_id")
+        if poll_author_id:
+            asyncio.ensure_future(create_app_notification(
+                recipient_id=poll_author_id,
+                sender_id=current_user.id,
+                notif_type="vote",
+                message="votó en tu votación",
+                poll_id=poll_id,
+                poll_title=poll.get("title", "")
+            ))
     
     # Increment vote count for new option
     result = await db.polls.update_one(
@@ -8090,6 +8210,18 @@ async def toggle_poll_like(
         except Exception as e:
             print(f"Error updating profiles after like addition: {e}")
         
+        # ── Notification: like ──
+        poll_author_id = poll.get("author_id")
+        if poll_author_id:
+            asyncio.ensure_future(create_app_notification(
+                recipient_id=poll_author_id,
+                sender_id=current_user.id,
+                notif_type="like",
+                message="le dio like a tu votación",
+                poll_id=poll_id,
+                poll_title=poll.get("title", "")
+            ))
+
         return {
             "liked": True,
             "likes": updated_poll["likes"]
