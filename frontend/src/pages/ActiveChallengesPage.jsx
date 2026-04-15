@@ -283,7 +283,7 @@ const ActiveChallengesPage = () => {
                             alt={participant.displayName}
                             className="object-cover"
                           />
-                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                          <AvatarFallback className="bg-gray-50 text-gray-400">
                             <User className="w-5 h-5" />
                           </AvatarFallback>
                         </Avatar>
@@ -296,7 +296,7 @@ const ActiveChallengesPage = () => {
                         alt={battle.participants[0]?.displayName}
                         className="object-cover"
                       />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                      <AvatarFallback className="bg-gray-50 text-gray-400">
                         <User className="w-5 h-5" />
                       </AvatarFallback>
                     </Avatar>
@@ -402,7 +402,7 @@ const ActiveChallengesPage = () => {
                   )}>
                     <Avatar className="w-8 h-8 border-2 border-black">
                       <AvatarImage src={participant.avatar} alt={participant.displayName} className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                      <AvatarFallback className="bg-gray-50 text-gray-400">
                         <User className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
