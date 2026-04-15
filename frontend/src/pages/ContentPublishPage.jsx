@@ -1083,19 +1083,19 @@ const ContentPublishPage = () => {
           />
           <div className="flex h-full items-end justify-center">
             <div 
-              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
               style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
             >
               {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900">
+              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
                 <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
               {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center">
+              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
                 <h2 className="font-semibold text-white text-base">Público objetivo</h2>
               </div>
               {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3">
+              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
                 {[
                   { value: 'General audience', label: 'General audience', subtitle: 'Para todo tipo de público' },
                   { value: 'Anime fans', label: 'Anime fans', subtitle: 'Amantes del anime y manga' },
@@ -1143,19 +1143,19 @@ const ContentPublishPage = () => {
           />
           <div className="flex h-full items-end justify-center">
             <div 
-              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
               style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
             >
               {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900">
+              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
                 <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
               {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center">
+              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
                 <h2 className="font-semibold text-white text-base">Autenticidad del contenido</h2>
               </div>
               {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3">
+              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
                 {[
                   { value: 'Original', label: 'Original', subtitle: 'Contenido creado por ti' },
                   { value: 'Fan-made', label: 'Fan-made', subtitle: 'Hecho por fans de un contenido' },
@@ -1202,19 +1202,19 @@ const ContentPublishPage = () => {
           />
           <div className="flex h-full items-end justify-center">
             <div 
-              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
               style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
             >
               {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900">
+              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
                 <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
               {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center">
+              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
                 <h2 className="font-semibold text-white text-base">Privacidad de votos</h2>
               </div>
               {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3">
+              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
                 {[
                   { value: 'Público', label: 'Público', subtitle: 'Todos pueden ver los votos' },
                   { value: 'Solo seguidores', label: 'Solo seguidores', subtitle: 'Solo tus seguidores pueden ver los votos' },
