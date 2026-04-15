@@ -1061,161 +1061,198 @@ const ContentPublishPage = () => {
         </div>
       </div>
 
-      {/* Audience Targeting Modal */}
+      {/* Bottom Sheet Modal Animations */}
+      <style>{`
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* Audience Targeting Modal - Bottom Sheet style */}
       {showAudienceModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[100000]">
           <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
             onClick={() => setShowAudienceModal(false)}
           />
-          <div className="relative bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-hidden">
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-5 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white text-lg font-semibold">Público objetivo</h3>
-                <button
-                  onClick={() => setShowAudienceModal(false)}
-                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+          <div className="flex h-full items-end justify-center">
+            <div 
+              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+            >
+              {/* Handle bar */}
+              <div className="w-full py-2 flex justify-center bg-zinc-900">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
-              <p className="text-gray-400 text-sm mt-1">Selecciona la audiencia que mejor se adapte a tu contenido</p>
-            </div>
-            <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
-              {['General audience', 'Anime fans', 'Gaming', 'Art & Edits', 'Movies & series', 'Photography'].map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    setAudienceTarget(option);
-                    setShowAudienceModal(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
-                    audienceTarget === option
-                      ? 'bg-[#3B82F6] text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{option}</span>
-                    {audienceTarget === option && (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Público objetivo</h2>
+              </div>
+              {/* Options */}
+              <div className="px-4 pb-8 flex flex-col gap-3">
+                {[
+                  { value: 'General audience', label: 'General audience', subtitle: 'Para todo tipo de público', bgClass: 'bg-blue-500/20', icon: (<svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
+                  { value: 'Anime fans', label: 'Anime fans', subtitle: 'Amantes del anime y manga', bgClass: 'bg-pink-500/20', icon: (<svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>) },
+                  { value: 'Gaming', label: 'Gaming', subtitle: 'Comunidad de videojuegos', bgClass: 'bg-green-500/20', icon: (<svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
+                  { value: 'Art & Edits', label: 'Art & Edits', subtitle: 'Arte digital y ediciones', bgClass: 'bg-purple-500/20', icon: (<svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>) },
+                  { value: 'Movies & series', label: 'Movies & series', subtitle: 'Películas y series de TV', bgClass: 'bg-amber-500/20', icon: (<svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>) },
+                  { value: 'Photography', label: 'Photography', subtitle: 'Fotografía y contenido visual', bgClass: 'bg-cyan-500/20', icon: (<svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>) },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setAudienceTarget(option.value);
+                      setShowAudienceModal(false);
+                    }}
+                    className={`flex items-center gap-3 p-4 rounded-2xl transition-colors ${
+                      audienceTarget === option.value 
+                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
+                        : 'bg-zinc-800 hover:bg-zinc-700'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-full ${option.bgClass} flex items-center justify-center flex-shrink-0`}>
+                      {option.icon}
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-semibold text-white text-sm">{option.label}</p>
+                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
+                    </div>
+                    {audienceTarget === option.value && (
+                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Source Authenticity Modal */}
+      {/* Source Authenticity Modal - Bottom Sheet style */}
       {showAuthenticityModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[100000]">
           <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
             onClick={() => setShowAuthenticityModal(false)}
           />
-          <div className="relative bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-hidden">
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-5 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white text-lg font-semibold">Autenticidad del contenido</h3>
-                <button
-                  onClick={() => setShowAuthenticityModal(false)}
-                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+          <div className="flex h-full items-end justify-center">
+            <div 
+              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+            >
+              {/* Handle bar */}
+              <div className="w-full py-2 flex justify-center bg-zinc-900">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
-              <p className="text-gray-400 text-sm mt-1">Indica la procedencia de tu contenido</p>
-            </div>
-            <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
-              {['Original', 'Fan-made', 'Official', 'AI-generated', 'Mixed'].map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    setSourceAuthenticity(option);
-                    setShowAuthenticityModal(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
-                    sourceAuthenticity === option
-                      ? 'bg-[#3B82F6] text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{option}</span>
-                    {sourceAuthenticity === option && (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Autenticidad del contenido</h2>
+              </div>
+              {/* Options */}
+              <div className="px-4 pb-8 flex flex-col gap-3">
+                {[
+                  { value: 'Original', label: 'Original', subtitle: 'Contenido creado por ti', bgClass: 'bg-green-500/20', icon: (<svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>) },
+                  { value: 'Fan-made', label: 'Fan-made', subtitle: 'Hecho por fans de un contenido', bgClass: 'bg-pink-500/20', icon: (<svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>) },
+                  { value: 'Official', label: 'Official', subtitle: 'Contenido oficial verificado', bgClass: 'bg-amber-500/20', icon: (<svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>) },
+                  { value: 'AI-generated', label: 'AI-generated', subtitle: 'Generado con inteligencia artificial', bgClass: 'bg-indigo-500/20', icon: (<svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>) },
+                  { value: 'Mixed', label: 'Mixed', subtitle: 'Combinación de fuentes', bgClass: 'bg-orange-500/20', icon: (<svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>) },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSourceAuthenticity(option.value);
+                      setShowAuthenticityModal(false);
+                    }}
+                    className={`flex items-center gap-3 p-4 rounded-2xl transition-colors ${
+                      sourceAuthenticity === option.value 
+                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
+                        : 'bg-zinc-800 hover:bg-zinc-700'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-full ${option.bgClass} flex items-center justify-center flex-shrink-0`}>
+                      {option.icon}
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-semibold text-white text-sm">{option.label}</p>
+                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
+                    </div>
+                    {sourceAuthenticity === option.value && (
+                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Voting Privacy Modal */}
+      {/* Voting Privacy Modal - Bottom Sheet style */}
       {showPrivacyModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[100000]">
           <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
             onClick={() => setShowPrivacyModal(false)}
           />
-          <div className="relative bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-hidden">
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-5 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white text-lg font-semibold">Privacidad de votos</h3>
-                <button
-                  onClick={() => setShowPrivacyModal(false)}
-                  className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                >
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+          <div className="flex h-full items-end justify-center">
+            <div 
+              className="relative bg-zinc-900 shadow-2xl overflow-hidden w-full rounded-t-3xl"
+              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+            >
+              {/* Handle bar */}
+              <div className="w-full py-2 flex justify-center bg-zinc-900">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
               </div>
-              <p className="text-gray-400 text-sm mt-1">Define quién puede ver los votos de esta publicación</p>
-            </div>
-            <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
-              {['Público', 'Solo seguidores', 'Privado'].map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    setVotingPrivacy(option);
-                    setShowPrivacyModal(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
-                    votingPrivacy === option
-                      ? 'bg-[#3B82F6] text-white'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{option}</span>
-                      <span className="text-xs text-gray-400 mt-0.5">
-                        {option === 'Público' && 'Todos pueden ver los votos'}
-                        {option === 'Solo seguidores' && 'Solo tus seguidores pueden ver los votos'}
-                        {option === 'Privado' && 'Solo tú puedes ver los votos'}
-                      </span>
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Privacidad de votos</h2>
+              </div>
+              {/* Options */}
+              <div className="px-4 pb-8 flex flex-col gap-3">
+                {[
+                  { value: 'Público', label: 'Público', subtitle: 'Todos pueden ver los votos', bgClass: 'bg-blue-500/20', icon: (<svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
+                  { value: 'Solo seguidores', label: 'Solo seguidores', subtitle: 'Solo tus seguidores pueden ver los votos', bgClass: 'bg-purple-500/20', icon: (<svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>) },
+                  { value: 'Privado', label: 'Privado', subtitle: 'Solo tú puedes ver los votos', bgClass: 'bg-red-500/20', icon: (<svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>) },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setVotingPrivacy(option.value);
+                      setShowPrivacyModal(false);
+                    }}
+                    className={`flex items-center gap-3 p-4 rounded-2xl transition-colors ${
+                      votingPrivacy === option.value 
+                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
+                        : 'bg-zinc-800 hover:bg-zinc-700'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-full ${option.bgClass} flex items-center justify-center flex-shrink-0`}>
+                      {option.icon}
                     </div>
-                    {votingPrivacy === option && (
-                      <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="text-left flex-1">
+                      <p className="font-semibold text-white text-sm">{option.label}</p>
+                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
+                    </div>
+                    {votingPrivacy === option.value && (
+                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
