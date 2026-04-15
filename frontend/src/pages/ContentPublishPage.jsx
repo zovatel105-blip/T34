@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Hash, AtSign, Search, X, Users, Trophy } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -9,6 +9,101 @@ import uploadService from '../services/uploadService';  // ⚡ Import upload ser
 import challengeService from '../services/challengeService';  // ⚡ Import challenge service
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import AppConfig from '../config/config';
+
+// Bottom Sheet Modal with swipe-to-close
+const BottomSheetModal = ({ title, onClose, options, selectedValue, onSelect }) => {
+  const sheetRef = useRef(null);
+  const dragRef = useRef({ startY: 0, currentY: 0, isDragging: false });
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => onClose(), 250);
+  }, [onClose]);
+
+  const handleTouchStart = useCallback((e) => {
+    dragRef.current.startY = e.touches[0].clientY;
+    dragRef.current.isDragging = true;
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!dragRef.current.isDragging) return;
+    const delta = e.touches[0].clientY - dragRef.current.startY;
+    if (delta > 0) {
+      setDragOffset(delta);
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    dragRef.current.isDragging = false;
+    if (dragOffset > 100) {
+      handleClose();
+    } else {
+      setDragOffset(0);
+    }
+  }, [dragOffset, handleClose]);
+
+  return (
+    <div className="fixed inset-0 z-[100000]">
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        style={{ 
+          animation: isClosing ? 'modalFadeOut 0.25s ease-in forwards' : 'modalFadeIn 0.2s ease-out forwards',
+          opacity: isClosing ? 0 : undefined
+        }}
+        onClick={handleClose}
+      />
+      <div className="flex h-full items-end justify-center">
+        <div 
+          ref={sheetRef}
+          className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl"
+          style={{ 
+            animation: !isClosing && dragOffset === 0 ? 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' : undefined,
+            transform: isClosing ? 'translateY(100%)' : `translateY(${dragOffset}px)`,
+            transition: !dragRef.current.isDragging ? 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)' : 'none',
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Handle bar */}
+          <div className="w-full py-3 flex justify-center">
+            <div className="w-10 h-1.5 bg-zinc-600 rounded-full" />
+          </div>
+          {/* Header */}
+          <div className="px-4 pb-3 flex items-center justify-center">
+            <h2 className="font-semibold text-white text-base">{title}</h2>
+          </div>
+          {/* Options */}
+          <div className="px-4 pb-10 flex flex-col gap-3">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => onSelect(option.value)}
+                className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
+                  selectedValue === option.value 
+                    ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
+                    : 'bg-zinc-800 hover:bg-zinc-700'
+                }`}
+              >
+                <div className="text-left">
+                  <p className="font-semibold text-white text-sm">{option.label}</p>
+                  <p className="text-xs text-zinc-400">{option.subtitle}</p>
+                </div>
+                {selectedValue === option.value && (
+                  <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // CSS para ocultar scrollbar
 const scrollableOptionsStyle = `
@@ -1025,244 +1120,56 @@ const ContentPublishPage = () => {
           from { opacity: 0; }
           to { opacity: 1; }
         }
+        @keyframes modalFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
         @keyframes modalSlideUp {
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
         }
       `}</style>
 
-      {/* Audience Targeting Modal - Bottom Sheet style */}
-      {showAudienceModal && (
-        <div className="fixed inset-0 z-[100000]">
-          <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
-            onClick={() => setShowAudienceModal(false)}
-          />
-          <div className="flex h-full items-end justify-center">
-            <div 
-              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
-              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
-            >
-              {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
-                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
-              </div>
-              {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
-                <h2 className="font-semibold text-white text-base">Público objetivo</h2>
-              </div>
-              {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
-                {[
-                  { value: 'General audience', label: 'General audience', subtitle: 'Para todo tipo de público' },
-                  { value: 'Anime fans', label: 'Anime fans', subtitle: 'Amantes del anime y manga' },
-                  { value: 'Gaming', label: 'Gaming', subtitle: 'Comunidad de videojuegos' },
-                  { value: 'Art & Edits', label: 'Art & Edits', subtitle: 'Arte digital y ediciones' },
-                  { value: 'Movies & series', label: 'Movies & series', subtitle: 'Películas y series de TV' },
-                  { value: 'Photography', label: 'Photography', subtitle: 'Fotografía y contenido visual' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setAudienceTarget(option.value);
-                      setShowAudienceModal(false);
-                    }}
-                    className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
-                      audienceTarget === option.value 
-                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-semibold text-white text-sm">{option.label}</p>
-                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
-                    </div>
-                    {audienceTarget === option.value && (
-                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Source Authenticity Modal - Bottom Sheet style */}
-      {showAuthenticityModal && (
-        <div className="fixed inset-0 z-[100000]">
-          <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
-            onClick={() => setShowAuthenticityModal(false)}
-          />
-          <div className="flex h-full items-end justify-center">
-            <div 
-              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
-              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
-            >
-              {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
-                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
-              </div>
-              {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
-                <h2 className="font-semibold text-white text-base">Autenticidad del contenido</h2>
-              </div>
-              {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
-                {[
-                  { value: 'Original', label: 'Original', subtitle: 'Contenido creado por ti' },
-                  { value: 'Fan-made', label: 'Fan-made', subtitle: 'Hecho por fans de un contenido' },
-                  { value: 'Official', label: 'Official', subtitle: 'Contenido oficial verificado' },
-                  { value: 'AI-generated', label: 'AI-generated', subtitle: 'Generado con inteligencia artificial' },
-                  { value: 'Mixed', label: 'Mixed', subtitle: 'Combinación de fuentes' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setSourceAuthenticity(option.value);
-                      setShowAuthenticityModal(false);
-                    }}
-                    className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
-                      sourceAuthenticity === option.value 
-                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-semibold text-white text-sm">{option.label}</p>
-                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
-                    </div>
-                    {sourceAuthenticity === option.value && (
-                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Voting Privacy Modal - Bottom Sheet style */}
-      {showPrivacyModal && (
-        <div className="fixed inset-0 z-[100000]">
-          <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
-            onClick={() => setShowPrivacyModal(false)}
-          />
-          <div className="flex h-full items-end justify-center">
-            <div 
-              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
-              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
-            >
-              {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
-                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
-              </div>
-              {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
-                <h2 className="font-semibold text-white text-base">Privacidad de votos</h2>
-              </div>
-              {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
-                {[
-                  { value: 'Público', label: 'Público', subtitle: 'Todos pueden ver los votos' },
-                  { value: 'Solo seguidores', label: 'Solo seguidores', subtitle: 'Solo tus seguidores pueden ver los votos' },
-                  { value: 'Privado', label: 'Privado', subtitle: 'Solo tú puedes ver los votos' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setVotingPrivacy(option.value);
-                      setShowPrivacyModal(false);
-                    }}
-                    className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
-                      votingPrivacy === option.value 
-                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-semibold text-white text-sm">{option.label}</p>
-                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
-                    </div>
-                    {votingPrivacy === option.value && (
-                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mature Content Modal - Bottom Sheet style */}
-      {showMatureModal && (
-        <div className="fixed inset-0 z-[100000]">
-          <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
-            onClick={() => setShowMatureModal(false)}
-          />
-          <div className="flex h-full items-end justify-center">
-            <div 
-              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
-              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
-            >
-              {/* Handle bar */}
-              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
-                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
-              </div>
-              {/* Header */}
-              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
-                <h2 className="font-semibold text-white text-base">Mature content (Sensitive media)</h2>
-              </div>
-              {/* Options */}
-              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
-                {[
-                  { value: 'none', label: 'None', subtitle: 'No sensitive content' },
-                  { value: 'mild', label: 'Mild', subtitle: 'Edits with blood, dark themes' },
-                  { value: 'strong', label: 'Strong', subtitle: 'Fictional violence, disturbing content' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setMatureContent(option.value);
-                      setShowMatureModal(false);
-                    }}
-                    className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
-                      matureContent === option.value 
-                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
-                        : 'bg-zinc-800 hover:bg-zinc-700'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-semibold text-white text-sm">{option.label}</p>
-                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
-                    </div>
-                    {matureContent === option.value && (
-                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Reusable Bottom Sheet Modals with swipe-to-close */}
+      {[
+        { show: showAudienceModal, setShow: setShowAudienceModal, title: 'Público objetivo', selectedValue: audienceTarget, setValue: setAudienceTarget, options: [
+          { value: 'General audience', label: 'General audience', subtitle: 'Para todo tipo de público' },
+          { value: 'Anime fans', label: 'Anime fans', subtitle: 'Amantes del anime y manga' },
+          { value: 'Gaming', label: 'Gaming', subtitle: 'Comunidad de videojuegos' },
+          { value: 'Art & Edits', label: 'Art & Edits', subtitle: 'Arte digital y ediciones' },
+          { value: 'Movies & series', label: 'Movies & series', subtitle: 'Películas y series de TV' },
+          { value: 'Photography', label: 'Photography', subtitle: 'Fotografía y contenido visual' },
+        ]},
+        { show: showAuthenticityModal, setShow: setShowAuthenticityModal, title: 'Autenticidad del contenido', selectedValue: sourceAuthenticity, setValue: setSourceAuthenticity, options: [
+          { value: 'Original', label: 'Original', subtitle: 'Contenido creado por ti' },
+          { value: 'Fan-made', label: 'Fan-made', subtitle: 'Hecho por fans de un contenido' },
+          { value: 'Official', label: 'Official', subtitle: 'Contenido oficial verificado' },
+          { value: 'AI-generated', label: 'AI-generated', subtitle: 'Generado con inteligencia artificial' },
+          { value: 'Mixed', label: 'Mixed', subtitle: 'Combinación de fuentes' },
+        ]},
+        { show: showPrivacyModal, setShow: setShowPrivacyModal, title: 'Privacidad de votos', selectedValue: votingPrivacy, setValue: setVotingPrivacy, options: [
+          { value: 'Público', label: 'Público', subtitle: 'Todos pueden ver los votos' },
+          { value: 'Solo seguidores', label: 'Solo seguidores', subtitle: 'Solo tus seguidores pueden ver los votos' },
+          { value: 'Privado', label: 'Privado', subtitle: 'Solo tú puedes ver los votos' },
+        ]},
+        { show: showMatureModal, setShow: setShowMatureModal, title: 'Mature content (Sensitive media)', selectedValue: matureContent, setValue: setMatureContent, options: [
+          { value: 'none', label: 'None', subtitle: 'No sensitive content' },
+          { value: 'mild', label: 'Mild', subtitle: 'Edits with blood, dark themes' },
+          { value: 'strong', label: 'Strong', subtitle: 'Fictional violence, disturbing content' },
+        ]},
+      ].map((modal) => modal.show && (
+        <BottomSheetModal
+          key={modal.title}
+          title={modal.title}
+          onClose={() => modal.setShow(false)}
+          options={modal.options}
+          selectedValue={modal.selectedValue}
+          onSelect={(value) => {
+            modal.setValue(value);
+            modal.setShow(false);
+          }}
+        />
+      ))}
 
     </div>
   );
