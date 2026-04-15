@@ -383,7 +383,7 @@ const ContentPublishPage = () => {
       </div>
 
       {/* Top Section - Preview + Description - Fixed */}
-      <div className="px-3 sm:px-4 flex-shrink-0">
+      <div className="px-3 sm:px-4 pb-2 flex-shrink-0 relative z-10 bg-zinc-900">
         <div className="flex gap-3 sm:gap-4">
           {/* Left Column - Preview */}
           <div className="w-24 sm:w-28 flex-shrink-0">
