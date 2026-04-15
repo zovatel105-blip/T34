@@ -717,7 +717,7 @@ const StoryEditPage = () => {
                   setShowAlignPicker(false);
                 }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-base transition-all ${
-                  showFontPicker ? 'bg-white text-black' : 'bg-white/20 backdrop-blur-sm text-white'
+                  showFontPicker ? 'bg-white text-black' : 'hover:bg-white/10 text-white'
                 }`}
               >
                 Aa
@@ -731,7 +731,7 @@ const StoryEditPage = () => {
                   setShowAlignPicker(false);
                 }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all overflow-hidden ${
-                  showColorPicker ? 'bg-white scale-110' : 'bg-white/20 backdrop-blur-sm'
+                  showColorPicker ? 'bg-white scale-110' : 'hover:bg-white/10'
                 }`}
               >
                 <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute">
@@ -779,7 +779,7 @@ const StoryEditPage = () => {
                   handleBgChange(nextBg);
                 }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all overflow-hidden ${
-                  currentTextBg === 'white' ? 'bg-white' : currentTextBg === 'black' ? 'bg-black border border-white/30' : 'bg-white/20 backdrop-blur-sm'
+                  currentTextBg === 'white' ? 'bg-white' : currentTextBg === 'black' ? 'bg-black border border-white/30' : 'hover:bg-white/10'
                 }`}
               >
                 <svg width="36" height="36" viewBox="0 0 36 36" className="absolute">
@@ -834,7 +834,7 @@ const StoryEditPage = () => {
                   handleAlignChange(nextAlign);
                 }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                  'bg-white/20 backdrop-blur-sm text-white'
+                  'hover:bg-white/10 text-white'
                 }`}
               >
                 {currentTextAlign === 'left' && <AlignLeft className="w-3.5 h-3.5" strokeWidth={1.5} />}
@@ -1303,8 +1303,8 @@ const StoryEditPage = () => {
                 {/* Texto "Aa" */}
                 <button
                   onClick={handleTextMode}
-                  className={`w-12 h-12 rounded-full backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all ${
-                    isTextMode ? 'bg-white' : 'bg-zinc-800/80'
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                    isTextMode ? 'bg-white' : 'hover:bg-white/10'
                   }`}
                   title="Añadir texto"
                 >
@@ -1314,37 +1314,37 @@ const StoryEditPage = () => {
                 {/* GIFs y Emojis */}
                 <button
                   onClick={() => setShowGifEmojiPicker(!showGifEmojiPicker)}
-                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-all"
                   title="GIFs y Emojis"
                 >
-                  <Smile className="w-5 h-5 text-white" />
+                  <Smile className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </button>
 
                 {/* Filtros */}
                 <button
                   onClick={() => setShowFilterPicker(!showFilterPicker)}
-                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-all"
                   title="Filtros"
                 >
-                  <Sparkles className="w-5 h-5 text-white" />
+                  <Sparkles className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </button>
 
                 {/* Música */}
                 <button
                   onClick={() => setShowMusicSelector(true)}
-                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-all"
                   title="Añadir música"
                 >
-                  <Music className="w-5 h-5 text-white" />
+                  <Music className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </button>
 
                 {/* Más opciones */}
                 <button 
                   onClick={() => setShowMoreOptions(!showMoreOptions)}
-                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full hover:bg-white/10 flex items-center justify-center transition-all"
                   title="Más opciones"
                 >
-                  <MoreHorizontal className="w-5 h-5 text-white" />
+                  <MoreHorizontal className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </button>
               </div>
             )}
