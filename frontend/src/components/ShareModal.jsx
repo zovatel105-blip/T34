@@ -171,7 +171,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-white rounded-t-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+            className="bg-zinc-900 rounded-t-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -180,39 +180,39 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           >
             {/* Handle */}
             <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
             </div>
 
             {/* Header */}
             <div className="px-5 py-3 flex items-center justify-center">
-              <h3 className="font-semibold text-gray-900 text-base">
+              <h3 className="font-semibold text-white text-base">
                 Compartir {type === 'poll' ? 'Votación' : 'Perfil'}
               </h3>
             </div>
 
             {/* Content Preview */}
-            <div className="mx-4 mb-4 p-4 rounded-2xl bg-gray-50">
-              <p className="font-medium text-sm text-gray-900 mb-1">{title}</p>
-              <p className="text-xs text-gray-400 mb-2">{description}</p>
-              <p className="text-xs text-gray-300 truncate">{url}</p>
+            <div className="mx-4 mb-4 p-4 rounded-2xl bg-zinc-800">
+              <p className="font-medium text-sm text-white mb-1">{title}</p>
+              <p className="text-xs text-zinc-400 mb-2">{description}</p>
+              <p className="text-xs text-zinc-500 truncate">{url}</p>
             </div>
 
             {/* Platform Options */}
-            <div className="px-4 pb-4 flex flex-col gap-2">
+            <div className="px-4 pb-4 flex flex-col gap-3">
               {platforms.map((platform) => {
                 const Icon = platform.icon;
                 return (
                   <button
                     key={platform.id}
                     onClick={() => handleShare(platform.id)}
-                    className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors text-left"
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left"
                   >
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
-                      <Icon className="w-5 h-5 text-gray-600" />
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900">{platform.name}</p>
-                      <p className="text-xs text-gray-400">{platform.description}</p>
+                      <p className="font-semibold text-white text-sm">{platform.name}</p>
+                      <p className="text-xs text-zinc-400">{platform.description}</p>
                     </div>
                   </button>
                 );
@@ -221,14 +221,14 @@ const ShareModal = ({ isOpen, onClose, content }) => {
               {/* Copy Link */}
               <button
                 onClick={() => handleShare('copy')}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors text-left"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
-                  <Link className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <Link className="w-5 h-5 text-purple-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-gray-900">Copiar enlace</p>
-                  <p className="text-xs text-gray-400">Copiar al portapapeles</p>
+                  <p className="font-semibold text-white text-sm">Copiar enlace</p>
+                  <p className="text-xs text-zinc-400">Copiar al portapapeles</p>
                 </div>
               </button>
             </div>
