@@ -1208,7 +1208,7 @@ const MessagesMainPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="bg-white">
+              <div className="px-4 py-2 flex flex-col gap-2">
                 {conversations.map((conversation, index) => {
                   const otherUser = conversation.participants?.find(p => p.id !== user?.id) || conversation.participants?.[0];
                   if (!otherUser) return null;
@@ -1220,11 +1220,11 @@ const MessagesMainPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleConversationClick(conversation)}
-                      className="w-full flex items-center px-6 py-4 border-b border-gray-100 transition-colors min-h-[80px] hover:bg-gray-50 active:bg-gray-100"
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
                       style={{ touchAction: 'manipulation' }}
                     >
                       {/* Avatar */}
-                      <div className="w-14 h-14 rounded-full mr-4 flex items-center justify-center text-lg flex-shrink-0 relative overflow-hidden bg-gray-100">
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 relative overflow-hidden bg-white shadow-sm">
                         {otherUser.avatar_url ? (
                           <>
                             <img 
@@ -1237,27 +1237,27 @@ const MessagesMainPage = () => {
                               }}
                             />
                             <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-                              <User className="w-8 h-8 text-gray-600" />
+                              <User className="w-6 h-6 text-gray-400" />
                             </div>
                           </>
                         ) : (
                           <div className="w-full h-full rounded-full flex items-center justify-center">
-                            <User className="w-8 h-8 text-gray-600" />
+                            <User className="w-6 h-6 text-gray-400" />
                           </div>
                         )}
                       </div>
                       
                       {/* Content */}
                       <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-lg font-semibold truncate text-gray-900">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-sm font-semibold truncate text-gray-900">
                             {otherUser.display_name || otherUser.username || 'Usuario'}
                           </span>
-                          <span className="text-sm text-gray-500 ml-2 flex-shrink-0">
+                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
                             {formatTimeForInbox(conversation.last_message_at || conversation.created_at)}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 truncate leading-relaxed">
+                        <p className="text-xs text-gray-500 truncate">
                           {conversation.isPending 
                             ? 'Solicitud de chat enviada' 
                             : conversation.last_message || 'Iniciar conversación'
@@ -1268,10 +1268,10 @@ const MessagesMainPage = () => {
                       {/* Unread Badge */}
                       {conversation.unread_count > 0 && (
                         <div 
-                          className="min-w-[24px] h-6 rounded-full flex items-center justify-center ml-3 flex-shrink-0"
+                          className="min-w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: '#FF4B8D' }}
                         >
-                          <span className="text-xs text-white font-medium px-2">
+                          <span className="text-[10px] text-white font-bold px-1.5">
                             {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
                           </span>
                         </div>
@@ -1279,12 +1279,8 @@ const MessagesMainPage = () => {
                       
                       {/* Pending Badge */}
                       {conversation.isPending && (
-                        <div 
-                          className="min-w-[24px] h-6 rounded-full flex items-center justify-center ml-3 flex-shrink-0 bg-gray-100 border border-gray-300"
-                        >
-                          <span className="text-xs text-gray-700 font-medium px-2">
-                            P
-                          </span>
+                        <div className="min-w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200">
+                          <span className="text-[10px] text-gray-500 font-bold px-1.5">P</span>
                         </div>
                       )}
                     </motion.button>
