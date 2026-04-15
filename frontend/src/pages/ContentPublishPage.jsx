@@ -50,6 +50,7 @@ const ContentPublishPage = () => {
   const [showAudienceModal, setShowAudienceModal] = useState(false);
   const [showAuthenticityModal, setShowAuthenticityModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showMatureModal, setShowMatureModal] = useState(false);
   const [audienceTarget, setAudienceTarget] = useState('General audience');
   const [sourceAuthenticity, setSourceAuthenticity] = useState('Original');
   const [votingPrivacy, setVotingPrivacy] = useState('Público');
@@ -893,57 +894,27 @@ const ContentPublishPage = () => {
               </div>
 
               {/* Mature content */}
-              <div className="rounded-2xl bg-zinc-800 p-4">
-                <div className="flex items-center gap-3 mb-3">
+              <button
+                onClick={() => setShowMatureModal(true)}
+                className="w-full rounded-2xl bg-zinc-800 p-4 flex items-center justify-between touch-manipulation active:bg-zinc-700 transition-colors"
+              >
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
                     <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-zinc-300 text-sm font-medium">Mature content (Sensitive media)</span>
-                    <span className="text-zinc-500 text-xs">Classify the sensitivity level</span>
+                    <span className="text-zinc-500 text-xs">
+                      {matureContent === 'none' ? 'None' : matureContent === 'mild' ? 'Mild' : 'Strong'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex gap-2 pl-0">
-                  <button
-                    onClick={() => setMatureContent('none')}
-                    className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-colors touch-manipulation ${
-                      matureContent === 'none'
-                        ? 'bg-[#3B82F6] text-white'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-700'
-                    }`}
-                  >
-                    None
-                  </button>
-                  <button
-                    onClick={() => setMatureContent('mild')}
-                    className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-colors touch-manipulation ${
-                      matureContent === 'mild'
-                        ? 'bg-yellow-500 text-white'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-700'
-                    }`}
-                  >
-                    Mild
-                  </button>
-                  <button
-                    onClick={() => setMatureContent('strong')}
-                    className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-colors touch-manipulation ${
-                      matureContent === 'strong'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-700'
-                    }`}
-                  >
-                    Strong
-                  </button>
-                </div>
-                {matureContent === 'mild' && (
-                  <p className="text-xs text-zinc-500 mt-2 pl-0">Edits with blood, dark themes</p>
-                )}
-                {matureContent === 'strong' && (
-                  <p className="text-xs text-zinc-500 mt-2 pl-0">Fictional violence, disturbing content</p>
-                )}
-              </div>
+                <svg className="w-5 h-5 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
 
               {/* Allow downloads */}
               <div className="rounded-2xl bg-zinc-800 p-4">
@@ -1224,6 +1195,63 @@ const ContentPublishPage = () => {
                       <p className="text-xs text-zinc-400">{option.subtitle}</p>
                     </div>
                     {votingPrivacy === option.value && (
+                      <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mature Content Modal - Bottom Sheet style */}
+      {showMatureModal && (
+        <div className="fixed inset-0 z-[100000]">
+          <div 
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            style={{ animation: 'modalFadeIn 0.2s ease-out forwards' }}
+            onClick={() => setShowMatureModal(false)}
+          />
+          <div className="flex h-full items-end justify-center">
+            <div 
+              className="relative bg-zinc-900 shadow-2xl w-full rounded-t-3xl max-h-[80vh] flex flex-col"
+              style={{ animation: 'modalSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}
+            >
+              {/* Handle bar */}
+              <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              </div>
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center flex-shrink-0">
+                <h2 className="font-semibold text-white text-base">Mature content (Sensitive media)</h2>
+              </div>
+              {/* Options */}
+              <div className="px-4 pb-8 flex flex-col gap-3 overflow-y-auto overscroll-contain">
+                {[
+                  { value: 'none', label: 'None', subtitle: 'No sensitive content' },
+                  { value: 'mild', label: 'Mild', subtitle: 'Edits with blood, dark themes' },
+                  { value: 'strong', label: 'Strong', subtitle: 'Fictional violence, disturbing content' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setMatureContent(option.value);
+                      setShowMatureModal(false);
+                    }}
+                    className={`flex items-center justify-between p-4 rounded-2xl transition-colors ${
+                      matureContent === option.value 
+                        ? 'bg-zinc-700 ring-1 ring-indigo-500/50' 
+                        : 'bg-zinc-800 hover:bg-zinc-700'
+                    }`}
+                  >
+                    <div className="text-left">
+                      <p className="font-semibold text-white text-sm">{option.label}</p>
+                      <p className="text-xs text-zinc-400">{option.subtitle}</p>
+                    </div>
+                    {matureContent === option.value && (
                       <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
