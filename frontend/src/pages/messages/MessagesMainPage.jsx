@@ -1291,12 +1291,12 @@ const MessagesMainPage = () => {
             <div className="flex items-center">
               <button
                 onClick={handleCloseChat}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors mr-2"
+                className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors mr-3"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
+                <ArrowLeft className="h-5 w-5 text-gray-700" strokeWidth={1.5} />
               </button>
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3 relative overflow-hidden">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center relative overflow-hidden shadow-sm">
                   {(() => {
                     const otherUser = selectedConversation?.participants?.find(p => p.id !== user?.id);
                     return otherUser?.avatar_url ? (
@@ -1311,15 +1311,15 @@ const MessagesMainPage = () => {
                           }}
                         />
                         <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-                          <User className="w-5 h-5 text-gray-600" />
+                          <User className="w-5 h-5 text-gray-400" />
                         </div>
                       </>
                     ) : (
-                      <User className="w-5 h-5 text-gray-600" />
+                      <User className="w-5 h-5 text-gray-400" />
                     );
                   })()}
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base font-semibold text-gray-900">
                   {(() => {
                     const otherUser = selectedConversation?.participants?.find(p => p.id !== user?.id);
                     return otherUser?.display_name || otherUser?.username || 'Usuario';
@@ -1333,7 +1333,7 @@ const MessagesMainPage = () => {
           <div className="flex-shrink-0 bg-white px-4 py-6">
             <div className="flex flex-col items-center text-center">
               {/* Logo principal del perfil */}
-              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-4 relative overflow-hidden">
+              <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4 relative overflow-hidden shadow-sm">
                 {(() => {
                   const otherUser = selectedConversation?.participants?.find(p => p.id !== user?.id);
                   return otherUser?.avatar_url ? (
@@ -1348,11 +1348,11 @@ const MessagesMainPage = () => {
                         }}
                       />
                       <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-                        <User className="w-10 h-10 text-gray-600" />
+                        <User className="w-10 h-10 text-gray-400" />
                       </div>
                     </>
                   ) : (
-                    <User className="w-10 h-10 text-gray-600" />
+                    <User className="w-10 h-10 text-gray-400" />
                   );
                 })()}
               </div>
@@ -1494,13 +1494,13 @@ const MessagesMainPage = () => {
                   <React.Fragment key={message.id}>
                     {showDateSeparator && (
                       <div className="flex justify-center my-6">
-                        <div className="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full text-xs font-medium select-none pointer-events-none">
+                        <div className="bg-gray-50 text-gray-400 px-4 py-1.5 rounded-2xl text-xs font-medium select-none pointer-events-none">
                           {formatDateSeparator(message.created_at || message.timestamp)}
                         </div>
                       </div>
                     )}
                     <div className="flex justify-center mb-4">
-                      <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm max-w-md text-center border border-blue-200">
+                      <div className="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-2xl text-sm max-w-md text-center">
                         {message.content}
                       </div>
                     </div>
@@ -1512,7 +1512,7 @@ const MessagesMainPage = () => {
                 <React.Fragment key={message.id}>
                   {showDateSeparator && (
                     <div className="flex justify-center my-6">
-                      <div className="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full text-xs font-medium select-none pointer-events-none">
+                      <div className="bg-gray-50 text-gray-400 px-4 py-1.5 rounded-2xl text-xs font-medium select-none pointer-events-none">
                         {formatDateSeparator(message.created_at || message.timestamp)}
                       </div>
                     </div>
@@ -1536,7 +1536,7 @@ const MessagesMainPage = () => {
                         ? message.status === 'chat_request' 
                           ? 'bg-yellow-100 text-gray-800 border-2 border-yellow-400 rounded-full' 
                           : 'text-white rounded-full'
-                        : 'bg-gray-200 text-gray-900 rounded-full'
+                        : 'bg-gray-100 text-gray-900 rounded-full'
                     }`}
                     style={isOwnMessage && message.status !== 'chat_request' ? { backgroundColor: '#B061FF' } : {}}
                     >
@@ -1559,69 +1559,60 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Message Input or Chat Request Actions */}
-          <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+          <div className="flex-shrink-0 bg-white px-4 py-3">
             {/* Si es una solicitud de chat pendiente y el usuario es el receptor */}
             {selectedConversation?.is_chat_request && selectedConversation?.is_request_receiver ? (
-              <div className="space-y-4">
-                {/* Título minimalista */}
+              <div className="space-y-3">
                 <div className="text-center px-2">
-                  <h3 className="text-base font-medium text-gray-700">
+                  <h3 className="text-sm font-medium text-gray-500">
                     Solicitud de mensaje de {selectedConversation?.other_user?.display_name || selectedConversation?.other_user?.username || 'este usuario'}
                   </h3>
                 </div>
-
-                {/* Botones minimalistas */}
-                <div className="grid grid-cols-2 gap-3 px-2 max-w-sm mx-auto">
+                <div className="flex gap-2 px-2">
                   <button
                     onClick={() => handleChatRequestAction('reject')}
-                    className="py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-center"
+                    className="flex-1 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-900">Rechazar</span>
+                    <span className="text-sm font-medium text-gray-700">Rechazar</span>
                   </button>
-
                   <button
                     onClick={() => handleChatRequestAction('accept')}
-                    className="py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-center"
+                    className="flex-1 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-900">Aceptar</span>
+                    <span className="text-sm font-medium text-gray-700">Aceptar</span>
                   </button>
                 </div>
               </div>
             ) : selectedConversation?.is_chat_request && selectedConversation?.is_request_sender ? (
-              /* Si es el sender de la solicitud, mostrar mensaje de espera */
-              <div className="space-y-3 p-4">
-                <div className="text-center space-y-2 max-w-md mx-auto">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Invitación enviada
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Podrás enviar más mensajes cuando se acepte tu invitación.
-                  </p>
+              <div className="space-y-3 py-2">
+                <div className="text-center space-y-1">
+                  <h2 className="text-sm font-semibold text-gray-900">Invitación enviada</h2>
+                  <p className="text-xs text-gray-400">Podrás enviar más mensajes cuando se acepte tu invitación.</p>
                 </div>
                 <button
                   onClick={() => handleCancelChatRequest()}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors text-sm"
+                  className="w-full py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium transition-colors text-sm"
                 >
                   Cancelar solicitud
                 </button>
               </div>
             ) : (
-              /* Input normal de mensajes */
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2.5 bg-gray-50 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-200 placeholder-gray-400"
                   onKeyPress={handleKeyPress}
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-40 transition-colors"
+                  style={{ backgroundColor: '#B061FF' }}
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -1631,17 +1622,23 @@ const MessagesMainPage = () => {
 
       {/* New Chat Modal */}
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-end justify-center z-50" onClick={closeNewChatModal}>
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-lg p-6 w-full max-w-md"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Nueva conversación</h3>
+            <div className="w-full pt-3 pb-1 flex justify-center">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-3">
+              <div className="w-9" />
+              <h3 className="font-semibold text-gray-900 text-base">Nueva conversación</h3>
               <button
                 onClick={closeNewChatModal}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
               >
                 <X className="h-5 w-5 text-gray-500" />
               </button>
@@ -1657,29 +1654,28 @@ const MessagesMainPage = () => {
                   setSearchQuery(e.target.value);
                   searchUsers(e.target.value);
                 }}
-                className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-4 py-3 bg-gray-50 rounded-2xl focus:outline-none focus:ring-1 focus:ring-gray-200 text-sm placeholder-gray-400"
                 autoFocus
               />
             </div>
 
             {/* Search Results */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto px-4 pb-6">
               {searchLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                  <span className="ml-2 text-gray-600">Buscando...</span>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+                  <span className="ml-2 text-sm text-gray-400">Buscando...</span>
                 </div>
               ) : searchResults.length > 0 ? (
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   {searchResults.map((result) => (
                     <motion.button
                       key={result.id}
-                      whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => startConversation(result)}
-                      className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-sm">
                         {result.avatar_url ? (
                           <>
                             <img 
@@ -1692,18 +1688,18 @@ const MessagesMainPage = () => {
                               }}
                             />
                             <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-                              <User className="w-6 h-6 text-gray-600" />
+                              <User className="w-5 h-5 text-gray-400" />
                             </div>
                           </>
                         ) : (
-                          <User className="w-6 h-6 text-gray-600" />
+                          <User className="w-5 h-5 text-gray-400" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
+                        <p className="font-medium text-sm text-gray-900 truncate">
                           {result.display_name || result.username}
                         </p>
-                        <p className="text-sm text-gray-600 truncate">
+                        <p className="text-xs text-gray-400 truncate">
                           @{result.username}
                         </p>
                       </div>
@@ -1712,11 +1708,11 @@ const MessagesMainPage = () => {
                 </div>
               ) : searchQuery.trim() ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No se encontraron usuarios</p>
+                  <p className="text-sm text-gray-400">No se encontraron usuarios</p>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">Escribe para buscar usuarios</p>
+                  <p className="text-sm text-gray-400">Escribe para buscar usuarios</p>
                 </div>
               )}
             </div>
