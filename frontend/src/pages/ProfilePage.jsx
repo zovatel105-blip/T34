@@ -1882,7 +1882,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white border-b border-gray-100/50 sticky top-0 z-40">
+          <header className="bg-white sticky top-0 z-40">
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
@@ -1906,7 +1906,7 @@ const ProfilePage = () => {
                   <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
                     <Avatar className="w-8 h-8 ring-1 ring-gray-200">
                       <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 text-xs">
+                      <AvatarFallback className="bg-gray-50 text-gray-400 text-xs">
                         <User className="w-4 h-4" />
                       </AvatarFallback>
                     </Avatar>
@@ -2054,7 +2054,7 @@ const ProfilePage = () => {
                           <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             <Avatar className="w-full h-full rounded-full">
                               <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                              <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                              <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                                 <User className="w-8 h-8 sm:w-10 sm:h-10" />
                               </AvatarFallback>
                             </Avatar>
@@ -2064,7 +2064,7 @@ const ProfilePage = () => {
                         <div className="w-full h-full bg-white rounded-full overflow-hidden">
                           <Avatar className="w-full h-full rounded-full">
                             <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                            <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                            <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                               <User className="w-8 h-8 sm:w-10 sm:h-10" />
                             </AvatarFallback>
                           </Avatar>
