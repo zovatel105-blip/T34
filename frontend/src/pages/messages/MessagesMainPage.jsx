@@ -1267,14 +1267,7 @@ const MessagesMainPage = () => {
 
                       {/* Unread Badge */}
                       {conversation.unread_count > 0 && (
-                        <div 
-                          className="min-w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: '#FF4B8D' }}
-                        >
-                          <span className="text-[10px] text-white font-bold px-1.5">
-                            {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
-                          </span>
-                        </div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0" />
                       )}
                       
                       {/* Pending Badge */}
