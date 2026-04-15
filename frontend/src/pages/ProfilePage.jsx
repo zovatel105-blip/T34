@@ -2144,7 +2144,7 @@ const ProfilePage = () => {
                   <Button 
                     variant="outline" 
                     className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
-                    onClick={() => setEditProfileModalOpen(true)}
+                    onClick={() => navigate('/edit-profile')}
                   >
                     Editar perfil
                   </Button>
