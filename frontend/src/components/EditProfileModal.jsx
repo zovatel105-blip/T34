@@ -213,10 +213,6 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
           className="relative bg-white shadow-2xl overflow-hidden w-full rounded-t-3xl flex flex-col"
           style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards', maxHeight: '92vh' }}
         >
-          {/* Handle */}
-          <div className="w-full pt-3 pb-1 flex justify-center">
-            <div className="w-10 h-1 bg-gray-300 rounded-full" />
-          </div>
       
       {/* Header móvil con botón volver */}
       <div 
