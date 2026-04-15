@@ -200,87 +200,67 @@ const ActiveChallengesPage = () => {
   };
 
   // ============================================================
-  // ESTADO VACÍO — estilo bottom-sheet "Tu historia"
+  // ESTADO VACÍO — página completa estilo "Tu historia"
   // ============================================================
   if (!loading && battles.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
-        {/* Fondo sutil */}
-        <div className="absolute inset-0 bg-black" />
+      <div className="fixed inset-0 bg-zinc-900 overflow-y-auto" ref={containerRef}>
+        <div className="min-h-full flex flex-col px-4 pt-14 pb-24">
 
-        {/* Contenido centrado verticalmente — bottom-sheet style */}
-        <div className="relative z-10 flex flex-col h-full justify-end">
-          <div className="bg-zinc-900 rounded-t-3xl shadow-2xl w-full"
-               style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}>
-            
-            {/* Handle superior */}
-            <div className="w-full py-3 flex justify-center">
-              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+          {/* Header con ícono */}
+          <div className="flex flex-col items-center mt-6 mb-8">
+            <div className="w-20 h-20 mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
+              <Trophy className="w-10 h-10 text-zinc-500" strokeWidth={1.5} />
             </div>
+            <h2 className="font-semibold text-white text-lg">Challenge</h2>
+            <p className="text-sm text-zinc-500 mt-1">No tienes challenges activos</p>
+          </div>
 
-            {/* Header con ícono */}
-            <div className="px-6 pt-2 pb-4 flex flex-col items-center">
-              <div className="w-16 h-16 mb-3 rounded-full bg-zinc-800 flex items-center justify-center">
-                <Trophy className="w-8 h-8 text-zinc-500" strokeWidth={1.5} />
+          {/* Opciones */}
+          <div className="flex flex-col gap-3">
+            {/* Crear Challenge */}
+            <button
+              onClick={() => navigate('/new')}
+              className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] transition-all"
+            >
+              <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <Plus className="w-5 h-5 text-yellow-400" strokeWidth={2} />
               </div>
-              <h2 className="font-semibold text-white text-base">Challenge</h2>
-              <p className="text-sm text-zinc-500 mt-1">No tienes challenges activos</p>
-            </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="font-semibold text-white text-sm leading-tight">Crear un Challenge</p>
+                <p className="text-xs text-zinc-400 mt-0.5 leading-tight">Crea un nuevo desafío para tus amigos</p>
+              </div>
+            </button>
 
-            {/* Opciones */}
-            <div className="px-4 pb-10 flex flex-col gap-3">
-              {/* Crear Challenge */}
-              <button
-                onClick={() => navigate('/new')}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] transition-all"
-              >
-                <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-5 h-5 text-yellow-400" strokeWidth={2} />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="font-semibold text-white text-sm leading-tight">Crear un Challenge</p>
-                  <p className="text-xs text-zinc-400 mt-0.5 leading-tight">Crea un nuevo desafío para tus amigos</p>
-                </div>
-              </button>
+            {/* Mis Challenges */}
+            <button
+              className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
+              disabled
+            >
+              <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-5 h-5 text-purple-400/60" strokeWidth={1.5} />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="font-semibold text-zinc-400 text-sm leading-tight">Mis Challenges</p>
+                <p className="text-xs text-zinc-600 mt-0.5 leading-tight">0 de 0 participantes listos</p>
+              </div>
+            </button>
 
-              {/* Mis Challenges */}
-              <button
-                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
-                disabled
-              >
-                <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-5 h-5 text-purple-400/60" strokeWidth={1.5} />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="font-semibold text-zinc-400 text-sm leading-tight">Mis Challenges</p>
-                  <p className="text-xs text-zinc-600 mt-0.5 leading-tight">0 de 0 participantes listos</p>
-                </div>
-              </button>
-
-              {/* Invitaciones */}
-              <button
-                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
-                disabled
-              >
-                <div className="w-10 h-10 rounded-full bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-                  <Users className="w-5 h-5 text-indigo-400/60" strokeWidth={1.5} />
-                </div>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="font-semibold text-zinc-400 text-sm leading-tight">Invitaciones</p>
-                  <p className="text-xs text-zinc-600 mt-0.5 leading-tight">No tienes invitaciones pendientes</p>
-                </div>
-              </button>
-            </div>
+            {/* Invitaciones */}
+            <button
+              className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
+              disabled
+            >
+              <div className="w-10 h-10 rounded-full bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-indigo-400/60" strokeWidth={1.5} />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="font-semibold text-zinc-400 text-sm leading-tight">Invitaciones</p>
+                <p className="text-xs text-zinc-600 mt-0.5 leading-tight">No tienes invitaciones pendientes</p>
+              </div>
+            </button>
           </div>
         </div>
-
-        {/* Animación */}
-        <style>{`
-          @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
-          }
-        `}</style>
       </div>
     );
   }
