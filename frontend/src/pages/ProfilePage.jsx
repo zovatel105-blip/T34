@@ -16,7 +16,7 @@ import TikTokScrollView from '../components/TikTokScrollView';
 import { useUpload } from '../contexts/UploadContext';
 import StoriesViewer from '../components/StoriesViewer';
 import { 
-  Settings, SlidersHorizontal, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
+  Settings, SlidersHorizontal, Cog, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
   Share2, UserPlus, UserCheck, ChevronDown, Plus, BarChart3, Mail, MessageCircle, Send, Hash, Bell, BellOff, UserCircle, Link, X, Trash2, TrendingUp, User 
 } from 'lucide-react';
 import pollService from '../services/pollService';
@@ -1947,7 +1947,7 @@ const ProfilePage = () => {
                     )}
                   </div>
                   <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                    <SlidersHorizontal className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+                    <Cog className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
                   </Button>
                 </div>
               ) : (
