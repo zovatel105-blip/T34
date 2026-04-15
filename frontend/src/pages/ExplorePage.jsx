@@ -100,6 +100,12 @@ const ExplorePage = () => {
         
         console.log('🔄 Challenges transformados:', transformedChallenges);
         setBattles(transformedChallenges);
+        
+        // Initialize savedPolls from backend data
+        const initialSaved = new Set(
+          transformedChallenges.filter(c => c.isSaved).map(c => c.id)
+        );
+        setSavedPolls(initialSaved);
       } catch (error) {
         console.error('Error loading completed challenges:', error);
         setBattles([]);
@@ -207,11 +213,13 @@ const ExplorePage = () => {
           text: battle.title || 'Mira este reto',
           url: `${window.location.origin}/explore`
         });
+        setSharedPolls(prev => new Set([...prev, pollId]));
       } catch (e) {
         // User cancelled
       }
     } else {
       sharePoll(battle);
+      setSharedPolls(prev => new Set([...prev, pollId]));
     }
   }, [battles, sharePoll]);
 
@@ -222,6 +230,8 @@ const ExplorePage = () => {
       setSelectedPollTitle(battle.title);
       setSelectedPollAuthor(battle.author?.username || '');
       setShowCommentsModal(true);
+      // Mark as commented when opening
+      setCommentedPolls(prev => new Set([...prev, pollId]));
     }
   }, [battles]);
 
