@@ -6382,17 +6382,24 @@ async def get_ultra_fast_feed(
                 "options": challenge_options,
                 "created_at": challenge.get("published_at") or challenge.get("created_at"),
                 "total_votes": sum(opt.get("votes", 0) for opt in challenge_options),
+                "totalVotes": sum(opt.get("votes", 0) for opt in challenge_options),
+                "likes": challenge.get("likes_count", 0),
                 "likes_count": challenge.get("likes_count", 0),
+                "comments": challenge.get("comments_count", 0),
                 "comments_count": challenge.get("comments_count", 0),
+                "shares": 0,
+                "saves_count": challenge.get("saves_count", 0),
                 "layout": challenge_layout,
                 "music": challenge_music_info,
                 "userVote": user_challenge_vote,
                 "userLiked": False,
+                "isSaved": False,
+                "userCommented": False,
                 "comments_enabled": True,
                 "show_vote_count": True,
                 "is_challenge": True,
                 "challenge_status": "published",
-                "participants": [],  # Will be populated below
+                "participants": [],
             }
             
             # Check if current user liked this challenge
