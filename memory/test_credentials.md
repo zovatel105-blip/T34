@@ -36,3 +36,9 @@
 - Password: test123
 - Username: testuser
 - Display Name: Test User
+
+## Test Challenge User
+- Email: testchallenge@test.com
+- Password: test123
+- Username: testchallenge
+- Display Name: Test Challenge
