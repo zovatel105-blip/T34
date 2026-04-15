@@ -594,14 +594,12 @@ const ContentPublishPage = () => {
               </div>
             </div>
 
-            {/* Action Items - Mobile Optimized - Full width on mobile */}
-            <div 
-              className="space-y-1 md:ml-0 md:mr-0" 
-              style={{ 
-                marginLeft: '-120px', 
-                marginRight: '-12px'
-              }}
-            >
+          </div>
+
+        </div>
+
+        {/* Action Items - Full width, outside two-column layout */}
+        <div className="space-y-1 mt-2">
 
               {/* Separator line */}
               <div className="border-t border-zinc-800 mt-8 mb-3"></div>
@@ -1007,10 +1005,6 @@ const ContentPublishPage = () => {
               </div>
 
             </div>
-
-          </div>
-
-        </div>
 
       </div>
 
