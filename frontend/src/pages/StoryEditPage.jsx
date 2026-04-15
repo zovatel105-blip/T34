@@ -702,7 +702,7 @@ const StoryEditPage = () => {
               onClick={() => navigate(-1)}
               className="absolute left-4 w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-white" strokeWidth={1.5} />
             </button>
           )}
 
@@ -837,9 +837,9 @@ const StoryEditPage = () => {
                   'bg-white/20 backdrop-blur-sm text-white'
                 }`}
               >
-                {currentTextAlign === 'left' && <AlignLeft className="w-3.5 h-3.5" />}
-                {currentTextAlign === 'center' && <AlignCenter className="w-3.5 h-3.5" />}
-                {currentTextAlign === 'right' && <AlignRight className="w-3.5 h-3.5" />}
+                {currentTextAlign === 'left' && <AlignLeft className="w-3.5 h-3.5" strokeWidth={1.5} />}
+                {currentTextAlign === 'center' && <AlignCenter className="w-3.5 h-3.5" strokeWidth={1.5} />}
+                {currentTextAlign === 'right' && <AlignRight className="w-3.5 h-3.5" strokeWidth={1.5} />}
               </button>
             </div>
           )}
@@ -1244,9 +1244,9 @@ const StoryEditPage = () => {
                           : 'bg-zinc-800/80 backdrop-blur-sm text-white'
                       }`}
                     >
-                      {align === 'left' && <AlignLeft className="w-5 h-5" />}
-                      {align === 'center' && <AlignCenter className="w-5 h-5" />}
-                      {align === 'right' && <AlignRight className="w-5 h-5" />}
+                      {align === 'left' && <AlignLeft className="w-5 h-5" strokeWidth={1.5} />}
+                      {align === 'center' && <AlignCenter className="w-5 h-5" strokeWidth={1.5} />}
+                      {align === 'right' && <AlignRight className="w-5 h-5" strokeWidth={1.5} />}
                     </button>
                   ))}
                 </div>
@@ -1265,7 +1265,7 @@ const StoryEditPage = () => {
                   className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all flex-shrink-0"
                   title="Volver"
                 >
-                  <ArrowLeft className="w-5 h-5 text-white" />
+                  <ArrowLeft className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </button>
                 
                 {/* Filtros individuales */}
@@ -1612,6 +1612,12 @@ const MoreOptionsModal = ({ onClose, onReset }) => {
           ))}
         </div>
       </div>
+    </div>
+  );
+};
+
+export default StoryEditPage;
+iv>
     </div>
   );
 };

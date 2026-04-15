@@ -1152,7 +1152,7 @@ const MessagesMainPage = () => {
                 onClick={() => navigate('/messages/followers')}
                 className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
-                <Users className="w-4 h-4 text-gray-500" />
+                <Users className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
@@ -1163,7 +1163,7 @@ const MessagesMainPage = () => {
                 onClick={() => navigate('/messages/activity')}
                 className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
-                <Bell className="w-4 h-4 text-gray-500" />
+                <Bell className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
@@ -1174,7 +1174,7 @@ const MessagesMainPage = () => {
                 onClick={() => navigate('/messages/requests')}
                 className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
-                <MessageCircle className="w-4 h-4 text-gray-500" />
+                <MessageCircle className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Solicitudes</span>
                 {getSegmentBadgeCount('messages') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />

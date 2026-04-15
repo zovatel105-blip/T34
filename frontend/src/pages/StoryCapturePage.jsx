@@ -366,7 +366,7 @@ const StoryCapturePage = () => {
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-6 h-6 text-white" strokeWidth={1.5} />
           </button>
 
           {/* Botones en vertical a la derecha */}
@@ -377,9 +377,9 @@ const StoryCapturePage = () => {
               className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
               {flashEnabled ? (
-                <Zap className="w-5 h-5 text-white" />
+                <Zap className="w-5 h-5 text-white" strokeWidth={1.5} />
               ) : (
-                <ZapOff className="w-5 h-5 text-white" />
+                <ZapOff className="w-5 h-5 text-white" strokeWidth={1.5} />
               )}
             </button>
             
@@ -388,7 +388,7 @@ const StoryCapturePage = () => {
               onClick={toggleCamera}
               className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
-              <RotateCw className="w-5 h-5 text-white" />
+              <RotateCw className="w-5 h-5 text-white" strokeWidth={1.5} />
             </button>
           </div>
         </div>
@@ -412,7 +412,7 @@ const StoryCapturePage = () => {
             <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
               <div className="text-center px-6">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Camera className="w-10 h-10 text-zinc-400" />
+                  <Camera className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
                 </div>
                 <h3 className="text-white text-lg font-semibold mb-2">
                   Cámara no disponible
@@ -454,7 +454,7 @@ const StoryCapturePage = () => {
             onClick={() => fileInputRef.current?.click()}
             className="absolute left-8 w-14 h-14 rounded-2xl bg-white/90 hover:bg-white transition-all shadow-2xl flex items-center justify-center"
           >
-            <ImageIcon className="w-7 h-7 text-black" />
+            <ImageIcon className="w-7 h-7 text-black" strokeWidth={1.5} />
           </button>
           
           {/* Botón circular de captura en el centro - Click = foto, Mantener = video */}
