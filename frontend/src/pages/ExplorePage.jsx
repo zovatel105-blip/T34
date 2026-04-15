@@ -4,8 +4,14 @@ import { Trophy, Swords, Crown, Medal, Eye, User, Play, CheckCircle } from 'luci
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import TikTokScrollView from '../components/TikTokScrollView';
+import CommentsModal from '../components/CommentsModal';
+import ShareModal from '../components/ShareModal';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import challengeService from '../services/challengeService';
+import pollService from '../services/pollService';
+import savedPollsService from '../services/savedPollsService';
+import { useToast } from '../hooks/use-toast';
+import { useShare } from '../hooks/useShare';
 import AppConfig from '../config/config';
 
 const ExplorePage = () => {
@@ -16,6 +22,12 @@ const ExplorePage = () => {
   const [savedPolls, setSavedPolls] = useState(new Set());
   const [commentedPolls, setCommentedPolls] = useState(new Set());
   const [sharedPolls, setSharedPolls] = useState(new Set());
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [selectedPollId, setSelectedPollId] = useState(null);
+  const [selectedPollTitle, setSelectedPollTitle] = useState('');
+  const [selectedPollAuthor, setSelectedPollAuthor] = useState('');
+  const { toast } = useToast();
+  const { shareModal, sharePoll, closeShareModal } = useShare();
 
   // Cargar challenges completados del backend
   useEffect(() => {
@@ -59,8 +71,13 @@ const ExplorePage = () => {
             totalVotes: challenge.total_votes || 0,
             total_votes: challenge.total_votes || 0,
             views: 0,
-            likes_count: 0,
-            comments_count: 0,
+            likes: challenge.likes_count || 0,
+            likes_count: challenge.likes_count || 0,
+            comments_count: challenge.comments_count || 0,
+            saves_count: challenge.saves_count || 0,
+            userLiked: challenge.user_liked || false,
+            isSaved: challenge.is_saved || false,
+            comments_enabled: true,
             created_at: challenge.published_at || challenge.created_at,
             userVote: challenge.user_vote_participant_id || null,
             author: {
@@ -143,30 +160,107 @@ const ExplorePage = () => {
     }
   }, [battles, token]);
 
-  const handleLike = useCallback((pollId) => {
-    console.log('Like completed battle:', pollId);
-  }, []);
+  const handleLike = useCallback(async (pollId) => {
+    if (!token) return;
+    try {
+      // Optimistic update
+      setBattles(prev => prev.map(b => {
+        if (b.id === pollId) {
+          const wasLiked = b.userLiked;
+          return {
+            ...b,
+            userLiked: !wasLiked,
+            likes: wasLiked ? Math.max(0, (b.likes || 0) - 1) : (b.likes || 0) + 1
+          };
+        }
+        return b;
+      }));
+      
+      const result = await pollService.toggleLike(pollId);
+      
+      setBattles(prev => prev.map(b => {
+        if (b.id === pollId) {
+          return { ...b, userLiked: result.liked, likes: result.likes };
+        }
+        return b;
+      }));
+    } catch (error) {
+      console.error('Error liking challenge:', error);
+      // Revert
+      setBattles(prev => prev.map(b => {
+        if (b.id === pollId) {
+          return { ...b, userLiked: !b.userLiked, likes: b.userLiked ? (b.likes || 0) + 1 : Math.max(0, (b.likes || 0) - 1) };
+        }
+        return b;
+      }));
+    }
+  }, [token]);
 
-  const handleShare = useCallback((pollId) => {
-    console.log('Share completed battle:', pollId);
-  }, []);
+  const handleShare = useCallback(async (pollId) => {
+    const battle = battles.find(b => b.id === pollId);
+    if (!battle) return;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: battle.title,
+          text: battle.title || 'Mira este reto',
+          url: `${window.location.origin}/explore`
+        });
+      } catch (e) {
+        // User cancelled
+      }
+    } else {
+      sharePoll(battle);
+    }
+  }, [battles, sharePoll]);
 
   const handleComment = useCallback((pollId) => {
-    console.log('Comment on completed battle:', pollId);
-  }, []);
+    const battle = battles.find(b => b.id === pollId);
+    if (battle) {
+      setSelectedPollId(pollId);
+      setSelectedPollTitle(battle.title);
+      setSelectedPollAuthor(battle.author?.username || '');
+      setShowCommentsModal(true);
+    }
+  }, [battles]);
 
-  const handleSave = useCallback((pollId) => {
-    console.log('Save completed battle:', pollId);
-    setSavedPolls(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(pollId)) {
-        newSet.delete(pollId);
-      } else {
-        newSet.add(pollId);
-      }
-      return newSet;
-    });
-  }, []);
+  const handleSave = useCallback(async (pollId) => {
+    if (!token) return;
+    try {
+      const battle = battles.find(b => b.id === pollId);
+      const wasSaved = battle?.isSaved || savedPolls.has(pollId);
+      
+      // Optimistic update
+      setBattles(prev => prev.map(b => {
+        if (b.id === pollId) {
+          return {
+            ...b,
+            saves_count: wasSaved ? Math.max(0, (b.saves_count || 0) - 1) : (b.saves_count || 0) + 1,
+            isSaved: !wasSaved
+          };
+        }
+        return b;
+      }));
+      
+      setSavedPolls(prev => {
+        const newSet = new Set(prev);
+        if (wasSaved) newSet.delete(pollId);
+        else newSet.add(pollId);
+        return newSet;
+      });
+      
+      const result = await savedPollsService.toggleSavePoll(pollId);
+      
+      toast({
+        title: result.saved ? "¡Guardado!" : "Eliminado de guardados",
+        description: result.saved ? "El reto ha sido guardado" : "El reto ha sido eliminado de guardados",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Error saving challenge:', error);
+    }
+  }, [battles, savedPolls, token, toast]);
 
   const handleCreatePoll = useCallback(() => {
     navigate('/new');
@@ -204,6 +298,22 @@ const ExplorePage = () => {
         setCommentedPolls={setCommentedPolls}
         sharedPolls={sharedPolls}
         setSharedPolls={setSharedPolls}
+      />
+
+      {/* Comments Modal */}
+      <CommentsModal
+        isOpen={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        pollId={selectedPollId}
+        pollTitle={selectedPollTitle}
+        pollAuthor={selectedPollAuthor}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={shareModal.isOpen}
+        onClose={closeShareModal}
+        content={shareModal.content}
       />
     </div>
   );

@@ -11119,6 +11119,23 @@ async def get_completed_challenges(
                         if challenge_music_info:
                             break
             
+            # Check user like/save status
+            challenge_feed_id = f"challenge_{challenge.get('id')}"
+            user_liked = False
+            is_saved = False
+            if current_user:
+                user_like = await db.poll_likes.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                user_liked = user_like is not None
+                
+                user_save = await db.saved_polls.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                is_saved = user_save is not None
+            
             response = {
                 "id": challenge.get("id"),
                 "title": challenge.get("title"),
@@ -11140,7 +11157,12 @@ async def get_completed_challenges(
                 "is_ready_to_publish": True,
                 "user_vote_participant_id": user_vote_participant,
                 "total_votes": challenge.get("total_votes", 0),
-                "music": challenge_music_info
+                "music": challenge_music_info,
+                "likes_count": challenge.get("likes_count", 0),
+                "comments_count": challenge.get("comments_count", 0),
+                "saves_count": challenge.get("saves_count", 0),
+                "user_liked": user_liked,
+                "is_saved": is_saved
             }
             responses.append(response)
         
