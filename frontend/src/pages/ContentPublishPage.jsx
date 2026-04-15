@@ -366,12 +366,12 @@ const ContentPublishPage = () => {
   // ========== FIN VISTA SIMPLIFICADA ==========
 
   return (
-    <div className="min-h-screen bg-zinc-900">
+    <div className="fixed inset-0 bg-zinc-900 flex flex-col">
       {/* Inject CSS for hiding scrollbar */}
       <style>{scrollableOptionsStyle}</style>
       
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900">
+      {/* Header - Fixed top */}
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 flex-shrink-0">
         <button
           onClick={handleBack}
           className="p-2 hover:bg-gray-900 rounded-full transition-colors"
@@ -382,15 +382,11 @@ const ContentPublishPage = () => {
         <div className="w-9"></div>
       </div>
 
-      {/* Main Content - Fixed Two Column Layout */}
-      <div className="px-3 sm:px-4 pt-4 pb-32">
-        
-        {/* Two Column Layout - Always the same */}
+      {/* Top Section - Preview + Description - Fixed */}
+      <div className="px-3 sm:px-4 flex-shrink-0">
         <div className="flex gap-3 sm:gap-4">
-          
           {/* Left Column - Preview */}
           <div className="w-24 sm:w-28 flex-shrink-0">
-            <div className="sticky top-4">
               <div className="bg-zinc-800 rounded-xl overflow-hidden shadow-lg w-full h-32 sm:h-36">
                 {contentData && contentData.options && contentData.options.length > 0 ? (
                   <div className="relative w-full h-full">
@@ -572,34 +568,38 @@ const ContentPublishPage = () => {
                   <AtSign className="w-4 h-4 text-gray-300" />
                 </button>
               </div>
-            </div>
           </div>
 
-          {/* Right Column - Description and Options */}
+          {/* Right Column - Description */}
           <div className="flex-1 min-w-0">
-            
-            {/* Description Input - Sticky on mobile */}
-            <div className="mb-5 sticky top-0 bg-zinc-900 z-10 pb-2 -mt-4 pt-4">
+            <div className="pb-2">
               <textarea
                 id="title-input"
                 placeholder="Add description..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full text-white text-sm sm:text-base placeholder-gray-500 bg-transparent border-none outline-none resize-none leading-relaxed"
-                rows={5}
+                rows={3}
                 maxLength={200}
               />
               <div className="flex justify-end mt-1">
                 <span className="text-xs text-gray-500">{title.length}/200</span>
               </div>
             </div>
-
           </div>
-
         </div>
+      </div>
 
-        {/* Action Items - Full width, outside two-column layout */}
-        <div className="space-y-1 mt-2">
+      {/* Action Items - Scrollable list */}
+      <div 
+        className="flex-1 overflow-y-auto px-3 sm:px-4 scrollable-options"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        <div className="space-y-1 pb-4">
 
               {/* Separator line */}
               <div className="border-t border-zinc-800 mt-8 mb-3"></div>
@@ -1005,11 +1005,10 @@ const ContentPublishPage = () => {
               </div>
 
             </div>
+        </div>
 
-      </div>
-
-      {/* Bottom Action Bar - Mobile Optimized */}
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-3 md:px-4 py-3 safe-area-inset-bottom">
+      {/* Bottom Action Bar */}
+      <div className="flex-shrink-0 bg-zinc-900 border-t border-zinc-800 px-3 md:px-4 py-3 safe-area-inset-bottom">
         {/* Progress Bar */}
         {isPublishing && uploadProgress > 0 && (
           <div className="mb-2.5 md:mb-3">
