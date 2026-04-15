@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { X, Lock, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Lock, Eye, EyeOff, Loader2, Shield, ArrowLeft } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -20,122 +18,61 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     new_password: '',
     confirm_password: ''
   });
-
   const [errors, setErrors] = useState({});
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Clear error when user starts typing
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.current_password) {
-      newErrors.current_password = 'La contraseña actual es requerida';
-    }
-
-    if (!formData.new_password) {
-      newErrors.new_password = 'La nueva contraseña es requerida';
-    } else if (formData.new_password.length < 6) {
-      newErrors.new_password = 'La nueva contraseña debe tener al menos 6 caracteres';
-    }
-
-    if (!formData.confirm_password) {
-      newErrors.confirm_password = 'Confirma la nueva contraseña';
-    } else if (formData.new_password !== formData.confirm_password) {
-      newErrors.confirm_password = 'Las contraseñas no coinciden';
-    }
-
-    if (formData.current_password === formData.new_password) {
-      newErrors.new_password = 'La nueva contraseña debe ser diferente a la actual';
-    }
-
+    if (!formData.current_password) newErrors.current_password = 'La contraseña actual es requerida';
+    if (!formData.new_password) newErrors.new_password = 'La nueva contraseña es requerida';
+    else if (formData.new_password.length < 6) newErrors.new_password = 'Mínimo 6 caracteres';
+    if (!formData.confirm_password) newErrors.confirm_password = 'Confirma la nueva contraseña';
+    else if (formData.new_password !== formData.confirm_password) newErrors.confirm_password = 'Las contraseñas no coinciden';
+    if (formData.current_password === formData.new_password && formData.new_password) newErrors.new_password = 'Debe ser diferente a la actual';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-
     try {
       const response = await apiRequest('/auth/password', {
         method: 'PUT',
-        body: JSON.stringify({
-          current_password: formData.current_password,
-          new_password: formData.new_password
-        })
+        body: JSON.stringify({ current_password: formData.current_password, new_password: formData.new_password })
       });
-
       if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "¡Contraseña actualizada!",
-          description: "Tu contraseña se ha cambiado exitosamente",
-          variant: "default"
-        });
-        
-        // Reset form
-        setFormData({
-          current_password: '',
-          new_password: '',
-          confirm_password: ''
-        });
-        setErrors({});
-        onClose();
+        toast({ title: "¡Contraseña actualizada!", description: "Tu contraseña se ha cambiado exitosamente", variant: "default" });
+        resetAndClose();
       } else {
         const errorData = await response.json();
         if (response.status === 400 && errorData.detail?.includes('incorrect')) {
           setErrors({ current_password: 'La contraseña actual es incorrecta' });
         } else {
-          toast({
-            title: "Error al cambiar contraseña",
-            description: errorData.detail || "No se pudo cambiar la contraseña",
-            variant: "destructive"
-          });
+          toast({ title: "Error", description: errorData.detail || "No se pudo cambiar la contraseña", variant: "destructive" });
         }
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar con el servidor",
-        variant: "destructive"
-      });
+      toast({ title: "Error de conexión", description: "No se pudo conectar con el servidor", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setFormData({
-      current_password: '',
-      new_password: '',
-      confirm_password: ''
-    });
+  const resetAndClose = () => {
+    setFormData({ current_password: '', new_password: '', confirm_password: '' });
     setErrors({});
     setShowPasswords({ current: false, new: false, confirm: false });
     onClose();
@@ -143,173 +80,106 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md mx-auto bg-white">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Cambiar Contraseña
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </CardHeader>
+  const PasswordField = ({ label, field, placeholder }) => (
+    <div className="p-4 rounded-2xl bg-gray-50">
+      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</label>
+      <div className="relative">
+        <input
+          type={showPasswords[field] ? 'text' : 'password'}
+          value={formData[field]}
+          onChange={(e) => handleChange(field, e.target.value)}
+          placeholder={placeholder}
+          className={`w-full text-sm font-medium text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none pr-8 ${errors[field] ? 'text-red-600' : ''}`}
+        />
+        <button
+          type="button"
+          onClick={() => togglePasswordVisibility(field)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+        >
+          {showPasswords[field] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+      {errors[field] && <p className="text-xs text-red-500 mt-2">{errors[field]}</p>}
+    </div>
+  );
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Current Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Contraseña Actual
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPasswords.current ? 'text' : 'password'}
-                  value={formData.current_password}
-                  onChange={(e) => handleChange('current_password', e.target.value)}
-                  placeholder="Ingresa tu contraseña actual"
-                  className={`w-full pr-10 ${errors.current_password ? 'border-red-500' : ''}`}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                  onClick={() => togglePasswordVisibility('current')}
-                >
-                  {showPasswords.current ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-              {errors.current_password && (
-                <p className="text-xs text-red-600">{errors.current_password}</p>
-              )}
-            </div>
+  return createPortal(
+    <div className="fixed inset-0 z-[100000]">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+        onClick={resetAndClose}
+      />
 
-            {/* New Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Nueva Contraseña
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPasswords.new ? 'text' : 'password'}
-                  value={formData.new_password}
-                  onChange={(e) => handleChange('new_password', e.target.value)}
-                  placeholder="Ingresa una nueva contraseña"
-                  className={`w-full pr-10 ${errors.new_password ? 'border-red-500' : ''}`}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                  onClick={() => togglePasswordVisibility('new')}
-                >
-                  {showPasswords.new ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-              {errors.new_password && (
-                <p className="text-xs text-red-600">{errors.new_password}</p>
-              )}
-              <p className="text-xs text-gray-500">
-                Mínimo 6 caracteres
-              </p>
-            </div>
+      {/* Bottom sheet */}
+      <div className="flex h-full items-end justify-center">
+        <div
+          className="relative bg-white shadow-2xl overflow-hidden w-full rounded-t-3xl flex flex-col"
+          style={{
+            animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards',
+            maxHeight: '85vh'
+          }}
+        >
+          {/* Handle */}
+          <div className="w-full pt-3 pb-1 flex justify-center">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
 
-            {/* Confirm New Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Confirmar Nueva Contraseña
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPasswords.confirm ? 'text' : 'password'}
-                  value={formData.confirm_password}
-                  onChange={(e) => handleChange('confirm_password', e.target.value)}
-                  placeholder="Confirma tu nueva contraseña"
-                  className={`w-full pr-10 ${errors.confirm_password ? 'border-red-500' : ''}`}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                  onClick={() => togglePasswordVisibility('confirm')}
-                >
-                  {showPasswords.confirm ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-              {errors.confirm_password && (
-                <p className="text-xs text-red-600">{errors.confirm_password}</p>
-              )}
-            </div>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-3">
+            <button type="button" onClick={resetAndClose} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
+            </button>
+            <h2 className="font-semibold text-gray-900 text-base">Cambiar contraseña</h2>
+            <div className="w-9" />
+          </div>
 
-            {/* Security Notice */}
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <div className="flex items-start gap-2">
-                <Lock className="w-4 h-4 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-xs font-medium text-blue-800">
-                    Consejo de Seguridad
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Usa una contraseña única con combinación de letras, números y símbolos.
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
+            <form id="change-password-form" onSubmit={handleSubmit} className="flex flex-col gap-3 pt-2">
+              <PasswordField label="Contraseña actual" field="current_password" placeholder="Ingresa tu contraseña actual" />
+              <PasswordField label="Nueva contraseña" field="new_password" placeholder="Ingresa una nueva contraseña" />
+              <PasswordField label="Confirmar contraseña" field="confirm_password" placeholder="Confirma tu nueva contraseña" />
+
+              {/* Security tip */}
+              <div className="p-3 bg-blue-50 rounded-2xl mt-1">
+                <div className="flex items-start gap-2">
+                  <Lock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-blue-600">
+                    Usa una contraseña única con letras, números y símbolos. Mínimo 6 caracteres.
                   </p>
                 </div>
               </div>
-            </div>
+            </form>
+          </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={loading}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Cambiando...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Cambiar
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          {/* Bottom action buttons */}
+          <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+            <button
+              type="button"
+              onClick={resetAndClose}
+              className="flex-1 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="change-password-form"
+              disabled={loading}
+              className="flex-1 h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-colors disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin mr-2" />Cambiando...</span>
+              ) : (
+                'Cambiar'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 
