@@ -154,42 +154,42 @@ const PostDetailModal = ({
             <div ref={scrollRef} className="overflow-y-auto overscroll-contain">
               {/* Post Header */}
               <div className="px-4 pt-2 pb-4">
-                {/* Author */}
-                <div className="flex items-center gap-3 mb-4">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={authorAvatar} className="object-cover" />
-                    <AvatarFallback className="bg-white text-gray-600">
-                      <User className="w-4 h-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <span className="text-white font-bold text-base flex-1">
-                    {authorUsername}
-                  </span>
-                  
-                  {!isFollowing && onFollow && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onFollow();
-                      }}
-                      className="px-5 py-1.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-colors"
-                      style={{ backgroundColor: '#B061FF' }}
-                    >
-                      Seguir
-                    </button>
-                  )}
+                {/* Author Card */}
+                <div className="p-3 rounded-2xl bg-zinc-800 mb-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={authorAvatar} className="object-cover" />
+                      <AvatarFallback className="bg-gray-50 text-gray-400">
+                        <User className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold text-sm">
+                        {authorUsername}
+                      </p>
+                      <p className="text-xs text-zinc-400">{formatDate()}</p>
+                    </div>
+                    
+                    {!isFollowing && onFollow && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFollow();
+                        }}
+                        className="px-5 py-1.5 rounded-full text-white text-sm font-semibold hover:opacity-90 transition-colors"
+                        style={{ backgroundColor: '#B061FF' }}
+                      >
+                        Seguir
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Post Title */}
+                  <p className="text-white text-sm leading-relaxed">
+                    {poll.title}
+                  </p>
                 </div>
-
-                {/* Post Title */}
-                <p className="text-white text-base leading-relaxed mb-3">
-                  {poll.title}
-                </p>
-
-                {/* Date */}
-                <p className="text-zinc-500 text-sm">
-                  {formatDate()}
-                </p>
               </div>
 
               {/* Separator */}
