@@ -266,6 +266,8 @@ class PollService {
       saves_count: backendPoll.saves_count || 0,  // ✅ CRITICAL FIX: Include saves_count
       userVote: backendPoll.user_vote || backendPoll.userVote || null,
       userLiked: backendPoll.user_liked || backendPoll.userLiked || false,
+      isSaved: backendPoll.isSaved || backendPoll.is_saved || false,
+      userCommented: backendPoll.userCommented || backendPoll.user_commented || false,
       category: backendPoll.category,
       tags: backendPoll.tags || [],
       is_featured: backendPoll.is_featured,
