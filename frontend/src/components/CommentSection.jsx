@@ -334,26 +334,22 @@ const CommentSection = ({
     >
       {/* Header minimalista - solo mostrar cuando showHeader = true */}
       {showHeader && (
-        <div className={`comment-header p-6 border-b flex-shrink-0 ${darkMode ? 'bg-transparent border-zinc-800' : 'bg-white border-gray-100'}`}>
+        <div className={`comment-header px-5 py-4 flex-shrink-0 ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <h3 className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>Comentarios</h3>
-                {comments.length > 0 && (
-                  <p className={`text-sm ${darkMode ? 'text-zinc-400' : 'text-gray-500'}`}>{comments.length} comentario{comments.length !== 1 ? 's' : ''}</p>
-                )}
-              </div>
+            <div>
+              <h3 className={`font-semibold text-base ${darkMode ? 'text-white' : 'text-gray-900'}`}>Comentarios</h3>
+              {comments.length > 0 && (
+                <p className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-gray-400'}`}>{comments.length} comentario{comments.length !== 1 ? 's' : ''}</p>
+              )}
             </div>
             
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => loadComments(0, false)}
-                disabled={loading}
-                className={`h-10 w-10 rounded-lg transition-colors flex items-center justify-center ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}
-              >
-                <RefreshCw className={cn("w-5 h-5", darkMode ? "text-zinc-400" : "text-gray-500", loading && "animate-spin")} />
-              </button>
-            </div>
+            <button
+              onClick={() => loadComments(0, false)}
+              disabled={loading}
+              className={`h-9 w-9 rounded-full transition-colors flex items-center justify-center ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+            >
+              <RefreshCw className={cn("w-4 h-4", darkMode ? "text-zinc-400" : "text-gray-400", loading && "animate-spin")} />
+            </button>
           </div>
         </div>
       )}
@@ -362,20 +358,18 @@ const CommentSection = ({
       <div className={`comment-list overflow-y-auto flex-1 ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
         {error && (
           <motion.div 
-            className={`error-message p-4 m-4 border rounded-xl ${darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'}`}
+            className={`p-4 mx-4 mt-3 rounded-2xl ${darkMode ? 'bg-red-900/20' : 'bg-red-50'}`}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
           >
-            <div className={`flex items-center gap-3 ${darkMode ? 'text-red-400' : 'text-red-700'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? 'bg-red-900/40' : 'bg-red-100'}`}>
+            <div className={`flex items-center gap-3 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? 'bg-red-900/40' : 'bg-white shadow-sm'}`}>
                 <AlertCircle className="w-4 h-4" />
               </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium">{error}</span>
-              </div>
+              <span className="text-sm flex-1">{error}</span>
               <button
                 onClick={() => loadComments(0, false)}
-                className={`h-8 px-3 rounded-lg text-sm font-medium transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : 'text-red-700 hover:text-red-800 hover:bg-red-100'}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/30' : 'bg-white shadow-sm text-red-600 hover:bg-red-50'}`}
               >
                 Reintentar
               </button>
@@ -384,17 +378,20 @@ const CommentSection = ({
         )}
         
         {loading && comments.length === 0 ? (
-          <div className="loading-state p-12 flex items-center justify-center">
-            <div className={`flex flex-col items-center gap-4 ${darkMode ? 'text-zinc-400' : 'text-gray-500'}`}>
-              <Loader2 className={`w-8 h-8 animate-spin ${darkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
-              <span className="font-medium">Cargando comentarios...</span>
+          <div className="p-12 flex items-center justify-center">
+            <div className={`flex flex-col items-center gap-3 ${darkMode ? 'text-zinc-400' : 'text-gray-400'}`}>
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="text-sm font-medium">Cargando comentarios...</span>
             </div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="empty-state flex flex-col items-center justify-center p-6 py-8">
-            <div className="text-center">
-              <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Todavía no hay comentarios</h3>
-              <p className={`text-base ${darkMode ? 'text-zinc-400' : 'text-gray-500'}`}>
+          <div className="flex flex-col items-center justify-center p-6 py-12">
+            <div className="text-center space-y-2">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${darkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
+                <MessageCircle className={`w-6 h-6 ${darkMode ? 'text-zinc-500' : 'text-gray-400'}`} strokeWidth={1.5} />
+              </div>
+              <h3 className={`text-base font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Todavía no hay comentarios</h3>
+              <p className={`text-sm ${darkMode ? 'text-zinc-400' : 'text-gray-400'}`}>
                 Sé el primero en comentar.
               </p>
             </div>
@@ -417,34 +414,36 @@ const CommentSection = ({
               ))}
             </AnimatePresence>
             
-            {/* Botón cargar más - Diseño moderno */}
+            {/* Botón cargar más */}
             {hasMore && (
-              <div className="load-more p-6 text-center border-t border-gray-100">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <div className="py-4 text-center">
+                <button
                   onClick={loadMoreComments}
                   disabled={loading}
-                  className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-8 py-3 rounded-2xl font-medium transition-all duration-200"
+                  className={`px-6 py-2.5 rounded-2xl text-sm font-medium transition-colors ${
+                    darkMode 
+                      ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' 
+                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  }`}
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Cargando...
-                    </>
+                    </span>
                   ) : (
                     'Mostrar más comentarios'
                   )}
-                </Button>
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
       
-      {/* Área de comentario flotante en la parte inferior */}
+      {/* Área de comentario */}
       {user && (
-        <div className={`border-t flex-shrink-0 ${darkMode ? 'bg-transparent border-zinc-800' : 'bg-white border-gray-100'}`}>
+        <div className={`flex-shrink-0 ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
           {/* Indicador de respuesta */}
           <AnimatePresence>
             {replyingTo && (
@@ -452,9 +451,9 @@ const CommentSection = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`flex items-center justify-between px-4 py-2 border-b ${darkMode ? 'border-zinc-800' : 'border-gray-100'}`}
+                className={`flex items-center justify-between px-5 py-2 ${darkMode ? '' : ''}`}
               >
-                <span className={`text-sm ${darkMode ? 'text-white/60' : 'text-gray-500'}`}>
+                <span className={`text-xs ${darkMode ? 'text-white/60' : 'text-gray-400'}`}>
                   Respondiendo a <span className={`font-semibold ${darkMode ? 'text-white/90' : 'text-gray-900'}`}>{replyingTo.user.username}</span>
                 </span>
                 <button onClick={cancelReply} className={`p-1 ${darkMode ? 'text-white/40 hover:text-white/70' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -464,7 +463,7 @@ const CommentSection = ({
             )}
           </AnimatePresence>
 
-          {/* Input con avatar y botón enviar */}
+          {/* Input */}
           <div className="flex items-center gap-3 px-4 pb-4 pt-2">
             <Avatar className="w-8 h-8 flex-shrink-0">
               <AvatarImage src={user.avatar_url} alt={user.username} />
@@ -497,10 +496,10 @@ const CommentSection = ({
                 ref={inputRef}
                 type="text"
                 placeholder={replyingTo ? `@${replyingTo.user.username}` : "Añade un comentario..."}
-                className={`flex-1 px-4 py-2.5 rounded-full text-sm focus:outline-none transition-all ${
+                className={`flex-1 px-4 py-2.5 rounded-2xl text-sm focus:outline-none transition-all ${
                   darkMode 
                     ? 'bg-zinc-900 border border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500' 
-                    : 'border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    : 'bg-gray-50 placeholder-gray-400 focus:ring-1 focus:ring-gray-200'
                 }`}
                 maxLength={500}
                 disabled={submitting}
@@ -510,17 +509,17 @@ const CommentSection = ({
         </div>
       )}
       
-      {/* Aviso para usuarios no autenticados - Diseño moderno */}
+      {/* Aviso para usuarios no autenticados */}
       {!user && (
-        <div className="auth-notice p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-t border-amber-200/60 flex-shrink-0">
-          <div className="text-center">
-            <p className="text-amber-800 font-medium mb-2 text-sm sm:text-base">
+        <div className={`p-4 flex-shrink-0 ${darkMode ? '' : ''}`}>
+          <div className="p-4 rounded-2xl bg-gray-50 text-center space-y-1">
+            <p className="text-sm font-medium text-gray-900">
               ¡Únete a la conversación!
             </p>
-            <p className="text-xs sm:text-sm text-amber-700">
-              <a href="/login" className="font-semibold hover:underline text-indigo-600 hover:text-indigo-700 transition-colors">
+            <p className="text-xs text-gray-400">
+              <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
                 Inicia sesión
-              </a> para comentar y conectar con la comunidad
+              </a> para comentar
             </p>
           </div>
         </div>
