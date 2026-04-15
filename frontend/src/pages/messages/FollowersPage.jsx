@@ -93,15 +93,21 @@ const FollowersPage = () => {
   useEffect(() => { loadFollowers(); }, [loadFollowers]);
 
   const Avatar = ({ avatarUrl, name }) => (
-    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+    <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
       {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
-          onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
-      ) : null}
-      <div className="w-full h-full flex items-center justify-center text-gray-500"
-        style={{ display: avatarUrl ? 'none' : 'flex' }}>
-        <User className="w-5 h-5" />
-      </div>
+        <>
+          <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
+          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400"
+            style={{ display: 'none' }}>
+            <User className="w-6 h-6" />
+          </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+          <User className="w-6 h-6" />
+        </div>
+      )}
     </div>
   );
 
@@ -135,34 +141,31 @@ const FollowersPage = () => {
             </p>
           </div>
         ) : (
-          <div className="pt-3 pb-20">
-
+          <div className="px-4 py-2 flex flex-col gap-2">
             {followers.map(follower => {
               const username = follower.username || follower.display_name || 'Usuario';
               const time = formatTime(follower.followed_at);
               const isFollowing = followingStatus[follower.id];
 
               return (
-                <div key={follower.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-                  <div onClick={() => navigate(`/profile/${follower.id}`)} className="cursor-pointer">
+                <div key={follower.id} className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-2xl transition-colors">
+                  <div onClick={() => navigate(`/profile/${follower.id}`)} className="cursor-pointer flex-shrink-0">
                     <Avatar avatarUrl={follower.avatar_url} name={username} />
                   </div>
-                  <div className="flex-1 min-w-0 ml-3">
-                    <p className="text-sm">
-                      <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${follower.id}`)}>
-                        {username}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${follower.id}`)}>
+                      {username}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      empezó a seguirte. <span className="text-gray-400">{time}</span>
+                    <p className="text-xs text-gray-500">
+                      empezó a seguirte · <span className="text-gray-400">{time}</span>
                     </p>
                   </div>
                   <button
                     onClick={() => handleFollowToggle(follower.id)}
-                    className={`ml-3 px-5 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-colors ${
+                    className={`px-5 py-1.5 rounded-full text-sm font-semibold flex-shrink-0 transition-colors ${
                       isFollowing
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'text-white'
+                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'text-white hover:opacity-90'
                     }`}
                     style={!isFollowing ? { backgroundColor: '#B061FF' } : {}}
                   >

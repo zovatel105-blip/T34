@@ -79,15 +79,21 @@ const RequestsPage = () => {
   };
 
   const Avatar = ({ avatarUrl, name }) => (
-    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+    <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
       {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
-          onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
-      ) : null}
-      <div className="w-full h-full flex items-center justify-center text-gray-500"
-        style={{ display: avatarUrl ? 'none' : 'flex' }}>
-        <User className="w-5 h-5" />
-      </div>
+        <>
+          <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
+          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400"
+            style={{ display: 'none' }}>
+            <User className="w-6 h-6" />
+          </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+          <User className="w-6 h-6" />
+        </div>
+      )}
     </div>
   );
 
@@ -121,8 +127,7 @@ const RequestsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="pt-3 pb-20">
-
+          <div className="px-4 py-2 flex flex-col gap-2">
             {requests.map(request => {
               const username = request.sender?.display_name || request.sender?.username || 'Usuario';
               const time = formatTime(request.created_at);
@@ -131,18 +136,16 @@ const RequestsPage = () => {
               return (
                 <div key={request.id}
                   onClick={() => handleRequestClick(request)}
-                  className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2 cursor-pointer active:bg-gray-100 transition-colors">
+                  className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-2xl cursor-pointer transition-colors">
                   <Avatar avatarUrl={request.sender?.avatar_url} name={username} />
-                  <div className="flex-1 min-w-0 ml-3">
-                    <p className="text-sm">
-                      <span className="font-bold text-black">{username}</span>
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {preview} <span className="text-gray-400">{time}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{username}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {preview} · <span className="text-gray-400">{time}</span>
                     </p>
                   </div>
                   {request.unread && (
-                    <span className="ml-3 px-3 py-1 rounded-full text-xs font-semibold text-white flex-shrink-0"
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold text-white flex-shrink-0"
                       style={{ backgroundColor: '#B061FF' }}>
                       Nueva
                     </span>

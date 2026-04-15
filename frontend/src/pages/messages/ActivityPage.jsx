@@ -90,15 +90,21 @@ const ActivityPage = () => {
   ];
 
   const Avatar = ({ avatarUrl, name }) => (
-    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+    <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
       {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
-          onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
-      ) : null}
-      <div className="w-full h-full flex items-center justify-center text-gray-500"
-        style={{ display: avatarUrl ? 'none' : 'flex' }}>
-        <User className="w-5 h-5" />
-      </div>
+        <>
+          <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
+          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400"
+            style={{ display: 'none' }}>
+            <User className="w-6 h-6" />
+          </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+          <User className="w-6 h-6" />
+        </div>
+      )}
     </div>
   );
 
@@ -109,18 +115,16 @@ const ActivityPage = () => {
     if (item.type === 'comment') {
       const commentText = item.comment_preview || 'Comentó tu publicación';
       return (
-        <div key={item.id} className="flex items-start px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
+        <div key={item.id} className="flex items-start gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
+          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
             <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
-          <div className="flex-1 min-w-0 ml-3">
-            <p className="text-sm leading-relaxed">
-              <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${item.user?.id}`)}>
-                {username}
-              </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
+              {username}
             </p>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Commented: {commentText} <span className="text-gray-400">{time}</span>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Comentó: {commentText} · <span className="text-gray-400">{time}</span>
             </p>
             <div className="flex items-center gap-3 mt-2">
               <Heart className="w-5 h-5 text-gray-400 cursor-pointer hover:text-red-500 transition-colors" strokeWidth={1.5} />
@@ -128,7 +132,7 @@ const ActivityPage = () => {
             </div>
           </div>
           {item.poll_thumbnail && (
-            <div className="ml-3 w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
               <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
             </div>
           )}
@@ -138,22 +142,20 @@ const ActivityPage = () => {
 
     if (item.type === 'like') {
       return (
-        <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
+        <div key={item.id} className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
+          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
             <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
-          <div className="flex-1 min-w-0 ml-3">
-            <p className="text-sm">
-              <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${item.user?.id}`)}>
-                {username}
-              </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
+              {username}
             </p>
-            <p className="text-sm text-gray-500">
-              le gustó tu publicación. <span className="text-gray-400">{time}</span>
+            <p className="text-xs text-gray-500">
+              le gustó tu publicación · <span className="text-gray-400">{time}</span>
             </p>
           </div>
           {item.poll_thumbnail && (
-            <div className="ml-3 w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
               <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
             </div>
           )}
@@ -163,18 +165,16 @@ const ActivityPage = () => {
 
     if (item.type === 'vote') {
       return (
-        <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
+        <div key={item.id} className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
+          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
             <Avatar avatarUrl={item.user?.avatar_url} name={username} />
           </div>
-          <div className="flex-1 min-w-0 ml-3">
-            <p className="text-sm">
-              <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${item.user?.id}`)}>
-                {username}
-              </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
+              {username}
             </p>
-            <p className="text-sm text-gray-500">
-              votó en tu encuesta{item.vote_option ? `: "${item.vote_option}"` : ''}. <span className="text-gray-400">{time}</span>
+            <p className="text-xs text-gray-500">
+              votó en tu encuesta{item.vote_option ? `: "${item.vote_option}"` : ''} · <span className="text-gray-400">{time}</span>
             </p>
           </div>
         </div>
@@ -183,18 +183,16 @@ const ActivityPage = () => {
 
     // Mention
     return (
-      <div key={item.id} className="flex items-center px-4 py-3 bg-gray-50/80 rounded-xl mx-3 mb-2">
-        <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer">
+      <div key={item.id} className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
+        <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
           <Avatar avatarUrl={item.user?.avatar_url} name={username} />
         </div>
-        <div className="flex-1 min-w-0 ml-3">
-          <p className="text-sm">
-            <span className="font-bold text-black cursor-pointer" onClick={() => navigate(`/profile/${item.user?.id}`)}>
-              {username}
-            </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
+            {username}
           </p>
-          <p className="text-sm text-gray-500">
-            te mencionó en una publicación. <span className="text-gray-400">{time}</span>
+          <p className="text-xs text-gray-500">
+            te mencionó en una publicación · <span className="text-gray-400">{time}</span>
           </p>
         </div>
         {item.poll_thumbnail && (
@@ -255,7 +253,7 @@ const ActivityPage = () => {
             </p>
           </div>
         ) : (
-          <div className="pt-3 pb-20">
+          <div className="px-4 py-2 flex flex-col gap-2">
             {filteredItems.map(item => renderItem(item))}
           </div>
         )}
