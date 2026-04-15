@@ -200,9 +200,9 @@ const ActiveChallengesPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden" ref={containerRef}>
+    <div className="fixed inset-0 bg-zinc-900 overflow-hidden" ref={containerRef}>
       {/* Barra de avatares de battles/streams */}
-      <div className="absolute top-0 left-0 right-0 z-30 pt-4 pb-3 bg-gradient-to-b from-black/60 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-30 pt-4 pb-3 bg-gradient-to-b from-zinc-900/80 to-transparent">
         <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 px-3"
              style={{ 
                paddingLeft: 'max(0.75rem, env(safe-area-inset-left))', 
@@ -292,7 +292,7 @@ const ActiveChallengesPage = () => {
             onClick={() => navigate('/new')}
             className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 flex items-center justify-center hover:shadow-lg hover:scale-105 transition-all"
           >
-            <Plus className="w-6 h-6 text-white" />
+            <Plus className="w-6 h-6 text-white" strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -464,12 +464,17 @@ const ActiveChallengesPage = () => {
             <p>Cargando challenges...</p>
           </div>
         ) : (
-          <div className="text-white text-center">
-            <Trophy className="w-12 h-12 text-gray-500 mx-auto mb-2" />
-            <p className="text-gray-400">No tienes challenges activos</p>
+          <div className="text-center px-6">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-zinc-800 flex items-center justify-center">
+              <Trophy className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-white text-xl font-semibold mb-2">Challenge</h3>
+            <p className="text-zinc-400 text-sm mb-6">
+              No tienes challenges activos
+            </p>
             <button 
               onClick={() => navigate('/new')}
-              className="mt-4 px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-white font-semibold text-sm"
+              className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
             >
               Crear un Challenge
             </button>
