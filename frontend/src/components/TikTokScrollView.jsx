@@ -1508,6 +1508,33 @@ const TikTokScrollView = ({
   const [commentedPolls, setCommentedPolls] = useState(new Set());
   const [sharedPolls, setSharedPolls] = useState(new Set());
   const { user: currentUser } = useAuth();
+
+  // Initialize saved/commented/shared from backend data
+  useEffect(() => {
+    if (polls && polls.length > 0) {
+      setSavedPolls(prev => {
+        const newSet = new Set(prev);
+        polls.forEach(p => {
+          if (p.isSaved) newSet.add(p.id);
+        });
+        return newSet;
+      });
+      setCommentedPolls(prev => {
+        const newSet = new Set(prev);
+        polls.forEach(p => {
+          if (p.userCommented) newSet.add(p.id);
+        });
+        return newSet;
+      });
+      setSharedPolls(prev => {
+        const newSet = new Set(prev);
+        polls.forEach(p => {
+          if (p.userShared) newSet.add(p.id);
+        });
+        return newSet;
+      });
+    }
+  }, [polls]);
   const [lastActiveIndex, setLastActiveIndex] = useState(initialIndex);
   const navigate = useNavigate();
   const controls = useAnimation();

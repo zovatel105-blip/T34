@@ -6156,6 +6156,14 @@ async def get_ultra_fast_feed(
         user_likes = await user_likes_cursor.to_list(len(poll_ids))
         liked_poll_ids = set(like["poll_id"] for like in user_likes)
         
+        # 🔖 Batch lookup: saved polls
+        user_saves_cursor = db.saved_polls.find({
+            "poll_id": {"$in": poll_ids},
+            "user_id": current_user.id
+        })
+        user_saves = await user_saves_cursor.to_list(len(poll_ids))
+        saved_poll_ids = set(save["poll_id"] for save in user_saves)
+        
         # 🏷️ Batch lookup: Resolve all mentioned user IDs across all options
         all_mentioned_ids = set()
         for poll_data in polls:
@@ -6244,6 +6252,7 @@ async def get_ultra_fast_feed(
                     "music": music_info,  # 🎵 FIXED: Use resolved music info
                     "userVote": user_votes_dict.get(poll_data.get("id")),
                     "userLiked": poll_data.get("id") in liked_poll_ids,
+                    "isSaved": poll_data.get("id") in saved_poll_ids,
                     # Post settings - Include from database
                     "comments_enabled": poll_data.get("comments_enabled", True),
                     "show_vote_count": poll_data.get("show_vote_count", True),
