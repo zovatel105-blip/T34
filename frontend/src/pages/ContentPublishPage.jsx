@@ -613,7 +613,7 @@ const ContentPublishPage = () => {
 
               {/* Joining Challenge Info - Shown when joining an existing challenge */}
               {joiningChallengeId && (
-                <div className="px-5 md:px-2 mb-6">
+                <div className="mb-3">
                   <div className="rounded-2xl bg-zinc-800 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Trophy className="w-5 h-5 text-yellow-500" />
@@ -628,15 +628,15 @@ const ContentPublishPage = () => {
 
               {/* Challenge Section - Only shown when CREATING a new challenge (not joining existing) */}
               {isChallengeMode && !joiningChallengeId && (
-                <div className="px-5 md:px-2 mb-6">
+                <div className="space-y-3">
                   {/* Challenge Header */}
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-1 px-5 md:px-2">
                     <Trophy className="w-5 h-5 text-yellow-500" />
                     <span className="text-yellow-500 font-semibold text-sm">Configuración del Challenge</span>
                   </div>
 
                   {/* Challenge Category */}
-                  <div className="rounded-2xl bg-zinc-800 p-4 mb-3">
+                  <div className="rounded-2xl bg-zinc-800 p-4">
                     <label className="block text-white text-sm font-semibold mb-3">
                       Categoría (Opcional)
                     </label>
@@ -659,7 +659,7 @@ const ContentPublishPage = () => {
                   </div>
 
                   {/* Invite Users */}
-                  <div className="rounded-2xl bg-zinc-800 p-4 mb-3">
+                  <div className="rounded-2xl bg-zinc-800 p-4">
                     <label className="block text-white text-sm font-semibold mb-3 flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-zinc-400" />
