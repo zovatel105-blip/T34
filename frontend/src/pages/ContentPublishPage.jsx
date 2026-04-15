@@ -366,15 +366,15 @@ const ContentPublishPage = () => {
   // ========== FIN VISTA SIMPLIFICADA ==========
 
   return (
-    <div className="min-h-screen bg-zinc-900">
+    <div className="min-h-screen bg-black">
       {/* Inject CSS for hiding scrollbar */}
       <style>{scrollableOptionsStyle}</style>
       
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900">
+      <div className="flex items-center justify-between px-4 py-3 bg-black">
         <button
           onClick={handleBack}
-          className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+          className="p-2 hover:bg-gray-900 rounded-full transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
@@ -391,7 +391,7 @@ const ContentPublishPage = () => {
           {/* Left Column - Preview */}
           <div className="w-24 sm:w-28 flex-shrink-0">
             <div className="sticky top-4">
-              <div className="bg-zinc-800 rounded-xl overflow-hidden shadow-lg w-full h-32 sm:h-36">
+              <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg w-full h-32 sm:h-36">
                 {contentData && contentData.options && contentData.options.length > 0 ? (
                   <div className="relative w-full h-full">
                     {(() => {
@@ -547,7 +547,7 @@ const ContentPublishPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                     <div className="text-center text-gray-500">
                       <div className="text-lg sm:text-xl mb-1">📱</div>
                     </div>
@@ -559,17 +559,17 @@ const ContentPublishPage = () => {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleAddHashtagSymbol}
-                  className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-xl transition-colors touch-manipulation"
+                  className="flex-1 flex items-center justify-center py-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-colors touch-manipulation"
                   title="Add hashtag"
                 >
-                  <Hash className="w-4 h-4 text-zinc-300" />
+                  <Hash className="w-4 h-4 text-gray-300" />
                 </button>
                 <button
                   onClick={handleAddMentionSymbol}
-                  className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-xl transition-colors touch-manipulation"
+                  className="flex-1 flex items-center justify-center py-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-colors touch-manipulation"
                   title="Add mention"
                 >
-                  <AtSign className="w-4 h-4 text-zinc-300" />
+                  <AtSign className="w-4 h-4 text-gray-300" />
                 </button>
               </div>
             </div>
@@ -579,18 +579,18 @@ const ContentPublishPage = () => {
           <div className="flex-1 min-w-0">
             
             {/* Description Input - Sticky on mobile */}
-            <div className="mb-5 sticky top-0 bg-zinc-900 z-10 pb-2 -mt-4 pt-4">
+            <div className="mb-5 sticky top-0 bg-black z-10 pb-2 -mt-4 pt-4">
               <textarea
                 id="title-input"
                 placeholder="Add description..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full text-white text-sm sm:text-base placeholder-zinc-500 bg-transparent border-none outline-none resize-none leading-relaxed"
+                className="w-full text-white text-sm sm:text-base placeholder-gray-500 bg-transparent border-none outline-none resize-none leading-relaxed"
                 rows={5}
                 maxLength={200}
               />
               <div className="flex justify-end mt-1">
-                <span className="text-xs text-zinc-500">{title.length}/200</span>
+                <span className="text-xs text-gray-500">{title.length}/200</span>
               </div>
             </div>
 
@@ -843,7 +843,7 @@ const ContentPublishPage = () => {
                   <button
                     onClick={() => setCommentsEnabled(!commentsEnabled)}
                     className={`relative w-11 h-6 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
-                      commentsEnabled ? 'bg-yellow-500' : 'bg-zinc-700'
+                      commentsEnabled ? 'bg-[#3B82F6]' : 'bg-zinc-700'
                     }`}
                   >
                     <div
@@ -872,7 +872,7 @@ const ContentPublishPage = () => {
                   <button
                     onClick={() => setShowVoteCount(!showVoteCount)}
                     className={`relative w-11 h-6 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
-                      showVoteCount ? 'bg-yellow-500' : 'bg-zinc-700'
+                      showVoteCount ? 'bg-[#3B82F6]' : 'bg-zinc-700'
                     }`}
                   >
                     <div
@@ -900,7 +900,7 @@ const ContentPublishPage = () => {
                     onClick={() => setMatureContent('none')}
                     className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-colors touch-manipulation ${
                       matureContent === 'none'
-                        ? 'bg-yellow-500 text-black'
+                        ? 'bg-[#3B82F6] text-white'
                         : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                     }`}
                   >
@@ -910,7 +910,7 @@ const ContentPublishPage = () => {
                     onClick={() => setMatureContent('mild')}
                     className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-colors touch-manipulation ${
                       matureContent === 'mild'
-                        ? 'bg-yellow-500 text-black'
+                        ? 'bg-yellow-500 text-white'
                         : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                     }`}
                   >
@@ -950,7 +950,7 @@ const ContentPublishPage = () => {
                   <button
                     onClick={() => setAllowDownloads(!allowDownloads)}
                     className={`relative w-11 h-6 rounded-full transition-colors touch-manipulation flex-shrink-0 ${
-                      allowDownloads ? 'bg-yellow-500' : 'bg-zinc-700'
+                      allowDownloads ? 'bg-[#3B82F6]' : 'bg-zinc-700'
                     }`}
                   >
                     <div
@@ -1002,11 +1002,11 @@ const ContentPublishPage = () => {
           <div className="mb-2.5 md:mb-3">
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-xs text-zinc-400 truncate pr-2">{uploadStatus}</span>
-              <span className="text-xs font-semibold text-yellow-500 flex-shrink-0">{uploadProgress}%</span>
+              <span className="text-xs font-semibold text-pink-500 flex-shrink-0">{uploadProgress}%</span>
             </div>
             <div className="w-full bg-zinc-800 rounded-full h-1 overflow-hidden">
               <div 
-                className="bg-yellow-500 h-full rounded-full transition-all duration-300 ease-out"
+                className="bg-gradient-to-r from-pink-500 to-red-500 h-full rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
@@ -1018,7 +1018,7 @@ const ContentPublishPage = () => {
           <button
             onClick={handleFinalPublish}
             disabled={isPublishing || !title.trim()}
-            className="w-full flex items-center justify-center gap-1.5 md:gap-2 py-2.5 md:py-3 bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 disabled:bg-zinc-700 text-black disabled:text-zinc-500 rounded-xl font-semibold transition-all disabled:cursor-not-allowed text-sm touch-manipulation min-h-[44px]"
+            className="w-full flex items-center justify-center gap-1.5 md:gap-2 py-2.5 md:py-3 bg-[#8B5CF6] hover:bg-[#7C3AED] active:bg-[#6D28D9] disabled:bg-zinc-700 text-white rounded-xl font-semibold transition-all disabled:cursor-not-allowed text-sm touch-manipulation min-h-[44px]"
           >
             {isPublishing ? (
               <>
