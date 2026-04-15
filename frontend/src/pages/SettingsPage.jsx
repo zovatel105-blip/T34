@@ -11,6 +11,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import voiceService, { VOICE_TYPES } from '../services/voiceService';
+import SettingsSelectModal from '../components/SettingsSelectModal';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const SettingsPage = () => {
 
   const [voiceSettings, setVoiceSettings] = useState(() => voiceService.getPreferences());
   const [testingVoice, setTestingVoice] = useState(false);
+  const [activeSelectModal, setActiveSelectModal] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -194,6 +196,7 @@ const SettingsPage = () => {
   );
 
   return (
+    <>
     <div className="min-h-screen bg-white">
       {/* Contenedor estilo modal — rounded top, handle bar, título centrado */}
       <div className="max-w-md mx-auto bg-white rounded-t-3xl">
@@ -317,20 +320,9 @@ const SettingsPage = () => {
             <SettingsItem
               icon={Monitor}
               title="Calidad de video"
-              description="Ajustar calidad de reproducción"
-              rightElement={
-                <select 
-                  value={settings.video_quality}
-                  onChange={(e) => handleSettingsChange('video_quality', e.target.value)}
-                  disabled={loading}
-                  className="text-sm text-gray-500 bg-transparent border-none focus:outline-none"
-                >
-                  <option value="auto">Auto</option>
-                  <option value="high">Alta</option>
-                  <option value="medium">Media</option>
-                  <option value="low">Baja</option>
-                </select>
-              }
+              description={{ auto: 'Auto', high: 'Alta', medium: 'Media', low: 'Baja' }[settings.video_quality] || 'Auto'}
+              onClick={() => setActiveSelectModal('video_quality')}
+              showChevron
             />
             <SettingsItem
               icon={Wifi}
@@ -366,20 +358,9 @@ const SettingsPage = () => {
             <SettingsItem
               icon={Languages}
               title="Idioma"
-              description="Español"
-              rightElement={
-                <select 
-                  value={settings.app_language}
-                  onChange={(e) => handleSettingsChange('app_language', e.target.value)}
-                  disabled={loading}
-                  className="text-sm text-gray-500 bg-transparent border-none focus:outline-none"
-                >
-                  <option value="es">Español</option>
-                  <option value="en">English</option>
-                  <option value="fr">Français</option>
-                  <option value="pt">Português</option>
-                </select>
-              }
+              description={{ es: 'Español', en: 'English', fr: 'Français', pt: 'Português' }[settings.app_language] || 'Español'}
+              onClick={() => setActiveSelectModal('app_language')}
+              showChevron
             />
             <SettingsItem
               icon={settings.dark_mode ? Moon : Sun}
@@ -415,35 +396,16 @@ const SettingsPage = () => {
             <SettingsItem
               icon={Mic}
               title="Tipo de voz"
-              description="La voz se adapta automáticamente al idioma"
-              rightElement={
-                <select 
-                  value={voiceSettings.voiceType}
-                  onChange={(e) => handleVoiceTypeChange(e.target.value)}
-                  className="text-sm text-gray-500 bg-transparent border-none focus:outline-none"
-                >
-                  <option value={VOICE_TYPES.FEMALE}>Femenina</option>
-                  <option value={VOICE_TYPES.MALE}>Masculina</option>
-                  <option value={VOICE_TYPES.NEUTRAL}>Neutral</option>
-                </select>
-              }
+              description={{ [VOICE_TYPES.FEMALE]: 'Femenina', [VOICE_TYPES.MALE]: 'Masculina', [VOICE_TYPES.NEUTRAL]: 'Neutral' }[voiceSettings.voiceType] || 'Femenina'}
+              onClick={() => setActiveSelectModal('voice_type')}
+              showChevron
             />
             <SettingsItem
               icon={Volume2}
               title="Velocidad de voz"
-              description="Ajustar velocidad de lectura"
-              rightElement={
-                <select 
-                  value={voiceSettings.rate}
-                  onChange={(e) => handleVoiceRateChange(e.target.value)}
-                  className="text-sm text-gray-500 bg-transparent border-none focus:outline-none"
-                >
-                  <option value="0.8">Lenta</option>
-                  <option value="1.0">Normal</option>
-                  <option value="1.1">Rápida</option>
-                  <option value="1.3">Muy rápida</option>
-                </select>
-              }
+              description={{ '0.8': 'Lenta', '1': 'Normal', '1.0': 'Normal', '1.1': 'Rápida', '1.3': 'Muy rápida' }[String(voiceSettings.rate)] || 'Normal'}
+              onClick={() => setActiveSelectModal('voice_rate')}
+              showChevron
             />
             <button
               type="button"
@@ -536,6 +498,63 @@ const SettingsPage = () => {
       </div>
 
     </div>
+
+      {/* Modales de selección */}
+      <SettingsSelectModal
+        isOpen={activeSelectModal === 'video_quality'}
+        onClose={() => setActiveSelectModal(null)}
+        title="Calidad de video"
+        selectedValue={settings.video_quality}
+        onSelect={(value) => handleSettingsChange('video_quality', value)}
+        options={[
+          { value: 'auto', label: 'Auto', description: 'Se ajusta según tu conexión', icon: Monitor },
+          { value: 'high', label: 'Alta', description: 'Mejor calidad, más datos', icon: Monitor },
+          { value: 'medium', label: 'Media', description: 'Balance entre calidad y datos', icon: Monitor },
+          { value: 'low', label: 'Baja', description: 'Ahorra datos', icon: Monitor },
+        ]}
+      />
+
+      <SettingsSelectModal
+        isOpen={activeSelectModal === 'app_language'}
+        onClose={() => setActiveSelectModal(null)}
+        title="Idioma"
+        selectedValue={settings.app_language}
+        onSelect={(value) => handleSettingsChange('app_language', value)}
+        options={[
+          { value: 'es', label: 'Español', icon: Languages },
+          { value: 'en', label: 'English', icon: Languages },
+          { value: 'fr', label: 'Français', icon: Languages },
+          { value: 'pt', label: 'Português', icon: Languages },
+        ]}
+      />
+
+      <SettingsSelectModal
+        isOpen={activeSelectModal === 'voice_type'}
+        onClose={() => setActiveSelectModal(null)}
+        title="Tipo de voz"
+        selectedValue={voiceSettings.voiceType}
+        onSelect={(value) => handleVoiceTypeChange(value)}
+        options={[
+          { value: VOICE_TYPES.FEMALE, label: 'Femenina', description: 'Voz femenina suave', icon: Mic },
+          { value: VOICE_TYPES.MALE, label: 'Masculina', description: 'Voz masculina clara', icon: Mic },
+          { value: VOICE_TYPES.NEUTRAL, label: 'Neutral', description: 'Voz neutra equilibrada', icon: Mic },
+        ]}
+      />
+
+      <SettingsSelectModal
+        isOpen={activeSelectModal === 'voice_rate'}
+        onClose={() => setActiveSelectModal(null)}
+        title="Velocidad de voz"
+        selectedValue={String(voiceSettings.rate)}
+        onSelect={(value) => handleVoiceRateChange(value)}
+        options={[
+          { value: '0.8', label: 'Lenta', description: 'Para escuchar con calma', icon: Volume2 },
+          { value: '1.0', label: 'Normal', description: 'Velocidad estándar', icon: Volume2 },
+          { value: '1.1', label: 'Rápida', description: 'Un poco más rápido', icon: Volume2 },
+          { value: '1.3', label: 'Muy rápida', description: 'Para los que van con prisa', icon: Volume2 },
+        ]}
+      />
+    </>
   );
 };
 
