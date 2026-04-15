@@ -1994,13 +1994,13 @@ const ProfilePage = () => {
                 
                 {/* Votos - Esquina superior izquierda */}
                 <div className="text-left">
-                  <div className="flex items-center gap-2 p-2 rounded-2xl bg-gray-50">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" strokeWidth={1.5} />
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{displayUser?.totalVotes || 0}</p>
-                      <p className="text-xs text-gray-400">Votos</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Votos</p>
                     </div>
                   </div>
                 </div>
@@ -2010,13 +2010,13 @@ const ProfilePage = () => {
                 
                 {/* Me gusta - Esquina superior derecha */}
                 <div className="text-right">
-                  <div className="flex items-center gap-2 justify-end p-2 rounded-2xl bg-gray-50">
+                  <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? (displayUser?.totalLikes || 0) : (displayUser?.likes || 0)}</p>
-                      <p className="text-xs text-gray-400">Me gusta</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Me gusta</p>
                     </div>
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 order-2 shadow-sm">
-                      <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 order-2">
+                      <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" strokeWidth={1.5} />
                     </div>
                   </div>
                 </div>
@@ -2079,16 +2079,16 @@ const ProfilePage = () => {
 
                 {/* Seguidores - Esquina inferior izquierda */}
                 <button 
-                  className="text-left rounded-2xl bg-gray-50 p-2 transition-colors hover:bg-gray-100"
+                  className="text-left hover:bg-gray-50 rounded-xl p-1 sm:p-2 transition-colors"
                   onClick={handleFollowersClick}
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followersCount : (displayUser?.followers || 0)}</p>
-                      <p className="text-xs text-gray-400">Seguidores</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Seguidores</p>
                     </div>
                   </div>
                 </button>
@@ -2099,16 +2099,16 @@ const ProfilePage = () => {
                 {/* Seguidos - Esquina inferior derecha */}
                 {/* Seguidos - Esquina inferior derecha */}
                 <button 
-                  className="text-right rounded-2xl bg-gray-50 p-2 transition-colors hover:bg-gray-100"
+                  className="text-right hover:bg-gray-50 rounded-xl p-1 sm:p-2 transition-colors"
                   onClick={handleFollowingClick}
                 >
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followingCount : (displayUser?.following || 0)}</p>
-                      <p className="text-xs text-gray-400">Seguidos</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Seguidos</p>
                     </div>
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 order-2 shadow-sm">
-                      <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 order-2">
+                      <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" strokeWidth={1.5} />
                     </div>
                   </div>
                 </button>
