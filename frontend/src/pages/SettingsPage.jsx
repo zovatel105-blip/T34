@@ -216,11 +216,6 @@ const SettingsPage = () => {
       {/* Contenedor estilo modal — rounded top, handle bar, título centrado */}
       <div className="max-w-md mx-auto bg-white rounded-t-3xl">
 
-        {/* Handle bar */}
-        <div className="w-full pt-3 pb-1 flex justify-center">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
-        </div>
-
         {/* Header — centrado con botón de volver */}
         <div className="flex items-center justify-between px-4 py-3">
           <button
@@ -488,11 +483,6 @@ const SettingsPage = () => {
                 <ChevronRight className="w-4 h-4 text-gray-300" strokeWidth={1.5} />
               )}
             </button>
-            <div className="p-3 bg-blue-50 rounded-2xl">
-              <p className="text-xs text-blue-600">
-                💡 La voz detecta automáticamente el idioma del texto y usa tu tipo de voz preferido en cada idioma.
-              </p>
-            </div>
           </div>
 
           {/* Seguridad */}
