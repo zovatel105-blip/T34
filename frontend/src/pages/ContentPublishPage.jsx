@@ -600,11 +600,12 @@ const ContentPublishPage = () => {
               style={{ 
                 marginLeft: '-120px', 
                 marginRight: '-12px',
-                maxHeight: 'calc(100vh - 350px)',
+                maxHeight: 'calc(100vh - 280px)',
                 overscrollBehavior: 'contain',
                 scrollbarWidth: 'none', /* Firefox */
                 msOverflowStyle: 'none', /* IE and Edge */
-                WebkitOverflowScrolling: 'touch' /* Smooth scrolling on iOS */
+                WebkitOverflowScrolling: 'touch', /* Smooth scrolling on iOS */
+                paddingBottom: '100px' /* Space for fixed bottom bar */
               }}
             >
 
