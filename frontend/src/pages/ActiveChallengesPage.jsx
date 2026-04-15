@@ -22,6 +22,33 @@ const ActiveChallengesPage = () => {
 
   const selectedBattle = battles[selectedBattleIndex];
 
+  // Ocultar barra de navegación derecha
+  useEffect(() => {
+    const hideRightNavigationBar = () => {
+      const rightNav = document.querySelector('[class*="RightSidebar"]') || 
+                       document.querySelector('aside') ||
+                       document.getElementById('right-sidebar');
+      if (rightNav) {
+        rightNav.style.display = 'none';
+      }
+    };
+
+    const showRightNavigationBar = () => {
+      const rightNav = document.querySelector('[class*="RightSidebar"]') || 
+                       document.querySelector('aside') ||
+                       document.getElementById('right-sidebar');
+      if (rightNav) {
+        rightNav.style.display = '';
+      }
+    };
+
+    hideRightNavigationBar();
+    
+    return () => {
+      showRightNavigationBar();
+    };
+  }, []);
+
   // Cargar challenges activos del backend
   useEffect(() => {
     const loadActiveChallenges = async () => {
