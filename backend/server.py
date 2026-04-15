@@ -4864,7 +4864,7 @@ async def create_comment(
     comment_data: CommentCreate,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Create a new comment on a poll"""
+    """Create a new comment on a poll or challenge"""
     # Verificar que el poll_id coincida con el de los datos
     if comment_data.poll_id != poll_id:
         raise HTTPException(status_code=400, detail="Poll ID mismatch")
@@ -4878,10 +4878,18 @@ async def create_comment(
         if not parent_comment:
             raise HTTPException(status_code=404, detail="Parent comment not found")
     
-    # Verificar que el poll existe
-    poll = await db.polls.find_one({"id": poll_id})
-    if not poll:
-        raise HTTPException(status_code=404, detail="Poll not found")
+    # Detect challenge or poll
+    is_challenge = poll_id.startswith("challenge_")
+    
+    if is_challenge:
+        real_challenge_id = poll_id.replace("challenge_", "", 1)
+        challenge = await db.challenges.find_one({"id": real_challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge not found")
+    else:
+        poll = await db.polls.find_one({"id": poll_id})
+        if not poll:
+            raise HTTPException(status_code=404, detail="Poll not found")
     
     # Crear el comentario
     comment = Comment(
@@ -4894,11 +4902,17 @@ async def create_comment(
     # Insertar en la base de datos
     await db.comments.insert_one(comment.dict())
     
-    # Incrementar el contador de comentarios en el poll
-    await db.polls.update_one(
-        {"id": poll_id},
-        {"$inc": {"comments_count": 1}}
-    )
+    # Incrementar el contador de comentarios
+    if is_challenge:
+        await db.challenges.update_one(
+            {"id": real_challenge_id},
+            {"$inc": {"comments_count": 1}}
+        )
+    else:
+        await db.polls.update_one(
+            {"id": poll_id},
+            {"$inc": {"comments_count": 1}}
+        )
     
     # Retornar el comentario creado con información del usuario
     return CommentResponse(
@@ -6350,8 +6364,8 @@ async def get_ultra_fast_feed(
                 "options": challenge_options,
                 "created_at": challenge.get("published_at") or challenge.get("created_at"),
                 "total_votes": sum(opt.get("votes", 0) for opt in challenge_options),
-                "likes_count": 0,
-                "comments_count": 0,
+                "likes_count": challenge.get("likes_count", 0),
+                "comments_count": challenge.get("comments_count", 0),
                 "layout": challenge_layout,
                 "music": challenge_music_info,
                 "userVote": user_challenge_vote,
@@ -6362,6 +6376,23 @@ async def get_ultra_fast_feed(
                 "challenge_status": "published",
                 "participants": [],  # Will be populated below
             }
+            
+            # Check if current user liked this challenge
+            if current_user:
+                challenge_feed_id = f"challenge_{challenge.get('id')}"
+                user_like = await db.poll_likes.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                challenge_response["userLiked"] = user_like is not None
+                
+                # Check if saved
+                user_save = await db.saved_polls.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                challenge_response["isSaved"] = user_save is not None
+                challenge_response["saves_count"] = challenge.get("saves_count", 0)
             
             # Fetch fresh user data for participants
             participant_user_ids = [
@@ -7870,9 +7901,35 @@ async def toggle_poll_like(
     poll_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Toggle like on a poll"""
+    """Toggle like on a poll or challenge"""
     
-    # Check if poll exists
+    # Detect if this is a challenge
+    is_challenge = poll_id.startswith("challenge_")
+    
+    if is_challenge:
+        real_challenge_id = poll_id.replace("challenge_", "", 1)
+        challenge = await db.challenges.find_one({"id": real_challenge_id})
+        if not challenge:
+            raise HTTPException(status_code=404, detail="Challenge not found")
+        
+        existing_like = await db.poll_likes.find_one({
+            "poll_id": poll_id,
+            "user_id": current_user.id
+        })
+        
+        if existing_like:
+            await db.poll_likes.delete_one({"poll_id": poll_id, "user_id": current_user.id})
+            await db.challenges.update_one({"id": real_challenge_id}, {"$inc": {"likes_count": -1}})
+            updated = await db.challenges.find_one({"id": real_challenge_id})
+            return {"liked": False, "likes": max(0, updated.get("likes_count", 0))}
+        else:
+            like = PollLike(poll_id=poll_id, user_id=current_user.id)
+            await db.poll_likes.insert_one(like.dict())
+            await db.challenges.update_one({"id": real_challenge_id}, {"$inc": {"likes_count": 1}})
+            updated = await db.challenges.find_one({"id": real_challenge_id})
+            return {"liked": True, "likes": updated.get("likes_count", 1)}
+    
+    # Regular poll
     poll = await db.polls.find_one({"id": poll_id, "is_active": True})
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
@@ -9903,12 +9960,20 @@ async def save_poll(
     poll_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Save a poll to user's saved collection"""
+    """Save a poll or challenge to user's saved collection"""
     try:
-        # Check if poll exists
-        poll = await db.polls.find_one({"id": poll_id})
-        if not poll:
-            raise HTTPException(status_code=404, detail="Poll not found")
+        # Detect challenge
+        is_challenge = poll_id.startswith("challenge_")
+        
+        if is_challenge:
+            real_challenge_id = poll_id.replace("challenge_", "", 1)
+            challenge = await db.challenges.find_one({"id": real_challenge_id})
+            if not challenge:
+                raise HTTPException(status_code=404, detail="Challenge not found")
+        else:
+            poll = await db.polls.find_one({"id": poll_id})
+            if not poll:
+                raise HTTPException(status_code=404, detail="Poll not found")
         
         # Check if already saved
         existing_save = await db.saved_polls.find_one({
@@ -9917,32 +9982,39 @@ async def save_poll(
         })
         
         if existing_save:
-            return {"success": True, "message": "Poll already saved", "saved": True}
+            return {"success": True, "message": "Already saved", "saved": True}
         
-        # Save the poll
+        # Save
         save_record = {
             "id": str(uuid.uuid4()),
             "user_id": current_user.id,
             "poll_id": poll_id,
             "saved_at": datetime.utcnow(),
-            "poll_title": poll.get("title", ""),
-            "poll_author": poll.get("author", {}).get("username", "")
+            "poll_title": challenge.get("title", "") if is_challenge else poll.get("title", ""),
+            "poll_author": ""
         }
         
         await db.saved_polls.insert_one(save_record)
         
-        # Incrementar el contador de guardados en el poll y obtener el valor actualizado
-        updated_poll = await db.polls.find_one_and_update(
-            {"id": poll_id},
-            {"$inc": {"saves_count": 1}},
-            return_document=ReturnDocument.AFTER
-        )
-        
-        saves_count = updated_poll.get("saves_count", 1) if updated_poll else 1
+        # Increment saves count
+        if is_challenge:
+            await db.challenges.update_one(
+                {"id": real_challenge_id},
+                {"$inc": {"saves_count": 1}}
+            )
+            updated = await db.challenges.find_one({"id": real_challenge_id})
+            saves_count = updated.get("saves_count", 1) if updated else 1
+        else:
+            updated_poll = await db.polls.find_one_and_update(
+                {"id": poll_id},
+                {"$inc": {"saves_count": 1}},
+                return_document=ReturnDocument.AFTER
+            )
+            saves_count = updated_poll.get("saves_count", 1) if updated_poll else 1
         
         return {
             "success": True, 
-            "message": "Poll saved successfully", 
+            "message": "Saved successfully", 
             "saved": True,
             "saves_count": saves_count
         }
@@ -9958,41 +10030,48 @@ async def unsave_poll(
     poll_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Remove a poll from user's saved collection"""
+    """Remove a poll or challenge from user's saved collection"""
     try:
-        # Check if poll is saved
         existing_save = await db.saved_polls.find_one({
             "user_id": current_user.id,
             "poll_id": poll_id
         })
         
         if not existing_save:
-            return {"success": True, "message": "Poll was not saved", "saved": False}
+            return {"success": True, "message": "Was not saved", "saved": False}
         
-        # Remove from saved
         await db.saved_polls.delete_one({
             "user_id": current_user.id,
             "poll_id": poll_id
         })
         
-        # Decrementar el contador de guardados en el poll y obtener el valor actualizado
-        updated_poll = await db.polls.find_one_and_update(
-            {"id": poll_id},
-            {"$inc": {"saves_count": -1}},
-            return_document=ReturnDocument.AFTER
-        )
-        
-        saves_count = max(0, updated_poll.get("saves_count", 0)) if updated_poll else 0
+        # Decrement saves count
+        is_challenge = poll_id.startswith("challenge_")
+        if is_challenge:
+            real_challenge_id = poll_id.replace("challenge_", "", 1)
+            await db.challenges.update_one(
+                {"id": real_challenge_id},
+                {"$inc": {"saves_count": -1}}
+            )
+            updated = await db.challenges.find_one({"id": real_challenge_id})
+            saves_count = max(0, updated.get("saves_count", 0)) if updated else 0
+        else:
+            updated_poll = await db.polls.find_one_and_update(
+                {"id": poll_id},
+                {"$inc": {"saves_count": -1}},
+                return_document=ReturnDocument.AFTER
+            )
+            saves_count = max(0, updated_poll.get("saves_count", 0)) if updated_poll else 0
         
         return {
             "success": True, 
-            "message": "Poll removed from saved", 
+            "message": "Removed from saved", 
             "saved": False,
             "saves_count": saves_count
         }
         
     except Exception as e:
-        logger.error(f"Error unsaving poll: {str(e)}")
+        logger.error(f"Error unsaving: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @api_router.get("/users/{user_id}/saved-polls")
