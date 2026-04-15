@@ -1617,9 +1617,3 @@ const MoreOptionsModal = ({ onClose, onReset }) => {
 };
 
 export default StoryEditPage;
-iv>
-    </div>
-  );
-};
-
-export default StoryEditPage;
