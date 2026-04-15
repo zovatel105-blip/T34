@@ -366,12 +366,12 @@ const ContentPublishPage = () => {
   // ========== FIN VISTA SIMPLIFICADA ==========
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-zinc-900">
       {/* Inject CSS for hiding scrollbar */}
       <style>{scrollableOptionsStyle}</style>
       
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black">
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900">
         <button
           onClick={handleBack}
           className="p-2 hover:bg-gray-900 rounded-full transition-colors"
@@ -391,7 +391,7 @@ const ContentPublishPage = () => {
           {/* Left Column - Preview */}
           <div className="w-24 sm:w-28 flex-shrink-0">
             <div className="sticky top-4">
-              <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg w-full h-32 sm:h-36">
+              <div className="bg-zinc-800 rounded-xl overflow-hidden shadow-lg w-full h-32 sm:h-36">
                 {contentData && contentData.options && contentData.options.length > 0 ? (
                   <div className="relative w-full h-full">
                     {(() => {
@@ -547,7 +547,7 @@ const ContentPublishPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                     <div className="text-center text-gray-500">
                       <div className="text-lg sm:text-xl mb-1">📱</div>
                     </div>
@@ -559,14 +559,14 @@ const ContentPublishPage = () => {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleAddHashtagSymbol}
-                  className="flex-1 flex items-center justify-center py-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-colors touch-manipulation"
+                  className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-lg transition-colors touch-manipulation"
                   title="Add hashtag"
                 >
                   <Hash className="w-4 h-4 text-gray-300" />
                 </button>
                 <button
                   onClick={handleAddMentionSymbol}
-                  className="flex-1 flex items-center justify-center py-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-600 rounded-lg transition-colors touch-manipulation"
+                  className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-lg transition-colors touch-manipulation"
                   title="Add mention"
                 >
                   <AtSign className="w-4 h-4 text-gray-300" />
@@ -579,7 +579,7 @@ const ContentPublishPage = () => {
           <div className="flex-1 min-w-0">
             
             {/* Description Input - Sticky on mobile */}
-            <div className="mb-5 sticky top-0 bg-black z-10 pb-2 -mt-4 pt-4">
+            <div className="mb-5 sticky top-0 bg-zinc-900 z-10 pb-2 -mt-4 pt-4">
               <textarea
                 id="title-input"
                 placeholder="Add description..."
@@ -1092,7 +1092,7 @@ const ContentPublishPage = () => {
                   className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
                     audienceTarget === option
                       ? 'bg-[#3B82F6] text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-750'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -1143,7 +1143,7 @@ const ContentPublishPage = () => {
                   className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
                     sourceAuthenticity === option
                       ? 'bg-[#3B82F6] text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-750'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -1194,7 +1194,7 @@ const ContentPublishPage = () => {
                   className={`w-full text-left px-4 py-3 rounded-xl transition-colors ${
                     votingPrivacy === option
                       ? 'bg-[#3B82F6] text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-750'
+                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
