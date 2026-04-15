@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -197,8 +198,25 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-white z-[60] flex flex-col">
+  return createPortal(
+    <div className="fixed inset-0 z-[100000]">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
+        style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+        onClick={onClose}
+      />
+
+      {/* Bottom sheet */}
+      <div className="flex h-full items-end justify-center">
+        <div 
+          className="relative bg-white shadow-2xl overflow-hidden w-full rounded-t-3xl flex flex-col"
+          style={{ animation: 'slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards', maxHeight: '92vh' }}
+        >
+          {/* Handle */}
+          <div className="w-full pt-3 pb-1 flex justify-center">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
       
       {/* Header móvil con botón volver */}
       <div 
@@ -377,7 +395,6 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
         </div>
       </div>
       
-      {/* Componente de crop circular */}
       <CircularCrop
         isOpen={cropModalOpen}
         onClose={() => {
@@ -388,7 +405,10 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
         initialImage={tempImageForCrop}
       />
       
-    </div>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 
