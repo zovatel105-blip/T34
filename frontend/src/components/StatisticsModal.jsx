@@ -98,7 +98,7 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
   ];
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+    <div className="fixed inset-0 bg-white z-[100000] flex flex-col">
       
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 bg-white">
