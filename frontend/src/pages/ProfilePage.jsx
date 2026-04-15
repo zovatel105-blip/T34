@@ -1994,13 +1994,13 @@ const ProfilePage = () => {
                 
                 {/* Votos - Esquina superior izquierda */}
                 <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                      <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" strokeWidth={1.5} />
+                  <div className="flex items-center gap-2 p-2 rounded-2xl bg-gray-50">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{displayUser?.totalVotes || 0}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Votos</p>
+                      <p className="text-xs text-gray-400">Votos</p>
                     </div>
                   </div>
                 </div>
@@ -2010,13 +2010,13 @@ const ProfilePage = () => {
                 
                 {/* Me gusta - Esquina superior derecha */}
                 <div className="text-right">
-                  <div className="flex items-center gap-2 justify-end">
+                  <div className="flex items-center gap-2 justify-end p-2 rounded-2xl bg-gray-50">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? (displayUser?.totalLikes || 0) : (displayUser?.likes || 0)}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Me gusta</p>
+                      <p className="text-xs text-gray-400">Me gusta</p>
                     </div>
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 order-2">
-                      <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 order-2 shadow-sm">
+                      <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500" strokeWidth={1.5} />
                     </div>
                   </div>
                 </div>
@@ -2079,16 +2079,16 @@ const ProfilePage = () => {
 
                 {/* Seguidores - Esquina inferior izquierda */}
                 <button 
-                  className="text-left hover:bg-gray-50 rounded-xl p-1 sm:p-2 transition-colors"
+                  className="text-left rounded-2xl bg-gray-50 p-2 transition-colors hover:bg-gray-100"
                   onClick={handleFollowersClick}
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followersCount : (displayUser?.followers || 0)}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Seguidores</p>
+                      <p className="text-xs text-gray-400">Seguidores</p>
                     </div>
                   </div>
                 </button>
@@ -2097,17 +2097,18 @@ const ProfilePage = () => {
                 <div></div>
                 
                 {/* Seguidos - Esquina inferior derecha */}
+                {/* Seguidos - Esquina inferior derecha */}
                 <button 
-                  className="text-right hover:bg-gray-50 rounded-xl p-1 sm:p-2 transition-colors"
+                  className="text-right rounded-2xl bg-gray-50 p-2 transition-colors hover:bg-gray-100"
                   onClick={handleFollowingClick}
                 >
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followingCount : (displayUser?.following || 0)}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Seguidos</p>
+                      <p className="text-xs text-gray-400">Seguidos</p>
                     </div>
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 order-2">
-                      <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" strokeWidth={1.5} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 order-2 shadow-sm">
+                      <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" strokeWidth={1.5} />
                     </div>
                   </div>
                 </button>
@@ -2115,22 +2116,20 @@ const ProfilePage = () => {
             </div>
 
             {/* Nombre, profesión y biografía */}
-            <div ref={profileInfoRef} className="text-center space-y-3 max-w-sm mx-auto">
-              <div className="w-16 h-px bg-gray-200 mx-auto"></div>
-              
+            <div ref={profileInfoRef} className="text-center space-y-2 max-w-sm mx-auto">
               <div className="space-y-2">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                   {displayUser?.displayName || displayUser?.username || 'Usuario'}
                 </h2>
                 
                 {displayUser?.occupation && (
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-sm text-gray-400 font-medium">
                     {displayUser.occupation}
                   </p>
                 )}
                 
                 {displayUser?.bio && (
-                  <p className="text-sm text-gray-600 leading-relaxed px-2">
+                  <p className="text-sm text-gray-500 leading-relaxed px-2">
                     {displayUser.bio}
                   </p>
                 )}
@@ -2142,15 +2141,15 @@ const ProfilePage = () => {
               {isOwnProfile ? (
                 <>
                   <Button 
-                    variant="outline" 
-                    className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
+                    variant="ghost" 
+                    className="h-11 sm:h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 font-medium text-sm text-gray-900"
                     onClick={() => navigate('/edit-profile')}
                   >
                     Editar perfil
                   </Button>
                   <Button 
-                    variant="outline" 
-                    className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
+                    variant="ghost" 
+                    className="h-11 sm:h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 font-medium text-sm text-gray-900"
                     onClick={() => setStatisticsModalOpen(true)}
                   >
                     Estadísticas
@@ -2205,8 +2204,8 @@ const ProfilePage = () => {
                     )}
                   </Button>
                   <Button 
-                    variant="outline" 
-                    className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
+                    variant="ghost" 
+                    className="h-11 sm:h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 font-medium text-sm text-gray-900"
                     onClick={() => {
                       // LÓGICA SIMPLIFICADA PARA MÓVIL
                       
@@ -2248,7 +2247,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Línea separadora sutil */}
-            <div className="w-full h-px bg-gray-100 max-w-sm mx-auto"></div>
+            <div className="w-12 h-1 bg-gray-100 rounded-full max-w-sm mx-auto"></div>
 
             </div>{/* Close profileHeaderSectionRef wrapper */}
 
@@ -2256,10 +2255,10 @@ const ProfilePage = () => {
 
           {/* Mensaje de solicitud pendiente - Diseño según imagen de referencia */}
           {followRequestPending && !isOwnProfile && (
-            <div className="px-6 py-12">
-              <div className="max-w-md mx-auto text-center space-y-3">
-                <h2 className="text-2xl font-bold text-gray-900">Invitación enviada</h2>
-                <p className="text-base text-gray-600 leading-relaxed">
+            <div className="px-4 py-8">
+              <div className="max-w-sm mx-auto p-6 rounded-2xl bg-gray-50 text-center space-y-2">
+                <h2 className="text-base font-semibold text-gray-900">Invitación enviada</h2>
+                <p className="text-sm text-gray-400 leading-relaxed">
                   Podrás enviar más mensajes cuando se acepte tu invitación.
                 </p>
               </div>
@@ -2326,13 +2325,13 @@ const ProfilePage = () => {
               <div className="mt-0 relative z-0 overflow-hidden">
                 <TabsContent value="polls" className="mt-0">
                   {polls.length === 0 && (!isOwnProfile || activeUploads.length === 0) ? (
-                    <div className="text-center py-16 space-y-6 px-1 sm:px-2">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                        <LayoutDashboard className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+                    <div className="text-center py-16 space-y-4 px-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                        <LayoutDashboard className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-900">Sin publicaciones aún</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-gray-900">Sin publicaciones aún</h3>
+                        <p className="text-gray-400 text-sm">
                           Empieza a crear contenido
                         </p>
                       </div>
@@ -2357,13 +2356,13 @@ const ProfilePage = () => {
                         <span className="ml-3 text-gray-600">Cargando likes...</span>
                       </div>
                     ) : likedPolls.length === 0 ? (
-                      <div className="text-center py-16 space-y-6 px-1 sm:px-2">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                          <Heart className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+                      <div className="text-center py-16 space-y-4 px-4">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                          <Heart className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                         </div>
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-semibold text-gray-900">Sin favoritos aún</h3>
-                          <p className="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
+                        <div className="space-y-1">
+                          <h3 className="text-base font-semibold text-gray-900">Sin favoritos aún</h3>
+                          <p className="text-gray-400 text-sm">
                             Las publicaciones que ames aparecerán aquí
                           </p>
                         </div>
@@ -2388,12 +2387,12 @@ const ProfilePage = () => {
                       <span className="ml-3 text-gray-600">Cargando menciones...</span>
                     </div>
                   ) : mentionedPolls.length === 0 ? (
-                    <div className="text-center py-16 space-y-6 px-1 sm:px-2">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                        <UserCircle className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+                    <div className="text-center py-16 space-y-4 px-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                        <UserCircle className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-900">Sin menciones</h3>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-gray-900">Sin menciones</h3>
                       </div>
                     </div>
                   ) : (
