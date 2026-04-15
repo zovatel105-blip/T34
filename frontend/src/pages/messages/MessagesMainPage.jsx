@@ -1125,27 +1125,27 @@ const MessagesMainPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black">
+    <div className="flex flex-col h-screen bg-white">
       {!showChat ? (
         <>
           {/* Header */}
-          <div className="flex-shrink-0 bg-black px-4 py-3">
+          <div className="flex-shrink-0 bg-white px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Inbox className="h-6 w-6 text-indigo-400 mr-2" />
-                <h1 className="text-xl font-semibold text-white">Inbox</h1>
+                <h1 className="text-xl font-semibold text-gray-900">Inbox</h1>
               </div>
               <button 
                 onClick={() => setShowNewChatModal(true)}
-                className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <Plus className="h-5 w-5 text-zinc-400" />
+                <Plus className="h-5 w-5 text-gray-600" />
               </button>
             </div>
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-black px-4 py-3">
+          <div className="flex-shrink-0 bg-white px-4 py-3">
             <div className="flex items-center space-x-2">
               {/* Navigation to other pages */}
               <button
@@ -1190,20 +1190,20 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto bg-black">
+          <div className="flex-1 overflow-y-auto bg-white">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
               </div>
             ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6 bg-black">
+              <div className="flex flex-col items-center justify-center h-full text-center px-6 bg-white">
                 <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
                   <MessageCircle className="h-8 w-8 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Mensajes
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-gray-500">
                   Tus conversaciones aparecerán aquí. Busca usuarios para iniciar nuevos chats
                 </p>
               </div>
