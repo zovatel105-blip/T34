@@ -39,7 +39,6 @@ const PostDetailModal = ({
   const scrollRef = useRef(null);
 
   const handleTouchStart = (e) => {
-    // Solo permitir drag si el scroll está arriba del todo
     const scrollEl = scrollRef.current;
     if (scrollEl && scrollEl.scrollTop > 0) return;
     dragStartY.current = e.touches[0].clientY;
@@ -56,7 +55,6 @@ const PostDetailModal = ({
       currentTranslateY.current = deltaY;
       if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
     } else {
-      // User is scrolling up, cancel drag
       isDragging.current = false;
       if (sheetRef.current) {
         sheetRef.current.style.transition = 'transform 0.2s ease-out';
@@ -134,7 +132,7 @@ const PostDetailModal = ({
           {/* Bottom Sheet */}
           <motion.div
             ref={sheetRef}
-            className="relative z-10 bg-zinc-900 rounded-t-3xl w-full max-h-[80vh] flex flex-col"
+            className="relative z-10 bg-white rounded-t-3xl w-full max-h-[80vh] flex flex-col shadow-2xl"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -147,7 +145,7 @@ const PostDetailModal = ({
             <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
             >
-              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
             
             {/* Scrollable Content */}
@@ -155,17 +153,20 @@ const PostDetailModal = ({
               {/* Post Header */}
               <div className="px-4 pt-2 pb-4">
                 {/* Author */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 mb-4">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={authorAvatar} className="object-cover" />
-                    <AvatarFallback className="bg-white text-gray-600">
+                    <AvatarFallback className="bg-white text-gray-400 shadow-sm">
                       <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
                   
-                  <span className="text-white font-bold text-base flex-1">
-                    {authorUsername}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-gray-900 font-semibold text-sm">
+                      {authorUsername}
+                    </span>
+                    <p className="text-xs text-gray-400">{formatDate()}</p>
+                  </div>
                   
                   {!isFollowing && onFollow && (
                     <button
@@ -182,18 +183,10 @@ const PostDetailModal = ({
                 </div>
 
                 {/* Post Title */}
-                <p className="text-white text-base leading-relaxed mb-3">
+                <p className="text-gray-900 text-sm leading-relaxed">
                   {poll.title}
                 </p>
-
-                {/* Date */}
-                <p className="text-zinc-500 text-sm">
-                  {formatDate()}
-                </p>
               </div>
-
-              {/* Separator */}
-              <div className="border-t border-zinc-800" />
 
               {/* Comments */}
               <div>
@@ -203,13 +196,15 @@ const PostDetailModal = ({
                     isVisible={isOpen}
                     maxHeight="100%"
                     showHeader={false}
-                    darkMode={true}
+                    darkMode={false}
                   />
                 ) : (
                   <div className="flex items-center justify-center p-8">
-                    <p className="text-zinc-500 text-center text-sm">
-                      Los comentarios están desactivados
-                    </p>
+                    <div className="p-4 rounded-2xl bg-gray-50 text-center">
+                      <p className="text-gray-400 text-sm">
+                        Los comentarios están desactivados
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
