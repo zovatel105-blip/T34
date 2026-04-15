@@ -289,12 +289,12 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
           {/* Input oculto removido - ahora se usa CircularCrop */}
 
           {/* Formulario principal */}
-          <div className="px-6 py-8 space-y-10">
+          <div className="px-5 py-6 flex flex-col gap-3">
             
             {/* Nombre */}
-            <div>
-              <label className="block text-base font-medium text-gray-900 mb-4">
-                ¿Cómo te llamas?
+            <div className="p-4 rounded-2xl bg-gray-50">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Nombre
               </label>
               <input
                 type="text"
@@ -302,53 +302,48 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
                 onChange={(e) => handleChange('display_name', e.target.value)}
                 placeholder="Tu nombre completo"
                 maxLength={50}
-                className="w-full text-xl font-medium text-gray-900 placeholder-gray-400 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-colors duration-200 pb-4"
+                className="w-full text-base font-medium text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none"
               />
-              <div className="flex justify-between items-center mt-3">
-                <p className="text-sm text-gray-500">Así te verán otros usuarios</p>
-                <p className="text-sm text-gray-400">{formData.display_name.length}/50</p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-400">Así te verán otros usuarios</p>
+                <p className="text-xs text-gray-300">{formData.display_name.length}/50</p>
               </div>
             </div>
 
             {/* Biografía */}
-            <div>
-              <label className="block text-base font-medium text-gray-900 mb-4">
-                Cuéntanos tu historia
+            <div className="p-4 rounded-2xl bg-gray-50">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Biografía
               </label>
-              <div className="relative">
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => handleChange('bio', e.target.value)}
-                  placeholder="¿Qué te apasiona? ¿Qué haces? ¿Qué te hace único? Comparte lo que quieras que otros sepan sobre ti..."
-                  maxLength={160}
-                  rows={5}
-                  className="w-full text-gray-900 placeholder-gray-400 bg-gray-50 hover:bg-gray-100 focus:bg-white border-0 rounded-3xl p-6 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 resize-none text-base leading-relaxed"
-                />
-                <div className="absolute bottom-4 right-5 text-sm text-gray-400 bg-white/80 px-2 py-1 rounded-full">
-                  {formData.bio.length}/160
-                </div>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => handleChange('bio', e.target.value)}
+                placeholder="¿Qué te apasiona? Comparte lo que quieras..."
+                maxLength={160}
+                rows={4}
+                className="w-full text-base text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none resize-none leading-relaxed"
+              />
+              <div className="flex justify-end mt-1">
+                <p className="text-xs text-gray-300">{formData.bio.length}/160</p>
               </div>
-              <p className="text-sm text-gray-500 mt-3">
-                Sé auténtico. La mejor biografía es la que realmente te representa.
-              </p>
             </div>
 
             {/* Ocupación */}
-            <div>
-              <label className="block text-base font-medium text-gray-900 mb-4">
-                ¿A qué te dedicas?
+            <div className="p-4 rounded-2xl bg-gray-50">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Ocupación
               </label>
               <input
                 type="text"
                 value={formData.occupation}
                 onChange={(e) => handleChange('occupation', e.target.value)}
-                placeholder="Estudiante, Diseñador, Músico, Chef..."
+                placeholder="Estudiante, Diseñador, Músico..."
                 maxLength={100}
-                className="w-full text-xl font-medium text-gray-900 placeholder-gray-400 bg-transparent border-0 border-b-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-colors duration-200 pb-4"
+                className="w-full text-base font-medium text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none"
               />
-              <div className="flex justify-between items-center mt-3">
-                <p className="text-sm text-gray-500">Campo opcional</p>
-                <p className="text-sm text-gray-400">{formData.occupation.length}/100</p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-400">Campo opcional</p>
+                <p className="text-xs text-gray-300">{formData.occupation.length}/100</p>
               </div>
             </div>
 
