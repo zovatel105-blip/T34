@@ -1150,7 +1150,7 @@ const MessagesMainPage = () => {
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
+                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
               >
                 <Users className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Nuevos</span>
@@ -1161,7 +1161,7 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
+                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
               >
                 <Bell className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Actividad</span>
@@ -1172,7 +1172,7 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
+                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
               >
                 <MessageCircle className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Solicitudes</span>
