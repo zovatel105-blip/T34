@@ -1145,36 +1145,39 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-4">
+          <div className="flex-shrink-0 bg-white px-4 py-3">
+            <div className="flex items-center gap-2">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
               >
-                Nuevos
+                <Users className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
-                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
               >
-                Actividad
+                <Bell className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
-                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
               >
-                Solicitudes
+                <MessageCircle className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Solicitudes</span>
                 {getSegmentBadgeCount('messages') && (
-                  <span className="absolute -top-2 -right-3 w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
             </div>
