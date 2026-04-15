@@ -1125,35 +1125,35 @@ const MessagesMainPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-black">
       {!showChat ? (
         <>
           {/* Header */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
+          <div className="flex-shrink-0 bg-black px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <Inbox className="h-6 w-6 text-blue-500 mr-2" />
-                <h1 className="text-xl font-semibold text-gray-900">Inbox</h1>
+                <Inbox className="h-6 w-6 text-indigo-400 mr-2" />
+                <h1 className="text-xl font-semibold text-white">Inbox</h1>
               </div>
               <button 
                 onClick={() => setShowNewChatModal(true)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
               >
-                <Plus className="h-5 w-5 text-gray-600" />
+                <Plus className="h-5 w-5 text-zinc-400" />
               </button>
             </div>
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
-            <div className="flex items-center space-x-1">
+          <div className="flex-shrink-0 bg-black px-4 py-3">
+            <div className="flex items-center space-x-2">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
               >
-                <Users className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Nuevos</span>
+                <Users className="w-4 h-4 text-zinc-400" />
+                <span className="text-sm font-medium text-white">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('followers')}
@@ -1163,10 +1163,10 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
               >
-                <Bell className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Actividad</span>
+                <Bell className="w-4 h-4 text-zinc-400" />
+                <span className="text-sm font-medium text-white">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('activity')}
@@ -1176,10 +1176,10 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
+                className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-full flex items-center space-x-2 transition-colors relative"
               >
-                <MessageCircle className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Solicitud</span>
+                <MessageCircle className="w-4 h-4 text-zinc-400" />
+                <span className="text-sm font-medium text-white">Solicitud</span>
                 {getSegmentBadgeCount('messages') && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10">
                     {getSegmentBadgeCount('messages')}
@@ -1190,25 +1190,25 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-black">
             {loading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
               </div>
             ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6 bg-white">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <MessageCircle className="h-8 w-8 text-blue-500" />
+              <div className="flex flex-col items-center justify-center h-full text-center px-6 bg-black">
+                <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
+                  <MessageCircle className="h-8 w-8 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   Mensajes
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-zinc-400">
                   Tus conversaciones aparecerán aquí. Busca usuarios para iniciar nuevos chats
                 </p>
               </div>
             ) : (
-              <div className="px-4 py-2 flex flex-col gap-2">
+              <div className="px-4 py-2 flex flex-col gap-3">
                 {conversations.map((conversation, index) => {
                   const otherUser = conversation.participants?.find(p => p.id !== user?.id) || conversation.participants?.[0];
                   if (!otherUser) return null;
@@ -1220,11 +1220,11 @@ const MessagesMainPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleConversationClick(conversation)}
-                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 transition-colors"
                       style={{ touchAction: 'manipulation' }}
                     >
                       {/* Avatar */}
-                      <div className="w-12 h-12 rounded-full flex-shrink-0 relative overflow-hidden bg-white shadow-sm">
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 relative overflow-hidden bg-gray-50">
                         {otherUser.avatar_url ? (
                           <>
                             <img 
@@ -1236,12 +1236,12 @@ const MessagesMainPage = () => {
                                 e.target.parentNode.querySelector('.avatar-fallback').style.display = 'flex';
                               }}
                             />
-                            <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
+                            <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center bg-gray-50" style={{ display: 'none' }}>
                               <User className="w-6 h-6 text-gray-400" />
                             </div>
                           </>
                         ) : (
-                          <div className="w-full h-full rounded-full flex items-center justify-center">
+                          <div className="w-full h-full rounded-full flex items-center justify-center bg-gray-50">
                             <User className="w-6 h-6 text-gray-400" />
                           </div>
                         )}
@@ -1250,14 +1250,14 @@ const MessagesMainPage = () => {
                       {/* Content */}
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-sm font-semibold truncate text-gray-900">
+                          <span className="text-sm font-semibold truncate text-white">
                             {otherUser.display_name || otherUser.username || 'Usuario'}
                           </span>
-                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                          <span className="text-xs text-zinc-500 ml-2 flex-shrink-0">
                             {formatTimeForInbox(conversation.last_message_at || conversation.created_at)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-zinc-400 truncate">
                           {conversation.isPending 
                             ? 'Solicitud de chat enviada' 
                             : conversation.last_message || 'Iniciar conversación'
@@ -1272,8 +1272,8 @@ const MessagesMainPage = () => {
                       
                       {/* Pending Badge */}
                       {conversation.isPending && (
-                        <div className="min-w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-gray-200">
-                          <span className="text-[10px] text-gray-500 font-bold px-1.5">P</span>
+                        <div className="min-w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 bg-zinc-700 border border-zinc-600">
+                          <span className="text-[10px] text-zinc-300 font-bold px-1.5">P</span>
                         </div>
                       )}
                     </motion.button>
