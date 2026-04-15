@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Swords, Plus, Inbox, User, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Trophy } from 'lucide-react';
+import { Home, Swords, Plus, Inbox, User, Users, ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, Trophy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import AppConfig from '../config/config';
@@ -464,37 +464,62 @@ const ActiveChallengesPage = () => {
             <p>Cargando challenges...</p>
           </div>
         ) : (
-          <div className="text-center px-6">
-            {/* Primer trofeo grande */}
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
-              <Trophy className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+          <div className="px-4 pt-8">
+            {/* Header con ícono principal */}
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
+                <Trophy className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+              </div>
+              <h2 className="font-semibold text-white text-base mb-2">Challenge</h2>
+              <p className="text-sm text-zinc-400">
+                No tienes challenges activos
+              </p>
             </div>
-            
-            {/* Título */}
-            <h2 className="font-semibold text-white text-base mb-2">Challenge</h2>
-            
-            {/* Texto participantes */}
-            <p className="text-sm text-zinc-400 mb-6">
-              0 de 0 participantes listos
-            </p>
-            
-            {/* Segundo trofeo pequeño */}
-            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-zinc-800/50 flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-zinc-500" strokeWidth={1.5} />
+
+            {/* Opciones estilo "Tu historia" */}
+            <div className="flex flex-col gap-3 pb-8">
+              {/* Opción: Crear Challenge */}
+              <button
+                onClick={() => navigate('/new')}
+                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-5 h-5 text-yellow-400" strokeWidth={1.5} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-semibold text-white text-sm">Crear un Challenge</p>
+                  <p className="text-xs text-zinc-400">Crea un nuevo desafío para tus amigos</p>
+                </div>
+              </button>
+
+              {/* Opción: Mis Challenges */}
+              <button
+                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors opacity-60"
+                disabled
+              >
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5 text-purple-400" strokeWidth={1.5} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-semibold text-white text-sm">Mis Challenges</p>
+                  <p className="text-xs text-zinc-400">0 de 0 participantes listos</p>
+                </div>
+              </button>
+
+              {/* Opción: Invitaciones Pendientes */}
+              <button
+                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors opacity-60"
+                disabled
+              >
+                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                  <Users className="w-5 h-5 text-indigo-400" strokeWidth={1.5} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-semibold text-white text-sm">Invitaciones</p>
+                  <p className="text-xs text-zinc-400">No tienes invitaciones pendientes</p>
+                </div>
+              </button>
             </div>
-            
-            {/* Texto no hay challenges */}
-            <p className="text-sm text-zinc-400 mb-6">
-              No tienes challenges activos
-            </p>
-            
-            {/* Botón crear challenge */}
-            <button 
-              onClick={() => navigate('/new')}
-              className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
-            >
-              Crear un Challenge
-            </button>
           </div>
         )}
       </div>
