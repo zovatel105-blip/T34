@@ -169,24 +169,24 @@ const ChallengeCreationPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-zinc-900 overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+      <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="text-white hover:text-zinc-300 transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-white text-lg font-bold">Crear Challenge</h1>
+        <h1 className="text-white text-base font-semibold">Crear Challenge</h1>
         <button
           onClick={handleCreateChallenge}
           disabled={creating || selectedUsers.length < 1 || !description.trim()}
           className={cn(
-            "px-4 py-2 rounded-lg font-semibold transition-all",
+            "px-4 py-2 rounded-full text-sm font-semibold transition-all",
             creating || selectedUsers.length < 1 || !description.trim()
-              ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:shadow-lg"
+              ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+              : "bg-yellow-500 text-black hover:bg-yellow-400"
           )}
         >
           {creating ? 'Creando...' : 'Crear'}
@@ -195,11 +195,10 @@ const ChallengeCreationPage = () => {
 
       {/* Contenido */}
       <div className="flex-1 overflow-y-auto pb-20">
-        {/* Formulario */}
-        <div className="px-4 py-6 space-y-6">
+        <div className="px-4 py-4 flex flex-col gap-4">
           {/* Descripción */}
-          <div>
-            <label className="block text-white font-semibold mb-2">
+          <div className="rounded-2xl bg-zinc-800 p-4">
+            <label className="block text-white font-semibold text-sm mb-2">
               Descripción del Challenge *
             </label>
             <textarea
@@ -208,28 +207,28 @@ const ChallengeCreationPage = () => {
               placeholder="Describe el reto..."
               maxLength={300}
               rows={3}
-              className="w-full bg-zinc-900 text-white px-4 py-3 rounded-lg border border-zinc-700 focus:border-yellow-500 focus:outline-none transition-colors resize-none"
+              className="w-full bg-zinc-700/50 text-white px-4 py-3 rounded-xl focus:ring-1 focus:ring-yellow-500/50 focus:outline-none transition-colors resize-none placeholder-zinc-500 text-sm"
             />
-            <p className="text-zinc-500 text-xs mt-1">
-              {description.length}/300 caracteres
+            <p className="text-zinc-500 text-xs mt-2 text-right">
+              {description.length}/300
             </p>
           </div>
 
           {/* Tipo de challenge */}
-          <div>
-            <label className="block text-white font-semibold mb-2">
+          <div className="rounded-2xl bg-zinc-800 p-4">
+            <label className="block text-white font-semibold text-sm mb-3">
               Categoría (Opcional)
             </label>
             <div className="grid grid-cols-3 gap-2">
               {['Baile', 'Arte', 'Cocina', 'Música', 'Deporte', 'Otro'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => setChallengeType(type.toLowerCase())}
+                  onClick={() => setChallengeType(challengeType === type.toLowerCase() ? '' : type.toLowerCase())}
                   className={cn(
-                    "py-2 px-3 rounded-lg text-sm font-medium transition-all",
+                    "py-2.5 px-3 rounded-xl text-sm font-medium transition-all",
                     challengeType === type.toLowerCase()
                       ? "bg-yellow-500 text-black"
-                      : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                      : "bg-zinc-700/50 text-zinc-300 hover:bg-zinc-700"
                   )}
                 >
                   {type}
@@ -239,38 +238,41 @@ const ChallengeCreationPage = () => {
           </div>
 
           {/* Participantes seleccionados */}
-          <div>
-            <label className="block text-white font-semibold mb-2 flex items-center justify-between">
-              <span>Participantes * ({selectedUsers.length}/5)</span>
+          <div className="rounded-2xl bg-zinc-800 p-4">
+            <label className="flex items-center justify-between mb-3">
+              <span className="text-white font-semibold text-sm flex items-center gap-2">
+                <Users className="w-4 h-4 text-zinc-400" />
+                Invitar Participantes * ({selectedUsers.length}/5)
+              </span>
               {selectedUsers.length >= 5 && (
-                <span className="text-yellow-500 text-xs">Límite alcanzado</span>
+                <span className="text-yellow-500 text-xs">Límite</span>
               )}
             </label>
 
             {selectedUsers.length > 0 && (
-              <div className="space-y-2 mb-3">
+              <div className="flex flex-col gap-2 mb-3">
                 {selectedUsers.map((selectedUser) => (
                   <div
                     key={selectedUser.id}
-                    className="flex items-center justify-between bg-zinc-900 p-3 rounded-lg"
+                    className="flex items-center justify-between bg-zinc-700/50 p-3 rounded-xl"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
-                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                          {selectedUser.display_name?.[0]?.toUpperCase() || selectedUser.username?.[0]?.toUpperCase() || 'U'}
+                        <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
+                          <Users className="w-4 h-4" />
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-white font-medium">{selectedUser.display_name || selectedUser.username}</p>
-                        <p className="text-zinc-500 text-sm">@{selectedUser.username}</p>
+                        <p className="text-white font-semibold text-sm">{selectedUser.display_name || selectedUser.username}</p>
+                        <p className="text-zinc-400 text-xs">@{selectedUser.username}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemoveUser(selectedUser.id)}
-                      className="text-red-500 hover:text-red-400 transition-colors"
+                      className="w-7 h-7 rounded-full bg-zinc-600/50 flex items-center justify-center hover:bg-red-500/20 transition-colors"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4 text-zinc-400 hover:text-red-400" />
                     </button>
                   </div>
                 ))}
@@ -280,54 +282,53 @@ const ChallengeCreationPage = () => {
             {/* Buscador de usuarios */}
             {selectedUsers.length < 5 && (
               <div className="relative">
-                <div className="flex items-center gap-2 bg-zinc-900 px-4 py-3 rounded-lg border border-zinc-700 focus-within:border-yellow-500 transition-colors">
+                <div className="flex items-center gap-2 bg-zinc-700/50 px-4 py-3 rounded-xl focus-within:ring-1 focus-within:ring-yellow-500/50 transition-all">
                   <Search className="w-5 h-5 text-zinc-500" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Escribe al menos 2 caracteres..."
-                    className="flex-1 bg-transparent text-white placeholder-zinc-500 focus:outline-none"
+                    className="flex-1 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-sm"
                   />
                   {searching && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500" />
                   )}
                 </div>
                 
-                {/* Ayuda para el usuario */}
                 {searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
-                  <p className="text-zinc-500 text-xs mt-1">Escribe al menos 2 caracteres para buscar</p>
+                  <p className="text-zinc-500 text-xs mt-2">Escribe al menos 2 caracteres para buscar</p>
                 )}
 
                 {/* Resultados de búsqueda */}
                 {searchQuery.trim().length >= 2 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700 rounded-lg max-h-60 overflow-y-auto z-[100] shadow-xl">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 rounded-xl max-h-60 overflow-y-auto z-[100] shadow-2xl border border-zinc-700/50">
                     {searching ? (
                       <div className="p-4 text-center text-zinc-400">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500 mx-auto mb-2" />
-                        Buscando...
+                        <span className="text-sm">Buscando...</span>
                       </div>
                     ) : searchResults.length > 0 ? (
                       searchResults.map((searchUser) => (
                         <button
                           key={searchUser.id}
                           onClick={() => handleSelectUser(searchUser)}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors"
+                          className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700/50 transition-colors"
                         >
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
-                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                              {searchUser.display_name?.[0]?.toUpperCase() || searchUser.username?.[0]?.toUpperCase() || 'U'}
+                            <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
+                              <Users className="w-4 h-4" />
                             </AvatarFallback>
                           </Avatar>
                           <div className="text-left">
-                            <p className="text-white font-medium">{searchUser.display_name || searchUser.username}</p>
-                            <p className="text-zinc-500 text-sm">@{searchUser.username}</p>
+                            <p className="text-white font-semibold text-sm">{searchUser.display_name || searchUser.username}</p>
+                            <p className="text-zinc-400 text-xs">@{searchUser.username}</p>
                           </div>
                         </button>
                       ))
                     ) : (
-                      <div className="p-4 text-center text-zinc-400">
+                      <div className="p-4 text-center text-zinc-500 text-sm">
                         No se encontraron usuarios con "{searchQuery}"
                       </div>
                     )}
@@ -338,12 +339,14 @@ const ChallengeCreationPage = () => {
           </div>
 
           {/* Info */}
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+          <div className="rounded-2xl bg-zinc-800 p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-200">
-                <p className="font-semibold mb-1">¿Cómo funcionan los Challenges?</p>
-                <ul className="space-y-1 text-blue-300">
+              <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <AlertCircle className="w-4 h-4 text-yellow-400" />
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-white text-sm mb-1">¿Cómo funcionan los Challenges?</p>
+                <ul className="space-y-1 text-zinc-400 text-xs">
                   <li>• Los usuarios invitados verán tu challenge en Explore {'>'} Activos</li>
                   <li>• Deben aceptar y crear su propio contenido</li>
                   <li>• Cuando todos completen, se publicará automáticamente</li>
