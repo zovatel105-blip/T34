@@ -700,7 +700,7 @@ const StoryEditPage = () => {
           {!(isTextMode && editingTextIndex !== null) && (
             <button
               onClick={() => navigate(-1)}
-              className="absolute left-4 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
+              className="absolute left-4 w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
               <ArrowLeft className="w-6 h-6 text-white" />
             </button>
@@ -1202,7 +1202,7 @@ const StoryEditPage = () => {
 
             {/* Panel de colores - Solo cuando está editando texto */}
             {isTextMode && editingTextIndex !== null && showColorPicker && (
-              <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-3">
+              <div className="bg-zinc-800/90 backdrop-blur-sm rounded-2xl p-3">
                 <div className="grid grid-cols-8 gap-2 mb-3">
                   {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', 
                     '#ffa500', '#ff69b4', '#8b4513', '#9370db', '#20b2aa', '#ff6347', '#4169e1', '#32cd32'].map((color) => (
@@ -1229,7 +1229,7 @@ const StoryEditPage = () => {
 
             {/* Panel de alineación - Solo cuando está editando texto */}
             {isTextMode && editingTextIndex !== null && showAlignPicker && (
-              <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-3">
+              <div className="bg-zinc-800/90 backdrop-blur-sm rounded-2xl p-3">
                 <div className="flex gap-2 justify-center">
                   {['left', 'center', 'right'].map((align) => (
                     <button
@@ -1241,7 +1241,7 @@ const StoryEditPage = () => {
                       className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                         currentTextAlign === align
                           ? 'bg-white text-black'
-                          : 'bg-white/20 backdrop-blur-sm text-white'
+                          : 'bg-zinc-800/80 backdrop-blur-sm text-white'
                       }`}
                     >
                       {align === 'left' && <AlignLeft className="w-5 h-5" />}
@@ -1262,7 +1262,7 @@ const StoryEditPage = () => {
                 {/* Botón de volver */}
                 <button
                   onClick={() => setShowFilterPicker(false)}
-                  className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all flex-shrink-0"
+                  className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all flex-shrink-0"
                   title="Volver"
                 >
                   <ArrowLeft className="w-5 h-5 text-white" />
@@ -1291,7 +1291,7 @@ const StoryEditPage = () => {
                     className={`flex-shrink-0 px-4 py-2 h-10 rounded-full backdrop-blur-sm transition-all ${
                       selectedFilter === filter.id
                         ? 'bg-white text-black'
-                        : 'bg-black/60 hover:bg-black/70 text-white'
+                        : 'bg-zinc-800/80 hover:bg-zinc-700/80 text-white'
                     }`}
                   >
                     <span className="text-sm font-medium whitespace-nowrap">{filter.name}</span>
@@ -1303,8 +1303,8 @@ const StoryEditPage = () => {
                 {/* Texto "Aa" */}
                 <button
                   onClick={handleTextMode}
-                  className={`w-12 h-12 rounded-full backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all ${
-                    isTextMode ? 'bg-white' : 'bg-black/60'
+                  className={`w-12 h-12 rounded-full backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all ${
+                    isTextMode ? 'bg-white' : 'bg-zinc-800/80'
                   }`}
                   title="Añadir texto"
                 >
@@ -1314,7 +1314,7 @@ const StoryEditPage = () => {
                 {/* GIFs y Emojis */}
                 <button
                   onClick={() => setShowGifEmojiPicker(!showGifEmojiPicker)}
-                  className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
                   title="GIFs y Emojis"
                 >
                   <Smile className="w-5 h-5 text-white" />
@@ -1323,7 +1323,7 @@ const StoryEditPage = () => {
                 {/* Filtros */}
                 <button
                   onClick={() => setShowFilterPicker(!showFilterPicker)}
-                  className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
                   title="Filtros"
                 >
                   <Sparkles className="w-5 h-5 text-white" />
@@ -1332,7 +1332,7 @@ const StoryEditPage = () => {
                 {/* Música */}
                 <button
                   onClick={() => setShowMusicSelector(true)}
-                  className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
                   title="Añadir música"
                 >
                   <Music className="w-5 h-5 text-white" />
@@ -1341,7 +1341,7 @@ const StoryEditPage = () => {
                 {/* Más opciones */}
                 <button 
                   onClick={() => setShowMoreOptions(!showMoreOptions)}
-                  className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/70 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700/80 flex items-center justify-center transition-all"
                   title="Más opciones"
                 >
                   <MoreHorizontal className="w-5 h-5 text-white" />
