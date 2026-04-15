@@ -1947,7 +1947,7 @@ const ProfilePage = () => {
                     )}
                   </div>
                   <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                    <Cog className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
+                    <Cog className="w-7 h-7 text-gray-700" strokeWidth={1.5} />
                   </Button>
                 </div>
               ) : (
@@ -2146,7 +2146,6 @@ const ProfilePage = () => {
                     className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
                     onClick={() => setEditProfileModalOpen(true)}
                   >
-                    <Settings className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Editar perfil
                   </Button>
                   <Button 
@@ -2154,7 +2153,6 @@ const ProfilePage = () => {
                     className="h-11 sm:h-12 rounded-2xl border-gray-200 hover:bg-gray-50 font-medium text-sm"
                     onClick={() => setStatisticsModalOpen(true)}
                   >
-                    <TrendingUp className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Estadísticas
                   </Button>
                 </>
