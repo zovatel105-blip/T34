@@ -601,8 +601,7 @@ const ContentPublishPage = () => {
       >
         <div className="space-y-1 pb-4">
 
-              {/* Separator line */}
-              <div className="border-t border-zinc-800 mt-8 mb-3"></div>
+              {/* Público objetivo */}
 
               {/* Joining Challenge Info - Shown when joining an existing challenge */}
               {joiningChallengeId && (
