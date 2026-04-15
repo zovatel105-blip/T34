@@ -1202,7 +1202,7 @@ const MessagesMainPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="px-4 py-2 flex flex-col gap-2">
+              <div className="px-2 py-2 flex flex-col gap-2">
                 {conversations.map((conversation, index) => {
                   const otherUser = conversation.participants?.find(p => p.id !== user?.id) || conversation.participants?.[0];
                   if (!otherUser) return null;

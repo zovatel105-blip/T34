@@ -253,7 +253,7 @@ const ActivityPage = () => {
             </p>
           </div>
         ) : (
-          <div className="px-4 py-2 flex flex-col gap-2">
+          <div className="px-2 py-2 flex flex-col gap-2">
             {filteredItems.map(item => renderItem(item))}
           </div>
         )}

@@ -141,7 +141,7 @@ const FollowersPage = () => {
             </p>
           </div>
         ) : (
-          <div className="px-4 py-2 flex flex-col gap-2">
+          <div className="px-2 py-2 flex flex-col gap-2">
             {followers.map(follower => {
               const username = follower.username || follower.display_name || 'Usuario';
               const time = formatTime(follower.followed_at);

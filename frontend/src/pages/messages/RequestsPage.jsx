@@ -127,7 +127,7 @@ const RequestsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="px-4 py-2 flex flex-col gap-2">
+          <div className="px-2 py-2 flex flex-col gap-2">
             {requests.map(request => {
               const username = request.sender?.display_name || request.sender?.username || 'Usuario';
               const time = formatTime(request.created_at);
