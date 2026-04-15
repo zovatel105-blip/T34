@@ -1125,7 +1125,7 @@ const MessagesMainPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-white overflow-x-hidden">
       {!showChat ? (
         <>
           {/* Header */}
@@ -1145,12 +1145,12 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
-            <div className="flex items-center gap-2">
+          <div className="flex-shrink-0 bg-white px-4 py-3 overflow-x-hidden">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
                 <Users className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Nuevos</span>
@@ -1161,7 +1161,7 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
                 <Bell className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Actividad</span>
@@ -1172,7 +1172,7 @@ const MessagesMainPage = () => {
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative"
+                className="bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0"
               >
                 <MessageCircle className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">Solicitudes</span>
@@ -1184,7 +1184,7 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
