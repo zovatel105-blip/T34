@@ -364,7 +364,7 @@ const StoryCapturePage = () => {
           {/* Botón cerrar a la izquierda */}
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
+            className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
           >
             <X className="w-6 h-6 text-white" />
           </button>
@@ -374,7 +374,7 @@ const StoryCapturePage = () => {
             {/* Botón Flash */}
             <button 
               onClick={toggleFlash}
-              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
+              className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
               {flashEnabled ? (
                 <Zap className="w-5 h-5 text-white" />
@@ -386,7 +386,7 @@ const StoryCapturePage = () => {
             {/* Botón Flip Camera */}
             <button 
               onClick={toggleCamera}
-              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
+              className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
             >
               <RotateCw className="w-5 h-5 text-white" />
             </button>
@@ -409,20 +409,20 @@ const StoryCapturePage = () => {
           
           {/* Mensaje de ayuda si hay error de cámara */}
           {cameraError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
               <div className="text-center px-6">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
-                  <Camera className="w-10 h-10 text-gray-400" />
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
+                  <Camera className="w-10 h-10 text-zinc-400" />
                 </div>
                 <h3 className="text-white text-lg font-semibold mb-2">
                   Cámara no disponible
                 </h3>
-                <p className="text-gray-400 text-sm mb-4">
+                <p className="text-zinc-400 text-sm mb-4">
                   {permissionDenied 
                     ? 'Necesitas dar permisos de cámara en tu navegador'
                     : 'No se pudo acceder a la cámara'}
                 </p>
-                <p className="text-gray-500 text-xs mb-6">
+                <p className="text-zinc-500 text-xs mb-6">
                   Puedes usar el botón de galería para subir una foto o video
                 </p>
                 <button
@@ -441,7 +441,7 @@ const StoryCapturePage = () => {
       <div className="absolute bottom-0 left-0 right-0 z-30 pb-8">
         {/* Temporizador encima del círculo cuando está grabando */}
         {isRecording && (
-          <div className="absolute bottom-36 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-full">
+          <div className="absolute bottom-36 left-1/2 transform -translate-x-1/2 bg-zinc-800/90 backdrop-blur-sm px-4 py-2 rounded-full">
             <div className="text-white font-mono text-base font-semibold">
               {formatTime(recordingTime)}
             </div>
