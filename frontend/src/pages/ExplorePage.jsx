@@ -79,7 +79,7 @@ const ExplorePage = () => {
             saves_count: challenge.saves_count || 0,
             userLiked: challenge.user_liked || false,
             isSaved: challenge.is_saved || false,
-            userCommented: false,
+            userCommented: challenge.user_commented || false,
             comments_enabled: true,
             created_at: challenge.published_at || challenge.created_at,
             userVote: challenge.user_vote_participant_id || null,

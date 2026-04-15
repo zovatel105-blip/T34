@@ -6164,6 +6164,14 @@ async def get_ultra_fast_feed(
         user_saves = await user_saves_cursor.to_list(len(poll_ids))
         saved_poll_ids = set(save["poll_id"] for save in user_saves)
         
+        # 💬 Batch lookup: user commented polls
+        user_comments_pipeline = [
+            {"$match": {"poll_id": {"$in": poll_ids}, "user_id": current_user.id}},
+            {"$group": {"_id": "$poll_id"}}
+        ]
+        user_comments_agg = await db.comments.aggregate(user_comments_pipeline).to_list(len(poll_ids))
+        commented_poll_ids = set(doc["_id"] for doc in user_comments_agg)
+        
         # 🏷️ Batch lookup: Resolve all mentioned user IDs across all options
         all_mentioned_ids = set()
         for poll_data in polls:
@@ -6253,6 +6261,7 @@ async def get_ultra_fast_feed(
                     "userVote": user_votes_dict.get(poll_data.get("id")),
                     "userLiked": poll_data.get("id") in liked_poll_ids,
                     "isSaved": poll_data.get("id") in saved_poll_ids,
+                    "userCommented": poll_data.get("id") in commented_poll_ids,
                     # Post settings - Include from database
                     "comments_enabled": poll_data.get("comments_enabled", True),
                     "show_vote_count": poll_data.get("show_vote_count", True),
@@ -6402,6 +6411,13 @@ async def get_ultra_fast_feed(
                 })
                 challenge_response["isSaved"] = user_save is not None
                 challenge_response["saves_count"] = challenge.get("saves_count", 0)
+                
+                # Check if commented
+                user_comment = await db.comments.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                challenge_response["userCommented"] = user_comment is not None
             
             # Fetch fresh user data for participants
             participant_user_ids = [
@@ -11132,6 +11148,7 @@ async def get_completed_challenges(
             challenge_feed_id = f"challenge_{challenge.get('id')}"
             user_liked = False
             is_saved = False
+            user_commented = False
             if current_user:
                 user_like = await db.poll_likes.find_one({
                     "poll_id": challenge_feed_id,
@@ -11144,6 +11161,12 @@ async def get_completed_challenges(
                     "user_id": current_user.id
                 })
                 is_saved = user_save is not None
+                
+                user_comment = await db.comments.find_one({
+                    "poll_id": challenge_feed_id,
+                    "user_id": current_user.id
+                })
+                user_commented = user_comment is not None
             
             response = {
                 "id": challenge.get("id"),
@@ -11171,7 +11194,8 @@ async def get_completed_challenges(
                 "comments_count": challenge.get("comments_count", 0),
                 "saves_count": challenge.get("saves_count", 0),
                 "user_liked": user_liked,
-                "is_saved": is_saved
+                "is_saved": is_saved,
+                "user_commented": user_commented
             }
             responses.append(response)
         
