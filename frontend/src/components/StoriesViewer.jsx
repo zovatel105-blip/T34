@@ -332,7 +332,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
                   />
                 ) : null}
                 <div 
-                  className="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600"
+                  className="w-full h-full rounded-full bg-gray-50 flex items-center justify-center text-gray-400"
                   style={{ display: (currentGroup.user.avatar_url || currentGroup.user.profile_picture || currentGroup.user.avatar) ? 'none' : 'flex' }}
                 >
                   <User className="w-4 h-4" />

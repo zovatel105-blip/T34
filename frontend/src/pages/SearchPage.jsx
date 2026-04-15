@@ -1483,7 +1483,7 @@ const SearchPage = () => {
                     <div className="flex items-center space-x-1 flex-1 min-w-0">
                       {/* Avatar */}
                       <div 
-                        className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
+                        className="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           const username = result.username || result.author?.username || result.author_username;

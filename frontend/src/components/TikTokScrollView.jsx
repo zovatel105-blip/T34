@@ -712,7 +712,7 @@ const TikTokPollCard = ({
                           src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
                           className="object-cover" 
                         />
-                        <AvatarFallback className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center">
+                        <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                           <User className="w-4 h-4" />
                         </AvatarFallback>
                       </Avatar>

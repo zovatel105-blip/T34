@@ -468,7 +468,7 @@ const CommentSection = ({
           <div className="flex items-center gap-3 px-4 pb-4 pt-2">
             <Avatar className="w-8 h-8 flex-shrink-0">
               <AvatarImage src={user.avatar_url} alt={user.username} />
-              <AvatarFallback className={`flex items-center justify-center ${darkMode ? 'bg-white text-gray-600' : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600'}`}>
+              <AvatarFallback className={`flex items-center justify-center ${darkMode ? 'bg-white text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
                 <User className="w-4 h-4" />
               </AvatarFallback>
             </Avatar>

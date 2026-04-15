@@ -226,7 +226,7 @@ const UserMentionInput = ({
                   onClick={() => handleMentionSelect(user)}
                   className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">

@@ -792,7 +792,7 @@ const FollowingPage = () => {
                             />
                           ) : null}
                           <div 
-                            className={`w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 ${story.userAvatar ? 'hidden' : 'flex'}`}
+                            className={`w-full h-full rounded-full bg-gray-50 flex items-center justify-center text-gray-400 ${story.userAvatar ? 'hidden' : 'flex'}`}
                             style={{ display: story.userAvatar ? 'none' : 'flex' }}
                           >
                             <User className="w-4 h-4" />
