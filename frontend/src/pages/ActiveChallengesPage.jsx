@@ -464,20 +464,52 @@ const ActiveChallengesPage = () => {
             <p>Cargando challenges...</p>
           </div>
         ) : (
-          <div className="text-center px-6">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-zinc-800 flex items-center justify-center">
-              <Trophy className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+          /* Modal tipo bottom sheet estilo "Tu historia" */
+          <div className="fixed inset-0 z-50 flex items-end justify-center">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/70 backdrop-blur-md"
+              onClick={() => navigate(-1)}
+            />
+            
+            {/* Modal Container */}
+            <div className="relative bg-zinc-900 w-full rounded-t-3xl shadow-2xl">
+              {/* Handle */}
+              <div className="w-full pt-3 pb-1 flex justify-center">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="px-4 py-3 flex items-center justify-center">
+                <h2 className="font-semibold text-white text-base">Challenge</h2>
+              </div>
+
+              {/* Ícono y texto central */}
+              <div className="px-4 pb-4 text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center">
+                  <Trophy className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+                </div>
+                <p className="text-sm text-zinc-400 mb-6">
+                  0 de 0 participantes listos
+                </p>
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-zinc-800/50 flex items-center justify-center">
+                  <Trophy className="w-8 h-8 text-zinc-500" strokeWidth={1.5} />
+                </div>
+                <p className="text-sm text-zinc-400 mb-6">
+                  No tienes challenges activos
+                </p>
+              </div>
+
+              {/* Botón de acción */}
+              <div className="px-4 pb-8">
+                <button 
+                  onClick={() => navigate('/new')}
+                  className="w-full py-3.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
+                >
+                  Crear un Challenge
+                </button>
+              </div>
             </div>
-            <h3 className="text-white text-xl font-semibold mb-2">Challenge</h3>
-            <p className="text-zinc-400 text-sm mb-6">
-              No tienes challenges activos
-            </p>
-            <button 
-              onClick={() => navigate('/new')}
-              className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-full text-white font-semibold text-sm transition-all shadow-lg"
-            >
-              Crear un Challenge
-            </button>
           </div>
         )}
       </div>
