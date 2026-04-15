@@ -1946,8 +1946,8 @@ const ProfilePage = () => {
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" className="w-10 h-10 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                    <Cog className="w-7 h-7 text-gray-700" strokeWidth={1.5} />
+                  <Button variant="ghost" size="sm" className="w-11 h-11 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
+                    <Cog className="w-8 h-8 text-gray-700" strokeWidth={1.5} />
                   </Button>
                 </div>
               ) : (
