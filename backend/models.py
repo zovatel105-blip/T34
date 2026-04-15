@@ -513,6 +513,8 @@ class PollResponse(BaseModel):
     music: Optional[dict] = None  # Información de la música
     user_vote: Optional[str] = None  # ID de la opción votada por el usuario actual
     user_liked: bool = False
+    is_saved: bool = False
+    user_commented: bool = False
     is_featured: bool
     tags: List[str]
     category: Optional[str]

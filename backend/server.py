@@ -6828,6 +6828,22 @@ async def get_following_polls(
     user_likes = await user_likes_cursor.to_list(len(poll_ids))
     liked_poll_ids = set(like["poll_id"] for like in user_likes)
     
+    # 🔖 Batch lookup: saved polls
+    user_saves_cursor = db.saved_polls.find({
+        "poll_id": {"$in": poll_ids},
+        "user_id": current_user.id
+    })
+    user_saves = await user_saves_cursor.to_list(len(poll_ids))
+    saved_poll_ids = set(save["poll_id"] for save in user_saves)
+    
+    # 💬 Batch lookup: user commented polls
+    user_comments_pipeline = [
+        {"$match": {"poll_id": {"$in": poll_ids}, "user_id": current_user.id}},
+        {"$group": {"_id": "$poll_id"}}
+    ]
+    user_comments_agg = await db.comments.aggregate(user_comments_pipeline).to_list(len(poll_ids))
+    commented_poll_ids = set(doc["_id"] for doc in user_comments_agg)
+    
     # 🏷️ Batch resolve: mentioned user IDs to full objects
     all_mentioned_ids = set()
     for poll_data in polls:
@@ -6961,6 +6977,8 @@ async def get_following_polls(
             music=music_info,
             user_vote=user_votes_dict.get(poll_data["id"]),
             user_liked=poll_data["id"] in liked_poll_ids,
+            is_saved=poll_data["id"] in saved_poll_ids,
+            user_commented=poll_data["id"] in commented_poll_ids,
             is_featured=poll_data.get("is_featured", False),
             tags=poll_data.get("tags", []),
             category=poll_data.get("category"),
@@ -7100,19 +7118,45 @@ async def get_following_polls(
                     if p.get("status") == ParticipantStatus.CONTENT_SUBMITTED
                 ]
             
+            # Check user interaction status
+            challenge_feed_id = f"challenge_{challenge.get('id')}"
+            user_liked = False
+            is_saved = False
+            user_commented = False
+            
+            user_like = await db.poll_likes.find_one({
+                "poll_id": challenge_feed_id,
+                "user_id": current_user.id
+            })
+            user_liked = user_like is not None
+            
+            user_save = await db.saved_polls.find_one({
+                "poll_id": challenge_feed_id,
+                "user_id": current_user.id
+            })
+            is_saved = user_save is not None
+            
+            user_comment = await db.comments.find_one({
+                "poll_id": challenge_feed_id,
+                "user_id": current_user.id
+            })
+            user_commented = user_comment is not None
+            
             challenge_response = PollResponse(
                 id=f"challenge_{challenge.get('id')}",
                 title=challenge.get("title", "Challenge"),
                 author=creator,
                 options=challenge_options,
                 total_votes=sum(opt.get("votes", 0) for opt in challenge_options),
-                likes=0,
+                likes=challenge.get("likes_count", 0),
                 shares=0,
-                comments_count=0,
-                saves_count=0,
+                comments_count=challenge.get("comments_count", 0),
+                saves_count=challenge.get("saves_count", 0),
                 music=challenge_music_info,
                 user_vote=user_challenge_vote,
-                user_liked=False,
+                user_liked=user_liked,
+                is_saved=is_saved,
+                user_commented=user_commented,
                 is_featured=False,
                 tags=[],
                 category=None,
