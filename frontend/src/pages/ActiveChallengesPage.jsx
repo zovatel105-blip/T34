@@ -216,9 +216,8 @@ const ActiveChallengesPage = () => {
             <p className="text-sm text-zinc-500 mt-1">No tienes challenges activos</p>
           </div>
 
-          {/* Opciones */}
+          {/* Opción única */}
           <div className="flex flex-col gap-3">
-            {/* Crear Challenge */}
             <button
               onClick={() => navigate('/new')}
               className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] transition-all"
@@ -229,34 +228,6 @@ const ActiveChallengesPage = () => {
               <div className="text-left flex-1 min-w-0">
                 <p className="font-semibold text-white text-sm leading-tight">Crear un Challenge</p>
                 <p className="text-xs text-zinc-400 mt-0.5 leading-tight">Crea un nuevo desafío para tus amigos</p>
-              </div>
-            </button>
-
-            {/* Mis Challenges */}
-            <button
-              className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
-              disabled
-            >
-              <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-                <Trophy className="w-5 h-5 text-purple-400/60" strokeWidth={1.5} />
-              </div>
-              <div className="text-left flex-1 min-w-0">
-                <p className="font-semibold text-zinc-400 text-sm leading-tight">Mis Challenges</p>
-                <p className="text-xs text-zinc-600 mt-0.5 leading-tight">0 de 0 participantes listos</p>
-              </div>
-            </button>
-
-            {/* Invitaciones */}
-            <button
-              className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800/60 transition-colors cursor-default"
-              disabled
-            >
-              <div className="w-10 h-10 rounded-full bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-indigo-400/60" strokeWidth={1.5} />
-              </div>
-              <div className="text-left flex-1 min-w-0">
-                <p className="font-semibold text-zinc-400 text-sm leading-tight">Invitaciones</p>
-                <p className="text-xs text-zinc-600 mt-0.5 leading-tight">No tienes invitaciones pendientes</p>
               </div>
             </button>
           </div>
