@@ -38,11 +38,12 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isContentPublishPage = location.pathname === '/content-publish';
   const isSearchPage = location.pathname === '/search';
   const isMessagesPage = location.pathname.startsWith('/messages');
+  const isSettingsPage = location.pathname === '/settings';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const shouldUseTikTokLayout = (isFeedPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
   
   // Force hide RightSideNavigation on create page, story pages, content publish page, search page, messages page, and other users' profiles
-  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile;
+  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage;
 
   if (shouldUseTikTokLayout) {
     // Mobile TikTok mode - full screen without sidebars
