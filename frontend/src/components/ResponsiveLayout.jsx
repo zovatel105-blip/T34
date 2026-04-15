@@ -38,7 +38,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isContentPublishPage = location.pathname === '/content-publish';
   const isSearchPage = location.pathname === '/search';
   const isMessagesPage = location.pathname.startsWith('/messages');
-  const isSettingsPage = location.pathname === '/settings';
+  const isSettingsPage = location.pathname === '/settings' || location.pathname === '/edit-profile' || location.pathname === '/change-password';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const shouldUseTikTokLayout = (isFeedPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
   

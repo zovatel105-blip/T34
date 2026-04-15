@@ -10,8 +10,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
-import EditProfileModal from '../components/EditProfileModal';
-import ChangePasswordModal from '../components/ChangePasswordModal';
 import voiceService, { VOICE_TYPES } from '../services/voiceService';
 
 const SettingsPage = () => {
@@ -41,10 +39,6 @@ const SettingsPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [savingField, setSavingField] = useState(null);
-  const [modalsOpen, setModalsOpen] = useState({
-    editProfile: false,
-    changePassword: false
-  });
 
   const [voiceSettings, setVoiceSettings] = useState(() => voiceService.getPreferences());
   const [testingVoice, setTestingVoice] = useState(false);
@@ -134,18 +128,6 @@ const SettingsPage = () => {
       description: "Has cerrado sesión exitosamente",
     });
     navigate('/');
-  };
-
-  const handleProfileUpdate = async (updatedUser) => {
-    console.log('Profile updated successfully from settings:', updatedUser);
-  };
-
-  const openModal = (modalName) => {
-    setModalsOpen(prev => ({ ...prev, [modalName]: true }));
-  };
-
-  const closeModal = (modalName) => {
-    setModalsOpen(prev => ({ ...prev, [modalName]: false }));
   };
 
   const handleVoiceTypeChange = (voiceType) => {
@@ -238,14 +220,14 @@ const SettingsPage = () => {
               icon={User}
               title="Editar perfil"
               description="Nombre, foto, biografía"
-              onClick={() => openModal('editProfile')}
+              onClick={() => navigate('/edit-profile')}
               showChevron
             />
             <SettingsItem
               icon={Key}
               title="Cambiar contraseña"
               description="Actualizar contraseña"
-              onClick={() => openModal('changePassword')}
+              onClick={() => navigate('/change-password')}
               showChevron
             />
           </div>
@@ -553,16 +535,6 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      {/* Modales */}
-      <EditProfileModal
-        isOpen={modalsOpen.editProfile}
-        onClose={() => closeModal('editProfile')}
-        onProfileUpdate={handleProfileUpdate}
-      />
-      <ChangePasswordModal
-        isOpen={modalsOpen.changePassword}
-        onClose={() => closeModal('changePassword')}
-      />
     </div>
   );
 };

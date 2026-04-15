@@ -13,6 +13,8 @@ import FollowersPage from './pages/messages/FollowersPage';
 import ActivityPage from './pages/messages/ActivityPage';
 import RequestsPage from './pages/messages/RequestsPage';
 import SettingsPage from './pages/SettingsPage';
+import EditProfilePage from './pages/EditProfilePage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import AudioDetailPage from './pages/AudioDetailPage';
 import SearchPage from './pages/SearchPage';
 import ContentSelectionPage from './pages/ContentSelectionPage';
@@ -150,6 +152,8 @@ function AppContent() {
             <Route path="/profile/:userId?" element={<ProfilePage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/edit-profile" element={<EditProfilePage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
             <Route path="/audio/:audioId" element={<AudioDetailPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/new" element={<Navigate to="/create" replace />} />
