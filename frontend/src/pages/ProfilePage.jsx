@@ -1941,7 +1941,7 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between relative">
                   <div className="w-10"></div>
                   <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
-                    <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
+                    <h1 className="text-lg font-semibold text-gray-900">{displayUser?.username || 'usuario'}</h1>
                     {displayUser?.verified && (
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
@@ -1967,7 +1967,7 @@ const ProfilePage = () => {
                     <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
                   </Button>
                   <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
-                    <h1 className="text-lg font-semibold text-gray-900">@{displayUser?.username || 'usuario'}</h1>
+                    <h1 className="text-lg font-semibold text-gray-900">{displayUser?.username || 'usuario'}</h1>
                     {displayUser?.verified && (
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
@@ -2245,9 +2245,6 @@ const ProfilePage = () => {
                 </>
               )}
             </div>
-
-            {/* Línea separadora sutil */}
-            <div className="w-12 h-1 bg-gray-100 rounded-full max-w-sm mx-auto"></div>
 
             </div>{/* Close profileHeaderSectionRef wrapper */}
 
