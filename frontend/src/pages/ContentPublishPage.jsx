@@ -594,18 +594,12 @@ const ContentPublishPage = () => {
               </div>
             </div>
 
-            {/* Action Items - Mobile Optimized - Full width on mobile - SCROLLABLE */}
+            {/* Action Items - Mobile Optimized - Full width on mobile */}
             <div 
-              className="space-y-1 md:ml-0 md:mr-0 overflow-y-auto scrollable-options" 
+              className="space-y-1 md:ml-0 md:mr-0" 
               style={{ 
                 marginLeft: '-120px', 
-                marginRight: '-12px',
-                maxHeight: 'calc(100vh - 280px)',
-                overscrollBehavior: 'contain',
-                scrollbarWidth: 'none', /* Firefox */
-                msOverflowStyle: 'none', /* IE and Edge */
-                WebkitOverflowScrolling: 'touch', /* Smooth scrolling on iOS */
-                paddingBottom: '100px' /* Space for fixed bottom bar */
+                marginRight: '-12px'
               }}
             >
 
