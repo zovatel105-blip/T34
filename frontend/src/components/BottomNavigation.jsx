@@ -84,10 +84,9 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      {/* Barra negra redondeada estilo TikTok */}
-      <div className="mx-3 mb-2 bg-black rounded-[28px] shadow-2xl">
-        <div className="flex items-center justify-around px-2 py-3">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      {/* Barra fina, ancho completo, pegada abajo */}
+      <div className="flex items-center justify-around px-4 py-2.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path === navItems[0].path ? '/feed' : item.path);
@@ -97,13 +96,13 @@ const BottomNavigation = () => {
                 <button
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className="flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90"
+                  className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90"
                   style={{
                     background: 'transparent',
-                    border: '2px solid rgba(255,255,255,0.35)',
+                    border: '1.5px solid rgba(255,255,255,0.4)',
                   }}
                 >
-                  <Plus className="w-6 h-6 text-white" strokeWidth={2} />
+                  <Plus className="w-5 h-5 text-white" strokeWidth={2} />
                 </button>
               );
             }
@@ -119,14 +118,14 @@ const BottomNavigation = () => {
                   onMouseLeave={handleTouchEnd}
                   onClick={() => !isLongPressing && navigate(item.path)}
                   className={cn(
-                    "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90",
+                    "flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90",
                     isLongPressing && "scale-110 opacity-70"
                   )}
                 >
                   <Icon
                     className={cn(
-                      "w-7 h-7 transition-all duration-200",
-                      active ? "text-white" : "text-white/60"
+                      "w-6 h-6 transition-all duration-200",
+                      active ? "text-white" : "text-white/50"
                     )}
                     strokeWidth={active ? 2.5 : 1.5}
                     fill={active ? "white" : "none"}
@@ -139,25 +138,23 @@ const BottomNavigation = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="relative flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90"
+                className="relative flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90"
               >
                 <Icon
                   className={cn(
-                    "w-7 h-7 transition-all duration-200",
-                    active ? "text-white" : "text-white/60"
+                    "w-6 h-6 transition-all duration-200",
+                    active ? "text-white" : "text-white/50"
                   )}
                   strokeWidth={active ? 2.5 : 1.5}
-                  fill={active ? (item.path === '/messages' ? "none" : "none") : "none"}
                 />
                 {/* Badge de notificaciones */}
                 {item.badge > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-black" />
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
             );
           })}
         </div>
-      </div>
     </nav>
   );
 };

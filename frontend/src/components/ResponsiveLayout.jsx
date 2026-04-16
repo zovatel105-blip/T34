@@ -67,7 +67,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     
     return (
       <div className={`relative h-screen ${backgroundClass}`}>
-        {isBottomNav && isAuthenticated && <div className={isBottomNav ? 'pb-[85px]' : ''}>{children}</div>}
+        {isBottomNav && isAuthenticated && <div className={isBottomNav ? 'pb-[52px]' : ''}>{children}</div>}
         {!isBottomNav && children}
         {/* Navigation */}
         <div className="lg:hidden">
@@ -78,7 +78,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 lg:bg-gray-100 ${isBottomNav && isAuthenticated ? 'pb-[85px]' : ''}`}>
+    <div className={`min-h-screen bg-gray-50 lg:bg-gray-100 ${isBottomNav && isAuthenticated ? 'pb-[52px]' : ''}`}>
       {/* Desktop Sidebar - Hidden on mobile */}
       {isAuthenticated && <DesktopSidebar />}
       
