@@ -617,7 +617,7 @@ const TikTokPollCard = ({
           right: 0,
           bottom: 'auto',
           width: '100%',
-          height: '62vh',
+          height: '59vh',
           borderRadius: '0 0 20px 20px',
           overflow: 'hidden',
           zIndex: 101,
