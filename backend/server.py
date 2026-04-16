@@ -4970,8 +4970,10 @@ async def get_poll_comments(
     
     # Construir estructura anidada
     for comment_data in all_comments:
+        # Eliminar campos que se pasan explícitamente para evitar duplicados
+        clean_data = {k: v for k, v in comment_data.items() if k not in ('user', 'replies', 'reply_count', 'user_liked', '_id')}
         comment_resp = CommentResponse(
-            **comment_data,
+            **clean_data,
             user=users_dict.get(comment_data["user_id"]),
             replies=[],
             reply_count=0,
