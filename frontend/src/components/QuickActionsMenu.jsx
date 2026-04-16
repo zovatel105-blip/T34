@@ -22,12 +22,21 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       strokeWidth="1.3"
       fill="none"
     />
-    {/* Círculo blanco con fondo en esquina inferior derecha */}
+    {/* Máscara para recortar el + del círculo blanco */}
+    <defs>
+      <mask id="plusCutout">
+        <rect width="26" height="26" fill="white" />
+        <line x1="19" y1="17.5" x2="19" y2="23.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="16" y1="20.5" x2="22" y2="20.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
+      </mask>
+    </defs>
+    {/* Círculo blanco con + recortado (transparente) */}
     <circle
       cx="19"
       cy="20.5"
       r="5.5"
       fill="white"
+      mask="url(#plusCutout)"
     />
   </svg>
 );
