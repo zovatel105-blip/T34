@@ -1,19 +1,23 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Swords, Plus, Inbox, User } from 'lucide-react';
+import { Home, Swords, Plus, Inbox, User, Send } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
 import { useAuth } from '../contexts/AuthContext';
 import { useTikTok } from '../contexts/TikTokContext';
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
+import commentService from '../services/commentService';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { hideBottomNav } = useTikTok();
+  const { hideBottomNav, commentInputConfig } = useTikTok();
   const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [currentMode, setCurrentMode] = useState('feed');
+  const commentInputRef = useRef(null);
+  const [submittingComment, setSubmittingComment] = useState(false);
   const longPressTimer = useRef(null);
 
   useEffect(() => {
@@ -53,14 +57,57 @@ const BottomNavigation = () => {
     return location.pathname === path;
   };
 
+  const handleCommentSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    const content = commentInputRef.current?.value?.trim();
+    if (!content || !commentInputConfig?.pollId || submittingComment) return;
+    
+    setSubmittingComment(true);
+    try {
+      await commentService.addComment(commentInputConfig.pollId, content);
+      if (commentInputRef.current) commentInputRef.current.value = '';
+    } catch (error) {
+      // Error silencioso
+    } finally {
+      setSubmittingComment(false);
+    }
+  }, [commentInputConfig, submittingComment]);
+
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-black rounded-t-3xl transition-transform duration-300"
-      style={{ 
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        transform: hideBottomNav ? 'translateY(100%)' : 'translateY(0)',
-      }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-black rounded-t-3xl"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
+      {hideBottomNav && commentInputConfig ? (
+        <form onSubmit={handleCommentSubmit} className="flex items-center gap-2 px-3 py-2">
+          <Avatar className="w-8 h-8 flex-shrink-0">
+            {user?.avatar_url ? (
+              <AvatarImage src={user.avatar_url} alt={user?.username} />
+            ) : null}
+            <AvatarFallback className="bg-zinc-800 text-zinc-400 flex items-center justify-center">
+              <User className="w-4 h-4" />
+            </AvatarFallback>
+          </Avatar>
+          <input
+            ref={commentInputRef}
+            type="text"
+            placeholder="Add comment..."
+            className="flex-1 px-4 py-2 rounded-full text-sm bg-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+            maxLength={500}
+            disabled={submittingComment}
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={submittingComment}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white flex-shrink-0 hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </form>
+      ) : (
       <div className="flex items-center justify-around px-4 py-2.5">
 
         {/* Home - con long press */}
@@ -149,6 +196,7 @@ const BottomNavigation = () => {
         </button>
 
       </div>
+      )}
     </nav>
   );
 };

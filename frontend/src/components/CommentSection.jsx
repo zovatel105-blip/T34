@@ -443,8 +443,8 @@ const CommentSection = ({
         )}
       </div>
       
-      {/* Área de comentario */}
-      {user && (
+      {/* Área de comentario - oculta en bottomSheetMode porque el input está en la barra de navegación */}
+      {user && !bottomSheetMode && (
         <div className={`flex-shrink-0 ${bottomSheetMode ? 'bg-white border-t border-gray-100' : darkMode ? 'bg-transparent' : 'bg-white'}`}>
           {/* Indicador de respuesta */}
           <AnimatePresence>

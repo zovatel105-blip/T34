@@ -19,7 +19,7 @@ const CommentsModal = ({
   const modalRef = useRef(null);
   const scrollRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
-  const { hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar } = useTikTok();
+  const { hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar, setCommentInputConfig } = useTikTok();
   const { isBottomNav } = useNavPreference();
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -124,6 +124,7 @@ const CommentsModal = ({
       document.body.style.overflow = 'hidden';
       if (isBottomSheet) {
         hideBottomNavigationBar();
+        setCommentInputConfig({ pollId });
         didHideNavRef.current = true;
       } else {
         hideRightNavigationBar();
@@ -133,6 +134,7 @@ const CommentsModal = ({
       document.body.style.overflow = 'unset';
       showRightNavigationBar();
       showBottomNavigationBar();
+      setCommentInputConfig(null);
       didHideNavRef.current = false;
     }
 
@@ -142,10 +144,11 @@ const CommentsModal = ({
         document.body.style.overflow = 'unset';
         showRightNavigationBar();
         showBottomNavigationBar();
+        setCommentInputConfig(null);
         didHideNavRef.current = false;
       }
     };
-  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar, isBottomSheet]);
+  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar, setCommentInputConfig, isBottomSheet, pollId]);
 
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {

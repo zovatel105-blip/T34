@@ -14,6 +14,7 @@ export const TikTokProvider = ({ children }) => {
   const [isTikTokMode, setIsTikTokMode] = useState(false);
   const [hideRightNavigation, setHideRightNavigation] = useState(false);
   const [hideBottomNav, setHideBottomNav] = useState(false);
+  const [commentInputConfig, setCommentInputConfig] = useState(null);
 
   const enterTikTokMode = () => {
     setIsTikTokMode(true);
@@ -59,6 +60,8 @@ export const TikTokProvider = ({ children }) => {
         isTikTokMode,
         hideRightNavigation,
         hideBottomNav,
+        commentInputConfig,
+        setCommentInputConfig,
         enterTikTokMode,
         exitTikTokMode,
         toggleTikTokMode,
