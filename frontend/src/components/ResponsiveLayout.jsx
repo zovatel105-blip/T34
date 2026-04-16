@@ -40,14 +40,16 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isStoryPage = location.pathname === '/story-creation' || location.pathname === '/story-edit';
   const isContentPublishPage = location.pathname === '/content-publish';
   const isSearchPage = location.pathname === '/search';
-  const isMessagesPage = location.pathname.startsWith('/messages');
+  const isMessagesPage = location.pathname.startsWith('/messages/');
+  const isMessagesMainPage = location.pathname === '/messages';
+  const isAudioDetailPage = location.pathname.startsWith('/audio/');
   const isSettingsPage = location.pathname === '/settings' || location.pathname === '/edit-profile' || location.pathname === '/change-password';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const isChallengePage = location.pathname.startsWith('/challenges') || location.pathname === '/explore/active';
   const shouldUseTikTokLayout = (isFeedPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
   
   // Force hide RightSideNavigation on create page, story pages, content publish page, search page, messages page, challenges page, and other users' profiles
-  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage;
+  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage;
 
   // Render the appropriate navigation based on user preference
   const renderNavigation = () => {
