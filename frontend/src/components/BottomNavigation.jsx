@@ -70,7 +70,7 @@ const BottomNavigation = () => {
         >
           <Home
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-5 h-5 transition-all duration-200",
               isActive('/feed') ? "text-white" : "text-white/50"
             )}
             strokeWidth={isActive('/feed') ? 2.5 : 1.5}
@@ -85,7 +85,7 @@ const BottomNavigation = () => {
         >
           <Swords
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-5 h-5 transition-all duration-200",
               isActive('/explore') ? "text-white" : "text-white/50"
             )}
             strokeWidth={isActive('/explore') ? 2.5 : 1.5}
@@ -115,7 +115,7 @@ const BottomNavigation = () => {
           >
             <Inbox
               className={cn(
-                "w-6 h-6 transition-all duration-200",
+                "w-5 h-5 transition-all duration-200",
                 isActive('/messages') ? "text-white" : "text-white/50"
               )}
               strokeWidth={isActive('/messages') ? 2.5 : 1.5}
@@ -133,7 +133,7 @@ const BottomNavigation = () => {
         >
           <User
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-5 h-5 transition-all duration-200",
               isActive('/profile') ? "text-white" : "text-white/50"
             )}
             strokeWidth={isActive('/profile') ? 2.5 : 1.5}
