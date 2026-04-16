@@ -344,7 +344,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                           )}
                           style={!voter.is_following ? {backgroundColor: '#B061FF'} : {}}
                         >
-                          {voter.is_following ? 'Siguiendo' : 'Seguir'}
+                          {voter.is_following ? 'Siguiendo' : (voter.follows_me ? 'Seguir también' : 'Seguir')}
                         </Button>
                       )}
                     </div>

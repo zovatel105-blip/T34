@@ -8137,6 +8137,12 @@ async def get_poll_voters(
                     "following_id": user_id
                 }) is not None
                 
+                # Check if this voter follows the current user
+                follows_me = await db.follows.find_one({
+                    "follower_id": user_id,
+                    "following_id": current_user.id
+                }) is not None
+                
                 # Get which option they voted for
                 option_index = vote.get("option_index")
                 option_text = None
@@ -8151,6 +8157,7 @@ async def get_poll_voters(
                     "avatar_url": user.get("avatar_url"),
                     "is_verified": user.get("is_verified", False),
                     "is_following": is_following,
+                    "follows_me": follows_me,
                     "voted_at": vote.get("created_at"),
                     "voted_option": option_text
                 })
