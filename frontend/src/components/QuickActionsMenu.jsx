@@ -69,7 +69,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
         x2="32"
         y2="5"
         stroke="currentColor"
-        strokeWidth="5"
+        strokeWidth="4.2"
         strokeLinecap="round"
       />
       
@@ -80,7 +80,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
         x2="68"
         y2="5"
         stroke="currentColor"
-        strokeWidth="5"
+        strokeWidth="4.2"
         strokeLinecap="round"
       />
       
@@ -88,7 +88,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
       <path
         d="M 20 30 Q 20 20 30 20 L 70 20 Q 80 20 80 30"
         stroke="currentColor"
-        strokeWidth="5"
+        strokeWidth="4.2"
         strokeLinecap="round"
         fill="none"
       />
@@ -97,7 +97,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
       <path
         d="M 20 70 Q 20 80 30 80 L 70 80 Q 80 80 80 70"
         stroke="currentColor"
-        strokeWidth="5"
+        strokeWidth="4.2"
         strokeLinecap="round"
         fill="none"
       />
@@ -343,7 +343,7 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
             >
               <Icon 
                 size={isLiveAction ? 18 : isMomentsAction ? 33 : 33} 
-                strokeWidth={isLiveAction ? 2.5 : 1.2}
+                strokeWidth={isLiveAction ? 1.2 : 1.2}
                 className={`text-white transition-all duration-200 ${
                   isSelected ? 'scale-125' : 'group-hover:scale-110'
                 }`} 
