@@ -64,6 +64,14 @@ const StatCard = ({ icon: Icon, label, value, color = "blue", onClick, clickable
   </Card>
 );
 
+const formatNumber = (num) => {
+  if (num === undefined || num === null || isNaN(num)) return '0';
+  const numValue = Number(num);
+  if (numValue >= 1000000) return `${(numValue / 1000000).toFixed(1)}M`;
+  if (numValue >= 1000) return `${(numValue / 1000).toFixed(1)}K`;
+  return numValue.toString();
+};
+
 const ProfilePage = () => {
   const { activeUploads } = useUpload();
   const [activeTab, setActiveTab] = useState("polls");
@@ -2006,7 +2014,7 @@ const ProfilePage = () => {
                       <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{displayUser?.totalVotes || 0}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(displayUser?.totalVotes || 0)}</p>
                       <p className="text-xs sm:text-sm text-gray-600">Votos</p>
                     </div>
                   </div>
@@ -2019,7 +2027,7 @@ const ProfilePage = () => {
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? (displayUser?.totalLikes || 0) : (displayUser?.likes || 0)}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? (displayUser?.totalLikes || 0) : (displayUser?.likes || 0))}</p>
                       <p className="text-xs sm:text-sm text-gray-600">Me gusta</p>
                     </div>
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 order-2">
@@ -2094,7 +2102,7 @@ const ProfilePage = () => {
                       <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" strokeWidth={1.5} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followersCount : (displayUser?.followers || 0)}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? followersCount : (displayUser?.followers || 0))}</p>
                       <p className="text-xs sm:text-sm text-gray-600">Seguidores</p>
                     </div>
                   </div>
@@ -2111,7 +2119,7 @@ const ProfilePage = () => {
                 >
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{isOwnProfile ? followingCount : (displayUser?.following || 0)}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? followingCount : (displayUser?.following || 0))}</p>
                       <p className="text-xs sm:text-sm text-gray-600">Seguidos</p>
                     </div>
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 order-2">
