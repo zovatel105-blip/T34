@@ -486,68 +486,71 @@ const AudioDetailPage = () => {
         </div>
       </header>
 
-      <div className="w-full px-4 py-6 space-y-6">
+      <div className="w-full px-4 pt-4 pb-2 space-y-4">
         
-        {/* Audio Info */}
+        {/* Audio Info Card - Full width */}
         <div 
-          className="max-w-md mx-auto rounded-lg border border-gray-200 p-6 transition-all duration-500"
+          className="w-full rounded-2xl overflow-hidden transition-all duration-500"
           style={{ 
-            background: `linear-gradient(to bottom, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.12')} 40%, ${dominantColor.replace('0.2', '0.05')} 70%, white 100%)`
+            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`
           }}
         >
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4 p-4">
+            {/* Album Art */}
             <div 
-              className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-gray-200 transition-colors relative"
+              className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer relative overflow-hidden shadow-md"
               onClick={handlePlayPause}
             >
               {audio.cover_url ? (
                 <img 
                   src={audio.cover_url} 
                   alt={audio.title}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <Music className="w-8 h-8 text-gray-600" />
+                <Music className="w-10 h-10 text-gray-600" />
               )}
-              
-              {/* Botón invisible de play superpuesto */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-30 bg-black/20 rounded-lg transition-opacity">
-                {isPlaying ? (
-                  <Pause className="w-6 h-6 text-white" />
-                ) : (
-                  <Play className="w-6 h-6 ml-1 text-white" />
-                )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-all duration-200 rounded-xl">
+                <div className="opacity-0 hover:opacity-100 transition-opacity">
+                  {isPlaying ? (
+                    <Pause className="w-7 h-7 text-white drop-shadow-lg" />
+                  ) : (
+                    <Play className="w-7 h-7 ml-0.5 text-white drop-shadow-lg" />
+                  )}
+                </div>
               </div>
             </div>
             
+            {/* Info */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 truncate">
+              <h2 className="text-lg font-bold text-gray-900 truncate leading-tight">
                 {audio.title}
               </h2>
               {audio.artist && (
-                <p className="text-gray-600 truncate">{audio.artist}</p>
+                <p className="text-sm text-gray-600 truncate mt-0.5">{audio.artist}</p>
               )}
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-400 mt-1">
                 {posts.length || audio.uses_count || 0} usos
               </p>
             </div>
 
+            {/* Bookmark */}
             <Button
               onClick={handleSaveAudio}
-              size="lg"
-              className="w-12 h-12 rounded-full p-0"
-              variant="outline"
+              size="icon"
+              className="w-10 h-10 rounded-full bg-white/60 hover:bg-white/80 border-0 shadow-sm flex-shrink-0"
+              variant="ghost"
             >
-              <Bookmark className="w-6 h-6" />
+              <Bookmark className="w-5 h-5 text-gray-700" />
             </Button>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="max-w-md mx-auto grid grid-cols-2 gap-3">
+        {/* Action Buttons - Full width, pill shaped */}
+        <div className="w-full flex gap-3">
           <Button
             onClick={handleUseThisSound}
-            className="flex items-center justify-center space-x-2 text-white hover:brightness-110 border-0"
+            className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-12 text-sm font-semibold shadow-md"
             style={{backgroundColor: '#B061FF'}}
           >
             <Music className="w-4 h-4" />
@@ -557,7 +560,7 @@ const AudioDetailPage = () => {
           <Button
             onClick={handleShare}
             variant="outline"
-            className="flex items-center justify-center space-x-2"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full h-12 text-sm font-semibold border-gray-200 hover:bg-gray-50"
           >
             <Share2 className="w-4 h-4" />
             <span>Compartir</span>
