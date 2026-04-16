@@ -1119,7 +1119,10 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        <div className="flex items-center gap-0.5 -ml-2 pointer-events-auto flex-nowrap">
+        {(() => {
+          const hasHighInteractions = (poll.likes >= 1000 || poll.comments >= 1000 || poll.shares >= 1000 || (poll.saves_count || 0) >= 1000);
+          return (
+        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${hasHighInteractions ? 'gap-0.5' : 'gap-2'}`}>
             <Button
               variant="ghost"
               size="sm"
@@ -1359,6 +1362,8 @@ const TikTokPollCard = ({
               );
             })()}
       </div>
+          );
+        })()}
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
       {poll.music && !isMenuOpen && !isBottomNavVisible && (() => {
