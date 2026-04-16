@@ -14,6 +14,7 @@ export const useFollow = () => {
 export const FollowProvider = ({ children }) => {
   const { apiRequest } = useAuth();
   const [followingUsers, setFollowingUsers] = useState(new Map()); // userId -> isFollowing boolean
+  const [followsMeUsers, setFollowsMeUsers] = useState(new Map()); // userId -> followsMe boolean
   const [userCache, setUserCache] = useState(new Map()); // username -> user object cache
   const [followStateVersion, setFollowStateVersion] = useState(0); // Version para forzar re-renders
   const [refreshTrigger, setRefreshTrigger] = useState(0); // Trigger adicional para forzar refreshes
@@ -162,6 +163,16 @@ export const FollowProvider = ({ children }) => {
         newMap.set(originalKey, response.is_following);
         return newMap;
       });
+
+      // Update follows_me state
+      if (response.follows_me !== undefined) {
+        setFollowsMeUsers(prev => {
+          const newMap = new Map(prev);
+          newMap.set(userId, response.follows_me);
+          newMap.set(originalKey, response.follows_me);
+          return newMap;
+        });
+      }
       
       return response;
     } catch (error) {
@@ -172,6 +183,10 @@ export const FollowProvider = ({ children }) => {
 
   const isFollowing = (userId) => {
     return followingUsers.get(userId) || false;
+  };
+
+  const followsMe = (userId) => {
+    return followsMeUsers.get(userId) || false;
   };
 
   const getFollowingUsers = async () => {
@@ -277,13 +292,14 @@ export const FollowProvider = ({ children }) => {
     unfollowUser,
     getFollowStatus,
     isFollowing,
+    followsMe,
     getFollowingUsers,
     getUserFollowers,
     getUserFollowing,
     getUserByUsername,
     followingUsers,
-    followStateVersion, // Agregar la versión al contexto
-    refreshTrigger // Agregar refresh trigger adicional
+    followStateVersion,
+    refreshTrigger
   };
 
   return (

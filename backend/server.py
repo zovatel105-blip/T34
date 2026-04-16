@@ -3673,10 +3673,17 @@ async def get_follow_status(user_id: str, current_user: UserResponse = Depends(g
         "following_id": user_id
     })
     
-    result = FollowStatus(
-        is_following=follow_relationship is not None,
-        follow_id=follow_relationship["id"] if follow_relationship else None
-    )
+    # Check if the other user follows me
+    reverse_relationship = await db.follows.find_one({
+        "follower_id": user_id,
+        "following_id": current_user.id
+    })
+    
+    result = {
+        "is_following": follow_relationship is not None,
+        "follow_id": follow_relationship["id"] if follow_relationship else None,
+        "follows_me": reverse_relationship is not None
+    }
     
     # Cache the result
     follow_status_cache[cache_key] = {
