@@ -2,20 +2,28 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Compass, Plus, Bell, User, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
+import { useAuth } from '../contexts/AuthContext';
 
-const NavigationItem = ({ to, icon: Icon, label, isActive }) => {
+const NavigationItem = ({ to, icon: Icon, label, isActive, badge }) => {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         cn(
           "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px]",
-          // Remover colores activos - solo hover gris sutil
           "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
         )
       }
     >
-      <Icon className="w-6 h-6 transition-all duration-300" />
+      <div className="relative">
+        <Icon className="w-6 h-6 transition-all duration-300" />
+        {badge > 0 && (
+          <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
       <span className="text-xs font-medium">{label}</span>
     </NavLink>
   );
@@ -24,6 +32,8 @@ const NavigationItem = ({ to, icon: Icon, label, isActive }) => {
 const BottomNavigation = ({ onCreatePoll }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [currentMode, setCurrentMode] = useState('feed'); // 'feed' or 'following'
   const longPressTimer = useRef(null);
@@ -196,6 +206,7 @@ const BottomNavigation = ({ onCreatePoll }) => {
             to="/messages"
             icon={MessageCircle}
             label="Mensajes"
+            badge={unreadCount}
           />
 
           <NavigationItem
