@@ -1145,8 +1145,8 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-3 py-3">
-            <div className="flex items-center justify-between gap-2">
+          <div className="flex-shrink-0 bg-white px-1 py-3">
+            <div className="flex items-center justify-between gap-1.5">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
