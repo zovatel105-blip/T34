@@ -12,10 +12,9 @@ const RightSideNavigation = () => {
   const { user } = useAuth();
   const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
-  const [currentMode, setCurrentMode] = useState('feed'); // 'feed' or 'following'
+  const [currentMode, setCurrentMode] = useState('feed');
   const longPressTimer = useRef(null);
 
-  // Detectar el modo actual basado en la ruta
   useEffect(() => {
     if (location.pathname === '/following') {
       setCurrentMode('following');
@@ -24,16 +23,12 @@ const RightSideNavigation = () => {
     }
   }, [location.pathname]);
 
-  // Long press handlers for home button
   const handleTouchStart = useCallback(() => {
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
-      // Vibration feedback if available
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
-      
-      // Alternar entre feed y following
       if (currentMode === 'feed') {
         setCurrentMode('following');
         navigate('/following');
@@ -41,9 +36,8 @@ const RightSideNavigation = () => {
         setCurrentMode('feed');
         navigate('/feed');
       }
-      
       setIsLongPressing(false);
-    }, 800); // 800ms for long press
+    }, 800);
   }, [navigate, currentMode]);
 
   const handleTouchEnd = useCallback(() => {
@@ -66,7 +60,6 @@ const RightSideNavigation = () => {
     handleTouchEnd();
   }, [handleTouchEnd]);
 
-  // Función para obtener los estilos del modo actual
   const getModeStyles = () => {
     if (currentMode === 'following') {
       return {
@@ -87,11 +80,8 @@ const RightSideNavigation = () => {
 
   const modeStyles = getModeStyles();
 
-  // Estilo SVG nítido para todos los iconos
-  const iconStyle = { shapeRendering: 'geometricPrecision' };
-
   return (
-    <div className="fixed right-1 md:right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-50"
+    <div className="fixed right-1 md:right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-50"
          style={{ right: 'max(0.25rem, env(safe-area-inset-right))' }}>
       
       {/* Home/Inicio with Long Press - Dynamic Colors */}
@@ -107,8 +97,8 @@ const RightSideNavigation = () => {
             "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
             modeStyles.bgColor,
             modeStyles.hoverColor,
-            "w-8 h-14 shadow-xl",
-            isLongPressing && "w-9 h-16 shadow-2xl scale-110 opacity-75",
+            "w-5 h-12 shadow-xl",
+            isLongPressing && "w-6 h-14 shadow-2xl scale-110 opacity-75",
             "flex items-center justify-center"
           )}
           title={isLongPressing 
@@ -117,12 +107,11 @@ const RightSideNavigation = () => {
           }
         >
           <Home className={cn(
-            "w-[18px] h-[18px] transition-all duration-300 text-white",
+            "w-4 h-4 transition-all duration-300 text-white",
             isLongPressing && "w-5 h-5 animate-pulse"
-          )} style={iconStyle} strokeWidth={2} />
+          )} />
         </button>
         
-        {/* Long press indicator */}
         {isLongPressing && (
           <div className={cn(
             "absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse",
@@ -142,26 +131,26 @@ const RightSideNavigation = () => {
         className={cn(
           "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
           location.pathname === '/explore'
-            ? "bg-blue-500 hover:bg-blue-600 w-7 h-12 shadow-xl"
-            : "bg-white/60 hover:bg-white hover:scale-110 w-7 h-12 shadow-lg",
+            ? "bg-blue-500 hover:bg-blue-600 w-4 h-10 shadow-xl"
+            : "bg-white/60 hover:bg-white hover:scale-110 w-4 h-10 shadow-lg",
           "flex items-center justify-center"
         )}
         title="Battle Live"
       >
         <Swords className={cn(
-          "w-[16px] h-[16px]",
+          "w-3 h-3",
           location.pathname === '/explore' ? "text-white" : "text-gray-600"
-        )} style={iconStyle} strokeWidth={2} />
+        )} />
       </button>
 
-      {/* Crear Poll - Botón especial con colores en los bordes en forma de pastilla */}
+      {/* Crear Poll */}
       <button
         onClick={() => navigate('/new')}
         className={cn(
           "rounded-full transition-all duration-300 relative overflow-hidden",
           (location.pathname === '/create' || location.pathname === '/new')
-            ? "w-8 h-14 shadow-2xl"
-            : "hover:scale-110 w-8 h-14 shadow-xl hover:opacity-90",
+            ? "w-5 h-12 shadow-2xl"
+            : "hover:scale-110 w-5 h-12 shadow-xl hover:opacity-90",
           "flex items-center justify-center flex-shrink-0"
         )}
         title="Crear"
@@ -171,13 +160,13 @@ const RightSideNavigation = () => {
           backgroundImage: 'linear-gradient(#000, #000), linear-gradient(180deg, #A855F7 0%, #3B82F6 100%)',
           backgroundOrigin: 'border-box',
           backgroundClip: 'padding-box, border-box',
-          minWidth: '2rem',
-          maxWidth: '2rem',
-          minHeight: '3.5rem',
-          maxHeight: '3.5rem'
+          minWidth: '1.25rem',
+          maxWidth: '1.25rem',
+          minHeight: '3rem',
+          maxHeight: '3rem'
         }}
       >
-        <Plus className="w-[18px] h-[18px] text-white relative z-10" style={iconStyle} strokeWidth={2} />
+        <Plus className="w-4 h-4 text-white relative z-10" />
       </button>
 
       {/* Mensajes */}
@@ -187,19 +176,19 @@ const RightSideNavigation = () => {
           className={cn(
             "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
             location.pathname === '/messages'
-              ? "bg-blue-500 hover:bg-blue-600 w-7 h-12 shadow-xl"
-              : "bg-white/60 hover:bg-white hover:scale-110 w-7 h-12 shadow-lg",
+              ? "bg-blue-500 hover:bg-blue-600 w-4 h-10 shadow-xl"
+              : "bg-white/60 hover:bg-white hover:scale-110 w-4 h-10 shadow-lg",
             "flex items-center justify-center"
           )}
           title="Mensajes"
         >
           <Inbox className={cn(
-            "w-[16px] h-[16px]",
+            "w-3 h-3",
             location.pathname === '/messages' ? "text-white" : "text-gray-600"
-          )} style={iconStyle} strokeWidth={2} />
+          )} />
         </button>
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </div>
 
@@ -209,16 +198,16 @@ const RightSideNavigation = () => {
         className={cn(
           "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
           location.pathname === '/profile'
-            ? "bg-blue-500 hover:bg-blue-600 w-7 h-12 shadow-xl"
-            : "bg-white/60 hover:bg-white hover:scale-110 w-7 h-12 shadow-lg",
+            ? "bg-blue-500 hover:bg-blue-600 w-4 h-10 shadow-xl"
+            : "bg-white/60 hover:bg-white hover:scale-110 w-4 h-10 shadow-lg",
           "flex items-center justify-center"
         )}
         title="Perfil"
       >
         <User className={cn(
-          "w-[16px] h-[16px]",
+          "w-3 h-3",
           location.pathname === '/profile' ? "text-white" : "text-gray-600"
-        )} style={iconStyle} strokeWidth={2} />
+        )} />
       </button>
     </div>
   );
