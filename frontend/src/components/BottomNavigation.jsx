@@ -51,6 +51,9 @@ const BottomNavigation = () => {
     return location.pathname === path;
   };
 
+  // Estilo SVG nítido
+  const iconStyle = { shapeRendering: 'geometricPrecision' };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black rounded-t-2xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-center justify-around px-4 py-2.5">
@@ -64,16 +67,17 @@ const BottomNavigation = () => {
           onMouseLeave={handleTouchEnd}
           onClick={() => !isLongPressing && navigate(currentMode === 'following' ? '/following' : '/feed')}
           className={cn(
-            "flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90",
+            "flex items-center justify-center w-10 h-10 transition-all duration-200 active:scale-90",
             isLongPressing && "scale-110 opacity-70"
           )}
         >
           <Home
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-[22px] h-[22px] transition-all duration-200",
               isActive('/feed') ? "text-white" : "text-white/50"
             )}
-            strokeWidth={isActive('/feed') ? 2.5 : 1.5}
+            style={iconStyle}
+            strokeWidth={isActive('/feed') ? 2.2 : 1.8}
             fill={isActive('/feed') ? "white" : "none"}
           />
         </button>
@@ -81,21 +85,22 @@ const BottomNavigation = () => {
         {/* Explorar / Battle */}
         <button
           onClick={() => navigate('/explore')}
-          className="flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90"
+          className="flex items-center justify-center w-10 h-10 transition-all duration-200 active:scale-90"
         >
           <Swords
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-[22px] h-[22px] transition-all duration-200",
               isActive('/explore') ? "text-white" : "text-white/50"
             )}
-            strokeWidth={isActive('/explore') ? 2.5 : 1.5}
+            style={iconStyle}
+            strokeWidth={isActive('/explore') ? 2.2 : 1.8}
           />
         </button>
 
-        {/* Crear */}
+        {/* Crear - borde gradiente */}
         <button
           onClick={() => navigate('/new')}
-          className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 relative overflow-hidden flex-shrink-0"
+          className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 active:scale-90 relative overflow-hidden flex-shrink-0"
           style={{
             background: 'linear-gradient(180deg, #000 0%, #000 100%)',
             border: '2px solid transparent',
@@ -104,39 +109,41 @@ const BottomNavigation = () => {
             backgroundClip: 'padding-box, border-box',
           }}
         >
-          <Plus className="w-5 h-5 text-white relative z-10" strokeWidth={2} />
+          <Plus className="w-[20px] h-[20px] text-white relative z-10" style={iconStyle} strokeWidth={2.2} />
         </button>
 
         {/* Mensajes / Inbox */}
         <div className="relative flex items-center justify-center">
           <button
             onClick={() => navigate('/messages')}
-            className="flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90"
+            className="flex items-center justify-center w-10 h-10 transition-all duration-200 active:scale-90"
           >
             <Inbox
               className={cn(
-                "w-6 h-6 transition-all duration-200",
+                "w-[22px] h-[22px] transition-all duration-200",
                 isActive('/messages') ? "text-white" : "text-white/50"
               )}
-              strokeWidth={isActive('/messages') ? 2.5 : 1.5}
+              style={iconStyle}
+              strokeWidth={isActive('/messages') ? 2.2 : 1.8}
             />
           </button>
           {unreadCount > 0 && (
-            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" />
           )}
         </div>
 
         {/* Perfil */}
         <button
           onClick={() => navigate('/profile')}
-          className="flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90"
+          className="flex items-center justify-center w-10 h-10 transition-all duration-200 active:scale-90"
         >
           <User
             className={cn(
-              "w-6 h-6 transition-all duration-200",
+              "w-[22px] h-[22px] transition-all duration-200",
               isActive('/profile') ? "text-white" : "text-white/50"
             )}
-            strokeWidth={isActive('/profile') ? 2.5 : 1.5}
+            style={iconStyle}
+            strokeWidth={isActive('/profile') ? 2.2 : 1.8}
           />
         </button>
 
