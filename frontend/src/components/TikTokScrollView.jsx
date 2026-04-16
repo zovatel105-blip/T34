@@ -612,15 +612,17 @@ const TikTokPollCard = ({
       <div 
         className="absolute inset-0 transition-all duration-500 ease-out origin-top"
         style={isPostMiniature ? {
-          transform: 'scale(0.72) translateY(-2%)',
+          transform: 'scale(0.62) translateY(-3%)',
           borderRadius: '24px',
           overflow: 'hidden',
           height: '100%',
+          zIndex: 101,
+          pointerEvents: 'none',
         } : {}}
       >
 
       {/* Header - Fixed at top with safe area */}
-      <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent px-4 pt-safe-4 pb-8"
+      <div className={`absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent px-4 pt-safe-4 pb-8 ${isPostMiniature ? 'pointer-events-auto' : ''}`}
            style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

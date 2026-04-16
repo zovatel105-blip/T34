@@ -122,8 +122,12 @@ const CommentsModal = ({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      hideRightNavigationBar();
-      didHideNavRef.current = true;
+      // Solo ocultar la barra de navegación derecha cuando NO estamos en modo bottom sheet
+      // En modo bottom sheet, la barra inferior debe permanecer visible para miniaturizar el post
+      if (!isBottomSheet) {
+        hideRightNavigationBar();
+        didHideNavRef.current = true;
+      }
     } else if (didHideNavRef.current) {
       document.body.style.overflow = 'unset';
       showRightNavigationBar();
@@ -138,7 +142,7 @@ const CommentsModal = ({
         didHideNavRef.current = false;
       }
     };
-  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar]);
+  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar, isBottomSheet]);
 
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
