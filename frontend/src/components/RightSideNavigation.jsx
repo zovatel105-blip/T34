@@ -196,7 +196,7 @@ const RightSideNavigation = () => {
           )} />
         </button>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
         )}
       </div>
 
