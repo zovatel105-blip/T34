@@ -486,7 +486,7 @@ const AudioDetailPage = () => {
         </div>
       </header>
 
-      <div className="w-full px-4 pt-4 pb-2 space-y-4">
+      <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
         {/* Audio Info Card - Full width */}
         <div 
@@ -546,23 +546,23 @@ const AudioDetailPage = () => {
           </div>
         </div>
 
-        {/* Action Buttons - Full width, pill shaped */}
+        {/* Action Buttons - Full width, pill shaped, thin */}
         <div className="w-full flex gap-3">
           <Button
             onClick={handleUseThisSound}
-            className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-12 text-sm font-semibold shadow-md"
+            className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-9 text-xs font-semibold shadow-sm"
             style={{backgroundColor: '#B061FF'}}
           >
-            <Music className="w-4 h-4" />
+            <Music className="w-3.5 h-3.5" />
             <span>Use Sound</span>
           </Button>
           
           <Button
             onClick={handleShare}
             variant="outline"
-            className="flex-1 flex items-center justify-center gap-2 rounded-full h-12 text-sm font-semibold border-gray-200 hover:bg-gray-50"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full h-9 text-xs font-semibold border-gray-200 hover:bg-gray-50"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5" />
             <span>Compartir</span>
           </Button>
         </div>
