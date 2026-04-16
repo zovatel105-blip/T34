@@ -1305,7 +1305,8 @@ const TikTokPollCard = ({
             )}
 
             {/* Feed Menu - Only shown for other users' posts */}
-            {(() => {
+            {/* When music present, render outside the row to save space */}
+            {!poll.music && (() => {
               const shouldShowMenu = currentUser && (
                 (poll.author?.id && poll.author.id !== currentUser.id) ||
                 (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
@@ -1335,8 +1336,8 @@ const TikTokPollCard = ({
               />
             )}
 
-            {/* Post Management Menu - Only shown for own posts */}
-            {onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
+            {/* Post Management Menu - Only shown for own posts, outside row when music */}
+            {!poll.music && onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
               <PostManagementMenu
                 poll={poll}
                 onUpdate={onUpdatePoll}
@@ -1370,6 +1371,49 @@ const TikTokPollCard = ({
               );
             })()}
       </div>
+
+      {/* Menus positioned above buttons when music is present */}
+      {poll.music && (() => {
+        const shouldShowFeedMenu = currentUser && (
+          (poll.author?.id && poll.author.id !== currentUser.id) ||
+          (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
+        );
+        const shouldShowPostMenu = onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id;
+        
+        if (!shouldShowFeedMenu && !shouldShowPostMenu) return null;
+        
+        return (
+          <div className="absolute z-40 pointer-events-auto"
+               style={{
+                 right: 'max(1rem, env(safe-area-inset-right))',
+                 bottom: isPostMiniature ? '50px' : (isBottomNavVisible ? 'calc(155px + max(0.5rem, env(safe-area-inset-bottom)))' : 'calc(103px + max(0.5rem, env(safe-area-inset-bottom)))'),
+               }}>
+            {shouldShowFeedMenu && (
+              <FeedMenu
+                poll={poll}
+                onNotInterested={handleNotInterested}
+                onHideUser={handleHideUser}
+                onToggleNotifications={handleToggleNotifications}
+                onReport={handleReport}
+                isNotificationEnabled={isNotificationEnabled}
+                onOpenChange={setIsMenuOpen}
+                className="flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
+              />
+            )}
+            {shouldShowPostMenu && (
+              <PostManagementMenu
+                poll={poll}
+                onUpdate={onUpdatePoll}
+                onDelete={onDeletePoll}
+                currentUser={authUser}
+                isOwnProfile={isOwnProfile}
+                onOpenChange={setIsMenuOpen}
+                className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
+              />
+            )}
+          </div>
+        );
+      })()}
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
       {poll.music && !isMenuOpen && (() => {
