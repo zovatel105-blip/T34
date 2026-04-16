@@ -1119,9 +1119,7 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4 pointer-events-auto">
-          {/* Social buttons - Left side when no music, or right side when music present */}
-          <div className={`flex items-center gap-3 -ml-2 min-w-0 flex-wrap ${poll.music ? '' : 'flex-1 justify-start'}`}>
+        <div className="flex items-center gap-2 -ml-2 pointer-events-auto flex-nowrap">
             <Button
               variant="ghost"
               size="sm"
@@ -1349,10 +1347,9 @@ const TikTokPollCard = ({
                 className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
               />
             )}
-          </div>
 
-          {/* Music Player - disco en el lateral derecho de la fila */}
-          {poll.music && (() => {
+            {/* Music Player - disco en el lateral derecho */}
+            {poll.music && (() => {
               const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
               const displayMusic = hasExtractedAudio && carouselAudioData
                 ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
@@ -1368,10 +1365,10 @@ const TikTokPollCard = ({
                   authorUsername={poll.author?.username || poll.author?.display_name}
                   overrideAudioId={carouselAudioId}
                   forceUseAvatar={!!carouselThumbnail}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 ml-auto"
                 />
               );
-          })()}
+            })()}
       </div>
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
