@@ -1377,14 +1377,14 @@ const TikTokPollCard = ({
             className="flex items-center gap-1.5 text-white cursor-pointer hover:text-gray-200 transition-colors duration-200 ml-1 w-fit pointer-events-auto" 
             style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
           >
-            <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+            <Music className={`${isBottomNavVisible ? 'w-3 h-3' : 'w-3.5 h-3.5'} flex-shrink-0`} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
             {(() => {
               const fullTitle = `${displayMusic.title} - ${displayMusic.artist}`;
               const isLong = fullTitle.length > 25;
               return (
                 <div className="marquee-wrapper">
                   <span 
-                    className={`text-xs font-light${isLong ? ' animate-marquee' : ''}`}
+                    className={`${isBottomNavVisible ? 'text-[10px]' : 'text-xs'} font-light${isLong ? ' animate-marquee' : ''}`}
                     style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)', whiteSpace: 'nowrap' }}
                   >
                     {fullTitle}
