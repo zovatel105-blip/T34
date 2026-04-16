@@ -1138,7 +1138,7 @@ const TikTokPollCard = ({
                 "w-4 h-4 flex-shrink-0 transition-all duration-200",
                 poll.userLiked && "fill-current scale-110"
               )} />
-              <span className="font-medium text-xs truncate">{formatNumber(poll.likes)}</span>
+              <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.likes)}</span>
             </Button>
             
             {/* Botón de comentarios - siempre visible */}
@@ -1169,7 +1169,7 @@ const TikTokPollCard = ({
             >
               <MessageCircle className={`w-4 h-4 flex-shrink-0 ${commentedPolls.has(poll.id) || poll.userCommented ? 'fill-current' : ''}`} />
               {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-                <span className="font-medium text-xs truncate">{formatNumber(poll.comments)}</span>
+                <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.comments)}</span>
               )}
             </Button>
 
@@ -1239,7 +1239,7 @@ const TikTokPollCard = ({
               }`}
             >
               <Share2 className={`w-4 h-4 flex-shrink-0 ${sharedPolls.has(poll.id) || poll.userShared ? 'fill-current' : ''}`} />
-              <span className="font-medium text-xs truncate">{formatNumber(poll.shares)}</span>
+              <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.shares)}</span>
             </Button>
 
             {/* Save button */}
@@ -1298,7 +1298,7 @@ const TikTokPollCard = ({
                 style={{ pointerEvents: 'auto' }}
               >
                 <Bookmark className={`w-4 h-4 flex-shrink-0 ${savedPolls.has(poll.id) || poll.isSaved ? 'fill-current' : ''}`} />
-                <span className="font-medium text-xs truncate">
+                <span className="font-medium text-xs whitespace-nowrap">
                   {formatNumber(poll.saves_count || 0)}
                 </span>
               </Button>
