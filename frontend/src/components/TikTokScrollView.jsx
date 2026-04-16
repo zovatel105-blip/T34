@@ -1119,7 +1119,7 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${poll.music ? 'gap-0.5' : 'gap-1'}`}>
+        <div className="flex items-center gap-0.5 -ml-2 pointer-events-auto flex-nowrap">
             <Button
               variant="ghost"
               size="sm"
@@ -1128,7 +1128,7 @@ const TikTokPollCard = ({
                 onLike(poll.id);
               }}
               className={cn(
-                `flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`,
+                `flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm`,
                 poll.userLiked && "text-red-500 bg-red-500/20"
               )}
             >
@@ -1159,7 +1159,7 @@ const TikTokPollCard = ({
                   });
                 }
               }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'} ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm ${
                 commentedPolls.has(poll.id) || poll.userCommented
                   ? 'text-blue-400 bg-blue-500/20 hover:text-blue-300'
                   : 'text-white bg-black/20 hover:text-blue-400'
@@ -1230,7 +1230,7 @@ const TikTokPollCard = ({
                   sharePoll(poll);
                 }
               }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'} ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm ${
                 sharedPolls.has(poll.id) || poll.userShared
                   ? 'text-green-400 bg-green-500/20 hover:text-green-300'
                   : 'text-white bg-black/20 hover:text-green-400'
@@ -1288,7 +1288,7 @@ const TikTokPollCard = ({
                     console.error('🔖 TikTokScrollView: Error with save/unsave:', error);
                   }
                 }}
-                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${poll.music ? 'p-1.5' : 'px-3 py-2'} ${
+                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${
                   savedPolls.has(poll.id) || poll.isSaved
                     ? 'text-yellow-400 bg-yellow-500/20 hover:text-yellow-300' 
                     : 'text-white bg-black/20 hover:text-yellow-400'
@@ -1320,7 +1320,7 @@ const TikTokPollCard = ({
                 onReport={handleReport}
                 isNotificationEnabled={isNotificationEnabled}
                 onOpenChange={setIsMenuOpen}
-                className={`flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`}
+                className="flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"
               />
             )}
 
@@ -1333,7 +1333,7 @@ const TikTokPollCard = ({
                 currentUser={authUser}
                 isOwnProfile={isOwnProfile}
                 onOpenChange={setIsMenuOpen}
-                className={`flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`}
+                className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"
               />
             )}
 
