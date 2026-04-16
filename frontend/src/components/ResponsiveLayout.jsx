@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import DesktopSidebar from './DesktopSidebar';
 import RightSideNavigation from './RightSideNavigation';
+import BottomNavigation from './BottomNavigation';
 import ComingSoon from './ComingSoon';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavPreference } from '../hooks/useNavPreference';
 
 const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const location = useLocation();
   const { isTikTokMode, hideRightNavigation } = useTikTok();
   const { isAuthenticated, user } = useAuth();
+  const { isBottomNav } = useNavPreference();
   
   // Desktop detection state
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
@@ -46,6 +49,17 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   // Force hide RightSideNavigation on create page, story pages, content publish page, search page, messages page, challenges page, and other users' profiles
   const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage;
 
+  // Render the appropriate navigation based on user preference
+  const renderNavigation = () => {
+    if (!isAuthenticated || shouldHideRightNavigation || isCreatePage) return null;
+    
+    if (isBottomNav) {
+      return <BottomNavigation />;
+    } else {
+      return <RightSideNavigation onCreatePoll={onCreatePoll} />;
+    }
+  };
+
   if (shouldUseTikTokLayout) {
     // Mobile TikTok mode - full screen without sidebars
     // For create page and story pages, don't apply bg-black to allow gradients
@@ -53,17 +67,18 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     
     return (
       <div className={`relative h-screen ${backgroundClass}`}>
-        {children}
-        {/* Right side navigation for mobile TikTok mode - HIDDEN on create page */}
+        {isBottomNav && isAuthenticated && <div className={isBottomNav ? 'pb-[85px]' : ''}>{children}</div>}
+        {!isBottomNav && children}
+        {/* Navigation */}
         <div className="lg:hidden">
-          {isAuthenticated && !shouldHideRightNavigation && !isCreatePage && <RightSideNavigation onCreatePoll={onCreatePoll} />}
+          {renderNavigation()}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:bg-gray-100">
+    <div className={`min-h-screen bg-gray-50 lg:bg-gray-100 ${isBottomNav && isAuthenticated ? 'pb-[85px]' : ''}`}>
       {/* Desktop Sidebar - Hidden on mobile */}
       {isAuthenticated && <DesktopSidebar />}
       
@@ -74,16 +89,9 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
         </div>
       </div>
       
-      {/* Right Side Navigation - HIDDEN on create page */}
-      <div className="hidden lg:block lg:fixed lg:right-4 lg:top-1/2 lg:transform lg:-translate-y-1/2 lg:z-20">
-        {isAuthenticated && !shouldHideRightNavigation && !isCreatePage && <RightSideNavigation onCreatePoll={onCreatePoll} />}
-      </div>
-      
-      {/* Mobile Right Side Navigation - Only when not in TikTok mode and NOT on create page */}
+      {/* Navigation */}
       <div className="lg:hidden">
-        {!shouldUseTikTokLayout && isAuthenticated && !shouldHideRightNavigation && !isCreatePage && (
-          <RightSideNavigation onCreatePoll={onCreatePoll} />
-        )}
+        {renderNavigation()}
       </div>
     </div>
   );

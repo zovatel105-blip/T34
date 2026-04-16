@@ -6,17 +6,19 @@ import {
   ArrowLeft, ChevronRight, User, Shield, Bell, Eye, MessageCircle, 
   Lock, LogOut, Save, Monitor, Key, Globe, Moon, Sun, Volume2, Smartphone,
   Download, Wifi, BatteryLow, Languages, Type, HelpCircle, Info, Mail, Settings,
-  Mic, UserCircle, UserCircle2
+  Mic, UserCircle, UserCircle2, PanelBottom, PanelRight
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import voiceService, { VOICE_TYPES } from '../services/voiceService';
 import SettingsSelectModal from '../components/SettingsSelectModal';
+import { useNavPreference, NAV_STYLES } from '../hooks/useNavPreference';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, logout, apiRequest, refreshUser } = useAuth();
   const { toast } = useToast();
+  const { navStyle, setNavStyle, isBottomNav } = useNavPreference();
   
   const [settings, setSettings] = useState({
     is_public: true,
@@ -386,6 +388,44 @@ const SettingsPage = () => {
                   disabled={loading}
                   className="data-[state=checked]:bg-blue-600"
                 />
+              }
+            />
+            <SettingsItem
+              icon={isBottomNav ? PanelBottom : PanelRight}
+              title="Barra de navegación"
+              description={isBottomNav ? "Inferior (estilo TikTok)" : "Lateral derecha"}
+              rightElement={
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const newStyle = isBottomNav ? NAV_STYLES.RIGHT : NAV_STYLES.BOTTOM;
+                      setNavStyle(newStyle);
+                      toast({
+                        title: "Navegación actualizada",
+                        description: newStyle === NAV_STYLES.BOTTOM 
+                          ? "Barra inferior activada" 
+                          : "Barra lateral activada",
+                      });
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isBottomNav 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                        : 'bg-gray-100 text-gray-600 border border-gray-200'
+                    }`}
+                  >
+                    {isBottomNav ? (
+                      <>
+                        <PanelBottom className="w-3.5 h-3.5" />
+                        Inferior
+                      </>
+                    ) : (
+                      <>
+                        <PanelRight className="w-3.5 h-3.5" />
+                        Lateral
+                      </>
+                    )}
+                  </button>
+                </div>
               }
             />
           </div>

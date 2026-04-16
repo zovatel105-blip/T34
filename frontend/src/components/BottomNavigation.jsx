@@ -1,42 +1,19 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Compass, Plus, Bell, User, MessageCircle } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Home, Search, Plus, Heart, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
 import { useAuth } from '../contexts/AuthContext';
 
-const NavigationItem = ({ to, icon: Icon, label, isActive, badge }) => {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        cn(
-          "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px]",
-          "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-        )
-      }
-    >
-      <div className="relative">
-        <Icon className="w-6 h-6 transition-all duration-300" />
-        {badge > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" />
-        )}
-      </div>
-      <span className="text-xs font-medium">{label}</span>
-    </NavLink>
-  );
-};
-
-const BottomNavigation = ({ onCreatePoll }) => {
+const BottomNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
-  const [currentMode, setCurrentMode] = useState('feed'); // 'feed' or 'following'
+  const [currentMode, setCurrentMode] = useState('feed');
   const longPressTimer = useRef(null);
 
-  // Detectar el modo actual basado en la ruta
   useEffect(() => {
     if (location.pathname === '/following') {
       setCurrentMode('following');
@@ -49,12 +26,7 @@ const BottomNavigation = ({ onCreatePoll }) => {
   const handleTouchStart = useCallback(() => {
     setIsLongPressing(true);
     longPressTimer.current = setTimeout(() => {
-      // Vibration feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-      
-      // Alternar entre feed y following
+      if (navigator.vibrate) navigator.vibrate(50);
       if (currentMode === 'feed') {
         setCurrentMode('following');
         navigate('/following');
@@ -62,9 +34,8 @@ const BottomNavigation = ({ onCreatePoll }) => {
         setCurrentMode('feed');
         navigate('/feed');
       }
-      
       setIsLongPressing(false);
-    }, 800); // 800ms for long press
+    }, 800);
   }, [navigate, currentMode]);
 
   const handleTouchEnd = useCallback(() => {
@@ -75,143 +46,116 @@ const BottomNavigation = ({ onCreatePoll }) => {
     setIsLongPressing(false);
   }, []);
 
-  const handleMouseDown = useCallback(() => {
-    handleTouchStart();
-  }, [handleTouchStart]);
-
-  const handleMouseUp = useCallback(() => {
-    handleTouchEnd();
-  }, [handleTouchEnd]);
-
-  const handleMouseLeave = useCallback(() => {
-    handleTouchEnd();
-  }, [handleTouchEnd]);
-
-  // Función para obtener el color y texto basado en el modo actual
-  const getModeStyles = () => {
-    if (currentMode === 'following') {
-      return {
-        bgColor: 'bg-purple-50',
-        textColor: 'text-purple-600',
-        iconColor: 'text-purple-600',
-        label: 'Following',
-        activeBg: 'bg-purple-50',
-        activeText: 'text-purple-600'
-      };
-    } else {
-      return {
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-600',
-        iconColor: 'text-blue-600',
-        label: 'Seguidos',
-        activeBg: 'bg-blue-50',
-        activeText: 'text-blue-600'
-      };
-    }
+  const isActive = (path) => {
+    if (path === '/feed') return location.pathname === '/feed' || location.pathname === '/following';
+    if (path === '/profile') return location.pathname === '/profile' || location.pathname.startsWith('/profile/');
+    return location.pathname === path;
   };
 
-  const modeStyles = getModeStyles();
+  const navItems = [
+    {
+      path: currentMode === 'following' ? '/following' : '/feed',
+      icon: Home,
+      label: 'Inicio',
+      isHome: true,
+    },
+    {
+      path: '/explore',
+      icon: Search,
+      label: 'Buscar',
+    },
+    {
+      path: '/new',
+      icon: Plus,
+      label: 'Crear',
+      isCreate: true,
+    },
+    {
+      path: '/messages',
+      icon: Heart,
+      label: 'Actividad',
+      badge: unreadCount,
+    },
+    {
+      path: '/profile',
+      icon: User,
+      label: 'Perfil',
+    },
+  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 shadow-lg z-50">
-      <div className="max-w-md mx-auto px-4">
-        <div className="flex items-center justify-around py-2">
-          {/* Home Button with Long Press - Dynamic Colors */}
-          <div
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            className="relative"
-          >
-            <NavLink
-              to={currentMode === 'following' ? '/following' : '/feed'}
-              className={() =>
-                cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 min-w-[60px]",
-                  // Usar los estilos del modo actual
-                  modeStyles.activeBg,
-                  modeStyles.activeText,
-                  "transform scale-105",
-                  isLongPressing && "transform scale-110 opacity-75"
-                )
-              }
-            >
-              <Home 
-                className={cn(
-                  "w-6 h-6 transition-all duration-300 fill-current",
-                  modeStyles.iconColor,
-                  isLongPressing && "animate-pulse"
-                )} 
-              />
-              <span className={cn(
-                "text-xs font-medium transition-all duration-300",
-                modeStyles.textColor,
-                isLongPressing && "animate-pulse"
-              )}>
-                {isLongPressing 
-                  ? (currentMode === 'feed' ? 'Following...' : 'Feed...') 
-                  : modeStyles.label
-                }
-              </span>
-            </NavLink>
-            
-            {/* Long press indicator */}
-            {isLongPressing && (
-              <div className={cn(
-                "absolute -top-1 -right-1 w-3 h-3 rounded-full animate-pulse",
-                currentMode === 'following' ? 'bg-blue-500' : 'bg-purple-500'
-              )}>
-                <div className={cn(
-                  "absolute inset-0 rounded-full animate-ping",
-                  currentMode === 'following' ? 'bg-blue-400' : 'bg-purple-400'
-                )}></div>
-              </div>
-            )}
-          </div>
-          
-          <NavigationItem
-            to="/explore"
-            icon={Compass}
-            label="Explorar"
-          />
+    <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      {/* Barra negra redondeada estilo TikTok */}
+      <div className="mx-3 mb-2 bg-black rounded-[28px] shadow-2xl">
+        <div className="flex items-center justify-around px-2 py-3">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path === navItems[0].path ? '/feed' : item.path);
 
-          {/* Create Content Button - Navigate to selection page */}
-          <NavLink
-            to="/new"
-            className="flex flex-col items-center gap-1 px-3 py-2 transition-all duration-300 min-w-[60px] group"
-          >
-            {({ isActive }) => (
-              <>
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300",
-                  isActive
-                    ? "bg-gradient-to-r from-blue-700 to-purple-700"
-                    : "bg-gradient-to-r from-blue-600 to-purple-600"
-                )}>
-                  <Plus className="w-5 h-5 text-white" />
-                </div>
-                <span className={cn(
-                  "text-xs font-medium",
-                  isActive ? "text-blue-700" : "text-blue-600"
-                )}>Crear</span>
-              </>
-            )}
-          </NavLink>
+            if (item.isCreate) {
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className="flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90"
+                  style={{
+                    background: 'transparent',
+                    border: '2px solid rgba(255,255,255,0.35)',
+                  }}
+                >
+                  <Plus className="w-6 h-6 text-white" strokeWidth={2} />
+                </button>
+              );
+            }
 
-          <NavigationItem
-            to="/messages"
-            icon={MessageCircle}
-            label="Mensajes"
-            badge={unreadCount}
-          />
+            if (item.isHome) {
+              return (
+                <button
+                  key={item.path}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleTouchStart}
+                  onMouseUp={handleTouchEnd}
+                  onMouseLeave={handleTouchEnd}
+                  onClick={() => !isLongPressing && navigate(item.path)}
+                  className={cn(
+                    "flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90",
+                    isLongPressing && "scale-110 opacity-70"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-7 h-7 transition-all duration-200",
+                      active ? "text-white" : "text-white/60"
+                    )}
+                    strokeWidth={active ? 2.5 : 1.5}
+                    fill={active ? "white" : "none"}
+                  />
+                </button>
+              );
+            }
 
-          <NavigationItem
-            to="/profile"
-            icon={User}
-            label="Perfil"
-          />
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="relative flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-200 active:scale-90"
+              >
+                <Icon
+                  className={cn(
+                    "w-7 h-7 transition-all duration-200",
+                    active ? "text-white" : "text-white/60"
+                  )}
+                  strokeWidth={active ? 2.5 : 1.5}
+                  fill={active ? (item.path === '/messages' ? "none" : "none") : "none"}
+                />
+                {/* Badge de notificaciones */}
+                {item.badge > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-black" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </nav>

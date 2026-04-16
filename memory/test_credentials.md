@@ -42,3 +42,9 @@
 - Password: test123
 - Username: testchallenge
 - Display Name: Test Challenge
+
+## Test Nav User (for navigation preference testing)
+- Email: testnav@test.com
+- Password: test123
+- Username: testnav
+- Display Name: Test Nav
