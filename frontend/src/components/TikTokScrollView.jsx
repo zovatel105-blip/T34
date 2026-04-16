@@ -1119,7 +1119,7 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${poll.music ? 'gap-1' : 'gap-2'}`}>
+        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${poll.music ? 'gap-0.5' : 'gap-1'}`}>
             <Button
               variant="ghost"
               size="sm"
@@ -1128,7 +1128,7 @@ const TikTokPollCard = ({
                 onLike(poll.id);
               }}
               className={cn(
-                "flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm",
+                `flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`,
                 poll.userLiked && "text-red-500 bg-red-500/20"
               )}
             >
@@ -1159,7 +1159,7 @@ const TikTokPollCard = ({
                   });
                 }
               }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg backdrop-blur-sm ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'} ${
                 commentedPolls.has(poll.id) || poll.userCommented
                   ? 'text-blue-400 bg-blue-500/20 hover:text-blue-300'
                   : 'text-white bg-black/20 hover:text-blue-400'
@@ -1230,7 +1230,7 @@ const TikTokPollCard = ({
                   sharePoll(poll);
                 }
               }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg backdrop-blur-sm ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'} ${
                 sharedPolls.has(poll.id) || poll.userShared
                   ? 'text-green-400 bg-green-500/20 hover:text-green-300'
                   : 'text-white bg-black/20 hover:text-green-400'
@@ -1288,7 +1288,7 @@ const TikTokPollCard = ({
                     console.error('🔖 TikTokScrollView: Error with save/unsave:', error);
                   }
                 }}
-                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto px-3 py-2 rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${
+                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${poll.music ? 'p-1.5' : 'px-3 py-2'} ${
                   savedPolls.has(poll.id) || poll.isSaved
                     ? 'text-yellow-400 bg-yellow-500/20 hover:text-yellow-300' 
                     : 'text-white bg-black/20 hover:text-yellow-400'
@@ -1305,23 +1305,11 @@ const TikTokPollCard = ({
             )}
 
             {/* Feed Menu - Only shown for other users' posts */}
-            {/* When music present, render outside the row to save space */}
-            {!poll.music && (() => {
+            {(() => {
               const shouldShowMenu = currentUser && (
                 (poll.author?.id && poll.author.id !== currentUser.id) ||
                 (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
               );
-              
-              // Debug logging (remove in production)
-              if (process.env.NODE_ENV !== 'production') {
-                console.log('FeedMenu visibility check:', {
-                  currentUser: currentUser?.id,
-                  pollAuthorId: poll.author?.id,
-                  pollAuthorUserId: poll.authorUser?.id,
-                  shouldShowMenu
-                });
-              }
-              
               return shouldShowMenu;
             })() && (
               <FeedMenu
@@ -1332,12 +1320,12 @@ const TikTokPollCard = ({
                 onReport={handleReport}
                 isNotificationEnabled={isNotificationEnabled}
                 onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
+                className={`flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`}
               />
             )}
 
-            {/* Post Management Menu - Only shown for own posts, outside row when music */}
-            {!poll.music && onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
+            {/* Post Management Menu - Only shown for own posts */}
+            {onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
               <PostManagementMenu
                 poll={poll}
                 onUpdate={onUpdatePoll}
@@ -1345,7 +1333,7 @@ const TikTokPollCard = ({
                 currentUser={authUser}
                 isOwnProfile={isOwnProfile}
                 onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
+                className={`flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto rounded-lg bg-black/20 backdrop-blur-sm ${poll.music ? 'p-1.5' : 'p-2'}`}
               />
             )}
 
@@ -1371,49 +1359,6 @@ const TikTokPollCard = ({
               );
             })()}
       </div>
-
-      {/* Menus positioned above buttons when music is present */}
-      {poll.music && (() => {
-        const shouldShowFeedMenu = currentUser && (
-          (poll.author?.id && poll.author.id !== currentUser.id) ||
-          (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
-        );
-        const shouldShowPostMenu = onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id;
-        
-        if (!shouldShowFeedMenu && !shouldShowPostMenu) return null;
-        
-        return (
-          <div className="absolute z-40 pointer-events-auto"
-               style={{
-                 right: 'max(1rem, env(safe-area-inset-right))',
-                 bottom: isPostMiniature ? '50px' : (isBottomNavVisible ? 'calc(155px + max(0.5rem, env(safe-area-inset-bottom)))' : 'calc(103px + max(0.5rem, env(safe-area-inset-bottom)))'),
-               }}>
-            {shouldShowFeedMenu && (
-              <FeedMenu
-                poll={poll}
-                onNotInterested={handleNotInterested}
-                onHideUser={handleHideUser}
-                onToggleNotifications={handleToggleNotifications}
-                onReport={handleReport}
-                isNotificationEnabled={isNotificationEnabled}
-                onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
-              />
-            )}
-            {shouldShowPostMenu && (
-              <PostManagementMenu
-                poll={poll}
-                onUpdate={onUpdatePoll}
-                onDelete={onDeletePoll}
-                currentUser={authUser}
-                isOwnProfile={isOwnProfile}
-                onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
-              />
-            )}
-          </div>
-        );
-      })()}
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
       {poll.music && !isMenuOpen && (() => {
