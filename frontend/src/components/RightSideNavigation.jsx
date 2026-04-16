@@ -2,11 +2,15 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Swords, Plus, Inbox, User } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
+import { useAuth } from '../contexts/AuthContext';
 
 
 const RightSideNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [currentMode, setCurrentMode] = useState('feed'); // 'feed' or 'following'
   const longPressTimer = useRef(null);
@@ -174,22 +178,27 @@ const RightSideNavigation = () => {
       </button>
 
       {/* Mensajes */}
-      <button
-        onClick={() => navigate('/messages')}
-        className={cn(
-          "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
-          location.pathname === '/messages'
-            ? "bg-blue-500 hover:bg-blue-600 w-4 h-10 shadow-xl"
-            : "bg-white/60 hover:bg-white hover:scale-110 w-4 h-10 shadow-lg",
-          "flex items-center justify-center"
+      <div className="relative">
+        <button
+          onClick={() => navigate('/messages')}
+          className={cn(
+            "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
+            location.pathname === '/messages'
+              ? "bg-blue-500 hover:bg-blue-600 w-4 h-10 shadow-xl"
+              : "bg-white/60 hover:bg-white hover:scale-110 w-4 h-10 shadow-lg",
+            "flex items-center justify-center"
+          )}
+          title="Mensajes"
+        >
+          <Inbox className={cn(
+            "w-3 h-3",
+            location.pathname === '/messages' ? "text-white" : "text-gray-600"
+          )} />
+        </button>
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white/80" />
         )}
-        title="Mensajes"
-      >
-        <Inbox className={cn(
-          "w-3 h-3",
-          location.pathname === '/messages' ? "text-white" : "text-gray-600"
-        )} />
-      </button>
+      </div>
 
       {/* Perfil */}
       <button
