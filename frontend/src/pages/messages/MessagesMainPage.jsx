@@ -1145,8 +1145,8 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3 overflow-x-hidden">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex-shrink-0 bg-white px-4 py-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar" style={{ overflow: 'visible' }}>
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
