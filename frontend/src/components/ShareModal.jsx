@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Facebook, MessageCircle, Copy, ExternalLink, Link } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
+import { cn } from '../lib/utils';
+import { useNavPreference } from '../hooks/useNavPreference';
 
 const ShareModal = ({ isOpen, onClose, content }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -10,6 +12,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
   const dragStartY = useRef(0);
   const currentTranslateY = useRef(0);
   const isDragging = useRef(false);
+  const { isBottomNav } = useNavPreference();
 
   const handleTouchStart = (e) => {
     dragStartY.current = e.touches[0].clientY;
@@ -171,7 +174,10 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-zinc-900 rounded-t-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+            className={cn(
+              "rounded-t-3xl w-full overflow-y-auto shadow-2xl",
+              isMobile && isBottomNav ? "bg-white max-h-[55vh]" : "bg-zinc-900 max-h-[85vh]"
+            )}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -180,21 +186,21 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           >
             {/* Handle */}
             <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
-              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              <div className={cn("w-10 h-1 rounded-full", isMobile && isBottomNav ? "bg-gray-300" : "bg-zinc-600")} />
             </div>
 
             {/* Header */}
             <div className="px-5 py-3 flex items-center justify-center">
-              <h3 className="font-semibold text-white text-base">
+              <h3 className={cn("font-semibold text-base", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                 Compartir {type === 'poll' ? 'Votación' : 'Perfil'}
               </h3>
             </div>
 
             {/* Content Preview */}
-            <div className="mx-4 mb-4 p-4 rounded-2xl bg-zinc-800">
-              <p className="font-medium text-sm text-white mb-1">{title}</p>
-              <p className="text-xs text-zinc-400 mb-2">{description}</p>
-              <p className="text-xs text-zinc-500 truncate">{url}</p>
+            <div className={cn("mx-4 mb-4 p-4 rounded-2xl", isMobile && isBottomNav ? "bg-gray-100" : "bg-zinc-800")}>
+              <p className={cn("font-medium text-sm mb-1", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>{title}</p>
+              <p className={cn("text-xs mb-2", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>{description}</p>
+              <p className={cn("text-xs truncate", isMobile && isBottomNav ? "text-gray-400" : "text-zinc-500")}>{url}</p>
             </div>
 
             {/* Platform Options */}
@@ -205,14 +211,17 @@ const ShareModal = ({ isOpen, onClose, content }) => {
                   <button
                     key={platform.id}
                     onClick={() => handleShare(platform.id)}
-                    className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left"
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-2xl transition-colors text-left",
+                      isMobile && isBottomNav ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
+                    )}
                   >
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-5 h-5 text-indigo-400" />
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-indigo-100" : "bg-indigo-500/20")}>
+                      <Icon className={cn("w-5 h-5", isMobile && isBottomNav ? "text-indigo-500" : "text-indigo-400")} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white text-sm">{platform.name}</p>
-                      <p className="text-xs text-zinc-400">{platform.description}</p>
+                      <p className={cn("font-semibold text-sm", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>{platform.name}</p>
+                      <p className={cn("text-xs", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>{platform.description}</p>
                     </div>
                   </button>
                 );
@@ -221,14 +230,17 @@ const ShareModal = ({ isOpen, onClose, content }) => {
               {/* Copy Link */}
               <button
                 onClick={() => handleShare('copy')}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left"
+                className={cn(
+                  "flex items-center gap-3 p-4 rounded-2xl transition-colors text-left",
+                  isMobile && isBottomNav ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
+                )}
               >
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                  <Link className="w-5 h-5 text-purple-400" />
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-purple-100" : "bg-purple-500/20")}>
+                  <Link className={cn("w-5 h-5", isMobile && isBottomNav ? "text-purple-500" : "text-purple-400")} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-sm">Copiar enlace</p>
-                  <p className="text-xs text-zinc-400">Copiar al portapapeles</p>
+                  <p className={cn("font-semibold text-sm", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>Copiar enlace</p>
+                  <p className={cn("text-xs", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>Copiar al portapapeles</p>
                 </div>
               </button>
             </div>

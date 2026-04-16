@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+import { useNavPreference } from '../hooks/useNavPreference';
 
 const VotersModal = ({ isOpen, onClose, pollId }) => {
   const [voters, setVoters] = useState([]);
@@ -19,6 +20,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   const modalRef = useRef(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isBottomNav } = useNavPreference();
   const { user: currentUser } = useAuth();
   const dragStartY = useRef(0);
   const currentTranslateY = useRef(0);
@@ -227,9 +229,11 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             ref={modalRef}
             className={cn(
               "relative shadow-2xl overflow-hidden flex flex-col",
-              isMobile 
-                ? "w-full max-h-[85vh] rounded-t-3xl bg-zinc-900" 
-                : "w-full max-w-md max-h-[90vh] rounded-2xl bg-zinc-900"
+              isMobile && isBottomNav
+                ? "w-full max-h-[55vh] rounded-t-3xl bg-white"
+                : isMobile 
+                  ? "w-full max-h-[85vh] rounded-t-3xl bg-zinc-900" 
+                  : "w-full max-w-md max-h-[90vh] rounded-2xl bg-zinc-900"
             )}
             variants={modalVariants}
             initial="hidden"
@@ -246,29 +250,29 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
-            <div className="w-full py-3 flex justify-center flex-shrink-0">
-              <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+            <div className={cn("w-full py-3 flex justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-white" : "")}>
+              <div className={cn("w-10 h-1 rounded-full", isMobile && isBottomNav ? "bg-gray-300" : "bg-zinc-600")} />
             </div>
 
             {/* Header - Título y stats */}
-            <div className="px-4 sm:px-6 pb-4 flex-shrink-0">
-              <div className="pb-4 border-b border-white/10">
-                <h2 className="font-semibold text-white text-center text-base leading-tight">
+            <div className={cn("px-4 sm:px-6 pb-4 flex-shrink-0", isMobile && isBottomNav ? "bg-white" : "")}>
+              <div className={cn("pb-4 border-b", isMobile && isBottomNav ? "border-gray-200" : "border-white/10")}>
+                <h2 className={cn("font-semibold text-center text-base leading-tight", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                   Votos y<br />reproducciones
                 </h2>
               </div>
 
               <div className="flex items-center justify-center gap-8 pt-4">
                 <div className="flex items-center gap-2">
-                  <Vote className="w-5 h-5 text-white" strokeWidth={1.5} />
-                  <span className="text-lg font-normal text-white">
+                  <Vote className={cn("w-5 h-5", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={1.5} />
+                  <span className={cn("text-lg font-normal", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                     {totalVotes.toLocaleString()}
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Play className="w-5 h-5 text-white" strokeWidth={1.5} />
-                  <span className="text-lg font-normal text-white">
+                  <Play className={cn("w-5 h-5", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={1.5} />
+                  <span className={cn("text-lg font-normal", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                     {views.toLocaleString()}
                   </span>
                 </div>
@@ -279,15 +283,15 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className="w-6 h-6 text-white/40 animate-spin mb-3" />
-                  <p className="text-white/50 text-xs">Cargando votantes...</p>
+                  <Loader2 className={cn("w-6 h-6 animate-spin mb-3", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} />
+                  <p className={cn("text-xs", isMobile && isBottomNav ? "text-gray-400" : "text-white/50")}>Cargando votantes...</p>
                 </div>
               ) : filteredVoters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
-                  <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mb-3">
-                    <Vote className="w-7 h-7 text-white/40" />
+                  <div className={cn("w-14 h-14 rounded-full flex items-center justify-center mb-3", isMobile && isBottomNav ? "bg-gray-100" : "bg-white/10")}>
+                    <Vote className={cn("w-7 h-7", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} />
                   </div>
-                  <p className="text-white/50 text-center text-sm">
+                  <p className={cn("text-center text-sm", isMobile && isBottomNav ? "text-gray-400" : "text-white/50")}>
                     Aún no hay votos en esta publicación
                   </p>
                 </div>
@@ -312,7 +316,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             crossOrigin="anonymous"
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
-                          <AvatarFallback className="bg-white/10 text-white/50 flex items-center justify-center">
+                          <AvatarFallback className={cn("flex items-center justify-center", isMobile && isBottomNav ? "bg-gray-100 text-gray-400" : "bg-white/10 text-white/50")}>
                             <User className="w-7 h-7" />
                           </AvatarFallback>
                         </Avatar>
@@ -324,10 +328,10 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                             navigate(`/profile/${voter.username}`);
                           }}
                         >
-                          <p className="font-bold text-[15px] text-white truncate">
+                          <p className={cn("font-bold text-[15px] truncate", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                             {voter.username}
                           </p>
-                          <p className="text-[13px] text-white/50 truncate">
+                          <p className={cn("text-[13px] truncate", isMobile && isBottomNav ? "text-gray-500" : "text-white/50")}>
                             {voter.display_name}
                           </p>
                         </div>
@@ -339,8 +343,8 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
                           className={cn(
                             "ml-3 rounded-full font-semibold transition-all flex-shrink-0 h-[38px] px-7 text-[14px]",
                             voter.is_following
-                              ? 'bg-white/15 text-white hover:bg-white/25'
-                              : 'text-white hover:brightness-110'
+                              ? (isMobile && isBottomNav ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-white/15 text-white hover:bg-white/25')
+                              : (isMobile && isBottomNav ? 'text-white hover:brightness-110' : 'text-white hover:brightness-110')
                           )}
                           style={!voter.is_following ? {backgroundColor: '#B061FF'} : {}}
                         >

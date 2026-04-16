@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import CommentSection from './CommentSection';
 import { cn } from '../lib/utils';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useNavPreference } from '../hooks/useNavPreference';
 
 const CommentsModal = ({ 
   isOpen, 
@@ -18,6 +19,7 @@ const CommentsModal = ({
   const scrollRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
   const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+  const { isBottomNav } = useNavPreference();
   
   const didHideNavRef = useRef(false);
   const dragStartY = useRef(0);
@@ -151,10 +153,12 @@ const CommentsModal = ({
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative bg-zinc-900 shadow-2xl overflow-hidden flex flex-col",
-              isMobile 
-                ? "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom" 
-                : "w-full max-w-2xl max-h-[92vh] rounded-2xl"
+              "relative shadow-2xl overflow-hidden flex flex-col",
+              isMobile && isBottomNav
+                ? "w-full h-[50vh] max-h-[60vh] rounded-t-3xl bg-white"
+                : isMobile 
+                  ? "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900" 
+                  : "w-full max-w-2xl max-h-[92vh] rounded-2xl bg-zinc-900"
             )}
             variants={modalVariants}
             initial="hidden"
@@ -171,19 +175,21 @@ const CommentsModal = ({
             onTouchEnd={handleTouchEnd}
           >
             {/* Handle superior */}
-            <div className="w-full py-2 flex justify-center bg-zinc-900 flex-shrink-0">
+            <div className={cn("w-full py-2 flex justify-center flex-shrink-0", isBottomNav && isMobile ? "bg-white" : "bg-zinc-900")}>
               <div className={cn(
-                "bg-zinc-600 rounded-full",
-                isMobile ? "w-10 h-1" : "w-12 h-1"
+                "rounded-full",
+                isMobile ? "w-10 h-1" : "w-12 h-1",
+                isBottomNav && isMobile ? "bg-gray-300" : "bg-zinc-600"
               )} />
             </div>
 
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-zinc-900 px-4 sm:px-6 py-3 flex-shrink-0">
+            <div className={cn("sticky top-0 z-10 px-4 sm:px-6 py-3 flex-shrink-0", isBottomNav && isMobile ? "bg-white" : "bg-zinc-900")}>
               <div className="flex items-center justify-center">
                 <h2 className={cn(
-                  "font-semibold text-white text-center",
-                  isMobile ? "text-base" : "text-lg"
+                  "font-semibold text-center",
+                  isMobile ? "text-base" : "text-lg",
+                  isBottomNav && isMobile ? "text-gray-900" : "text-white"
                 )}>
                   Comentarios
                 </h2>
@@ -204,7 +210,7 @@ const CommentsModal = ({
                   isVisible={isOpen}
                   maxHeight="100%"
                   showHeader={false}
-                  darkMode={true}
+                  darkMode={!(isBottomNav && isMobile)}
                 />
               )}
             </div>
