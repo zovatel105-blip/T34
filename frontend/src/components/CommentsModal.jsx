@@ -19,7 +19,7 @@ const CommentsModal = ({
   const modalRef = useRef(null);
   const scrollRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
-  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+  const { hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar } = useTikTok();
   const { isBottomNav } = useNavPreference();
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -122,15 +122,17 @@ const CommentsModal = ({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      // Solo ocultar la barra de navegación derecha cuando NO estamos en modo bottom sheet
-      // En modo bottom sheet, la barra inferior debe permanecer visible para miniaturizar el post
-      if (!isBottomSheet) {
+      if (isBottomSheet) {
+        hideBottomNavigationBar();
+        didHideNavRef.current = true;
+      } else {
         hideRightNavigationBar();
         didHideNavRef.current = true;
       }
     } else if (didHideNavRef.current) {
       document.body.style.overflow = 'unset';
       showRightNavigationBar();
+      showBottomNavigationBar();
       didHideNavRef.current = false;
     }
 
@@ -139,10 +141,11 @@ const CommentsModal = ({
       if (didHideNavRef.current) {
         document.body.style.overflow = 'unset';
         showRightNavigationBar();
+        showBottomNavigationBar();
         didHideNavRef.current = false;
       }
     };
-  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar, isBottomSheet]);
+  }, [isOpen, onClose, hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar, isBottomSheet]);
 
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {

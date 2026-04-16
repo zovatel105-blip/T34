@@ -13,6 +13,7 @@ export const useTikTok = () => {
 export const TikTokProvider = ({ children }) => {
   const [isTikTokMode, setIsTikTokMode] = useState(false);
   const [hideRightNavigation, setHideRightNavigation] = useState(false);
+  const [hideBottomNav, setHideBottomNav] = useState(false);
 
   const enterTikTokMode = () => {
     setIsTikTokMode(true);
@@ -22,7 +23,8 @@ export const TikTokProvider = ({ children }) => {
 
   const exitTikTokMode = () => {
     setIsTikTokMode(false);
-    setHideRightNavigation(false); // Restaurar navegación cuando se sale de TikTok
+    setHideRightNavigation(false);
+    setHideBottomNav(false);
     // Restore body scroll
     document.body.style.overflow = 'auto';
   };
@@ -43,16 +45,27 @@ export const TikTokProvider = ({ children }) => {
     setHideRightNavigation(false);
   };
 
+  const hideBottomNavigationBar = () => {
+    setHideBottomNav(true);
+  };
+
+  const showBottomNavigationBar = () => {
+    setHideBottomNav(false);
+  };
+
   return (
     <TikTokContext.Provider 
       value={{
         isTikTokMode,
         hideRightNavigation,
+        hideBottomNav,
         enterTikTokMode,
         exitTikTokMode,
         toggleTikTokMode,
         hideRightNavigationBar,
-        showRightNavigationBar
+        showRightNavigationBar,
+        hideBottomNavigationBar,
+        showBottomNavigationBar
       }}
     >
       {children}

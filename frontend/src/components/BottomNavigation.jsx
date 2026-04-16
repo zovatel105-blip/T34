@@ -4,11 +4,13 @@ import { Home, Swords, Plus, Inbox, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
 import { useAuth } from '../contexts/AuthContext';
+import { useTikTok } from '../contexts/TikTokContext';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { hideBottomNav } = useTikTok();
   const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [currentMode, setCurrentMode] = useState('feed');
@@ -52,7 +54,13 @@ const BottomNavigation = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black rounded-t-3xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-black rounded-t-3xl transition-transform duration-300"
+      style={{ 
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transform: hideBottomNav ? 'translateY(100%)' : 'translateY(0)',
+      }}
+    >
       <div className="flex items-center justify-around px-4 py-2.5">
 
         {/* Home - con long press */}
