@@ -95,12 +95,16 @@ const BottomNavigation = () => {
         {/* Crear */}
         <button
           onClick={() => navigate('/new')}
-          className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90"
+          className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 relative overflow-hidden flex-shrink-0"
           style={{
-            border: '1.5px solid rgba(255,255,255,0.4)',
+            background: 'linear-gradient(180deg, #000 0%, #000 100%)',
+            border: '2px solid transparent',
+            backgroundImage: 'linear-gradient(#000, #000), linear-gradient(90deg, #A855F7 0%, #3B82F6 100%)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
           }}
         >
-          <Plus className="w-5 h-5 text-white" strokeWidth={2} />
+          <Plus className="w-5 h-5 text-white relative z-10" strokeWidth={2} />
         </button>
 
         {/* Mensajes / Inbox */}
