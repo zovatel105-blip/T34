@@ -31,6 +31,7 @@ import DoubleTapVoteAnimation from './DoubleTapVoteAnimation';
 import feedMenuService from '../services/feedMenuService';
 import storyService from '../services/storyService';
 import { useNavPreference } from '../hooks/useNavPreference';
+import { useTikTok } from '../contexts/TikTokContext';
 
 // Swiper imports for improved scrolling
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -153,6 +154,8 @@ const TikTokPollCard = ({
   const [showChallengeParticipants, setShowChallengeParticipants] = useState(false);
   const [audioContextActivated, setAudioContextActivated] = useState(false);
   const { isBottomNav } = useNavPreference();
+  const { hideRightNavigation } = useTikTok();
+  const isBottomNavVisible = isBottomNav && !hideRightNavigation;
   
   // Carousel state for multiple options
   // When coming from AudioDetailPage, start at the slide matching the current audio
@@ -1051,7 +1054,7 @@ const TikTokPollCard = ({
       {/* Bottom info and actions - Enhanced with safe area */}
       <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
-             paddingBottom: isBottomNav ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))',
+             paddingBottom: isBottomNavVisible ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))',
              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
              paddingRight: 'max(1rem, env(safe-area-inset-right))'
            }}>
@@ -1356,7 +1359,7 @@ const TikTokPollCard = ({
         return (
         <div className="absolute left-0 right-0 z-40 px-4 pointer-events-none"
              style={{ 
-               bottom: isBottomNav ? 'calc(52px + max(0.15rem, env(safe-area-inset-bottom)))' : 'max(0.15rem, env(safe-area-inset-bottom))',
+               bottom: isBottomNavVisible ? 'calc(52px + max(0.15rem, env(safe-area-inset-bottom)))' : 'max(0.15rem, env(safe-area-inset-bottom))',
                paddingLeft: 'max(1rem, env(safe-area-inset-left))',
                paddingRight: 'max(1rem, env(safe-area-inset-right))'
              }}>
