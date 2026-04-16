@@ -1356,7 +1356,7 @@ const TikTokPollCard = ({
         return (
         <div className="absolute left-0 right-0 z-40 px-4 pointer-events-none"
              style={{ 
-               bottom: 'max(0.15rem, env(safe-area-inset-bottom))',
+               bottom: isBottomNav ? 'calc(52px + max(0.15rem, env(safe-area-inset-bottom)))' : 'max(0.15rem, env(safe-area-inset-bottom))',
                paddingLeft: 'max(1rem, env(safe-area-inset-left))',
                paddingRight: 'max(1rem, env(safe-area-inset-right))'
              }}>
