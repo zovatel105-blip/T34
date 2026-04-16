@@ -272,27 +272,27 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       id: 'moments',
       icon: StoryPlusIcon,
       label: 'Historias',
-      color: 'bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700',
+      color: '',
       borderColor: 'border-orange-300',
-      shadowColor: 'shadow-orange-500/50',
+      shadowColor: '',
       position: { x: -28, y: 8 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'search',
       icon: Search,
       label: 'Buscar',
-      color: 'bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',
+      color: '',
       borderColor: 'border-blue-300',
-      shadowColor: 'shadow-blue-500/50',
+      shadowColor: '',
       position: { x: -35, y: -13 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'live',
       icon: TikTokLiveIcon,
       label: 'LIVE',
-      color: 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
+      color: '',
       borderColor: 'border-red-300',
-      shadowColor: 'shadow-red-500/50',
+      shadowColor: '',
       position: { x: -8, y: 16 }, // AJUSTADO: manteniendo distancia proporcional
     }
   ];
@@ -327,10 +327,10 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
               key={action.id}
               onClick={() => handleActionClick(action.id)}
               className={`
-                group absolute rounded-full shadow-lg transition-all duration-500 transform
-                ${action.color} ${action.borderColor} ${action.shadowColor}
+                group absolute rounded-full transition-all duration-500 transform
+                ${action.color}
                 ${isSelected ? 'scale-125 ring-4 ring-black/50' : 'hover:scale-110 active:scale-95'}
-                flex items-center justify-center border-2 w-10 h-10
+                flex items-center justify-center w-10 h-10
               `}
               style={{
                 left: `${action.position.x}px`,
