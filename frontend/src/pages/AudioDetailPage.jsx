@@ -550,7 +550,7 @@ const AudioDetailPage = () => {
         <div className="w-full flex gap-3">
           <Button
             onClick={handleUseThisSound}
-            className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-9 text-xs font-semibold shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-10 text-sm font-semibold shadow-sm"
             style={{backgroundColor: '#B061FF'}}
           >
             <Music className="w-3.5 h-3.5" />
@@ -560,7 +560,7 @@ const AudioDetailPage = () => {
           <Button
             onClick={handleShare}
             variant="outline"
-            className="flex-1 flex items-center justify-center gap-2 rounded-full h-9 text-xs font-semibold border-gray-200 hover:bg-gray-50"
+            className="flex-1 flex items-center justify-center gap-2 rounded-full h-10 text-sm font-semibold border-gray-200 hover:bg-gray-50"
           >
             <Share2 className="w-3.5 h-3.5" />
             <span>Compartir</span>
