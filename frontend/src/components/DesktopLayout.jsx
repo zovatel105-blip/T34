@@ -26,6 +26,7 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import { useNotificationPolling } from '../hooks/useNotificationPolling';
 import TrendingPanel from './TrendingPanel';
 import SuggestionsPanel from './SuggestionsPanel';
 import { cn } from '../lib/utils';
@@ -37,13 +38,14 @@ const DesktopLayout = ({ children }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { unreadCount } = useNotificationPolling(!!user);
 
   // Navigation items
   const navigationItems = [
     { icon: Home, label: 'Para ti', path: '/', active: location.pathname === '/' },
     { icon: Search, label: 'Explorar', path: '/explore', active: location.pathname === '/explore' },
-    { icon: Bell, label: 'Notificaciones', path: '/notifications', active: location.pathname === '/notifications', badge: 3 },
-    { icon: Mail, label: 'Mensajes', path: '/messages', active: location.pathname === '/messages', badge: 1 },
+    { icon: Bell, label: 'Notificaciones', path: '/notifications', active: location.pathname === '/notifications', badge: unreadCount > 0 ? unreadCount : null },
+    { icon: Mail, label: 'Mensajes', path: '/messages', active: location.pathname === '/messages' },
     { icon: Bookmark, label: 'Guardados', path: '/saved', active: location.pathname === '/saved' },
     { icon: User, label: 'Perfil', path: '/profile', active: location.pathname === '/profile' },
     { icon: Settings, label: 'Configuración', path: '/settings', active: location.pathname === '/settings' },

@@ -4,12 +4,16 @@ import CustomLogo from './CustomLogo';
 import QuickActionsMenu from './QuickActionsMenu';
 import useLongPress from '../hooks/useLongPress';
 import { useToast } from '../hooks/use-toast';
+import { useNotificationPolling } from '../hooks/useNotificationPolling';
+import { useAuth } from '../contexts/AuthContext';
 
 const LogoWithQuickActions = ({ size = 32, className = "" }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { unreadCount } = useNotificationPolling(!!user);
 
   const handleLongPress = useCallback(() => {
     setShowQuickActions(true);
@@ -135,6 +139,13 @@ const LogoWithQuickActions = ({ size = 32, className = "" }) => {
           }`} 
         />
         
+        {/* Notification badge */}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 shadow-lg shadow-red-500/50 animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+        
         {/* Indicador de carga eliminado para quitar anillo */}
       </div>
 
@@ -143,6 +154,7 @@ const LogoWithQuickActions = ({ size = 32, className = "" }) => {
         isVisible={showQuickActions}
         onClose={handleCloseMenu}
         onActionSelect={handleActionSelect}
+        unreadCount={unreadCount}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Plus, User, Settings, Video } from 'lucide-react';
+import { Search, X, Plus, User, Settings, Video, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 
@@ -119,7 +119,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
   );
 };
 
-const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
+const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const menuRef = useRef(null);
@@ -172,6 +172,9 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
           break;
         case 'live':
           handleLive();
+          break;
+        case 'notifications':
+          handleNotifications();
           break;
         default:
           break;
@@ -257,11 +260,16 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       duration: 4000,
     });
     
-    // Futuro: navegar a la página de live streaming
-    // navigate('/live');
-    
     if (onActionSelect) {
       onActionSelect('live');
+    }
+  };
+
+  const handleNotifications = () => {
+    navigate('/notifications');
+    
+    if (onActionSelect) {
+      onActionSelect('notifications');
     }
   };
 
@@ -297,6 +305,16 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       shadowColor: '',
       glowColor: '',
       position: { x: -8, y: 16 },
+    },
+    {
+      id: 'notifications',
+      icon: Bell,
+      label: unreadCount > 0 ? `(${unreadCount})` : 'Alertas',
+      color: unreadCount > 0 ? 'bg-red-500/30 backdrop-blur-xl hover:bg-red-500/40' : 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
+      borderColor: unreadCount > 0 ? 'border-red-400/40' : 'border-white/20',
+      shadowColor: '',
+      glowColor: unreadCount > 0 ? 'rgba(239,68,68,0.4)' : '',
+      position: { x: -40, y: 2 },
     }
   ];
 
