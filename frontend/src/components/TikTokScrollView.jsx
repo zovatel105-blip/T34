@@ -30,6 +30,7 @@ import LayoutRenderer from './layouts/LayoutRenderer';
 import DoubleTapVoteAnimation from './DoubleTapVoteAnimation';
 import feedMenuService from '../services/feedMenuService';
 import storyService from '../services/storyService';
+import { useNavPreference } from '../hooks/useNavPreference';
 
 // Swiper imports for improved scrolling
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -151,6 +152,7 @@ const TikTokPollCard = ({
   const [showVotersModal, setShowVotersModal] = useState(false);
   const [showChallengeParticipants, setShowChallengeParticipants] = useState(false);
   const [audioContextActivated, setAudioContextActivated] = useState(false);
+  const { isBottomNav } = useNavPreference();
   
   // Carousel state for multiple options
   // When coming from AudioDetailPage, start at the slide matching the current audio
@@ -1049,7 +1051,7 @@ const TikTokPollCard = ({
       {/* Bottom info and actions - Enhanced with safe area */}
       <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
-             paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+             paddingBottom: isBottomNav ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))',
              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
              paddingRight: 'max(1rem, env(safe-area-inset-right))'
            }}>
