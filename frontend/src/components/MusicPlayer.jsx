@@ -169,13 +169,8 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
           title="Ver información de la música"
           style={{
             animation: 'none',
-            border: '3px solid rgba(255,255,255,0.3)',
           }}
         >
-          {/* Vinyl ring effect */}
-          <div className="absolute inset-0 rounded-full border-2 border-black/40 z-10 pointer-events-none" />
-          <div className="absolute inset-[35%] rounded-full bg-black/60 z-10 pointer-events-none border border-white/20" />
-          
           {displayImage ? (
             <img 
               src={displayImage} 
