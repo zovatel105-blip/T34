@@ -1,203 +1,236 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Heart, MessageCircle, Users, Vote, Trophy, Clock, User } from 'lucide-react';
+import React from 'react';
+import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
-import notificationApiService from '../services/notificationApiService';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Bell, Heart, MessageCircle, Users, Vote, Trophy, Clock, User } from 'lucide-react';
 
-const NotificationItem = ({ notification, onRead }) => {
-  const { type, sender_username, sender_avatar, message, poll_title, created_at, is_read } = notification;
-
+const NotificationItem = ({ type, user, message, time, poll, isNew = false }) => {
   const getIcon = () => {
     switch (type) {
-      case 'like': return <Heart className="w-4 h-4 text-red-400" />;
-      case 'comment': return <MessageCircle className="w-4 h-4 text-blue-400" />;
-      case 'follow': return <Users className="w-4 h-4 text-green-400" />;
-      case 'vote': return <Vote className="w-4 h-4 text-purple-400" />;
-      case 'achievement': return <Trophy className="w-4 h-4 text-yellow-400" />;
-      default: return <Bell className="w-4 h-4 text-zinc-400" />;
+      case 'like': return <Heart className="w-4 h-4 text-red-500" />;
+      case 'comment': return <MessageCircle className="w-4 h-4 text-blue-500" />;
+      case 'follow': return <Users className="w-4 h-4 text-green-500" />;
+      case 'vote': return <Vote className="w-4 h-4 text-purple-500" />;
+      case 'achievement': return <Trophy className="w-4 h-4 text-yellow-500" />;
+      default: return <Bell className="w-4 h-4 text-gray-500" />;
     }
   };
 
-  const getIconBg = () => {
+  const getBackgroundColor = () => {
     switch (type) {
-      case 'like': return 'bg-red-500/20';
-      case 'comment': return 'bg-blue-500/20';
-      case 'follow': return 'bg-green-500/20';
-      case 'vote': return 'bg-purple-500/20';
-      case 'achievement': return 'bg-yellow-500/20';
-      default: return 'bg-zinc-500/20';
+      case 'like': return 'bg-red-50 hover:bg-red-100';
+      case 'comment': return 'bg-blue-50 hover:bg-blue-100';
+      case 'follow': return 'bg-green-50 hover:bg-green-100';
+      case 'vote': return 'bg-purple-50 hover:bg-purple-100';
+      case 'achievement': return 'bg-yellow-50 hover:bg-yellow-100';
+      default: return 'bg-gray-50 hover:bg-gray-100';
     }
-  };
-
-  const getTimeAgo = (dateStr) => {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const diffMs = now - date;
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffHrs = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMin < 1) return 'ahora';
-    if (diffMin < 60) return `hace ${diffMin} min`;
-    if (diffHrs < 24) return `hace ${diffHrs}h`;
-    if (diffDays < 7) return `hace ${diffDays}d`;
-    return date.toLocaleDateString();
   };
 
   return (
-    <button
-      onClick={() => !is_read && onRead(notification.id)}
-      className={`w-full flex items-start gap-3 p-4 rounded-2xl transition-colors text-left ${
-        !is_read ? 'bg-zinc-800/80' : 'bg-zinc-900 opacity-70'
-      }`}
-    >
-      {/* Avatar */}
-      <div className="relative flex-shrink-0">
-        <Avatar className="w-11 h-11">
-          <AvatarImage src={sender_avatar} alt={sender_username} />
-          <AvatarFallback className="bg-zinc-700 text-zinc-300 text-sm">
-            {sender_username?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
-          </AvatarFallback>
-        </Avatar>
-        <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${getIconBg()} flex items-center justify-center border-2 border-zinc-900`}>
-          {getIcon()}
+    <Card className={`transition-all duration-300 cursor-pointer ${getBackgroundColor()} ${isNew ? 'ring-2 ring-blue-500/20' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={`https://github.com/${user}.png`} alt={user} />
+              <AvatarFallback className="flex items-center justify-center bg-gray-50 text-gray-400">
+                <User className="w-5 h-5" />
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-semibold text-gray-900">{user}</span>
+              <div className="flex items-center gap-1">
+                {getIcon()}
+              </div>
+              {isNew && (
+                <Badge variant="default" className="text-xs bg-blue-600">
+                  Nuevo
+                </Badge>
+              )}
+            </div>
+            
+            <p className="text-sm text-gray-700 mb-2">{message}</p>
+            
+            {poll && (
+              <div className="bg-white/60 rounded-lg p-2 mb-2">
+                <p className="text-xs font-medium text-gray-600 truncate">
+                  "{poll}"
+                </p>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Clock className="w-3 h-3" />
+                <span>{time}</span>
+              </div>
+              
+              {type === 'follow' && (
+                <Button size="sm" variant="outline" className="text-xs h-6 px-2">
+                  Seguir
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-200">
-          <span className="font-semibold text-white">{sender_username}</span>{' '}
-          {message}
-        </p>
-        {poll_title && (
-          <p className="text-xs text-zinc-500 mt-1 truncate">"{poll_title}"</p>
-        )}
-        <div className="flex items-center gap-1 mt-1.5">
-          <Clock className="w-3 h-3 text-zinc-600" />
-          <span className="text-xs text-zinc-600">{getTimeAgo(created_at)}</span>
-        </div>
-      </div>
-
-      {/* Unread indicator */}
-      {!is_read && (
-        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0 mt-2" />
-      )}
-    </button>
+      </CardContent>
+    </Card>
   );
 };
 
 const NotificationsPage = () => {
-  const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const data = await notificationApiService.getNotifications(50);
-      setNotifications(data);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
+  const notifications = [
+    {
+      id: 1,
+      type: 'like',
+      user: 'MariaGonzalez',
+      message: 'le dio like a tu votación',
+      time: 'hace 5 min',
+      poll: '¿Quién ganó el mejor outfit de hoy?',
+      isNew: true
+    },
+    {
+      id: 2,
+      type: 'comment',
+      user: 'CarlosRuiz',
+      message: 'comentó en tu votación',
+      time: 'hace 15 min',
+      poll: '¿Cuál es la mejor receta de cocina?',
+      isNew: true
+    },
+    {
+      id: 3,
+      type: 'follow',
+      user: 'AnaLopez',
+      message: 'comenzó a seguirte',
+      time: 'hace 30 min',
+      isNew: true
+    },
+    {
+      id: 4,
+      type: 'vote',
+      user: 'PedroMartinez',
+      message: 'votó en tu votación',
+      time: 'hace 1 hora',
+      poll: '¿Cuál es el mejor baile de Twyk?'
+    },
+    {
+      id: 5,
+      type: 'achievement',
+      user: 'Sistema',
+      message: '¡Tu votación alcanzó 1000 votos!',
+      time: 'hace 2 horas',
+      poll: '¿Quién ganó el mejor outfit de hoy?'
+    },
+    {
+      id: 6,
+      type: 'like',
+      user: 'LuisaFernandez',
+      message: 'le dio like a tu votación',
+      time: 'hace 3 horas',
+      poll: '¿Cuál es la mejor receta de cocina?'
+    },
+    {
+      id: 7,
+      type: 'follow',
+      user: 'RobertoGarcia',
+      message: 'comenzó a seguirte',
+      time: 'hace 5 horas'
+    },
+    {
+      id: 8,
+      type: 'vote',
+      user: 'SofiaHernandez',
+      message: 'votó en tu votación',
+      time: 'hace 1 día',
+      poll: '¿Cuál es el mejor baile de Twyk?'
     }
-  }, []);
+  ];
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
-  const handleMarkAllRead = async () => {
-    await notificationApiService.markAllAsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-  };
-
-  const handleMarkRead = async (notifId) => {
-    await notificationApiService.markAsRead(notifId);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notifId ? { ...n, is_read: true } : n))
-    );
-  };
-
-  const newNotifications = notifications.filter((n) => !n.is_read);
-  const readNotifications = notifications.filter((n) => n.is_read);
+  const newNotificationsCount = notifications.filter(n => n.isNew).length;
 
   return (
-    <div className="min-h-screen bg-zinc-900 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-800">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-zinc-800 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-            <h1 className="text-lg font-bold text-white">Notificaciones</h1>
-            {newNotifications.length > 0 && (
-              <span className="px-2 py-0.5 bg-blue-600 rounded-full text-xs font-semibold text-white">
-                {newNotifications.length}
-              </span>
-            )}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Bell className="w-6 h-6 text-white" />
+                </div>
+                {newNotificationsCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">{newNotificationsCount}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Notificaciones</h1>
+                <p className="text-xs text-gray-500">
+                  {newNotificationsCount > 0 ? `${newNotificationsCount} nuevas` : 'Todo al día'}
+                </p>
+              </div>
+            </div>
+
+            <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
+              Marcar todas como leídas
+            </Button>
           </div>
-          {newNotifications.length > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="text-sm text-blue-400 font-medium hover:text-blue-300 transition-colors"
-            >
-              Marcar todas
-            </button>
-          )}
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="px-3 py-3">
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 border-2 border-zinc-600 border-t-blue-500 rounded-full animate-spin" />
-          </div>
-        ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
-              <Bell className="w-10 h-10 text-zinc-600" />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {notifications.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Bell className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-1">Sin notificaciones</h3>
-            <p className="text-sm text-zinc-500 text-center">
-              Cuando tengas interacciones aparecerán aquí
-            </p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No tienes notificaciones</h3>
+            <p className="text-gray-600 mb-6">Cuando tengas nuevas interacciones, aparecerán aquí</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {/* New notifications */}
-            {newNotifications.length > 0 && (
-              <div className="mb-4">
-                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-                  Nuevas
+          <div className="space-y-3">
+            {/* New Notifications */}
+            {newNotificationsCount > 0 && (
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                  Nuevas ({newNotificationsCount})
                 </h2>
-                <div className="space-y-1.5">
-                  {newNotifications.map((n) => (
-                    <NotificationItem key={n.id} notification={n} onRead={handleMarkRead} />
-                  ))}
+                <div className="space-y-3">
+                  {notifications
+                    .filter(notification => notification.isNew)
+                    .map((notification) => (
+                      <NotificationItem key={notification.id} {...notification} />
+                    ))}
                 </div>
               </div>
             )}
 
-            {/* Read notifications */}
-            {readNotifications.length > 0 && (
+            {/* Earlier Notifications */}
+            {notifications.some(n => !n.isNew) && (
               <div>
-                <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-1">
-                  Anteriores
-                </h2>
-                <div className="space-y-1.5">
-                  {readNotifications.map((n) => (
-                    <NotificationItem key={n.id} notification={n} onRead={handleMarkRead} />
-                  ))}
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">Anteriores</h2>
+                <div className="space-y-3">
+                  {notifications
+                    .filter(notification => !notification.isNew)
+                    .map((notification) => (
+                      <NotificationItem key={notification.id} {...notification} />
+                    ))}
                 </div>
               </div>
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };

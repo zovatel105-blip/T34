@@ -26,7 +26,6 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
-import { useNotificationPolling } from '../hooks/useNotificationPolling';
 import TrendingPanel from './TrendingPanel';
 import SuggestionsPanel from './SuggestionsPanel';
 import { cn } from '../lib/utils';
@@ -38,14 +37,13 @@ const DesktopLayout = ({ children }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { unreadCount } = useNotificationPolling(!!user);
 
   // Navigation items
   const navigationItems = [
     { icon: Home, label: 'Para ti', path: '/', active: location.pathname === '/' },
     { icon: Search, label: 'Explorar', path: '/explore', active: location.pathname === '/explore' },
-    { icon: Bell, label: 'Notificaciones', path: '/notifications', active: location.pathname === '/notifications', badge: unreadCount > 0 ? unreadCount : null },
-    { icon: Mail, label: 'Mensajes', path: '/messages', active: location.pathname === '/messages' },
+    { icon: Bell, label: 'Notificaciones', path: '/notifications', active: location.pathname === '/notifications', badge: 3 },
+    { icon: Mail, label: 'Mensajes', path: '/messages', active: location.pathname === '/messages', badge: 1 },
     { icon: Bookmark, label: 'Guardados', path: '/saved', active: location.pathname === '/saved' },
     { icon: User, label: 'Perfil', path: '/profile', active: location.pathname === '/profile' },
     { icon: Settings, label: 'Configuración', path: '/settings', active: location.pathname === '/settings' },
@@ -88,7 +86,7 @@ const DesktopLayout = ({ children }) => {
             <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">V</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Twyk</span>
+            <span className="text-xl font-bold text-gray-900">VotaTok</span>
           </div>
         </div>
 

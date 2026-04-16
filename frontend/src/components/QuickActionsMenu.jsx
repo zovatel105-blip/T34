@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Plus, User, Settings, Video, Bell } from 'lucide-react';
+import { Search, X, Plus, User, Settings, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 
@@ -22,20 +22,20 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       strokeWidth="2.2"
       fill="none"
     />
-    {/* Círculo oscuro en esquina inferior derecha */}
+    {/* Círculo blanco en esquina inferior derecha */}
     <circle
       cx="19"
       cy="20.5"
       r="5.5"
-      fill="rgba(0,0,0,0.5)"
+      fill="white"
     />
-    {/* Cruz del + en blanco */}
+    {/* Cruz del + en naranja más fino */}
     <line
       x1="19"
       y1="17.5"
       x2="19"
       y2="23.5"
-      stroke="currentColor"
+      stroke="#f97316"
       strokeWidth="1.5"
       strokeLinecap="round"
     />
@@ -44,14 +44,14 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       y1="20.5"
       x2="22"
       y2="20.5"
-      stroke="currentColor"
+      stroke="#f97316"
       strokeWidth="1.5"
       strokeLinecap="round"
     />
   </svg>
 );
 
-// Ícono personalizado de LIVE estilo Twyk
+// Ícono personalizado de LIVE estilo TikTok
 const TikTokLiveIcon = ({ size = 16, className = "" }) => {
   return (
     <svg
@@ -119,7 +119,7 @@ const TikTokLiveIcon = ({ size = 16, className = "" }) => {
   );
 };
 
-const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 }) => {
+const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const menuRef = useRef(null);
@@ -172,9 +172,6 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 
           break;
         case 'live':
           handleLive();
-          break;
-        case 'notifications':
-          handleNotifications();
           break;
         default:
           break;
@@ -260,16 +257,11 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 
       duration: 4000,
     });
     
-    if (onActionSelect) {
-      onActionSelect('live');
-    }
-  };
-
-  const handleNotifications = () => {
-    navigate('/notifications');
+    // Futuro: navegar a la página de live streaming
+    // navigate('/live');
     
     if (onActionSelect) {
-      onActionSelect('notifications');
+      onActionSelect('live');
     }
   };
 
@@ -280,41 +272,28 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 
       id: 'moments',
       icon: StoryPlusIcon,
       label: 'Historias',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: '',
-      glowColor: '',
-      position: { x: -28, y: 8 },
+      color: 'bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700',
+      borderColor: 'border-orange-300',
+      shadowColor: 'shadow-orange-500/50',
+      position: { x: -28, y: 8 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'search',
       icon: Search,
       label: 'Buscar',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: '',
-      glowColor: '',
-      position: { x: -35, y: -13 },
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',
+      borderColor: 'border-blue-300',
+      shadowColor: 'shadow-blue-500/50',
+      position: { x: -35, y: -13 }, // SUBIDO: 8px más arriba
     },
     {
       id: 'live',
       icon: TikTokLiveIcon,
       label: 'LIVE',
-      color: 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: 'border-white/20',
-      shadowColor: '',
-      glowColor: '',
-      position: { x: -8, y: 16 },
-    },
-    {
-      id: 'notifications',
-      icon: Bell,
-      label: unreadCount > 0 ? `(${unreadCount})` : 'Alertas',
-      color: unreadCount > 0 ? 'bg-red-500/30 backdrop-blur-xl hover:bg-red-500/40' : 'bg-white/10 backdrop-blur-xl hover:bg-white/20',
-      borderColor: unreadCount > 0 ? 'border-red-400/40' : 'border-white/20',
-      shadowColor: '',
-      glowColor: unreadCount > 0 ? 'rgba(239,68,68,0.4)' : '',
-      position: { x: -40, y: 2 },
+      color: 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
+      borderColor: 'border-red-300',
+      shadowColor: 'shadow-red-500/50',
+      position: { x: -8, y: 16 }, // AJUSTADO: manteniendo distancia proporcional
     }
   ];
 
@@ -360,7 +339,6 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect, unreadCount = 0 
                   ? `translate(${action.position.x}px, ${action.position.y}px) scale(${isSelected ? 1.25 : 1})` 
                   : 'translate(0px, 0px) scale(0)',
                 transitionDelay: isVisible ? `${index * 100}ms` : '0ms',
-                boxShadow: action.glowColor ? `0 0 12px 2px ${action.glowColor}` : undefined,
               }}
             >
               <Icon 
