@@ -13,7 +13,20 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    {/* Círculo principal más grande */}
+    <defs>
+      {/* Máscara para ocultar el anillo en la zona del círculo blanco */}
+      <mask id="ringMask">
+        <rect width="26" height="26" fill="white" />
+        <circle cx="19" cy="20.5" r="6" fill="black" />
+      </mask>
+      {/* Máscara para recortar el + del círculo blanco */}
+      <mask id="plusCutout">
+        <rect width="26" height="26" fill="white" />
+        <line x1="19" y1="17.5" x2="19" y2="23.5" stroke="black" strokeWidth="0.8" strokeLinecap="round" />
+        <line x1="16" y1="20.5" x2="22" y2="20.5" stroke="black" strokeWidth="0.8" strokeLinecap="round" />
+      </mask>
+    </defs>
+    {/* Círculo principal - anillo oculto en zona del + */}
     <circle
       cx="13"
       cy="13"
@@ -21,15 +34,8 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       stroke="currentColor"
       strokeWidth="1.3"
       fill="none"
+      mask="url(#ringMask)"
     />
-    {/* Máscara para recortar el + del círculo blanco */}
-    <defs>
-      <mask id="plusCutout">
-        <rect width="26" height="26" fill="white" />
-        <line x1="19" y1="17.5" x2="19" y2="23.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="16" y1="20.5" x2="22" y2="20.5" stroke="black" strokeWidth="1.5" strokeLinecap="round" />
-      </mask>
-    </defs>
     {/* Círculo blanco con + recortado (transparente) */}
     <circle
       cx="19"
