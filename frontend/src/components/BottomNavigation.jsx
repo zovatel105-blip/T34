@@ -19,9 +19,7 @@ const NavigationItem = ({ to, icon: Icon, label, isActive, badge }) => {
       <div className="relative">
         <Icon className="w-6 h-6 transition-all duration-300" />
         {badge > 0 && (
-          <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
-            {badge > 99 ? '99+' : badge}
-          </span>
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" />
         )}
       </div>
       <span className="text-xs font-medium">{label}</span>
