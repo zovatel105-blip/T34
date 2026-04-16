@@ -1122,7 +1122,7 @@ const TikTokPollCard = ({
         {(() => {
           const hasHighInteractions = (poll.likes >= 1000 || poll.comments >= 1000 || poll.shares >= 1000 || (poll.saves_count || 0) >= 1000);
           return (
-        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${hasHighInteractions ? 'gap-0.5' : 'gap-2'}`}>
+        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${hasHighInteractions ? 'gap-0.5' : 'gap-3'}`}>
             <Button
               variant="ghost"
               size="sm"
