@@ -1121,7 +1121,7 @@ const TikTokPollCard = ({
 
         <div className="flex items-center justify-between gap-4 pointer-events-auto">
           {/* Social buttons - Left side when no music, or right side when music present */}
-          <div className={`flex items-center gap-3 -ml-2 flex-nowrap ${poll.music ? '' : 'flex-1 justify-start'}`}>
+          <div className={`flex items-center gap-3 -ml-2 ${poll.music ? '' : 'flex-1 justify-start'}`}>
             <Button
               variant="ghost"
               size="sm"
