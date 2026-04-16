@@ -1145,39 +1145,39 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 pt-1 pb-3">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 pb-1">
+          <div className="flex-shrink-0 bg-white px-2 py-3">
+            <div className="flex items-center justify-between gap-1">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
-                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
+                className="px-3 py-2 rounded-full flex items-center gap-1.5 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <Users className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Nuevos</span>
+                <span className="text-xs font-medium text-gray-700">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/activity')}
-                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
+                className="px-3 py-2 rounded-full flex items-center gap-1.5 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <Bell className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Actividad</span>
+                <span className="text-xs font-medium text-gray-700">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
 
               <button
                 onClick={() => navigate('/messages/requests')}
-                className="px-4 py-2 rounded-full flex items-center gap-2 transition-colors relative flex-shrink-0 hover:bg-gray-50"
+                className="px-3 py-2 rounded-full flex items-center gap-1.5 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <MessageCircle className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Solicitudes</span>
+                <span className="text-xs font-medium text-gray-700">Solicitudes</span>
                 {getSegmentBadgeCount('messages') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
               </button>
             </div>
