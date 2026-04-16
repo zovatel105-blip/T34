@@ -34,7 +34,7 @@ export function useInboxUnreadCount(isAuthenticated) {
       let total = 0;
 
       // Messages unread
-      const msgData = await apiRequest('/api/messages/unread-count');
+      const msgData = await apiRequest('/api/messages/unread');
       total += msgData?.unread_count || 0;
 
       // Activity unread
