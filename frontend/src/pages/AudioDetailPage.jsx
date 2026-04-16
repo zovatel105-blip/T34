@@ -9,10 +9,18 @@ import pollService from '../services/pollService';
 import { Button } from '../components/ui/button';
 import TikTokScrollView from '../components/TikTokScrollView';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
+import { useTikTok } from '../contexts/TikTokContext';
 
 const AudioDetailPage = () => {
   const { audioId } = useParams();
   const navigate = useNavigate();
+  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+
+  // Ocultar barra de navegación en esta página
+  useEffect(() => {
+    hideRightNavigationBar();
+    return () => showRightNavigationBar();
+  }, []);
   const { toast } = useToast();
   
   const [audio, setAudio] = useState(null);
