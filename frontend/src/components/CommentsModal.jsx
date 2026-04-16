@@ -13,7 +13,8 @@ const CommentsModal = ({
   pollId, 
   pollTitle = "Comentarios",
   pollAuthor = null,
-  commentsEnabled = true
+  commentsEnabled = true,
+  onExpandChange = null
 }) => {
   const modalRef = useRef(null);
   const scrollRef = useRef(null);
@@ -50,6 +51,7 @@ const CommentsModal = ({
         modalRef.current.style.transform = 'translateY(0)';
       }
       setIsExpanded(true);
+      if (onExpandChange) onExpandChange(true);
       return;
     }
 
@@ -76,6 +78,7 @@ const CommentsModal = ({
         // Dragging down while expanded → collapse to half
         if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
         setIsExpanded(false);
+        if (onExpandChange) onExpandChange(false);
       } else {
         // Dragging down while half-open → close
         if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
@@ -88,8 +91,12 @@ const CommentsModal = ({
   };
 
   const toggleExpand = useCallback(() => {
-    setIsExpanded(prev => !prev);
-  }, []);
+    setIsExpanded(prev => {
+      const next = !prev;
+      if (onExpandChange) onExpandChange(next);
+      return next;
+    });
+  }, [onExpandChange]);
 
   // Reset expanded on close
   useEffect(() => {

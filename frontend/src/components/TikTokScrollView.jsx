@@ -156,6 +156,8 @@ const TikTokPollCard = ({
   const { isBottomNav } = useNavPreference();
   const { hideRightNavigation } = useTikTok();
   const isBottomNavVisible = isBottomNav && !hideRightNavigation;
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  const [isVotersExpanded, setIsVotersExpanded] = useState(false);
   
   // Carousel state for multiple options
   // When coming from AudioDetailPage, start at the slide matching the current audio
@@ -597,9 +599,25 @@ const TikTokPollCard = ({
 
   const winningOption = getWinningOption();
 
+  // Si algún bottom sheet está medio abierto, comprimir el post
+  const isPostMiniature = isBottomNavVisible && (
+    (showCommentsModal && !isCommentsExpanded) ||
+    (showVotersModal && !isVotersExpanded)
+  );
+
   return (
     <div className="w-full h-full flex flex-col relative bg-black overflow-hidden">
-
+      
+      {/* Contenedor del post con transformación miniatura */}
+      <div 
+        className="absolute inset-0 transition-all duration-500 ease-out origin-top"
+        style={isPostMiniature ? {
+          transform: 'scale(0.72) translateY(-2%)',
+          borderRadius: '24px',
+          overflow: 'hidden',
+          height: '100%',
+        } : {}}
+      >
 
       {/* Header - Fixed at top with safe area */}
       <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent px-4 pt-safe-4 pb-8"
@@ -1412,14 +1430,17 @@ const TikTokPollCard = ({
         </div>
       )}
 
+      </div>{/* Cierre del contenedor miniatura */}
+
       {/* Modal de comentarios */}
       <CommentsModal
         isOpen={showCommentsModal}
-        onClose={() => setShowCommentsModal(false)}
+        onClose={() => { setShowCommentsModal(false); setIsCommentsExpanded(false); }}
         pollId={poll.id}
         pollTitle={poll.title}
         pollAuthor={poll.author?.display_name || poll.author?.username || 'Usuario'}
         commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
+        onExpandChange={setIsCommentsExpanded}
       />
 
       {/* Modal de detalle del post (al tocar título) */}
@@ -1442,8 +1463,9 @@ const TikTokPollCard = ({
       {/* Modal de votantes */}
       <VotersModal
         isOpen={showVotersModal}
-        onClose={() => setShowVotersModal(false)}
+        onClose={() => { setShowVotersModal(false); setIsVotersExpanded(false); }}
         pollId={poll.id}
+        onExpandChange={setIsVotersExpanded}
       />
 
       {/* Modal de participantes del challenge */}

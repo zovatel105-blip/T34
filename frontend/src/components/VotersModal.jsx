@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import { useNavPreference } from '../hooks/useNavPreference';
 
-const VotersModal = ({ isOpen, onClose, pollId }) => {
+const VotersModal = ({ isOpen, onClose, pollId, onExpandChange = null }) => {
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalVotes, setTotalVotes] = useState(0);
@@ -44,6 +44,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       isDragging.current = false;
       if (modalRef.current) { modalRef.current.style.transition = 'transform 0.2s ease-out'; modalRef.current.style.transform = 'translateY(0)'; }
       setIsExpanded(true);
+      if (onExpandChange) onExpandChange(true);
       return;
     }
 
@@ -64,6 +65,7 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       if (isBottomSheet && isExpanded) {
         if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
         setIsExpanded(false);
+        if (onExpandChange) onExpandChange(false);
       } else {
         if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
         setTimeout(onClose, 300);
@@ -100,8 +102,12 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   }, [isOpen]);
 
   const toggleExpand = useCallback(() => {
-    setIsExpanded(prev => !prev);
-  }, []);
+    setIsExpanded(prev => {
+      const next = !prev;
+      if (onExpandChange) onExpandChange(next);
+      return next;
+    });
+  }, [onExpandChange]);
 
   // Manejar escape key
   useEffect(() => {
