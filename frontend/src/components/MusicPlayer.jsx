@@ -165,7 +165,7 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
       <div className="relative">
         <div 
           onClick={handleNavigateToAudio}
-          className="relative cursor-pointer w-12 h-12 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200"
+          className="relative cursor-pointer w-9 h-9 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200"
           title="Ver información de la música"
           style={{
             animation: 'none',
