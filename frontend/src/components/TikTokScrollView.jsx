@@ -612,13 +612,13 @@ const TikTokPollCard = ({
       <div 
         className="absolute inset-0 transition-all duration-500 ease-out origin-top"
         style={isPostMiniature ? {
-          top: 0,
+          top: '8px',
           left: 0,
           right: 0,
           bottom: 'auto',
           width: '100%',
           height: '59vh',
-          borderRadius: '0 0 20px 20px',
+          borderRadius: '20px',
           overflow: 'hidden',
           zIndex: 101,
           pointerEvents: 'none',
@@ -1079,7 +1079,7 @@ const TikTokPollCard = ({
       {/* Bottom info and actions - Enhanced with safe area */}
       <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
-             paddingBottom: isBottomNavVisible ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))',
+             paddingBottom: isPostMiniature ? 'max(0.5rem, env(safe-area-inset-bottom))' : (isBottomNavVisible ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))'),
              paddingLeft: 'max(1rem, env(safe-area-inset-left))',
              paddingRight: 'max(1rem, env(safe-area-inset-right))'
            }}>
