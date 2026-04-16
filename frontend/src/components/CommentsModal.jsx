@@ -199,7 +199,7 @@ const CommentsModal = ({
               isBottomSheet 
                 ? (isExpanded 
                     ? "w-full h-[95vh] rounded-t-3xl bg-white shadow-2xl"
-                    : "w-full h-[42vh] rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)]")
+                    : "w-full h-[46vh] rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)]")
                 : isMobile 
                   ? "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900 shadow-2xl"
                   : "w-full max-w-2xl max-h-[92vh] rounded-2xl bg-zinc-900 shadow-2xl"

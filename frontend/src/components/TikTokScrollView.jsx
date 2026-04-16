@@ -612,16 +612,17 @@ const TikTokPollCard = ({
       <div 
         className="absolute inset-0 transition-all duration-500 ease-out origin-top"
         style={isPostMiniature ? {
-          top: '6px',
-          left: '6px',
-          right: '6px',
+          top: '4px',
+          left: '4px',
+          right: '4px',
           bottom: 'auto',
-          width: 'calc(100% - 12px)',
-          height: '54vh',
-          borderRadius: '40px',
+          width: 'calc(100% - 8px)',
+          height: '56vh',
+          borderRadius: '20px',
           overflow: 'hidden',
           zIndex: 101,
           pointerEvents: 'none',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2)',
         } : {}}
       >
 
