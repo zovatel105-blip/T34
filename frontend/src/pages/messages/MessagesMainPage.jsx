@@ -1145,8 +1145,8 @@ const MessagesMainPage = () => {
           </div>
 
           {/* Navigation Segments */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar" style={{ overflow: 'visible' }}>
+          <div className="flex-shrink-0 bg-white px-4 pt-1 pb-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 pb-1">
               {/* Navigation to other pages */}
               <button
                 onClick={() => navigate('/messages/followers')}
@@ -1155,7 +1155,7 @@ const MessagesMainPage = () => {
                 <Users className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Nuevos</span>
                 {getSegmentBadgeCount('followers') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
 
@@ -1166,7 +1166,7 @@ const MessagesMainPage = () => {
                 <Bell className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Actividad</span>
                 {getSegmentBadgeCount('activity') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
 
@@ -1177,7 +1177,7 @@ const MessagesMainPage = () => {
                 <MessageCircle className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
                 <span className="text-sm font-medium text-gray-700">Solicitudes</span>
                 {getSegmentBadgeCount('messages') && (
-                  <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
+                  <span className="w-2 h-2 bg-red-500 rounded-full" />
                 )}
               </button>
             </div>
