@@ -19,7 +19,7 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       cy="13"
       r="11"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="3.5"
       fill="none"
     />
     {/* Círculo blanco en esquina inferior derecha */}
@@ -36,7 +36,7 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       x2="19"
       y2="23.5"
       stroke="#f97316"
-      strokeWidth="1.5"
+      strokeWidth="2.5"
       strokeLinecap="round"
     />
     <line
@@ -45,7 +45,7 @@ const StoryPlusIcon = ({ size = 16, className = "" }) => (
       x2="22"
       y2="20.5"
       stroke="#f97316"
-      strokeWidth="1.5"
+      strokeWidth="2.5"
       strokeLinecap="round"
     />
   </svg>
@@ -343,7 +343,7 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
             >
               <Icon 
                 size={isLiveAction ? 15 : isMomentsAction ? 33 : 33} 
-                strokeWidth={isLiveAction ? 2.5 : 2.5}
+                strokeWidth={isLiveAction ? 2.5 : 3}
                 className={`text-white transition-all duration-200 ${
                   isSelected ? 'scale-125' : 'group-hover:scale-110'
                 }`} 
