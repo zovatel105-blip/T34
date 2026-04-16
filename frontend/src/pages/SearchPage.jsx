@@ -8,6 +8,7 @@ import searchService from '../services/searchService';
 import userService from '../services/userService';
 import AutocompleteDropdown from '../components/search/AutocompleteDropdown';
 import TikTokScrollView from '../components/TikTokScrollView';
+import { useTikTok } from '../contexts/TikTokContext';
 import PollThumbnail from '../components/PollThumbnail';
 import LazyImage from '../components/search/LazyImage';
 import { 
@@ -24,6 +25,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [autocompleteResults, setAutocompleteResults] = useState([]);
+  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
@@ -506,6 +508,7 @@ const SearchPage = () => {
       setTikTokViewPosts([instantPollData]);
       setCurrentTikTokIndex(0);
       setShowTikTokView(true);
+      hideRightNavigationBar();
       setLoadingAdjacentPosts(new Set());
       
       // 🔄 BACKGROUND: Fetch full data to get vote status, music, exact counts, etc.
@@ -676,6 +679,7 @@ const SearchPage = () => {
   // TikTokScrollView functions - defined early to avoid hoisting issues
   const handleCloseTikTokView = () => {
     setShowTikTokView(false);
+    showRightNavigationBar();
     setTikTokViewPosts([]);
     setCurrentTikTokIndex(0);
   };
