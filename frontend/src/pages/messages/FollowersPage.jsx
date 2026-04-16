@@ -169,7 +169,7 @@ const FollowersPage = () => {
                     }`}
                     style={!isFollowing ? { backgroundColor: '#B061FF' } : {}}
                   >
-                    {isFollowing ? 'Siguiendo' : 'Seguir'}
+                    {isFollowing ? 'Siguiendo' : 'Seguir también'}
                   </button>
                 </div>
               );

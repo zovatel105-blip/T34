@@ -124,7 +124,7 @@ const ProfilePage = () => {
   };
   const { toast } = useToast();
   const { user: authUser, refreshUser } = useAuth();
-  const { getUserFollowers, getUserFollowing, followUser, unfollowUser, isFollowing, getFollowStatus, followStateVersion, refreshTrigger, getUserByUsername } = useFollow();
+  const { getUserFollowers, getUserFollowing, followUser, unfollowUser, isFollowing, followsMe, getFollowStatus, followStateVersion, refreshTrigger, getUserByUsername } = useFollow();
   const { shareModal, shareProfile, closeShareModal } = useShare();
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
   const { userId } = useParams();
@@ -496,6 +496,13 @@ const ProfilePage = () => {
     
     return isMatch;
   }, [userId, authUser]);
+
+  // Load follow status when viewing another user's profile (to know if they follow me)
+  useEffect(() => {
+    if (!isOwnProfile && viewedUser?.id && authUser?.id) {
+      getFollowStatus(viewedUser.id);
+    }
+  }, [isOwnProfile, viewedUser?.id, authUser?.id, getFollowStatus, followStateVersion]);
 
   // Estado temporal para debug visual en móvil
   const [debugInfo, setDebugInfo] = useState(null);
@@ -1928,7 +1935,7 @@ const ProfilePage = () => {
                         }`}
                         style={!isFollowing(viewedUser?.id) ? {backgroundColor: '#B061FF'} : {}}
                       >
-                        {isFollowing(viewedUser?.id) ? 'Siguiendo' : 'Seguir'}
+                        {isFollowing(viewedUser?.id) ? 'Siguiendo' : (followsMe(viewedUser?.id) ? 'Seguir también' : 'Seguir')}
                       </Button>
                     )}
                   </div>
@@ -2199,7 +2206,7 @@ const ProfilePage = () => {
                     ) : (
                       <>
                         <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        Seguir
+                        {followsMe(viewedUser?.id || userId) ? 'Seguir también' : 'Seguir'}
                       </>
                     )}
                   </Button>
@@ -2778,7 +2785,7 @@ const ProfilePage = () => {
                             )}
                             style={!isFollowing(follower.id) ? {backgroundColor: '#B061FF'} : {}}
                           >
-                            {isFollowing(follower.id) ? "Siguiendo" : "Seguir"}
+                            {isFollowing(follower.id) ? "Siguiendo" : (isOwnProfile ? "Seguir también" : "Seguir")}
                           </button>
                         )}
                       </div>
