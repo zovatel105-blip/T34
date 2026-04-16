@@ -574,13 +574,7 @@ const TikTokPollCard = ({
     }
     
     const numValue = Number(num);
-    if (numValue >= 1000000) {
-      return `${(numValue / 1000000).toFixed(1)}M`;
-    }
-    if (numValue >= 1000) {
-      return `${(numValue / 1000).toFixed(1)}K`;
-    }
-    return numValue.toString();
+    return numValue.toLocaleString();
   };
 
   const getPercentage = (votes) => {
