@@ -83,7 +83,8 @@ const Comment = ({
   onLike, 
   onReplyClick,
   depth = 0, 
-  maxDepth = 3 
+  maxDepth = 3,
+  bottomSheetMode = false
 }) => {
   const { user: currentUser } = useAuth();
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -181,11 +182,14 @@ const Comment = ({
       transition={{ duration: 0.4, delay: depth * 0.1 }}
     >
       <div className="comment-item flex gap-3">
-        {/* Avatar pequeño */}
-        <Avatar className="w-8 h-8 flex-shrink-0 mt-0.5">
+        {/* Avatar */}
+        <Avatar className={cn("flex-shrink-0 mt-0.5", bottomSheetMode ? "w-10 h-10" : "w-8 h-8")}>
           <AvatarImage src={comment.user.avatar_url} />
-          <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
-            <User className="w-4 h-4" />
+          <AvatarFallback className={cn(
+            "flex items-center justify-center",
+            bottomSheetMode ? "bg-gray-100 text-gray-400" : "bg-gray-50 text-gray-400"
+          )}>
+            <User className={bottomSheetMode ? "w-5 h-5" : "w-4 h-4"} />
           </AvatarFallback>
         </Avatar>
         
@@ -193,14 +197,17 @@ const Comment = ({
         <div className="flex-1 min-w-0">
           {/* Nombre y hora */}
           <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-white text-[13px]">
+            <span className={cn(
+              "text-[13px]",
+              bottomSheetMode ? "text-gray-500 font-medium" : "font-semibold text-white"
+            )}>
               {comment.user.display_name || comment.user.username}
             </span>
-            <span className="text-[11px] text-white/40">
+            <span className={cn("text-[11px]", bottomSheetMode ? "text-gray-400" : "text-white/40")}>
               {formatTimeAgo(comment.created_at)}
             </span>
             {comment.is_edited && (
-              <span className="text-[11px] text-white/30">(editado)</span>
+              <span className={cn("text-[11px]", bottomSheetMode ? "text-gray-300" : "text-white/30")}>(editado)</span>
             )}
           </div>
           
@@ -216,75 +223,96 @@ const Comment = ({
               />
             </div>
           ) : (
-            <p className="text-white/90 text-[13px] leading-snug mt-0.5">
+            <p className={cn(
+              "text-[13px] leading-snug mt-0.5",
+              bottomSheetMode ? "text-gray-900 font-medium" : "text-white/90"
+            )}>
               {comment.content}
             </p>
           )}
           
-          {/* Acciones compactas */}
-          <div className="flex items-center gap-3 text-[11px] text-white/40 mt-1">
+          {/* Acciones */}
+          <div className={cn("flex items-center gap-2 mt-1.5", bottomSheetMode ? "gap-2" : "gap-3 text-[11px] text-white/40")}>
             {canReply && (
               <button
                 onClick={() => onReplyClick ? onReplyClick(comment) : setShowReplyForm(!showReplyForm)}
-                className="font-semibold hover:text-white/70"
+                className={cn(
+                  bottomSheetMode
+                    ? "px-3 py-1 rounded-full border border-gray-200 text-[11px] font-medium text-gray-500 hover:bg-gray-50"
+                    : "font-semibold hover:text-white/70 text-[11px] text-white/40"
+                )}
               >
-                Responder
+                Reply
               </button>
             )}
             
-            {isAuthor && (
+            {isAuthor && !bottomSheetMode && (
               <>
                 <button
                   onClick={() => setShowEditForm(true)}
-                  className="font-semibold hover:text-white/70"
+                  className="font-semibold hover:text-white/70 text-[11px] text-white/40"
                 >
                   Editar
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="font-semibold hover:text-red-400"
+                  className="font-semibold hover:text-red-400 text-[11px] text-white/40"
                 >
                   Eliminar
                 </button>
               </>
             )}
-            
-            {/* Menú de 3 puntos */}
-            <div className="relative">
+
+            {isAuthor && bottomSheetMode && (
               <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="hover:text-white/70"
+                onClick={handleDelete}
+                className="px-3 py-1 rounded-full border border-gray-200 text-[11px] font-medium text-gray-400 hover:bg-gray-50"
               >
-                <MoreHorizontal className="w-3.5 h-3.5" />
+                Eliminar
               </button>
-              
-              <AnimatePresence>
-                {showMenu && (
-                  <motion.div 
-                    className="absolute right-0 top-5 bg-gray-800 border border-white/20 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <button
-                      onClick={() => setShowMenu(false)}
-                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+            )}
+            
+            {/* Menú de 3 puntos - solo en modo oscuro */}
+            {!bottomSheetMode && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="hover:text-white/70 text-white/40"
+                >
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                </button>
+                
+                <AnimatePresence>
+                  {showMenu && (
+                    <motion.div 
+                      className="absolute right-0 top-5 bg-gray-800 border border-white/20 rounded-lg shadow-lg py-1 z-20 min-w-[120px]"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      <Flag className="w-4 h-4" />
-                      Reportar
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      <button
+                        onClick={() => setShowMenu(false)}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+                      >
+                        <Flag className="w-4 h-4" />
+                        Reportar
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
           
           {/* Ver respuestas */}
           {hasReplies && (
             <button
               onClick={() => setShowReplies(!showReplies)}
-              className="flex items-center gap-1 text-[11px] text-white/40 font-semibold hover:text-white/70 mt-1"
+              className={cn(
+                "flex items-center gap-1 text-[11px] font-semibold mt-1",
+                bottomSheetMode ? "text-gray-400 hover:text-gray-600" : "text-white/40 hover:text-white/70"
+              )}
             >
               {showReplies ? (
                 <>Ocultar respuestas ({comment.reply_count})</>
@@ -295,15 +323,17 @@ const Comment = ({
           )}
         </div>
         
-        {/* Likes/Dislikes a la derecha */}
-        <div className="flex items-start gap-2 ml-1 flex-shrink-0">
+        {/* Like a la derecha */}
+        <div className="flex items-start ml-1 flex-shrink-0">
           <div className="flex flex-col items-center w-5">
             <motion.button
               onClick={handleLike}
               disabled={isLiking}
               className={cn(
                 "p-0.5 transition-all duration-200",
-                comment.user_liked ? "text-red-500" : "text-white/30 hover:text-red-500"
+                bottomSheetMode
+                  ? (comment.user_liked ? "text-red-500" : "text-gray-300 hover:text-red-500")
+                  : (comment.user_liked ? "text-red-500" : "text-white/30 hover:text-red-500")
               )}
               whileTap={{ scale: 0.9 }}
             >
@@ -313,25 +343,28 @@ const Comment = ({
               )} />
             </motion.button>
             {comment.likes > 0 && (
-              <span className="text-[10px] text-white/40">{comment.likes}</span>
+              <span className={cn("text-[10px]", bottomSheetMode ? "text-gray-400" : "text-white/40")}>{comment.likes}</span>
             )}
           </div>
-          <div className="flex flex-col items-center w-5">
-            <motion.button
-              onClick={handleDislike}
-              disabled={isDisliking}
-              className={cn(
-                "p-0.5 transition-all duration-200",
-                comment.user_disliked ? "text-blue-500" : "text-white/30 hover:text-blue-500"
-              )}
-              whileTap={{ scale: 0.9 }}
-            >
-              <HeartCrack className={cn(
-                "w-4 h-4",
-                comment.user_disliked && "fill-current"
-              )} />
-            </motion.button>
-          </div>
+          {/* Dislike solo en modo oscuro */}
+          {!bottomSheetMode && (
+            <div className="flex flex-col items-center w-5">
+              <motion.button
+                onClick={handleDislike}
+                disabled={isDisliking}
+                className={cn(
+                  "p-0.5 transition-all duration-200",
+                  comment.user_disliked ? "text-blue-500" : "text-white/30 hover:text-blue-500"
+                )}
+                whileTap={{ scale: 0.9 }}
+              >
+                <HeartCrack className={cn(
+                  "w-4 h-4",
+                  comment.user_disliked && "fill-current"
+                )} />
+              </motion.button>
+            </div>
+          )}
         </div>
       </div>
       
@@ -370,6 +403,7 @@ const Comment = ({
                 onReplyClick={onReplyClick}
                 depth={depth + 1}
                 maxDepth={maxDepth}
+                bottomSheetMode={bottomSheetMode}
               />
             ))}
           </motion.div>

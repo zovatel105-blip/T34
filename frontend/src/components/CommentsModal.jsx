@@ -156,46 +156,44 @@ const CommentsModal = ({
       : { opacity: 0, scale: 0.85, y: 60 }
   };
 
-  // Bottom sheet height classes
-  const getSheetClasses = () => {
-    if (isBottomSheet) {
-      if (isExpanded) {
-        return "w-full h-[95vh] rounded-t-3xl bg-white";
-      }
-      return "w-full h-[42vh] rounded-t-3xl bg-white";
-    }
-    if (isMobile) {
-      return "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900";
-    }
-    return "w-full max-w-2xl max-h-[92vh] rounded-2xl bg-zinc-900";
-  };
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100]">
-        {/* Backdrop */}
+      <div className="fixed inset-0 z-[100]" style={{ pointerEvents: isBottomSheet && !isExpanded ? 'none' : 'auto' }}>
+        {/* Backdrop - transparente en bottom sheet medio abierto para ver el post */}
         <motion.div
           className={cn(
-            "absolute inset-0 backdrop-blur-md",
-            isBottomSheet && !isExpanded ? "bg-black/40" : "bg-black/70"
+            "absolute inset-0",
+            isBottomSheet && !isExpanded 
+              ? "" 
+              : isBottomSheet && isExpanded 
+                ? "bg-black/50 backdrop-blur-sm" 
+                : "bg-black/70 backdrop-blur-md"
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
+          style={{ pointerEvents: 'auto' }}
         />
         
         {/* Modal Container */}
         <div className={cn(
           "flex h-full",
           isMobile ? "items-end justify-center" : "items-center justify-center p-4"
-        )}>
+        )} style={{ pointerEvents: 'none' }}>
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative shadow-2xl overflow-hidden flex flex-col transition-all duration-300",
-              getSheetClasses()
+              "relative overflow-hidden flex flex-col transition-all duration-300",
+              isBottomSheet 
+                ? (isExpanded 
+                    ? "w-full h-[95vh] rounded-t-3xl bg-white shadow-2xl"
+                    : "w-full h-[42vh] rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)]")
+                : isMobile 
+                  ? "w-full h-[75vh] max-h-[85vh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900 shadow-2xl"
+                  : "w-full max-w-2xl max-h-[92vh] rounded-2xl bg-zinc-900 shadow-2xl"
             )}
+            style={{ pointerEvents: 'auto' }}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -255,6 +253,7 @@ const CommentsModal = ({
                   maxHeight="100%"
                   showHeader={false}
                   darkMode={!isBottomSheet}
+                  bottomSheetMode={isBottomSheet}
                 />
               )}
             </div>

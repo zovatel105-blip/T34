@@ -14,7 +14,8 @@ const CommentSection = ({
   isVisible = true, 
   maxHeight = "600px",
   showHeader = true,
-  darkMode = false
+  darkMode = false,
+  bottomSheetMode = false
 }) => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -410,6 +411,7 @@ const CommentSection = ({
                   onReplyClick={handleReplyClick}
                   depth={0}
                   maxDepth={3}
+                  bottomSheetMode={bottomSheetMode}
                 />
               ))}
             </AnimatePresence>
@@ -443,7 +445,7 @@ const CommentSection = ({
       
       {/* Área de comentario */}
       {user && (
-        <div className={`flex-shrink-0 ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
+        <div className={`flex-shrink-0 ${bottomSheetMode ? 'bg-white border-t border-gray-100' : darkMode ? 'bg-transparent' : 'bg-white'}`}>
           {/* Indicador de respuesta */}
           <AnimatePresence>
             {replyingTo && (
@@ -451,12 +453,12 @@ const CommentSection = ({
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`flex items-center justify-between px-5 py-2 ${darkMode ? '' : ''}`}
+                className={`flex items-center justify-between px-5 py-2`}
               >
-                <span className={`text-xs ${darkMode ? 'text-white/60' : 'text-gray-400'}`}>
-                  Respondiendo a <span className={`font-semibold ${darkMode ? 'text-white/90' : 'text-gray-900'}`}>{replyingTo.user.username}</span>
+                <span className={`text-xs ${bottomSheetMode || !darkMode ? 'text-gray-400' : 'text-white/60'}`}>
+                  Respondiendo a <span className={`font-semibold ${bottomSheetMode || !darkMode ? 'text-gray-900' : 'text-white/90'}`}>{replyingTo.user.username}</span>
                 </span>
-                <button onClick={cancelReply} className={`p-1 ${darkMode ? 'text-white/40 hover:text-white/70' : 'text-gray-400 hover:text-gray-600'}`}>
+                <button onClick={cancelReply} className={`p-1 ${bottomSheetMode || !darkMode ? 'text-gray-400 hover:text-gray-600' : 'text-white/40 hover:text-white/70'}`}>
                   ✕
                 </button>
               </motion.div>
@@ -467,7 +469,7 @@ const CommentSection = ({
           <div className="flex items-center gap-3 px-4 pb-4 pt-2">
             <Avatar className="w-8 h-8 flex-shrink-0">
               <AvatarImage src={user.avatar_url} alt={user.username} />
-              <AvatarFallback className={`flex items-center justify-center ${darkMode ? 'bg-white text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
+              <AvatarFallback className={`flex items-center justify-center ${bottomSheetMode ? 'bg-gray-100 text-gray-400' : darkMode ? 'bg-white text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
                 <User className="w-4 h-4" />
               </AvatarFallback>
             </Avatar>
@@ -495,15 +497,28 @@ const CommentSection = ({
               <input
                 ref={inputRef}
                 type="text"
-                placeholder={replyingTo ? `@${replyingTo.user.username}` : "Añade un comentario..."}
+                placeholder={replyingTo ? `@${replyingTo.user.username}` : "Add comment..."}
                 className={`flex-1 px-4 py-2.5 rounded-2xl text-sm focus:outline-none transition-all ${
-                  darkMode 
-                    ? 'bg-zinc-900 border border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500' 
-                    : 'bg-gray-50 placeholder-gray-400 focus:ring-1 focus:ring-gray-200'
+                  bottomSheetMode
+                    ? 'bg-gray-100 placeholder-gray-400 text-gray-900 focus:ring-1 focus:ring-gray-200'
+                    : darkMode 
+                      ? 'bg-zinc-900 border border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-500' 
+                      : 'bg-gray-50 placeholder-gray-400 focus:ring-1 focus:ring-gray-200'
                 }`}
                 maxLength={500}
                 disabled={submitting}
               />
+              {bottomSheetMode && (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 text-white flex-shrink-0 hover:bg-blue-600 transition-colors disabled:opacity-50"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
             </form>
           </div>
         </div>
