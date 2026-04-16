@@ -1349,35 +1349,29 @@ const TikTokPollCard = ({
                 className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm"
               />
             )}
+            {/* Music Player - disco giratorio en la fila */}
+            {poll.music && (() => {
+              const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+              const displayMusic = hasExtractedAudio && carouselAudioData
+                ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
+                : poll.music;
+              return (
+                <MusicPlayer
+                  music={displayMusic}
+                  isVisible={isActive}
+                  onTogglePlay={handleMusicToggle}
+                  autoPlay={!hasExtractedAudio}
+                  loop={true}
+                  authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+                  authorUsername={poll.author?.username || poll.author?.display_name}
+                  overrideAudioId={carouselAudioId}
+                  forceUseAvatar={!!carouselThumbnail}
+                  className="flex-shrink-0 ml-auto"
+                />
+              );
+            })()}
           </div>
       </div>
-
-      {/* Music Player - disco giratorio flotante estilo TikTok */}
-      {poll.music && (() => {
-        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-        const displayMusic = hasExtractedAudio && carouselAudioData
-          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
-          : poll.music;
-        return (
-          <div className="absolute z-40 pointer-events-auto"
-               style={{
-                 right: 'max(1rem, env(safe-area-inset-right))',
-                 bottom: isPostMiniature ? '12px' : (isBottomNavVisible ? 'calc(120px + max(0.5rem, env(safe-area-inset-bottom)))' : 'calc(68px + max(0.5rem, env(safe-area-inset-bottom)))'),
-               }}>
-            <MusicPlayer
-              music={displayMusic}
-              isVisible={isActive}
-              onTogglePlay={handleMusicToggle}
-              autoPlay={!hasExtractedAudio}
-              loop={true}
-              authorAvatar={carouselThumbnail || poll.author?.avatar_url}
-              authorUsername={poll.author?.username || poll.author?.display_name}
-              overrideAudioId={carouselAudioId}
-              forceUseAvatar={!!carouselThumbnail}
-            />
-          </div>
-        );
-      })()}
 
       {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
       {poll.music && !isMenuOpen && (() => {
