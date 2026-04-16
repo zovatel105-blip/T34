@@ -6246,8 +6246,8 @@ async def get_ultra_fast_feed(
                 music_info = None
                 if poll_data.get("music_id"):
                     music_info = await get_music_info(poll_data.get("music_id"))
-                elif poll_data.get("music"):
-                    # If music data already embedded, use it
+                if not music_info and poll_data.get("music"):
+                    # Fallback: If music data already embedded, use it
                     music_info = poll_data.get("music")
                 
                 poll_response = {

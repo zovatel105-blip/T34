@@ -1375,8 +1375,8 @@ const TikTokPollCard = ({
         </div>
       </div>
 
-      {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) - Oculto con barra inferior */}
-      {poll.music && !isMenuOpen && !isBottomNavVisible && (() => {
+      {/* Título de la música - Contenedor separado debajo de los botones (estilo Twyk) */}
+      {poll.music && !isMenuOpen && (() => {
         const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
         const displayMusic = hasExtractedAudio && carouselAudioData
           ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, id: carouselAudioData.id || poll.music?.id }
