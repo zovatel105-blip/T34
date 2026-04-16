@@ -1121,7 +1121,7 @@ const TikTokPollCard = ({
 
         <div className="flex items-center justify-between gap-4 pointer-events-auto">
           {/* Social buttons - Left side when no music, or right side when music present */}
-          <div className={`flex items-center gap-2 -ml-2 flex-nowrap min-w-0 ${poll.music ? '' : 'flex-1 justify-start'}`}>
+          <div className={`flex items-center gap-3 -ml-2 flex-nowrap ${poll.music ? '' : 'flex-1 justify-start'}`}>
             <Button
               variant="ghost"
               size="sm"
@@ -1130,15 +1130,15 @@ const TikTokPollCard = ({
                 onLike(poll.id);
               }}
               className={cn(
-                "flex items-center gap-0.5 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto px-1.5 py-1.5 rounded-lg bg-black/20 backdrop-blur-sm min-w-0",
+                "flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto p-2 rounded-lg bg-black/20 backdrop-blur-sm",
                 poll.userLiked && "text-red-500 bg-red-500/20"
               )}
             >
               <Heart className={cn(
-                "w-4 h-4 flex-shrink-0 transition-all duration-200",
+                "w-5 h-5 transition-all duration-200",
                 poll.userLiked && "fill-current scale-110"
               )} />
-              <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.likes)}</span>
+              <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.likes)}</span>
             </Button>
             
             {/* Botón de comentarios - siempre visible */}
@@ -1161,15 +1161,15 @@ const TikTokPollCard = ({
                   });
                 }
               }}
-              className={`flex items-center gap-0.5 hover:scale-105 transition-all duration-200 h-auto px-1.5 py-1.5 rounded-lg backdrop-blur-sm min-w-0 ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg backdrop-blur-sm ${
                 commentedPolls.has(poll.id) || poll.userCommented
                   ? 'text-blue-400 bg-blue-500/20 hover:text-blue-300'
                   : 'text-white bg-black/20 hover:text-blue-400'
               }`}
             >
-              <MessageCircle className={`w-4 h-4 flex-shrink-0 ${commentedPolls.has(poll.id) || poll.userCommented ? 'fill-current' : ''}`} />
+              <MessageCircle className={`w-5 h-5 ${commentedPolls.has(poll.id) || poll.userCommented ? 'fill-current' : ''}`} />
               {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-                <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.comments)}</span>
+                <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.comments)}</span>
               )}
             </Button>
 
@@ -1232,14 +1232,14 @@ const TikTokPollCard = ({
                   sharePoll(poll);
                 }
               }}
-              className={`flex items-center gap-0.5 hover:scale-105 transition-all duration-200 h-auto px-1.5 py-1.5 rounded-lg backdrop-blur-sm min-w-0 ${
+              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-2 rounded-lg backdrop-blur-sm ${
                 sharedPolls.has(poll.id) || poll.userShared
                   ? 'text-green-400 bg-green-500/20 hover:text-green-300'
                   : 'text-white bg-black/20 hover:text-green-400'
               }`}
             >
-              <Share2 className={`w-4 h-4 flex-shrink-0 ${sharedPolls.has(poll.id) || poll.userShared ? 'fill-current' : ''}`} />
-              <span className="font-medium text-xs whitespace-nowrap">{formatNumber(poll.shares)}</span>
+              <Share2 className={`w-5 h-5 ${sharedPolls.has(poll.id) || poll.userShared ? 'fill-current' : ''}`} />
+              <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.shares)}</span>
             </Button>
 
             {/* Save button */}
@@ -1290,15 +1290,15 @@ const TikTokPollCard = ({
                     console.error('🔖 TikTokScrollView: Error with save/unsave:', error);
                   }
                 }}
-                className={`flex flex-row items-center gap-0.5 hover:scale-105 transition-all duration-200 h-auto px-1.5 py-1.5 rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 min-w-0 ${
+                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto px-3 py-2 rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${
                   savedPolls.has(poll.id) || poll.isSaved
                     ? 'text-yellow-400 bg-yellow-500/20 hover:text-yellow-300' 
                     : 'text-white bg-black/20 hover:text-yellow-400'
                 }`}
                 style={{ pointerEvents: 'auto' }}
               >
-                <Bookmark className={`w-4 h-4 flex-shrink-0 ${savedPolls.has(poll.id) || poll.isSaved ? 'fill-current' : ''}`} />
-                <span className="font-medium text-xs whitespace-nowrap">
+                <Bookmark className={`w-5 h-5 ${savedPolls.has(poll.id) || poll.isSaved ? 'fill-current' : ''}`} />
+                <span className="font-medium text-sm whitespace-nowrap">
                   {formatNumber(poll.saves_count || 0)}
                 </span>
               </Button>
