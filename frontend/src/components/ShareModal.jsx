@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Facebook, MessageCircle, Copy, ExternalLink, Link } from 'lucide-react';
+import { X, Facebook, MessageCircle, Copy, ExternalLink, Link, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import { useNavPreference } from '../hooks/useNavPreference';
@@ -13,6 +13,8 @@ const ShareModal = ({ isOpen, onClose, content }) => {
   const currentTranslateY = useRef(0);
   const isDragging = useRef(false);
   const { isBottomNav } = useNavPreference();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isBottomSheet = isMobile && isBottomNav;
 
   const handleTouchStart = (e) => {
     dragStartY.current = e.touches[0].clientY;
@@ -23,6 +25,14 @@ const ShareModal = ({ isOpen, onClose, content }) => {
   const handleTouchMove = (e) => {
     if (!isDragging.current) return;
     const deltaY = e.touches[0].clientY - dragStartY.current;
+
+    if (isBottomSheet && !isExpanded && deltaY < -30) {
+      isDragging.current = false;
+      if (sheetRef.current) { sheetRef.current.style.transition = 'transform 0.2s ease-out'; sheetRef.current.style.transform = 'translateY(0)'; }
+      setIsExpanded(true);
+      return;
+    }
+
     if (deltaY > 0) {
       currentTranslateY.current = deltaY;
       if (sheetRef.current) sheetRef.current.style.transform = `translateY(${deltaY}px)`;
@@ -36,13 +46,26 @@ const ShareModal = ({ isOpen, onClose, content }) => {
     isDragging.current = false;
     if (sheetRef.current) sheetRef.current.style.transition = 'transform 0.3s ease-out';
     if (currentTranslateY.current > 80) {
-      if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
-      setTimeout(onClose, 300);
+      if (isBottomSheet && isExpanded) {
+        if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
+        setIsExpanded(false);
+      } else {
+        if (sheetRef.current) sheetRef.current.style.transform = 'translateY(100%)';
+        setTimeout(onClose, 300);
+      }
     } else {
       if (sheetRef.current) sheetRef.current.style.transform = 'translateY(0)';
     }
     currentTranslateY.current = 0;
   };
+
+  const toggleExpand = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) setIsExpanded(false);
+  }, [isOpen]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -165,7 +188,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999] flex items-end justify-center"
+          className={cn("fixed inset-0 backdrop-blur-md z-[9999] flex items-end justify-center", isBottomSheet && !isExpanded ? "bg-black/40" : "bg-black/70")}
           onClick={onClose}
         >
           <motion.div
@@ -175,8 +198,10 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={cn(
-              "rounded-t-3xl w-full overflow-y-auto shadow-2xl",
-              isMobile && isBottomNav ? "bg-white max-h-[55vh]" : "bg-zinc-900 max-h-[85vh]"
+              "rounded-t-3xl w-full overflow-y-auto shadow-2xl transition-all duration-300",
+              isBottomSheet 
+                ? (isExpanded ? "bg-white max-h-[95vh]" : "bg-white max-h-[42vh]")
+                : "bg-zinc-900 max-h-[85vh]"
             )}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleTouchStart}
@@ -184,23 +209,36 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             onTouchEnd={handleTouchEnd}
             style={{ paddingBottom: `max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))` }}
           >
-            {/* Handle */}
-            <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
-              <div className={cn("w-10 h-1 rounded-full", isMobile && isBottomNav ? "bg-gray-300" : "bg-zinc-600")} />
-            </div>
+            {/* Handle/Chevron */}
+            {isBottomSheet ? (
+              <button 
+                onClick={toggleExpand}
+                className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing bg-white active:bg-gray-50"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                ) : (
+                  <ChevronUp className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                )}
+              </button>
+            ) : (
+              <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              </div>
+            )}
 
             {/* Header */}
             <div className="px-5 py-3 flex items-center justify-center">
-              <h3 className={cn("font-semibold text-base", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
+              <h3 className={cn("font-semibold text-base", isBottomSheet ? "text-gray-900" : "text-white")}>
                 Compartir {type === 'poll' ? 'Votación' : 'Perfil'}
               </h3>
             </div>
 
             {/* Content Preview */}
-            <div className={cn("mx-4 mb-4 p-4 rounded-2xl", isMobile && isBottomNav ? "bg-gray-100" : "bg-zinc-800")}>
-              <p className={cn("font-medium text-sm mb-1", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>{title}</p>
-              <p className={cn("text-xs mb-2", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>{description}</p>
-              <p className={cn("text-xs truncate", isMobile && isBottomNav ? "text-gray-400" : "text-zinc-500")}>{url}</p>
+            <div className={cn("mx-4 mb-4 p-4 rounded-2xl", isBottomSheet ? "bg-gray-100" : "bg-zinc-800")}>
+              <p className={cn("font-medium text-sm mb-1", isBottomSheet ? "text-gray-900" : "text-white")}>{title}</p>
+              <p className={cn("text-xs mb-2", isBottomSheet ? "text-gray-500" : "text-zinc-400")}>{description}</p>
+              <p className={cn("text-xs truncate", isBottomSheet ? "text-gray-400" : "text-zinc-500")}>{url}</p>
             </div>
 
             {/* Platform Options */}
@@ -213,15 +251,15 @@ const ShareModal = ({ isOpen, onClose, content }) => {
                     onClick={() => handleShare(platform.id)}
                     className={cn(
                       "flex items-center gap-3 p-4 rounded-2xl transition-colors text-left",
-                      isMobile && isBottomNav ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
+                      isBottomSheet ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
                     )}
                   >
-                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-indigo-100" : "bg-indigo-500/20")}>
-                      <Icon className={cn("w-5 h-5", isMobile && isBottomNav ? "text-indigo-500" : "text-indigo-400")} />
+                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isBottomSheet ? "bg-indigo-100" : "bg-indigo-500/20")}>
+                      <Icon className={cn("w-5 h-5", isBottomSheet ? "text-indigo-500" : "text-indigo-400")} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={cn("font-semibold text-sm", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>{platform.name}</p>
-                      <p className={cn("text-xs", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>{platform.description}</p>
+                      <p className={cn("font-semibold text-sm", isBottomSheet ? "text-gray-900" : "text-white")}>{platform.name}</p>
+                      <p className={cn("text-xs", isBottomSheet ? "text-gray-500" : "text-zinc-400")}>{platform.description}</p>
                     </div>
                   </button>
                 );
@@ -232,15 +270,15 @@ const ShareModal = ({ isOpen, onClose, content }) => {
                 onClick={() => handleShare('copy')}
                 className={cn(
                   "flex items-center gap-3 p-4 rounded-2xl transition-colors text-left",
-                  isMobile && isBottomNav ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
+                  isBottomSheet ? "bg-gray-100 hover:bg-gray-200" : "bg-zinc-800 hover:bg-zinc-700"
                 )}
               >
-                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-purple-100" : "bg-purple-500/20")}>
-                  <Link className={cn("w-5 h-5", isMobile && isBottomNav ? "text-purple-500" : "text-purple-400")} />
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", isBottomSheet ? "bg-purple-100" : "bg-purple-500/20")}>
+                  <Link className={cn("w-5 h-5", isBottomSheet ? "text-purple-500" : "text-purple-400")} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={cn("font-semibold text-sm", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>Copiar enlace</p>
-                  <p className={cn("text-xs", isMobile && isBottomNav ? "text-gray-500" : "text-zinc-400")}>Copiar al portapapeles</p>
+                  <p className={cn("font-semibold text-sm", isBottomSheet ? "text-gray-900" : "text-white")}>Copiar enlace</p>
+                  <p className={cn("text-xs", isBottomSheet ? "text-gray-500" : "text-zinc-400")}>Copiar al portapapeles</p>
                 </div>
               </button>
             </div>

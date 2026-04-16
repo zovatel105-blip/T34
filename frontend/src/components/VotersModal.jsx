@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Vote, Loader2, User, Search, Heart, Eye } from 'lucide-react';
+import { Play, Vote, Loader2, User, Search, Heart, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,8 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isBottomNav } = useNavPreference();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isBottomSheet = isMobile && isBottomNav;
   const { user: currentUser } = useAuth();
   const dragStartY = useRef(0);
   const currentTranslateY = useRef(0);
@@ -37,6 +39,14 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
   const handleTouchMove = (e) => {
     if (!isDragging.current) return;
     const deltaY = e.touches[0].clientY - dragStartY.current;
+
+    if (isBottomSheet && !isExpanded && deltaY < -30) {
+      isDragging.current = false;
+      if (modalRef.current) { modalRef.current.style.transition = 'transform 0.2s ease-out'; modalRef.current.style.transform = 'translateY(0)'; }
+      setIsExpanded(true);
+      return;
+    }
+
     if (deltaY > 0) {
       e.preventDefault();
       currentTranslateY.current = deltaY;
@@ -51,8 +61,13 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
     isDragging.current = false;
     if (modalRef.current) modalRef.current.style.transition = 'transform 0.3s ease-out';
     if (currentTranslateY.current > 80) {
-      if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
-      setTimeout(onClose, 300);
+      if (isBottomSheet && isExpanded) {
+        if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
+        setIsExpanded(false);
+      } else {
+        if (modalRef.current) modalRef.current.style.transform = 'translateY(100%)';
+        setTimeout(onClose, 300);
+      }
     } else {
       if (modalRef.current) modalRef.current.style.transform = 'translateY(0)';
     }
@@ -78,6 +93,15 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       setSearchQuery('');
     }
   }, [isOpen, pollId]);
+
+  // Reset expanded on close
+  useEffect(() => {
+    if (!isOpen) setIsExpanded(false);
+  }, [isOpen]);
+
+  const toggleExpand = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
 
   // Manejar escape key
   useEffect(() => {
@@ -178,7 +202,11 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
 
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose();
+      if (isBottomSheet && isExpanded) {
+        setIsExpanded(false);
+      } else {
+        onClose();
+      }
     }
   };
 
@@ -213,7 +241,10 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
       <div className="fixed inset-0 z-[9999]">
         {/* Backdrop */}
         <motion.div
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          className={cn(
+            "absolute inset-0 backdrop-blur-md",
+            isBottomSheet && !isExpanded ? "bg-black/40" : "bg-black/70"
+          )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -228,9 +259,9 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
           <motion.div
             ref={modalRef}
             className={cn(
-              "relative shadow-2xl overflow-hidden flex flex-col",
-              isMobile && isBottomNav
-                ? "w-full max-h-[55vh] rounded-t-3xl bg-white"
+              "relative shadow-2xl overflow-hidden flex flex-col transition-all duration-300",
+              isBottomSheet
+                ? (isExpanded ? "w-full h-[95vh] rounded-t-3xl bg-white" : "w-full h-[42vh] rounded-t-3xl bg-white")
                 : isMobile 
                   ? "w-full max-h-[85vh] rounded-t-3xl bg-zinc-900" 
                   : "w-full max-w-md max-h-[90vh] rounded-2xl bg-zinc-900"
@@ -249,10 +280,23 @@ const VotersModal = ({ isOpen, onClose, pollId }) => {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Handle superior */}
-            <div className={cn("w-full py-3 flex justify-center flex-shrink-0", isMobile && isBottomNav ? "bg-white" : "")}>
-              <div className={cn("w-10 h-1 rounded-full", isMobile && isBottomNav ? "bg-gray-300" : "bg-zinc-600")} />
-            </div>
+            {/* Handle/Chevron superior */}
+            {isBottomSheet ? (
+              <button 
+                onClick={toggleExpand}
+                className="w-full py-2 flex justify-center flex-shrink-0 bg-white active:bg-gray-50"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                ) : (
+                  <ChevronUp className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                )}
+              </button>
+            ) : (
+              <div className="w-full py-3 flex justify-center flex-shrink-0">
+                <div className="w-10 h-1 bg-zinc-600 rounded-full" />
+              </div>
+            )}
 
             {/* Header - Título y stats */}
             <div className={cn("px-4 sm:px-6 pb-4 flex-shrink-0", isMobile && isBottomNav ? "bg-white" : "")}>
