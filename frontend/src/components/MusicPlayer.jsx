@@ -161,13 +161,21 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
   
   return (
     <div className={`flex-shrink-0 ${className}`}>
-      {/* Reproductor clicable - SOLO PARA NAVEGACIÓN */}
+      {/* Reproductor clicable - disco giratorio estilo TikTok */}
       <div className="relative">
         <div 
           onClick={handleNavigateToAudio}
-          className="relative cursor-pointer w-10 h-10 rounded-full overflow-hidden bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-200"
+          className="relative cursor-pointer w-12 h-12 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200"
           title="Ver información de la música"
+          style={{
+            animation: (isPlaying || realPreviewUrl) ? 'spin-disc 3s linear infinite' : 'none',
+            border: '3px solid rgba(255,255,255,0.3)',
+          }}
         >
+          {/* Vinyl ring effect */}
+          <div className="absolute inset-0 rounded-full border-2 border-black/40 z-10 pointer-events-none" />
+          <div className="absolute inset-[35%] rounded-full bg-black/60 z-10 pointer-events-none border border-white/20" />
+          
           {displayImage ? (
             <img 
               src={displayImage} 
@@ -182,21 +190,21 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
           
           {/* Indicadores de estado */}
           {isPlaying && (
-            <div className="absolute -top-0.5 -right-0.5">
+            <div className="absolute -top-0.5 -right-0.5 z-20">
               <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse" />
             </div>
           )}
 
-          {realPreviewUrl && (
-            <div className="absolute -bottom-0.5 -left-0.5">
-              <div className="w-2 h-2 bg-blue-500 rounded-full border border-white shadow-sm" 
+          {realPreviewUrl && !isPlaying && (
+            <div className="absolute -bottom-0.5 -left-0.5 z-20">
+              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full border border-white shadow-sm" 
                    title="Audio real disponible" />
             </div>
           )}
 
           {error && (
-            <div className="absolute -bottom-0.5 -left-0.5">
-              <div className="w-2 h-2 bg-red-500 rounded-full border border-white shadow-sm" 
+            <div className="absolute -bottom-0.5 -left-0.5 z-20">
+              <div className="w-2.5 h-2.5 bg-red-500 rounded-full border border-white shadow-sm" 
                    title={error} />
             </div>
           )}
@@ -205,10 +213,17 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
         {/* Animación de ondas cuando está reproduciéndose */}
         {isPlaying && (
           <div className="absolute -inset-2 opacity-60 pointer-events-none">
-            <div className="w-14 h-14 rounded-full border-2 border-purple-500/30 animate-ping" />
+            <div className="w-16 h-16 rounded-full border-2 border-purple-500/30 animate-ping" />
           </div>
         )}
       </div>
+      
+      <style>{`
+        @keyframes spin-disc {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
