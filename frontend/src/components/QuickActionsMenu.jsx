@@ -342,7 +342,7 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
               }}
             >
               <Icon 
-                size={isLiveAction ? 15 : isMomentsAction ? 33 : 33} 
+                size={isLiveAction ? 18 : isMomentsAction ? 33 : 33} 
                 strokeWidth={isLiveAction ? 2.5 : 1.2}
                 className={`text-white transition-all duration-200 ${
                   isSelected ? 'scale-125' : 'group-hover:scale-110'
