@@ -2007,7 +2007,8 @@ const TikTokScrollView = ({
               await audioManager.stop();
               onExitTikTok?.(); // Cerrar la vista después de usar el sonido
             }}
-            className="bg-black hover:bg-gray-800 text-white backdrop-blur-md border-none px-4 py-2.5 h-10 rounded-full transition-all duration-200 hover:scale-105 shadow-xl flex items-center gap-2"
+            className="text-white backdrop-blur-md border-none px-4 py-2.5 h-10 rounded-full transition-all duration-200 hover:scale-105 hover:brightness-110 shadow-xl flex items-center gap-2"
+            style={{backgroundColor: '#B061FF'}}
           >
             <Music className="w-4 h-4" />
             <span className="font-semibold text-sm">Use Sound</span>
