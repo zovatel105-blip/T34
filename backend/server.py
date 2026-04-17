@@ -10702,7 +10702,13 @@ async def get_user_social_links_by_id(
 # Agregar middleware CORS ANTES de incluir routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica los dominios permitidos
+    # allow_origin_regex permite cualquier origen (incluyendo https://localhost
+    # de Capacitor WebView, capacitor://localhost de iOS, y cualquier dominio web)
+    # manteniendo allow_credentials=True de forma válida según el estándar CORS.
+    # El regex .* matchea cualquier origin, pero el middleware lo refleja en la
+    # respuesta Access-Control-Allow-Origin (NO envía "*"), lo que es compatible
+    # con credentials.
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

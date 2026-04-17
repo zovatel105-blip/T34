@@ -3,18 +3,44 @@
 
 const hostname = window.location.hostname;
 
+// 📱 Detección de Capacitor/Cordova (app móvil nativa)
+// En APK con androidScheme="https", hostname === "localhost" pero NO debemos
+// intentar hablar con http://localhost:8001 porque ese es el localhost DEL
+// MÓVIL, no del servidor. Debemos usar siempre REACT_APP_BACKEND_URL.
+const isCapacitorNative =
+  typeof window !== 'undefined' &&
+  (
+    // @ts-ignore
+    !!window.Capacitor?.isNativePlatform?.() ||
+    !!window.cordova ||
+    // User agent check (Android WebView dentro de Capacitor)
+    /\bwv\b/i.test(navigator.userAgent || '') && hostname === 'localhost'
+  );
+
 // URL base del backend (se detecta automáticamente)
 let API_URL = "";
 
 /**
  * Lógica principal:
- * - Localhost → usa backend local
+ * - App nativa (Capacitor/Cordova) → usa REACT_APP_BACKEND_URL (obligatorio)
+ * - Localhost (navegador dev) → usa backend local
  * - Subdominio de Emergent.sh → genera URL del backend automáticamente
  * - Otro dominio → intenta resolver por API central de configuración
  */
 async function detectEnvironment() {
-  if (hostname.includes("localhost")) {
-    // 🧩 Entorno local
+  if (isCapacitorNative) {
+    // 📱 APK / iOS nativo — SIEMPRE usar la URL embebida en build time.
+    // Nunca caer a http://localhost:8001 porque es el localhost del dispositivo.
+    API_URL = process.env.REACT_APP_BACKEND_URL || "";
+    if (!API_URL) {
+      console.error(
+        "❌ APP NATIVA sin REACT_APP_BACKEND_URL. Reconstruye con la URL correcta en frontend/.env y ejecuta: yarn build && npx cap sync android"
+      );
+    } else {
+      console.log("📱 Entorno APP NATIVA detectado:", API_URL);
+    }
+  } else if (hostname.includes("localhost")) {
+    // 🧩 Entorno local (navegador dev)
     API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
     console.log("🏠 Entorno LOCAL detectado:", API_URL);
   } else if (hostname.endsWith(".emergent.sh")) {
@@ -52,7 +78,8 @@ async function detectEnvironment() {
   return {
     HOSTNAME: hostname,
     API_URL,
-    IS_LOCAL: hostname.includes("localhost"),
+    IS_LOCAL: hostname.includes("localhost") && !isCapacitorNative,
+    IS_NATIVE: isCapacitorNative,
     IS_EMERGENT: hostname.endsWith(".emergent.sh") || hostname.endsWith(".emergentagent.com"),
     SUBDOMAIN: hostname.endsWith(".emergent.sh") ? hostname.split(".")[0] : hostname.endsWith(".emergentagent.com") ? hostname.split(".")[0] : null,
   };
@@ -76,12 +103,24 @@ export const getEnvironment = () => {
   return envConfig;
 };
 
-// Para compatibilidad, inicializar inmediatamente en desarrollo
-if (hostname.includes("localhost")) {
+// Para compatibilidad, inicializar inmediatamente
+// - En navegador localhost: usar REACT_APP_BACKEND_URL o fallback local
+// - En APK nativa: usar REACT_APP_BACKEND_URL obligatoriamente
+if (isCapacitorNative) {
+  envConfig = {
+    HOSTNAME: hostname,
+    API_URL: process.env.REACT_APP_BACKEND_URL || "",
+    IS_LOCAL: false,
+    IS_NATIVE: true,
+    IS_EMERGENT: false,
+    SUBDOMAIN: null,
+  };
+} else if (hostname.includes("localhost")) {
   envConfig = {
     HOSTNAME: hostname,
     API_URL: process.env.REACT_APP_BACKEND_URL || "http://localhost:8001",
     IS_LOCAL: true,
+    IS_NATIVE: false,
     IS_EMERGENT: false,
     SUBDOMAIN: null,
   };
