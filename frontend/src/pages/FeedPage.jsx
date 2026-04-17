@@ -493,7 +493,7 @@ const FeedPage = () => {
       console.log('🔖 FeedPage: Token exists:', !!token);
       console.log('🔖 FeedPage: Token length:', token ? token.length : 0);
       
-      const baseUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const baseUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
       const method = isSaved ? 'DELETE' : 'POST';
       const url = `${baseUrl}/api/polls/${pollId}/save`;
       console.log('🔖 FeedPage: Making request to:', url);

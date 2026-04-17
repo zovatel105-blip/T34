@@ -15,7 +15,7 @@ let API_URL = "";
 async function detectEnvironment() {
   if (hostname.includes("localhost")) {
     // 🧩 Entorno local
-    API_URL = "http://localhost:8001";
+    API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
     console.log("🏠 Entorno LOCAL detectado:", API_URL);
   } else if (hostname.endsWith(".emergent.sh")) {
     // 🧩 Entorno Emergent.sh (cuenta automática)
@@ -80,7 +80,7 @@ export const getEnvironment = () => {
 if (hostname.includes("localhost")) {
   envConfig = {
     HOSTNAME: hostname,
-    API_URL: "http://localhost:8001",
+    API_URL: process.env.REACT_APP_BACKEND_URL || "http://localhost:8001",
     IS_LOCAL: true,
     IS_EMERGENT: false,
     SUBDOMAIN: null,

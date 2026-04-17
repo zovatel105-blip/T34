@@ -513,7 +513,7 @@ const SearchPage = () => {
       
       // 🔄 BACKGROUND: Fetch full data to get vote status, music, exact counts, etc.
       try {
-        const selectedResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${result.id}`, {
+        const selectedResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${result.id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -564,7 +564,7 @@ const SearchPage = () => {
       if (nextIndex < postResults.length) {
         try {
           const nextPost = postResults[nextIndex];
-          const nextResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${nextPost.id}`, {
+          const nextResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${nextPost.id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
               'Content-Type': 'application/json'
@@ -611,7 +611,7 @@ const SearchPage = () => {
         
         try {
           const postToLoad = originalSearchPosts[targetSearchIndex];
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${postToLoad.id}`, {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${postToLoad.id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
               'Content-Type': 'application/json'
@@ -648,7 +648,7 @@ const SearchPage = () => {
         
         try {
           const postToLoad = originalSearchPosts[targetSearchIndex];
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${postToLoad.id}`, {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${postToLoad.id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
               'Content-Type': 'application/json'
@@ -686,7 +686,7 @@ const SearchPage = () => {
 
   const handleTikTokVote = useCallback(async (pollId, optionIndex) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${pollId}/vote`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${pollId}/vote`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -714,7 +714,7 @@ const SearchPage = () => {
 
   const handleTikTokLike = useCallback(async (pollId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${pollId}/like`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${pollId}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -773,7 +773,7 @@ const SearchPage = () => {
 
   const handleTikTokSave = useCallback(async (pollId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${pollId}/save`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${pollId}/save`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -840,7 +840,7 @@ const SearchPage = () => {
     const optionId = poll.options[optionIndex].id;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/polls/${pollId}/vote`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL || window.location.origin}/api/polls/${pollId}/vote`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

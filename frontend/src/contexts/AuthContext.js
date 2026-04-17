@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     });
     
     // Return the URL with proper fallback
-    return envUrl || configUrl || 'http://localhost:8001';
+    return envUrl || configUrl || window.location.origin;
   }, []);
 
   // Clear error state

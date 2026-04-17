@@ -28,7 +28,7 @@ const UserMentionInput = ({
   const searchUsers = async (query) => {
     setLoading(true);
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
       const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token'
       
       const response = await fetch(`${backendUrl}/api/users/search?q=${encodeURIComponent(query)}`, {
@@ -84,7 +84,7 @@ const UserMentionInput = ({
         // For empty query, show recent users or mock users
         setLoading(true);
         try {
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
           const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token'
           
           const response = await fetch(`${backendUrl}/api/users/search?q=`, {

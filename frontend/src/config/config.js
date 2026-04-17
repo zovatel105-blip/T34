@@ -14,7 +14,7 @@ class AppConfig {
       return env.API_URL;
     } catch (error) {
       // Fallback para casos donde no se ha inicializado
-      const fallbackUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+      const fallbackUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
       console.warn('⚠️ CONFIG: Usando fallback URL =', fallbackUrl);
       return fallbackUrl;
     }
