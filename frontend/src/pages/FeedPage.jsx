@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useSearchParams } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
 import PollCard from '../components/PollCard';
@@ -14,6 +14,7 @@ import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
+import useLivePoll from '../hooks/useLivePoll';
 import { Plus } from 'lucide-react';
 
 const FeedPage = () => {
@@ -148,6 +149,74 @@ const FeedPage = () => {
 
     loadPolls();
   }, [isAuthenticated, toast]);
+
+  // 🔴 LIVE REFRESH estilo TikTok/Instagram — refrescar contadores de posts visibles cada 15s.
+  //
+  // Estrategia: re-pedir los primeros N polls (los más probables de estar en pantalla)
+  // y mergear SOLO los contadores (likes, comentarios, votos, shares, views), preservando
+  // el resto del estado local (userLiked, userVote, media, etc.) para no interrumpir
+  // reproducción de vídeo ni pisar optimistic updates.
+  const refreshVisiblePollStats = useCallback(async () => {
+    // Evitar refrescos inútiles
+    if (isLoading) return;
+    if (!polls || polls.length === 0) return;
+    if (showCommentsModal) return; // el modal de comentarios ya se auto-refresca
+
+    try {
+      const TOP_N = Math.min(polls.length, 8);
+      const topIds = polls.slice(0, TOP_N).map((p) => p.id);
+
+      // Pedir en paralelo, con tolerancia a fallos individuales
+      const freshResults = await Promise.all(
+        topIds.map((id) => pollService.refreshPoll(id).catch(() => null))
+      );
+
+      const freshById = new Map();
+      freshResults.forEach((fresh) => {
+        if (fresh && fresh.id) freshById.set(fresh.id, fresh);
+      });
+
+      if (freshById.size === 0) return;
+
+      setPolls((prev) =>
+        prev.map((p) => {
+          const fresh = freshById.get(p.id);
+          if (!fresh) return p;
+          // Merge de contadores. Mantenemos userLiked/userVote locales (optimistic).
+          const mergedOptions = Array.isArray(p.options)
+            ? p.options.map((opt) => {
+                const fOpt = fresh.options?.find((o) => o.id === opt.id);
+                if (!fOpt) return opt;
+                return {
+                  ...opt,
+                  votes: typeof fOpt.votes === 'number' ? fOpt.votes : opt.votes,
+                };
+              })
+            : p.options;
+
+          return {
+            ...p,
+            likes: typeof fresh.likes === 'number' ? fresh.likes : p.likes,
+            comments: typeof fresh.comments === 'number' ? fresh.comments : p.comments,
+            shares: typeof fresh.shares === 'number' ? fresh.shares : p.shares,
+            totalVotes:
+              typeof fresh.totalVotes === 'number' ? fresh.totalVotes : p.totalVotes,
+            saves_count:
+              typeof fresh.saves_count === 'number' ? fresh.saves_count : p.saves_count,
+            options: mergedOptions,
+          };
+        })
+      );
+    } catch (_) {
+      // silencioso
+    }
+  }, [polls, isLoading, showCommentsModal]);
+
+  useLivePoll(refreshVisiblePollStats, 15000, {
+    enabled: !isLoading && polls.length > 0 && isAuthenticated,
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   // Preload more content when user is near the end
   const loadMorePolls = async () => {

@@ -8,6 +8,7 @@ import { useToast } from '../hooks/use-toast';
 import commentService from '../services/commentService';
 import { cn } from '../lib/utils';
 import Comment from './Comment';
+import useLivePoll from '../hooks/useLivePoll';
 
 const CommentSection = ({ 
   pollId, 
@@ -321,6 +322,48 @@ const CommentSection = ({
       loadComments(0, false);
     }
   }, [pollId, isVisible]);
+
+  // 🔴 LIVE REFRESH — refrescar comentarios cada 5s mientras el modal está visible
+  // Merge inteligente: preserva comentarios optimistas (temp-*) y no pisa el estado local
+  // de likes. Solo refresca la primera página (si el usuario paginó, no sobreescribimos).
+  const silentRefreshComments = useCallback(async () => {
+    if (!pollId || !isAuthenticated) return;
+    if (page !== 0) return; // no interferir con paginación
+    if (submitting) return; // no pisar envíos en curso
+    try {
+      const fresh = await commentService.getCommentsForFrontend(pollId, 20, 0);
+      if (!Array.isArray(fresh)) return;
+
+      setComments((prev) => {
+        // Conservar comentarios optimistas (aún sin ID real)
+        const optimistic = prev.filter((c) => String(c.id).startsWith('temp-'));
+
+        // Para cada comentario del servidor, preservar el estado local de likes
+        // (el servidor ya devuelve is_liked del usuario actual, así que confiamos en él,
+        //  pero mantenemos replies locales si hay optimistas dentro).
+        const merged = fresh.map((nc) => {
+          const existing = prev.find((c) => c.id === nc.id);
+          if (!existing) return nc;
+          // Mantener replies optimistas (si hay) dentro del comentario padre
+          const tempReplies = (existing.replies || []).filter((r) =>
+            String(r.id).startsWith('temp-')
+          );
+          const mergedReplies = [...(nc.replies || []), ...tempReplies];
+          return { ...nc, replies: mergedReplies };
+        });
+
+        return [...optimistic, ...merged];
+      });
+    } catch (_) {
+      // silencioso: no molestar al usuario por un poll fallido
+    }
+  }, [pollId, isAuthenticated, page, submitting]);
+
+  useLivePoll(silentRefreshComments, 5000, {
+    enabled: Boolean(pollId && isVisible && isAuthenticated),
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   if (!pollId) {
     return null;
