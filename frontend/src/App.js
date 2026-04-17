@@ -48,7 +48,6 @@ import AppConfig from './config/config';
 import ComingSoon from './components/ComingSoon';
 
 // 📱 Capacitor Status Bar Plugin
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
 // 🔔 Push Notifications Hook
@@ -132,29 +131,9 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 Configurar StatusBar inicial en dispositivos nativos (EDGE-TO-EDGE)
-  useEffect(() => {
-    const setupStatusBar = async () => {
-      if (Capacitor.isNativePlatform()) {
-        try {
-          // EDGE-TO-EDGE: la WebView se extiende detrás de la status bar.
-          // El color de fondo de la status bar es transparente (manejado
-          // por MainActivity.java y styles.xml). Sólo controlamos el
-          // estilo de los íconos (claros/oscuros) desde useStatusBarColor.
-          await StatusBar.setOverlaysWebView({ overlay: true });
-          await StatusBar.setStyle({ style: Style.Light });
-          // Fondo transparente para que el CSS env(safe-area-inset-top)
-          // muestre el color de la página debajo de la status bar.
-          await StatusBar.setBackgroundColor({ color: '#00000000' });
-          console.log('✅ StatusBar configurado en modo EDGE-TO-EDGE');
-        } catch (error) {
-          console.error('❌ Error configurando StatusBar:', error);
-        }
-      }
-    };
-
-    setupStatusBar();
-  }, []);
+  // 📱 StatusBar: el hook `useStatusBarColor()` ya maneja todo dinámicamente
+  // según la ruta actual (overlay en /feed, barra negra sólida en el resto).
+  // No hace falta setup inicial aquí.
 
   // 🎵 CLEANUP GLOBAL: Detener audio en navegación de rutas
   React.useEffect(() => {
