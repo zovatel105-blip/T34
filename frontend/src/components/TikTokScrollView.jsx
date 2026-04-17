@@ -14,6 +14,7 @@ import FeedMenu from './FeedMenu';
 import StoriesViewer from './StoriesViewer';
 import VotersModal from './VotersModal';
 import ChallengeParticipantsModal from './ChallengeParticipantsModal';
+import MediaPrefetcher from './MediaPrefetcher';
 import { useFollow } from '../contexts/FollowContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useShare } from '../hooks/useShare';
@@ -1521,6 +1522,7 @@ const TikTokScrollView = ({
   onDeletePoll = null,
   isOwnProfile = false,
   onIndexChange = null,
+  onActiveIndexChange = null,
   emptyMessage = 'No hay publicaciones disponibles',
   emptySubMessage = 'Vuelve más tarde para ver nuevo contenido',
   onSwipeStart = null,
@@ -1805,7 +1807,13 @@ const TikTokScrollView = ({
   const handleSlideChange = (swiper) => {
     const newIndex = swiper.activeIndex;
     setActiveIndex(newIndex);
-    
+
+    // 🎯 Notificar al padre (FeedPage) cada cambio de post activo — para
+    // persistir la posición y saber qué post está viendo el usuario.
+    if (typeof onActiveIndexChange === 'function') {
+      try { onActiveIndexChange(newIndex); } catch (_) {}
+    }
+
     // 📜 Ocultar el hint de scroll después del primer scroll y guardar en localStorage
     if (showScrollHint && newIndex > 0) {
       setShowScrollHint(false);
@@ -2028,6 +2036,9 @@ const TikTokScrollView = ({
           position: 'relative'
         }}
       >
+        {/* 🚀 Prefetch de los próximos 2 posts (imágenes/vídeos) estilo TikTok/IG */}
+        <MediaPrefetcher polls={polls} activeIndex={activeIndex} count={2} />
+
         <Swiper
           modules={[Mousewheel, Keyboard]}
           onSwiper={(swiper) => {

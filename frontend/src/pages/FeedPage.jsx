@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useSearchParams } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
 import PollCard from '../components/PollCard';
@@ -15,18 +15,39 @@ import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
 import useLivePoll from '../hooks/useLivePoll';
+import {
+  getFeedSnapshot,
+  setFeedSnapshot,
+  updateFeedSnapshotActiveIndex,
+} from '../lib/feedSnapshot';
 import { Plus } from 'lucide-react';
 
 const FeedPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [polls, setPolls] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // 🎯 Hidratación desde snapshot — si el usuario ya estaba viendo el feed y
+  // vuelve (navegó a profile, búsqueda, etc.), restauramos polls + posición.
+  const hydratedSnapshot = getFeedSnapshot();
+  const hasHydrated = useRef(Boolean(hydratedSnapshot && hydratedSnapshot.polls?.length));
+
+  const [polls, setPolls] = useState(
+    hydratedSnapshot?.polls?.length ? hydratedSnapshot.polls : []
+  );
+  const [isLoading, setIsLoading] = useState(
+    hydratedSnapshot?.polls?.length ? false : true
+  );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreContent, setHasMoreContent] = useState(true);
+  const [hasMoreContent, setHasMoreContent] = useState(
+    hydratedSnapshot ? hydratedSnapshot.hasMoreContent ?? true : true
+  );
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [savedPolls, setSavedPolls] = useState(new Set()); // Track saved polls
+  const [currentPage, setCurrentPage] = useState(
+    hydratedSnapshot?.currentPage ?? 0
+  );
+  const [savedPolls, setSavedPolls] = useState(
+    hydratedSnapshot?.savedPolls ? new Set(hydratedSnapshot.savedPolls) : new Set()
+  );
   
   // 🚀 SPEED OPTIMIZATION: Simple cache for faster subsequent loads
   const [pollsCache, setPollsCache] = useState(new Map());
@@ -36,7 +57,14 @@ const FeedPage = () => {
   const [selectedPollAuthor, setSelectedPollAuthor] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [preSelectedAudio, setPreSelectedAudio] = useState(null);
-  const [initialIndex, setInitialIndex] = useState(0); // Add initial index state
+
+  // 🎯 initialIndex proviene del snapshot para continuar donde lo dejó.
+  const [initialIndex, setInitialIndex] = useState(
+    hydratedSnapshot?.activeIndex ?? 0
+  );
+  // activeIndex en vivo, sincronizado con TikTokScrollView
+  const activeIndexRef = useRef(hydratedSnapshot?.activeIndex ?? 0);
+
   const { toast } = useToast();
   const { trackAction } = useAddiction();
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
@@ -54,6 +82,15 @@ const FeedPage = () => {
       //   setIsLoading(false);
       //   return;
       // }
+
+      // 🎯 Si hidratamos del snapshot, saltamos el load inicial y no perdemos
+      // la posición del usuario (continúa viendo el mismo post).
+      if (hasHydrated.current && !searchParams.get('post')) {
+        console.log('🔄 FeedPage hidratado desde snapshot — saltando loadPolls inicial');
+        hasHydrated.current = false; // solo en el primer montaje
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -149,6 +186,27 @@ const FeedPage = () => {
 
     loadPolls();
   }, [isAuthenticated, toast]);
+
+  // 📸 Guardar snapshot del feed (polls + pagination + savedPolls) para poder
+  // restaurar la posición cuando el usuario navega a otra página y vuelve.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+    if (isLoading) return;
+    setFeedSnapshot({
+      polls,
+      currentPage,
+      hasMoreContent,
+      savedPolls: Array.from(savedPolls),
+      activeIndex: activeIndexRef.current,
+    });
+  }, [polls, currentPage, hasMoreContent, savedPolls, isLoading]);
+
+  // 🎯 Callback desde TikTokScrollView: actualiza el índice activo en vivo
+  // y lo persiste en el snapshot para la próxima vuelta.
+  const handleActiveIndexChange = useCallback((newIndex) => {
+    activeIndexRef.current = newIndex;
+    updateFeedSnapshotActiveIndex(newIndex);
+  }, []);
 
   // 🔴 LIVE REFRESH estilo TikTok/Instagram — refrescar contadores de posts visibles cada 15s.
   //
@@ -863,6 +921,7 @@ const FeedPage = () => {
           hasMoreContent={hasMoreContent}
           showLogo={false}
           initialIndex={initialIndex}
+          onActiveIndexChange={handleActiveIndexChange}
         />
       </>
     );

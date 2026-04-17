@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AppConfig from '../config/config';
+import { clearFeedSnapshot } from '../lib/feedSnapshot';
 
 const AuthContext = createContext();
 
@@ -105,6 +106,9 @@ export const AuthProvider = ({ children }) => {
     } catch (storageError) {
       console.warn('Failed to clear localStorage:', storageError);
     }
+
+    // Limpiar snapshot del feed para que un nuevo usuario no vea restos del anterior
+    try { clearFeedSnapshot(); } catch (_) {}
   }, []);
 
   // Make authenticated API request
