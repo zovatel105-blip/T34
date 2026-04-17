@@ -44,6 +44,39 @@ import { UploadProvider } from './contexts/UploadContext';
 // ✅ Configuración automática de entorno
 import AppConfig from './config/config';
 
+// 📱 Pantalla "Coming Soon" para escritorio
+import ComingSoon from './components/ComingSoon';
+
+// Umbral para considerar el dispositivo como móvil/tablet (px)
+const MOBILE_BREAKPOINT = 1024;
+
+const detectMobileDevice = () => {
+  if (typeof window === 'undefined') return true;
+  const ua = (navigator.userAgent || navigator.vendor || '').toLowerCase();
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+  const isMobileUA = mobileRegex.test(ua);
+  const isTouch = typeof window.ontouchstart !== 'undefined' || (navigator.maxTouchPoints || 0) > 1;
+  const isSmallScreen = window.innerWidth < MOBILE_BREAKPOINT;
+  // Considerar móvil si el UA lo indica, si tiene pantalla pequeña, o si es táctil con pantalla no muy grande
+  return isMobileUA || isSmallScreen || (isTouch && window.innerWidth < 1280);
+};
+
+const useIsMobileDevice = () => {
+  const [isMobile, setIsMobile] = useState(detectMobileDevice);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(detectMobileDevice());
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  return isMobile;
+};
+
 function AppContent() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -175,6 +208,13 @@ function AppContent() {
 }
 
 function App() {
+  const isMobile = useIsMobileDevice();
+
+  // 🖥️ En ordenadores/pantallas grandes mostramos la pantalla "Coming Soon"
+  if (!isMobile) {
+    return <ComingSoon />;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
