@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://ffmpeg-installer-5.preview.emergentagent.com"
+BASE_URL = "https://ffmpeg-installer-6.preview.emergentagent.com"
 TEST_USER = {
     "email": "backendtest@test.com",
     "password": "test1234",
