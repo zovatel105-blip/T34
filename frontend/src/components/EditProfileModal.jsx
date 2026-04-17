@@ -11,8 +11,12 @@ import { useAuth } from '../contexts/AuthContext';
 import AvatarUpload from './AvatarUpload';
 import CircularCrop from './CircularCrop';
 import uploadService from '../services/uploadService';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const { user, updateUser, apiRequest } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);

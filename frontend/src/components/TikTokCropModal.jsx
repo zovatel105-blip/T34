@@ -5,6 +5,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const TikTokCropModal = ({
   isOpen = false,
@@ -18,6 +19,9 @@ const TikTokCropModal = ({
   allowResize = true, // Allow aspect ratio changes
   showFilters = true // Show TikTok-style filters
 }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const [mediaSrc, setMediaSrc] = useState('');
   const [isVideo, setIsVideo] = useState(false);
   const [transform, setTransform] = useState({

@@ -6,6 +6,7 @@ import CommentSection from './CommentSection';
 import { cn } from '../lib/utils';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useNavPreference } from '../hooks/useNavPreference';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const CommentsModal = ({ 
   isOpen, 
@@ -16,6 +17,9 @@ const CommentsModal = ({
   commentsEnabled = true,
   onExpandChange = null
 }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const modalRef = useRef(null);
   const scrollRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);

@@ -9,8 +9,12 @@ import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import { useNavPreference } from '../hooks/useNavPreference';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const VotersModal = ({ isOpen, onClose, pollId, onExpandChange = null }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const [voters, setVoters] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalVotes, setTotalVotes] = useState(0);

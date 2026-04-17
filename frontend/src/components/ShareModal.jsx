@@ -5,8 +5,12 @@ import { X, Facebook, MessageCircle, Copy, ExternalLink, Link, ChevronUp, Chevro
 import { toast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import { useNavPreference } from '../hooks/useNavPreference';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const ShareModal = ({ isOpen, onClose, content }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const [isMobile, setIsMobile] = useState(false);
   const sheetRef = useRef(null);
   const dragStartY = useRef(0);

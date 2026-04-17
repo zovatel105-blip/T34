@@ -4,6 +4,7 @@ import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import CommentSection from './CommentSection';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const PostDetailModal = ({ 
   isOpen, 
@@ -13,6 +14,9 @@ const PostDetailModal = ({
   onFollow,
   commentsEnabled = true
 }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const sheetRef = useRef(null);
   const dragStartY = useRef(0);
   const currentTranslateY = useRef(0);

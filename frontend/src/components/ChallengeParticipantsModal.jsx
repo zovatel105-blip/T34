@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { User, Trophy } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { cn } from '../lib/utils';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challengeTitle = '' }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const navigate = useNavigate();
   const sheetRef = useRef(null);
   const dragStartY = useRef(0);

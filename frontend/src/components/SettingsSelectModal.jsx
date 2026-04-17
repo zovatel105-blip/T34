@@ -1,8 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const SettingsSelectModal = ({ isOpen, onClose, title, options, selectedValue, onSelect }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const sheetRef = useRef(null);
   const startY = useRef(0);
   const currentY = useRef(0);

@@ -3,8 +3,12 @@ import { createPortal } from 'react-dom';
 import { Lock, Eye, EyeOff, Loader2, Shield, ArrowLeft } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useModalBackButton } from '../hooks/useBackButton';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
+  // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
+  useModalBackButton(isOpen, onClose);
+
   const { apiRequest } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
