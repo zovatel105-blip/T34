@@ -648,7 +648,7 @@ const TikTokPollCard = ({
                     {/* Avatar 2 - top-right, behind, with crescent mask cutout */}
                     {poll.participants[1] && (
                       <div
-                        className="rounded-full overflow-hidden bg-gray-700 absolute"
+                        className="rounded-full overflow-hidden bg-white absolute"
                         style={{ 
                           zIndex: 1, 
                           top: '0px', 
@@ -666,8 +666,8 @@ const TikTokPollCard = ({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-3 h-3 text-white" />
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+                            <User className="w-3 h-3" />
                           </div>
                         )}
                       </div>
@@ -675,7 +675,7 @@ const TikTokPollCard = ({
                     {/* Avatar 1 - bottom-left, in front, no border */}
                     {poll.participants[0] && (
                       <div
-                        className="rounded-full overflow-hidden bg-gray-700 absolute"
+                        className="rounded-full overflow-hidden bg-white absolute"
                         style={{ zIndex: 2, bottom: '0px', left: '0px', width: '36px', height: '36px' }}
                       >
                         {poll.participants[0].avatar_url ? (
@@ -685,8 +685,8 @@ const TikTokPollCard = ({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-500 to-gray-600">
-                            <User className="w-4 h-4 text-white" />
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+                            <User className="w-4 h-4" />
                           </div>
                         )}
                       </div>
