@@ -47,6 +47,10 @@ import AppConfig from './config/config';
 // 📱 Pantalla "Coming Soon" para escritorio
 import ComingSoon from './components/ComingSoon';
 
+// 📱 Capacitor Status Bar Plugin
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -100,6 +104,24 @@ function AppContent() {
     };
 
     initializeAppConfig();
+  }, []);
+
+  // 📱 Configurar StatusBar en dispositivos nativos (Android/iOS)
+  useEffect(() => {
+    const setupStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: '#000000' });
+          await StatusBar.setOverlaysWebView({ overlay: false });
+          console.log('✅ StatusBar configurado correctamente');
+        } catch (error) {
+          console.error('❌ Error configurando StatusBar:', error);
+        }
+      }
+    };
+
+    setupStatusBar();
   }, []);
 
   // 🎵 CLEANUP GLOBAL: Detener audio en navegación de rutas
@@ -166,7 +188,7 @@ function AppContent() {
 
   return (
     <ResponsiveLayout onCreatePoll={handleCreatePoll}>
-      <div className="App relative">
+      <div className="App relative safe-area-top">
           <Routes>
             {/* Redirect root to feed */}
             <Route path="/" element={<Navigate to="/feed" replace />} />
