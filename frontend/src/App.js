@@ -60,6 +60,9 @@ import { useLocalNotifications } from './hooks/useLocalNotifications';
 // 📱 Dynamic Status Bar Color Hook
 import { useStatusBarColor } from './hooks/useStatusBarColor';
 
+// 🔙 Back Button Handler (Android)
+import { useBackButton } from './hooks/useBackButton';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -99,6 +102,9 @@ function AppContent() {
 
   // 📱 Cambiar color de barra de estado según la página
   useStatusBarColor();
+
+  // 🔙 Manejar botón atrás de Android (doble tap para salir)
+  useBackButton();
 
   // 📲 Notificaciones locales (funciona sin Firebase)
   useLocalNotifications(isAuthenticated, token);

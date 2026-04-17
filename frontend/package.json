@@ -5,6 +5,7 @@
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/android": "^7.4.4",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/camera": "^7.0.2",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
