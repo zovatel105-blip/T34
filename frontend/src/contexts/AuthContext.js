@@ -166,15 +166,24 @@ export const AuthProvider = ({ children }) => {
       
       // Handle 401 - token expired (but not for demo users)
       if (response.status === 401 && !isDemoToken) {
+        console.log('❌ 401 Unauthorized - Token is invalid or expired');
         clearAuthData();
         throw new Error('Session expired. Please login again.');
       }
       
       return response;
     } catch (fetchError) {
+      // Network errors - DO NOT clear auth data
       if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+        console.warn('⚠️ Network error:', fetchError.message);
         throw new Error('Network connection failed. Please check your internet connection.');
       }
+      // Timeout errors - DO NOT clear auth data
+      if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
+        console.warn('⚠️ Request timeout');
+        throw new Error('Request timeout. Please try again.');
+      }
+      // Re-throw other errors
       throw fetchError;
     }
   }, [token, getBackendUrl, clearAuthData]);
@@ -473,12 +482,23 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
         return { valid: true, user: userData };
+      } else if (response.status === 401) {
+        // Token is actually invalid (expired or wrong)
+        return { valid: false, reason: 'invalid_token' };
       } else {
-        return { valid: false };
+        // Other server errors (500, etc.) - don't invalidate token
+        return { valid: 'unknown', reason: 'server_error' };
       }
     } catch (error) {
       console.error('Token verification error:', error);
-      return { valid: false };
+      // Distinguish between network errors and authentication errors
+      if (error.message && error.message.includes('Network connection failed')) {
+        // Network error - don't invalidate the token
+        console.warn('⚠️ Network error during token verification. Keeping session active.');
+        return { valid: 'unknown', reason: 'network_error' };
+      }
+      // Other errors - could be token invalid
+      return { valid: false, reason: 'verification_failed' };
     }
   }, [makeAuthenticatedRequest]);
 
@@ -561,16 +581,23 @@ export const AuthProvider = ({ children }) => {
         if (savedToken && savedUser) {
           try {
             const parsedUser = JSON.parse(savedUser);
-            const { valid, user: verifiedUser } = await verifyToken(savedToken);
+            const { valid, user: verifiedUser, reason } = await verifyToken(savedToken);
             
-            if (valid && verifiedUser) {
+            if (valid === true && verifiedUser) {
+              // Token is valid and verified with backend
               setAuthData(verifiedUser, savedToken);
-            } else {
-              // Token is invalid, clear storage
+            } else if (valid === false && reason === 'invalid_token') {
+              // Token is actually invalid (401), clear session
+              console.log('❌ Token is invalid or expired. Clearing session.');
               clearAuthData();
+            } else {
+              // Network error or server error - keep session active with cached data
+              console.warn('⚠️ Cannot verify token (network/server issue). Using cached session.');
+              setAuthData(parsedUser, savedToken);
             }
           } catch (error) {
             console.error('Stored auth data is invalid:', error);
+            // Only clear if parsing failed (corrupted data)
             clearAuthData();
           }
         } else {
