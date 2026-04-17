@@ -604,7 +604,7 @@ const MomentCreationPage = () => {
           >
             <Music className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="text-xs sm:text-sm font-medium truncate max-w-24 sm:max-w-40">
-              {selectedMusic ? `🎵 ${selectedMusic.title}` : 'Add sound'}
+              {selectedMusic ? `${selectedMusic.title}` : 'Add sound'}
             </span>
           </button>
 
