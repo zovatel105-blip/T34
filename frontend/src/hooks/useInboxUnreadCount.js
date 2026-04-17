@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import AppConfig from '../config/config';
+import useLivePoll from './useLivePoll';
 
-const POLL_INTERVAL = 30000; // 30 seconds
+// Refresco en vivo estilo TikTok/Instagram: 15s, pausa en background,
+// refresco inmediato al volver el foco (ver useLivePoll).
+const POLL_INTERVAL = 15000;
 
 export function useInboxUnreadCount(isAuthenticated) {
   const [unreadCount, setUnreadCount] = useState(0);
-  const intervalRef = useRef(null);
 
   const apiRequest = useCallback(async (endpoint) => {
     const token = localStorage.getItem('token');
@@ -55,19 +57,21 @@ export function useInboxUnreadCount(isAuthenticated) {
     }
   }, [isAuthenticated, apiRequest]);
 
+  // Fetch inicial al autenticarse / al cambiar a no autenticado
   useEffect(() => {
     if (!isAuthenticated) {
       setUnreadCount(0);
       return;
     }
-
     fetchUnreadCount();
-    intervalRef.current = setInterval(fetchUnreadCount, POLL_INTERVAL);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
   }, [isAuthenticated, fetchUnreadCount]);
+
+  // 🔴 Live refresh (pausa cuando el tab está oculto, refresca al volver al foco)
+  useLivePoll(fetchUnreadCount, POLL_INTERVAL, {
+    enabled: isAuthenticated,
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   return { unreadCount, refreshUnread: fetchUnreadCount };
 }

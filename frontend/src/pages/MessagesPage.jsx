@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Plus, Search, ArrowLeft, Send, Camera, Mic, Smile, Users, Bell, MessageCircle, Phone, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import useLivePoll from '../hooks/useLivePoll';
 
 const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -496,17 +497,28 @@ const MessagesPage = () => {
     if (selectedConversation && selectedConversation.id && !selectedConversation.isNewConversation) {
       console.log('🔄 UseEffect: Loading messages for conversation:', selectedConversation.id);
       loadMessages(selectedConversation.id);
-      
-      // Set up polling for new messages (don't poll for chat requests)
-      if (!selectedConversation.is_chat_request) {
-        const interval = setInterval(() => {
-          loadMessages(selectedConversation.id);
-        }, 5000);
-        
-        return () => clearInterval(interval);
-      }
     }
   }, [selectedConversation?.id]);
+
+  // 🔴 LIVE REFRESH — mensajes en vivo (3s) estilo WhatsApp/Instagram
+  // Se pausa automáticamente cuando la pestaña está oculta y refresca al volver al foco.
+  const livePollMessages = useCallback(() => {
+    if (!selectedConversation?.id) return;
+    if (selectedConversation.isNewConversation) return;
+    if (selectedConversation.is_chat_request) return; // no pollear en requests
+    loadMessages(selectedConversation.id);
+  }, [selectedConversation?.id, selectedConversation?.isNewConversation, selectedConversation?.is_chat_request]);
+
+  useLivePoll(livePollMessages, 3000, {
+    enabled: Boolean(
+      selectedConversation &&
+      selectedConversation.id &&
+      !selectedConversation.isNewConversation &&
+      !selectedConversation.is_chat_request
+    ),
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

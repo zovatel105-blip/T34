@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, X, ArrowLeft, Users, Bell, Send, Plus, Inbox, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
+import useLivePoll from '../../hooks/useLivePoll';
 
 const MessagesMainPage = () => {
   const navigate = useNavigate();
@@ -312,6 +313,21 @@ const MessagesMainPage = () => {
       loadSegmentData();
     }
   }, [user]);
+
+  // 🔴 LIVE REFRESH — refrescar lista de conversaciones y badges cada 10s.
+  // Solo cuando NO está abierto el chat (si el chat está abierto, MessagesPage ya poll).
+  const livePollInbox = useCallback(() => {
+    if (!user) return;
+    if (showChat) return; // evita doble polling cuando hay chat abierto
+    loadConversations();
+    loadSegmentData();
+  }, [user, showChat]);
+
+  useLivePoll(livePollInbox, 10000, {
+    enabled: Boolean(user) && !showChat,
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   // Refrescar badges cuando la página vuelve a enfocarse (al volver de subpáginas)
   useEffect(() => {
