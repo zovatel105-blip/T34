@@ -3,6 +3,7 @@ import { ArrowLeft, Heart, MessageCircle, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
+import useLivePoll from '../../hooks/useLivePoll';
 
 const ActivityPage = () => {
   const navigate = useNavigate();
@@ -59,7 +60,27 @@ const ActivityPage = () => {
     }
   }, [user, apiRequest]);
 
+  // Refresco silencioso (sin spinner, sin mark-read) para live polling
+  const silentRefresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const activitiesData = await apiRequest('/api/users/activity/recent').catch(() => null);
+      if (Array.isArray(activitiesData)) {
+        setActivities(activitiesData);
+      }
+    } catch (_) {
+      // silencioso
+    }
+  }, [user, apiRequest]);
+
   useEffect(() => { loadData(); }, [loadData]);
+
+  // 🔴 Live refresh cada 10s mientras la página de actividad está abierta
+  useLivePoll(silentRefresh, 10000, {
+    enabled: Boolean(user),
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   const getFilteredItems = () => {
     switch (activeTab) {

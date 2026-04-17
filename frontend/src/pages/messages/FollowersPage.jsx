@@ -3,6 +3,7 @@ import { ArrowLeft, User, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
+import useLivePoll from '../../hooks/useLivePoll';
 
 const FollowersPage = () => {
   const navigate = useNavigate();
@@ -91,6 +92,31 @@ const FollowersPage = () => {
   }, [user, apiRequest, checkFollowStatus]);
 
   useEffect(() => { loadFollowers(); }, [loadFollowers]);
+
+  // Refresco silencioso (sin spinner, sin mark-read ni refetch de follow-status)
+  const silentRefreshFollowers = useCallback(async () => {
+    if (!user) return;
+    try {
+      const followersData = await apiRequest('/api/users/followers/recent').catch(() => null);
+      if (Array.isArray(followersData)) {
+        setFollowers(followersData);
+        // Refrescar follow-status solo para IDs nuevos
+        const newIds = followersData
+          .map((f) => f.id)
+          .filter((id) => followingStatus[id] === undefined);
+        if (newIds.length > 0) checkFollowStatus(newIds);
+      }
+    } catch (_) {
+      // silencioso
+    }
+  }, [user, apiRequest, followingStatus, checkFollowStatus]);
+
+  // 🔴 Live refresh cada 10s mientras la página de seguidores está abierta
+  useLivePoll(silentRefreshFollowers, 10000, {
+    enabled: Boolean(user),
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   const Avatar = ({ avatarUrl, name }) => (
     <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">

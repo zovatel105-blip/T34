@@ -3,6 +3,7 @@ import { ArrowLeft, MessageCircle, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
+import useLivePoll from '../../hooks/useLivePoll';
 
 const RequestsPage = () => {
   const navigate = useNavigate();
@@ -59,6 +60,25 @@ const RequestsPage = () => {
   }, [user, apiRequest]);
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  // 🔴 Live refresh cada 10s mientras la página de solicitudes está abierta (silencioso)
+  const silentRefreshRequests = useCallback(async () => {
+    if (!user) return;
+    try {
+      const requestsData = await apiRequest('/api/messages/requests').catch(() => null);
+      if (Array.isArray(requestsData)) {
+        setRequests(requestsData);
+      }
+    } catch (_) {
+      // silencioso
+    }
+  }, [user, apiRequest]);
+
+  useLivePoll(silentRefreshRequests, 10000, {
+    enabled: Boolean(user),
+    pauseWhenHidden: true,
+    refreshOnFocus: true,
+  });
 
   const handleRequestClick = (request) => {
     navigate('/messages', {
