@@ -108,7 +108,7 @@ export const useLocalNotifications = (isAuthenticated, userToken) => {
             schedule: { at: new Date(Date.now() + 1000) },
             sound: 'default',
             channelId: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
+            smallIcon: 'ic_stat_notification',
             iconColor: '#ff4081'
           }
         ]
@@ -289,7 +289,7 @@ export const useLocalNotifications = (isAuthenticated, userToken) => {
             actionTypeId: '',
             extra: data || {},
             channelId: 'default',
-            smallIcon: 'ic_stat_icon_config_sample',
+            smallIcon: 'ic_stat_notification',
             iconColor: '#ff4081'
           }
         ]
