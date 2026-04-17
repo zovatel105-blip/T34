@@ -12899,6 +12899,106 @@ async def get_moment_image(filename: str):
     return FileResponse(file_path)
 
 
+# ============= NOTIFICATION SUMMARY FOR LOCAL NOTIFICATIONS =============
+@api_router.get("/notifications/summary")
+async def get_notifications_summary(current_user: dict = Depends(verify_token)):
+    """
+    Get summary of unread messages and notifications
+    Used by local notifications system to detect new events
+    """
+    try:
+        user_id = current_user["id"]
+        
+        # Count unread messages
+        unread_messages = await db.messages.count_documents({
+            "recipient_id": user_id,
+            "read": False
+        })
+        
+        # Get latest unread message
+        latest_message = await db.messages.find_one(
+            {"recipient_id": user_id, "read": False},
+            {"_id": 0},
+            sort=[("timestamp", -1)]
+        )
+        
+        # Count unread activity/notifications
+        # This would count likes, comments, follows, etc.
+        # For now, using a simple approach with comments
+        user_polls = await db.polls.find({"user_id": user_id}, {"_id": 0, "id": 1}).to_list(1000)
+        user_poll_ids = [p["id"] for p in user_polls]
+        
+        # Count new comments on user's polls
+        unread_comments = await db.comments.count_documents({
+            "poll_id": {"$in": user_poll_ids},
+            "user_id": {"$ne": user_id},  # Not from the user themselves
+            "created_at": {"$gte": datetime.utcnow() - timedelta(hours=24)}  # Last 24h
+        })
+        
+        # Count new follows
+        new_follows = await db.follows.count_documents({
+            "following_id": user_id,
+            "created_at": {"$gte": datetime.utcnow() - timedelta(hours=24)}
+        })
+        
+        total_notifications = unread_comments + new_follows
+        
+        # Get latest notification details
+        latest_notification = None
+        
+        # Try to get latest comment
+        latest_comment = await db.comments.find_one(
+            {
+                "poll_id": {"$in": user_poll_ids},
+                "user_id": {"$ne": user_id}
+            },
+            {"_id": 0},
+            sort=[("created_at", -1)]
+        )
+        
+        if latest_comment:
+            # Get commenter info
+            commenter = await db.users.find_one(
+                {"id": latest_comment["user_id"]},
+                {"_id": 0, "username": 1}
+            )
+            latest_notification = {
+                "type": "comment",
+                "from_user": commenter.get("username", "Alguien") if commenter else "Alguien",
+                "timestamp": latest_comment["created_at"].isoformat()
+            }
+        
+        # If no comment, try latest follow
+        if not latest_notification:
+            latest_follow = await db.follows.find_one(
+                {"following_id": user_id},
+                {"_id": 0},
+                sort=[("created_at", -1)]
+            )
+            
+            if latest_follow:
+                follower = await db.users.find_one(
+                    {"id": latest_follow["follower_id"]},
+                    {"_id": 0, "username": 1}
+                )
+                latest_notification = {
+                    "type": "follow",
+                    "from_user": follower.get("username", "Alguien") if follower else "Alguien",
+                    "timestamp": latest_follow["created_at"].isoformat()
+                }
+        
+        return {
+            "unread_messages": unread_messages,
+            "unread_notifications": total_notifications,
+            "latest_message_id": latest_message["id"] if latest_message else None,
+            "latest_notification_id": None,  # Could add IDs if needed
+            "latest_notification": latest_notification
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting notifications summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Incluir el router en la aplicación
 app.include_router(api_router)
 

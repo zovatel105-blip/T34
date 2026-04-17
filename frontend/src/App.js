@@ -54,6 +54,9 @@ import { Capacitor } from '@capacitor/core';
 // 🔔 Push Notifications Hook
 import { usePushNotifications } from './hooks/usePushNotifications';
 
+// 📲 Local Notifications Hook
+import { useLocalNotifications } from './hooks/useLocalNotifications';
+
 // 📱 Dynamic Status Bar Color Hook
 import { useStatusBarColor } from './hooks/useStatusBarColor';
 
@@ -97,9 +100,12 @@ function AppContent() {
   // 📱 Cambiar color de barra de estado según la página
   useStatusBarColor();
 
-  // 🔔 Inicializar notificaciones push (solo en dispositivos nativos)
-  // NOTA: Comentado temporalmente hasta que se configure Firebase
-  // Descomentar después de seguir la guía en /app/FIREBASE_SETUP_GUIDE.md
+  // 📲 Notificaciones locales (funciona sin Firebase)
+  useLocalNotifications(isAuthenticated, token);
+
+  // 🔔 Push Notifications con Firebase (deshabilitado hasta configurar Firebase)
+  // Cuando configures Firebase, comenta la línea de arriba (useLocalNotifications)
+  // y descomenta esta línea:
   // usePushNotifications(isAuthenticated, token);
 
   // ✅ Inicializar configuración automática de entorno al inicio
