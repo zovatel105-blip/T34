@@ -103,10 +103,11 @@ export const getEnvironment = () => {
   return envConfig;
 };
 
-// Para compatibilidad, inicializar inmediatamente
-// - En navegador localhost: usar REACT_APP_BACKEND_URL o fallback local
-// - En APK nativa: usar REACT_APP_BACKEND_URL obligatoriamente
+// Para compatibilidad, inicializar inmediatamente (SÍNCRONO) para todos los
+// casos conocidos, evitando race conditions donde código llame a
+// getEnvironment() antes de que `initializeEnvironment()` async termine.
 if (isCapacitorNative) {
+  // 📱 APK / iOS — siempre usar REACT_APP_BACKEND_URL embebido
   envConfig = {
     HOSTNAME: hostname,
     API_URL: process.env.REACT_APP_BACKEND_URL || "",
@@ -115,11 +116,46 @@ if (isCapacitorNative) {
     IS_EMERGENT: false,
     SUBDOMAIN: null,
   };
+  if (!envConfig.API_URL) {
+    console.error(
+      "❌ FATAL: APK sin REACT_APP_BACKEND_URL. La app no podrá conectar al backend."
+    );
+  }
 } else if (hostname.includes("localhost")) {
   envConfig = {
     HOSTNAME: hostname,
     API_URL: process.env.REACT_APP_BACKEND_URL || "http://localhost:8001",
     IS_LOCAL: true,
+    IS_NATIVE: false,
+    IS_EMERGENT: false,
+    SUBDOMAIN: null,
+  };
+} else if (hostname.endsWith(".emergent.sh")) {
+  const subdomain = hostname.split(".")[0];
+  envConfig = {
+    HOSTNAME: hostname,
+    API_URL: `https://api.${subdomain}.emergent.sh`,
+    IS_LOCAL: false,
+    IS_NATIVE: false,
+    IS_EMERGENT: true,
+    SUBDOMAIN: subdomain,
+  };
+} else if (hostname.endsWith(".emergentagent.com") || hostname.endsWith(".emergent.host")) {
+  // Preview URLs y deploys de Emergent — backend en el mismo dominio
+  envConfig = {
+    HOSTNAME: hostname,
+    API_URL: `https://${hostname}`,
+    IS_LOCAL: false,
+    IS_NATIVE: false,
+    IS_EMERGENT: true,
+    SUBDOMAIN: hostname.split(".")[0],
+  };
+} else if (process.env.REACT_APP_BACKEND_URL) {
+  // Dominio personalizado con URL embebida en build time
+  envConfig = {
+    HOSTNAME: hostname,
+    API_URL: process.env.REACT_APP_BACKEND_URL,
+    IS_LOCAL: false,
     IS_NATIVE: false,
     IS_EMERGENT: false,
     SUBDOMAIN: null,

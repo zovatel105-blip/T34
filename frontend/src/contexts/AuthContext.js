@@ -41,19 +41,39 @@ export const AuthProvider = ({ children }) => {
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // Get backend URL with fallback
+  // Get backend URL with safe fallback (NEVER fall back to window.location.origin
+  // in Capacitor APK — it would point to the WebView itself and return HTML).
   const getBackendUrl = useCallback(() => {
-    // Debug: Log what we're getting from different sources
     const envUrl = process.env.REACT_APP_BACKEND_URL;
     const configUrl = AppConfig.BACKEND_URL;
-    
+
     console.log('🔍 DEBUG - Backend URL sources:', {
       'process.env.REACT_APP_BACKEND_URL': envUrl,
-      'AppConfig.BACKEND_URL': configUrl
+      'AppConfig.BACKEND_URL': configUrl,
     });
-    
-    // Return the URL with proper fallback
-    return envUrl || configUrl || window.location.origin;
+
+    // Prefer the baked-in env variable, then the dynamic config.
+    const resolved = envUrl || configUrl;
+    if (resolved) return resolved;
+
+    // 📱 Detect Capacitor/Cordova: NEVER use window.location.origin as it
+    // points to the WebView itself (returns HTML, not JSON).
+    const isNative =
+      typeof window !== 'undefined' &&
+      (
+        !!window.Capacitor?.isNativePlatform?.() ||
+        !!window.cordova ||
+        window.location.hostname === 'localhost'
+      );
+    if (isNative) {
+      const msg = '❌ Backend URL missing in native app. Rebuild APK with REACT_APP_BACKEND_URL set in frontend/.env and run: yarn build && npx cap sync android';
+      console.error(msg);
+      throw new Error(msg);
+    }
+
+    // En navegador, como último recurso, usar window.location.origin (dev server proxy)
+    console.warn('⚠️ No backend URL resolved; falling back to window.location.origin (only safe in dev)');
+    return window.location.origin;
   }, []);
 
   // Clear error state
@@ -259,6 +279,26 @@ export const AuthProvider = ({ children }) => {
       try {
         responseData = await response.json();
       } catch (parseError) {
+        // Log details para diagnóstico (muy útil en APK/logcat)
+        let rawText = '';
+        try {
+          const cloned = response.clone();
+          rawText = await cloned.text();
+        } catch (_) {}
+        console.error('❌ AUTH: response.json() falló', {
+          status: response.status,
+          contentType: response.headers?.get?.('content-type'),
+          url: response.url,
+          bodyPreview: (rawText || '').substring(0, 300),
+          parseError: parseError?.message,
+        });
+        const looksLikeHtml = /<!doctype html|<html/i.test(rawText || '');
+        if (looksLikeHtml) {
+          throw new Error(
+            'Backend URL incorrecta: el servidor devolvió HTML en lugar de JSON. ' +
+              'La APK probablemente apunta a sí misma. Reconstruye con la URL de backend correcta.'
+          );
+        }
         throw new Error('Server returned invalid response. Please try again.');
       }
 
@@ -345,6 +385,26 @@ export const AuthProvider = ({ children }) => {
       try {
         responseData = await response.json();
       } catch (parseError) {
+        // Log details para diagnóstico (muy útil en APK/logcat)
+        let rawText = '';
+        try {
+          const cloned = response.clone();
+          rawText = await cloned.text();
+        } catch (_) {}
+        console.error('❌ AUTH: response.json() falló', {
+          status: response.status,
+          contentType: response.headers?.get?.('content-type'),
+          url: response.url,
+          bodyPreview: (rawText || '').substring(0, 300),
+          parseError: parseError?.message,
+        });
+        const looksLikeHtml = /<!doctype html|<html/i.test(rawText || '');
+        if (looksLikeHtml) {
+          throw new Error(
+            'Backend URL incorrecta: el servidor devolvió HTML en lugar de JSON. ' +
+              'La APK probablemente apunta a sí misma. Reconstruye con la URL de backend correcta.'
+          );
+        }
         throw new Error('Server returned invalid response. Please try again.');
       }
 

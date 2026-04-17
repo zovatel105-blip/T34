@@ -9,14 +9,29 @@ class AppConfig {
   static get BACKEND_URL() {
     try {
       const env = getEnvironment();
-      console.log('🚀 CONFIG: Entorno detectado automáticamente =', env.HOSTNAME);
-      console.log('🚀 CONFIG: Backend URL =', env.API_URL);
       return env.API_URL;
     } catch (error) {
-      // Fallback para casos donde no se ha inicializado
-      const fallbackUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-      console.warn('⚠️ CONFIG: Usando fallback URL =', fallbackUrl);
-      return fallbackUrl;
+      // Fallback SEGURO — nunca usar window.location.origin en Capacitor APK
+      // porque apunta al WebView (https://localhost) y devuelve HTML, no JSON.
+      const envUrl = process.env.REACT_APP_BACKEND_URL;
+      if (envUrl) {
+        console.warn('⚠️ CONFIG: getEnvironment() no inicializado, usando REACT_APP_BACKEND_URL:', envUrl);
+        return envUrl;
+      }
+      const isNative =
+        typeof window !== 'undefined' &&
+        (
+          !!window.Capacitor?.isNativePlatform?.() ||
+          !!window.cordova
+        );
+      if (isNative) {
+        console.error('❌ CONFIG: APK sin backend URL. Reconstruye con REACT_APP_BACKEND_URL en .env');
+        return '';
+      }
+      // Solo en navegador dev es seguro usar window.location.origin
+      const fallback = typeof window !== 'undefined' ? window.location.origin : '';
+      console.warn('⚠️ CONFIG: Usando fallback window.location.origin:', fallback);
+      return fallback;
     }
   }
 
