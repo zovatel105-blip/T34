@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, Hash, User, Music, Play, Heart, MessageCircle, Fire } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import searchService from '../../services/searchService';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 
 const TrendingSection = ({ className = "" }) => {
   const [trendingData, setTrendingData] = useState({
@@ -168,7 +169,7 @@ const TrendingSection = ({ className = "" }) => {
 
                 {post.thumbnail_url && (
                   <img
-                    src={post.thumbnail_url}
+                    src={resolveAssetUrl(post.thumbnail_url)}
                     alt="Post thumbnail"
                     className="w-10 h-10 rounded object-cover"
                   />
@@ -223,7 +224,7 @@ const TrendingSection = ({ className = "" }) => {
               >
                 <div className="relative">
                   <img
-                    src={user.avatar_url || '/default-avatar.png'}
+                    src={resolveAssetUrl(user.avatar_url) || '/default-avatar.png'}
                     alt={user.display_name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-orange-300"
                   />

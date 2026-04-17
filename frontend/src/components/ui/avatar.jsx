@@ -2,6 +2,7 @@ import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
 import { cn } from "../../lib/utils"
+import { resolveAssetUrl } from "../../utils/resolveAssetUrl"
 
 const Avatar = React.forwardRef(({ className, ...props }, ref) => (
   <AvatarPrimitive.Root
@@ -11,9 +12,14 @@ const Avatar = React.forwardRef(({ className, ...props }, ref) => (
 ))
 Avatar.displayName = AvatarPrimitive.Root.displayName
 
-const AvatarImage = React.forwardRef(({ className, ...props }, ref) => (
+// 📱 AvatarImage resuelve automáticamente paths relativos como
+// "/api/uploads/avatars/xxx.jpg" -> "https://backend.com/api/uploads/..."
+// para que funcionen tanto en web como en APK de Capacitor (donde la
+// WebView vive en https://localhost).
+const AvatarImage = React.forwardRef(({ className, src, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
+    src={resolveAssetUrl(src)}
     className={cn("aspect-square h-full w-full", className)}
     {...props} />
 ))

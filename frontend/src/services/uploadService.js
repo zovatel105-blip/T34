@@ -1,3 +1,5 @@
+import { resolveOptimizedAssetUrl } from '../utils/resolveAssetUrl';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 class UploadService {
@@ -185,33 +187,14 @@ class UploadService {
     }
   }
 
-  // Get optimized public URL with transformations
+  // Get optimized public URL with transformations.
+  // 📱 En APK de Capacitor el frontend vive en https://localhost.
+  // Los paths relativos ("/api/uploads/xxx.jpg") se romperían al resolverse
+  // contra localhost. Por eso usamos `resolveOptimizedAssetUrl` que
+  // siempre prepone BACKEND_URL (con fallback a AppConfig).
   getPublicUrl(path, options = {}) {
     if (!path) return null;
-    
-    const {
-      width,
-      height,
-      quality = 80,
-      format = 'auto'
-    } = options;
-    
-    // If it's already a full URL, return as-is
-    if (path.startsWith('http')) {
-      return path;
-    }
-    
-    // Build transformation parameters
-    const params = new URLSearchParams();
-    if (width) params.set('w', width);
-    if (height) params.set('h', height);
-    if (quality !== 80) params.set('q', quality);
-    if (format !== 'auto') params.set('f', format);
-    
-    const queryString = params.toString();
-    const separator = queryString ? '?' : '';
-    
-    return `${BACKEND_URL}${path}${separator}${queryString}`;
+    return resolveOptimizedAssetUrl(path, options);
   }
 }
 

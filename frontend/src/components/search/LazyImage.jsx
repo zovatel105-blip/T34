@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 
 /**
  * LazyImage component with Intersection Observer
- * Only loads images when they come into viewport
+ * Only loads images when they come into viewport.
+ *
+ * 📱 Resuelve automáticamente URLs relativas (ej: "/api/uploads/xxx.jpg")
+ * a su forma absoluta contra el BACKEND_URL, evitando que fallen en el
+ * APK de Capacitor (donde el WebView corre desde https://localhost).
  */
 const LazyImage = ({ 
   src, 
@@ -19,6 +24,9 @@ const LazyImage = ({
   const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef(null);
+
+  // Resolver la URL (absoluta o relativa) a forma final cargable
+  const resolvedSrc = resolveAssetUrl(src);
 
   useEffect(() => {
     // Create Intersection Observer
@@ -70,9 +78,9 @@ const LazyImage = ({
       )}
 
       {/* Actual image - only load when in view */}
-      {isInView && !hasError && (
+      {isInView && !hasError && resolvedSrc && (
         <img
-          src={src}
+          src={resolvedSrc}
           alt={alt}
           className={`${className} transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={handleLoad}
@@ -81,6 +89,9 @@ const LazyImage = ({
           {...props}
         />
       )}
+
+      {/* Si no hay URL resolvible, mostrar placeholder */}
+      {isInView && !resolvedSrc && placeholder}
 
       {/* Error placeholder */}
       {hasError && placeholder}

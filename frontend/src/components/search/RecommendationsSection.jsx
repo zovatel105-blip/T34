@@ -7,6 +7,7 @@ import { Sparkles, Heart, MessageCircle, Share, Bookmark, RefreshCw, User } from
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import searchService from '../../services/searchService';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 
 const RecommendationsSection = ({ className = "" }) => {
   const [recommendations, setRecommendations] = useState([]);
@@ -141,7 +142,7 @@ const RecommendationsSection = ({ className = "" }) => {
               {item.type === 'user' ? (
                 <div className="relative">
                   <img
-                    src={item.avatar_url || '/default-avatar.png'}
+                    src={resolveAssetUrl(item.avatar_url) || '/default-avatar.png'}
                     alt={item.display_name}
                     className="w-16 h-16 rounded-full object-cover"
                   />
@@ -155,7 +156,7 @@ const RecommendationsSection = ({ className = "" }) => {
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center overflow-hidden">
                   {item.thumbnail_url ? (
                     <img
-                      src={item.thumbnail_url}
+                      src={resolveAssetUrl(item.thumbnail_url)}
                       alt="Content"
                       className="w-full h-full object-cover"
                     />
