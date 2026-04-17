@@ -1,10 +1,12 @@
 import { handleApiResponse } from '../utils/apiErrorHandler';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import AppConfig from '../config/config';
 
 class SearchService {
-  constructor() {
-    this.baseURL = `${BACKEND_URL}/api`;
+  // baseURL como getter para que siempre use la URL actual (AppConfig resuelve
+  // correctamente el entorno APK vs web sin depender solo de process.env).
+  get baseURL() {
+    const backendUrl = AppConfig.BACKEND_URL || process.env.REACT_APP_BACKEND_URL || '';
+    return `${backendUrl}/api`;
   }
 
   getAuthHeaders() {

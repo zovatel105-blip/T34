@@ -108,25 +108,33 @@ const AudioDetailPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/audio/${audioId}`, {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      const url = `${backendUrl}/api/audio/${audioId}`;
+
+      console.log('🎵 [AudioDetail] Fetching:', url);
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('🎵 [AudioDetail] Status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
         setAudio(data.audio);
       } else {
-        const musicResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/music/library-with-previews?limit=1000`, {
+        const musicUrl = `${backendUrl}/api/music/library-with-previews?limit=1000`;
+        console.log('🎵 [AudioDetail] Fallback a music library:', musicUrl);
+        const musicResponse = await fetch(musicUrl, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (musicResponse.ok) {
           const musicData = await musicResponse.json();
           const musicTrack = musicData.music?.find(m => m.id === audioId);
@@ -148,15 +156,20 @@ const AudioDetailPage = () => {
             };
             setAudio(audioData);
           } else {
-            throw new Error('Audio not found');
+            throw new Error(`Audio ${audioId} no encontrado en la librería`);
           }
         } else {
-          throw new Error('Audio not found');
+          throw new Error(`HTTP ${response.status} al cargar audio ${audioId}`);
         }
       }
     } catch (error) {
-      console.error('Error fetching audio details:', error);
-      setError('Audio no encontrado');
+      console.error('❌ [AudioDetail] Error:', error);
+      // Guardar mensaje detallado para mostrarlo en UI
+      setError({
+        message: error?.message || 'Error desconocido',
+        url: `${process.env.REACT_APP_BACKEND_URL || '(sin URL)'}/api/audio/${audioId}`,
+        type: error?.name || 'NetworkError'
+      });
       toast({
         title: "Error",
         description: "No se pudo cargar el audio",
@@ -452,15 +465,41 @@ const AudioDetailPage = () => {
   }
 
   if (error || !audio) {
+    // Manejar tanto el formato nuevo (objeto) como el antiguo (string)
+    const errorMsg = typeof error === 'string' ? error : (error?.message || 'No disponible');
+    const errorUrl = typeof error === 'object' ? error?.url : null;
+
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center space-y-4 p-8">
+      <div className="min-h-screen bg-white flex items-center justify-center safe-area-top safe-area-bottom">
+        <div className="text-center space-y-4 p-8 max-w-md">
           <Music className="w-16 h-16 text-gray-400 mx-auto" />
           <h2 className="text-xl font-semibold text-gray-900">Audio no encontrado</h2>
           <p className="text-gray-600">Este audio no está disponible</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">
-            Volver
-          </Button>
+
+          {/* 🛠️ Información diagnóstica */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-left">
+            <p className="text-xs font-semibold text-red-800 mb-1">Detalle del error:</p>
+            <p className="text-[11px] text-red-700 break-all">{errorMsg}</p>
+            {errorUrl && (
+              <p className="text-[10px] text-red-600 mt-1 break-all opacity-80">URL: {errorUrl}</p>
+            )}
+          </div>
+
+          <div className="flex gap-2 justify-center">
+            <Button
+              onClick={() => {
+                setError(null);
+                fetchAudioDetails();
+                fetchPostsUsingAudio();
+              }}
+              variant="default"
+            >
+              🔄 Reintentar
+            </Button>
+            <Button onClick={() => navigate(-1)} variant="outline">
+              Volver
+            </Button>
+          </div>
         </div>
       </div>
     );

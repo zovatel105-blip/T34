@@ -96,21 +96,63 @@ code {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Optimizaciones móviles para TikTok Inbox */
+/* ============================================================
+   EDGE-TO-EDGE SAFE AREAS (Android + iOS)
+   La WebView se extiende detrás de la status bar y la navigation
+   bar del sistema. Usamos env(safe-area-inset-*) para reservar
+   espacio y evitar que el contenido quede cortado/superpuesto.
+   ============================================================ */
+
+/* Utilidad: padding-top = altura de la status bar */
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Barra de estado en Android nativo - agregar padding mínimo */
-body {
-  padding-top: env(safe-area-inset-top, 0px);
+/* Utilidad: padding-bottom = altura de la nav bar del sistema */
+.safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Fix para barra de navegación inferior en Android */
-#root {
+/* Utilidad: sólo el margen/altura de la nav bar inferior */
+.pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Margen superior combinado con safe-area para overlays fixed/absolute
+   que estén sobre la status bar (ej: botones flotantes arriba-derecha). */
+.top-safe-4 {
+  top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
+}
+
+.top-safe-2 {
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem) !important;
+}
+
+.top-safe-0 {
+  top: env(safe-area-inset-top, 0px) !important;
+}
+
+/* Margen inferior combinado con safe-area para overlays fixed/absolute
+   que estén sobre la nav bar (ej: botones flotantes). */
+.bottom-safe-4 {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem) !important;
+}
+
+.bottom-safe-20 {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem) !important;
+}
+
+/* IMPORTANTE: NO aplicar padding al body ni a #root para
+   no romper layouts fullscreen (TikTok feed, cámara, stories).
+   Las safe areas se aplican por componente usando las clases
+   .safe-area-top / .safe-area-bottom o estilos inline. */
+#root {
   min-height: 100vh;
+  min-height: 100dvh;
   min-height: -webkit-fill-available;
 }
 

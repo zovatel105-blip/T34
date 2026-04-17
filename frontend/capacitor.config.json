@@ -18,9 +18,9 @@
       "splashImmersive": true
     },
     "StatusBar": {
-      "style": "Dark",
-      "backgroundColor": "#000000",
-      "overlaysWebView": false
+      "style": "Light",
+      "backgroundColor": "#00000000",
+      "overlaysWebView": true
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]

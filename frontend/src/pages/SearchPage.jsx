@@ -45,6 +45,8 @@ const SearchPage = () => {
     stories: false,
     recommendations: false
   });
+  // Error visible para diagnóstico en APK (antes fallaban silenciosamente)
+  const [networkError, setNetworkError] = useState(null);
   
   // TikTokScrollView states
   const [showTikTokView, setShowTikTokView] = useState(false);
@@ -145,9 +147,15 @@ const SearchPage = () => {
     try {
       const response = await searchService.getRecommendedContent(12);
       setRecommendedContent(response.recommendations || []);
+      setNetworkError(null); // Limpiar error si todo va bien
     } catch (error) {
       console.error('Error loading recommended content:', error);
-      // Keep empty array if error
+      // Mostrar error visible (ayuda a diagnosticar APK)
+      setNetworkError({
+        message: error?.message || 'No se pudo conectar al servidor',
+        status: error?.status || 'network',
+        url: `${(process.env.REACT_APP_BACKEND_URL || '')}/api/search/recommendations`
+      });
     } finally {
       setLoadingStates(prev => ({ ...prev, recommendations: false }));
     }
@@ -1057,6 +1065,34 @@ const SearchPage = () => {
 
       {/* Clean Content Area - TikTok Style - Full Width */}
       <div className="w-full">
+        {/* 🛠️ Banner de diagnóstico (solo visible si hay error de red y no hay resultados) */}
+        {networkError && recommendedContent.length === 0 && recentSearches.length === 0 && !hasSearched && (
+          <div className="mx-4 mb-3 p-3 rounded-xl bg-red-50 border border-red-200">
+            <div className="flex items-start gap-2">
+              <div className="text-red-500 text-lg flex-shrink-0">⚠️</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-red-800">No se pudo cargar el contenido</p>
+                <p className="text-xs text-red-700 mt-0.5 break-all">
+                  {networkError.message}
+                </p>
+                <p className="text-[10px] text-red-600 mt-1 break-all opacity-80">
+                  URL: {networkError.url}
+                </p>
+                <button
+                  onClick={() => {
+                    setNetworkError(null);
+                    loadRecentSearches();
+                    loadRecommendedContent();
+                  }}
+                  className="mt-2 px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  🔄 Reintentar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Content Sections - Only show when NOT searching */}
         {!hasSearched && (
           <div className="flex-1 py-1 space-y-6 sm:space-y-8 w-full">

@@ -79,7 +79,12 @@ const BottomNavigation = () => {
         "fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl",
         hideBottomNav && commentInputConfig ? "bg-white" : "bg-black"
       )}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{
+        // EDGE-TO-EDGE: respetar la barra de navegación del sistema
+        // (gesto o 3 botones). max() garantiza un mínimo aunque el
+        // sistema no reporte insets.
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)'
+      }}
     >
       {hideBottomNav && commentInputConfig ? (
         <div className="px-4 py-2">

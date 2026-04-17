@@ -750,7 +750,7 @@ const FeedPage = () => {
           className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
           style={{ 
             position: 'fixed',
-            top: '16px',
+            top: 'max(16px, calc(env(safe-area-inset-top, 0px) + 8px))',
             right: '16px',
             zIndex: 9999,
           }}
@@ -778,7 +778,7 @@ const FeedPage = () => {
           className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
           style={{ 
             position: 'fixed',
-            top: '16px',
+            top: 'max(16px, calc(env(safe-area-inset-top, 0px) + 8px))',
             right: '16px',
             zIndex: 9999,
           }}
@@ -816,7 +816,7 @@ const FeedPage = () => {
           className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
           style={{ 
             position: 'fixed',
-            top: '16px',
+            top: 'max(16px, calc(env(safe-area-inset-top, 0px) + 8px))',
             right: '16px',
             zIndex: 9999,
           }}
@@ -864,7 +864,7 @@ const FeedPage = () => {
           className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
           style={{ 
             position: 'fixed',
-            top: '16px',
+            top: 'max(16px, calc(env(safe-area-inset-top, 0px) + 8px))',
             right: '16px',
             zIndex: 9999,
           }}
@@ -896,7 +896,7 @@ const FeedPage = () => {
           className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
           style={{ 
             position: 'fixed',
-            top: '16px',
+            top: 'max(16px, calc(env(safe-area-inset-top, 0px) + 8px))',
             right: '16px',
             zIndex: 9999,
           }}
