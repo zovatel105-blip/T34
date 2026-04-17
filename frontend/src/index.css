@@ -104,6 +104,14 @@ code {
 /* Barra de estado en Android nativo - agregar padding mínimo */
 body {
   padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Fix para barra de navegación inferior en Android */
+#root {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 /* Mejor rendimiento en scroll móvil */
