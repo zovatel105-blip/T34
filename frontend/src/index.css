@@ -98,7 +98,7 @@ code {
 
 /* Optimizaciones móviles para TikTok Inbox */
 .safe-area-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Mejor rendimiento en scroll móvil */

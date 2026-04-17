@@ -92,7 +92,9 @@ function AppContent() {
   const [configInitialized, setConfigInitialized] = useState(false);
 
   // 🔔 Inicializar notificaciones push (solo en dispositivos nativos)
-  usePushNotifications(isAuthenticated, token);
+  // NOTA: Comentado temporalmente hasta que se configure Firebase
+  // Descomentar después de seguir la guía en /app/FIREBASE_SETUP_GUIDE.md
+  // usePushNotifications(isAuthenticated, token);
 
   // ✅ Inicializar configuración automática de entorno al inicio
   useEffect(() => {
@@ -117,9 +119,16 @@ function AppContent() {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
+          // Configurar la barra de estado
           await StatusBar.setStyle({ style: Style.Dark });
           await StatusBar.setBackgroundColor({ color: '#000000' });
+          
+          // CRÍTICO: NO permitir que el WebView se superponga con la barra
           await StatusBar.setOverlaysWebView({ overlay: false });
+          
+          // Mostrar la barra de estado
+          await StatusBar.show();
+          
           console.log('✅ StatusBar configurado correctamente');
         } catch (error) {
           console.error('❌ Error configurando StatusBar:', error);
@@ -194,7 +203,7 @@ function AppContent() {
 
   return (
     <ResponsiveLayout onCreatePoll={handleCreatePoll}>
-      <div className="App relative safe-area-top">
+      <div className="App relative">
           <Routes>
             {/* Redirect root to feed */}
             <Route path="/" element={<Navigate to="/feed" replace />} />

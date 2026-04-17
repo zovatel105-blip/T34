@@ -15,12 +15,22 @@ export const usePushNotifications = (isAuthenticated, userToken) => {
   useEffect(() => {
     // Only initialize on native platforms and when user is authenticated
     if (!Capacitor.isNativePlatform() || !isAuthenticated || !userToken) {
+      console.log('📲 Push notifications: Skipping initialization (not native or not authenticated)');
       return;
     }
+
+    // Add delay to ensure app is fully loaded
+    const timer = setTimeout(() => {
+      initializePushNotifications();
+    }, 2000);
 
     const initializePushNotifications = async () => {
       try {
         console.log('📲 Initializing push notifications...');
+
+        // Check permission first
+        const currentPermission = await PushNotifications.checkPermissions();
+        console.log('Current permission:', currentPermission);
 
         // Request permission
         const permResult = await PushNotifications.requestPermissions();
@@ -33,16 +43,22 @@ export const usePushNotifications = (isAuthenticated, userToken) => {
           console.log('✅ Registered for push notifications');
         } else {
           console.log('❌ Push notification permission denied');
+          return;
         }
 
         // Listen for registration success
-        await PushNotifications.addListener('registration', async (token) => {
+        PushNotifications.addListener('registration', async (token) => {
           console.log('✅ FCM Token received:', token.value.substring(0, 20) + '...');
           setFcmToken(token.value);
 
           // Register token with backend
           try {
             const API_URL = AppConfig.BACKEND_URL;
+            if (!API_URL) {
+              console.error('❌ Backend URL not configured');
+              return;
+            }
+
             await axios.post(
               `${API_URL}/api/push/register-token`,
               {
@@ -64,21 +80,21 @@ export const usePushNotifications = (isAuthenticated, userToken) => {
         });
 
         // Listen for registration errors
-        await PushNotifications.addListener('registrationError', (error) => {
+        PushNotifications.addListener('registrationError', (error) => {
           console.error('❌ Error on push notification registration:', error);
         });
 
         // Handle notification received while app is in foreground
-        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
           console.log('🔔 Push notification received (foreground):', notification);
           
-          // You can show a custom in-app notification here
-          // For now, we'll just log it
-          alert(`📬 ${notification.title}\n${notification.body}`);
+          // Don't use alert() - just log for now
+          // In production, you'd show a toast or custom notification
+          console.log(`📬 ${notification.title}: ${notification.body}`);
         });
 
         // Handle notification tapped (app in background)
-        await PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
           console.log('👆 Push notification tapped:', notification);
           
           // Handle navigation based on notification data
@@ -93,10 +109,9 @@ export const usePushNotifications = (isAuthenticated, userToken) => {
       }
     };
 
-    initializePushNotifications();
-
-    // Cleanup listeners on unmount
+    // Cleanup timer and listeners on unmount
     return () => {
+      clearTimeout(timer);
       PushNotifications.removeAllListeners();
     };
   }, [isAuthenticated, userToken]);
