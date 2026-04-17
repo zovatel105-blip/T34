@@ -911,3 +911,35 @@ class StoriesGroupResponse(BaseModel):
 
 # Necesario para resolver referencia circular
 CommentResponse.model_rebuild()
+
+# ============= PUSH NOTIFICATION MODELS =============
+
+class FCMToken(BaseModel):
+    """Firebase Cloud Messaging device token"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    token: str
+    device_type: str = "android"  # android, ios, web
+    device_name: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_used: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class FCMTokenCreate(BaseModel):
+    """Request model for registering FCM token"""
+    token: str
+    device_type: str = "android"
+    device_name: Optional[str] = None
+
+class PushNotification(BaseModel):
+    """Push notification record"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    body: str
+    data: Optional[Dict[str, str]] = None
+    notification_type: str  # "message", "comment", "like", "follow", "challenge"
+    related_id: Optional[str] = None  # ID of related entity (message, comment, etc)
+    sent_at: datetime = Field(default_factory=datetime.utcnow)
+    delivered: bool = False
+    read: bool = False

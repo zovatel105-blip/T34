@@ -72,7 +72,9 @@ from models import (
     # Story Models - REMOVED (Stories feature disabled)
     # Story, StoryCreate, StoryResponse, StoryView, StoryLike, StoryViewCreate, StoryLikeCreate, StoryType, StoryPrivacy,
     # Chat Request Models
-    ChatRequest, ChatRequestCreate, ChatRequestResponse, ChatRequestAction, ChatRequestStatus
+    ChatRequest, ChatRequestCreate, ChatRequestResponse, ChatRequestAction, ChatRequestStatus,
+    # Push Notification Models
+    FCMToken, FCMTokenCreate, PushNotification
 )
 from auth import (
     verify_password, get_password_hash, create_access_token, 
@@ -12899,6 +12901,14 @@ async def get_moment_image(filename: str):
 
 # Incluir el router en la aplicación
 app.include_router(api_router)
+
+# Include push notification routes
+try:
+    from push_routes import push_router
+    app.include_router(push_router)
+    logger.info("✅ Push notification routes loaded")
+except Exception as e:
+    logger.warning(f"⚠️  Push notification routes not loaded: {e}")
 
 if __name__ == "__main__":
     import uvicorn

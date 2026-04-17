@@ -51,6 +51,9 @@ import ComingSoon from './components/ComingSoon';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
+// 🔔 Push Notifications Hook
+import { usePushNotifications } from './hooks/usePushNotifications';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -85,8 +88,11 @@ function AppContent() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isTikTokMode } = useTikTok();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, token } = useAuth();
   const [configInitialized, setConfigInitialized] = useState(false);
+
+  // 🔔 Inicializar notificaciones push (solo en dispositivos nativos)
+  usePushNotifications(isAuthenticated, token);
 
   // ✅ Inicializar configuración automática de entorno al inicio
   useEffect(() => {
