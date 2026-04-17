@@ -13,9 +13,9 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- NO dibujar bajo las barras del sistema -->
-        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
-        <item name="android:fitsSystemWindows">true</item>
+        <!-- Permitir dibujar bajo barras pero con control de color -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/black</item>
     </style>
 
 

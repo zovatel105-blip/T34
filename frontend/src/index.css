@@ -101,6 +101,11 @@ code {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Barra de estado en Android nativo - agregar padding mínimo */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Mejor rendimiento en scroll móvil */
 .mobile-scroll {
   -webkit-overflow-scrolling: touch;

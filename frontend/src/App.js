@@ -119,15 +119,14 @@ function AppContent() {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Configurar la barra de estado
-          await StatusBar.setStyle({ style: Style.Dark });
+          // Configurar estilo de iconos (blancos sobre fondo oscuro)
+          await StatusBar.setStyle({ style: Style.Light });
+          
+          // Color de fondo de la barra
           await StatusBar.setBackgroundColor({ color: '#000000' });
           
-          // CRÍTICO: NO permitir que el WebView se superponga con la barra
+          // CLAVE: overlay false para que respete el espacio
           await StatusBar.setOverlaysWebView({ overlay: false });
-          
-          // Mostrar la barra de estado
-          await StatusBar.show();
           
           console.log('✅ StatusBar configurado correctamente');
         } catch (error) {
