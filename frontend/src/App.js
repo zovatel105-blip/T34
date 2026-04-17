@@ -54,6 +54,9 @@ import { Capacitor } from '@capacitor/core';
 // 🔔 Push Notifications Hook
 import { usePushNotifications } from './hooks/usePushNotifications';
 
+// 📱 Dynamic Status Bar Color Hook
+import { useStatusBarColor } from './hooks/useStatusBarColor';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -91,6 +94,9 @@ function AppContent() {
   const { isAuthenticated, loading: authLoading, token } = useAuth();
   const [configInitialized, setConfigInitialized] = useState(false);
 
+  // 📱 Cambiar color de barra de estado según la página
+  useStatusBarColor();
+
   // 🔔 Inicializar notificaciones push (solo en dispositivos nativos)
   // NOTA: Comentado temporalmente hasta que se configure Firebase
   // Descomentar después de seguir la guía en /app/FIREBASE_SETUP_GUIDE.md
@@ -114,20 +120,13 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 Configurar StatusBar en dispositivos nativos (Android/iOS)
+  // 📱 Configurar StatusBar inicial en dispositivos nativos
   useEffect(() => {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Configurar estilo de iconos (blancos sobre fondo oscuro)
-          await StatusBar.setStyle({ style: Style.Light });
-          
-          // Color de fondo de la barra
-          await StatusBar.setBackgroundColor({ color: '#000000' });
-          
-          // CLAVE: overlay false para que respete el espacio
+          // Configuración inicial - el hook useStatusBarColor lo ajustará dinámicamente
           await StatusBar.setOverlaysWebView({ overlay: false });
-          
           console.log('✅ StatusBar configurado correctamente');
         } catch (error) {
           console.error('❌ Error configurando StatusBar:', error);
