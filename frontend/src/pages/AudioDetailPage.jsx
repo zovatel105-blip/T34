@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button';
 import TikTokScrollView from '../components/TikTokScrollView';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
 import { useTikTok } from '../contexts/TikTokContext';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const AudioDetailPage = () => {
   const { audioId } = useParams();
@@ -101,7 +102,8 @@ const AudioDetailPage = () => {
       setDominantColor('rgba(176, 97, 255, 0.15)');
     };
     
-    img.src = imageUrl;
+    // Resolve URL for APK compatibility
+    img.src = resolveAssetUrl(imageUrl);
   };
 
   const fetchAudioDetails = async () => {
@@ -542,7 +544,7 @@ const AudioDetailPage = () => {
             >
               {audio.cover_url ? (
                 <img 
-                  src={audio.cover_url} 
+                  src={resolveAssetUrl(audio.cover_url)} 
                   alt={audio.title}
                   className="w-full h-full object-cover"
                 />
