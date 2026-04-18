@@ -10,6 +10,7 @@ from datetime import datetime
 from models import FCMToken, FCMTokenCreate
 from push_notification_service import push_service
 from auth import verify_token
+from database import db
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +35,6 @@ async def register_fcm_token(
     """
     try:
         user_id = current_user["id"]
-        
-        # Import db from server (will be injected)
-        from server import db
         
         # Check if token already exists for this user
         existing_token = await db.fcm_tokens.find_one({
@@ -98,7 +96,6 @@ async def unregister_fcm_token(
     """
     try:
         user_id = current_user["id"]
-        from server import db
         
         result = await db.fcm_tokens.update_one(
             {
@@ -148,7 +145,6 @@ async def test_push_notification(
     """
     try:
         user_id = current_user["id"]
-        from server import db
         
         # Get active tokens for user
         tokens = await db.fcm_tokens.find({
@@ -201,7 +197,6 @@ async def get_user_tokens(
     """
     try:
         user_id = current_user["id"]
-        from server import db
         
         tokens = await db.fcm_tokens.find({
             "user_id": user_id,

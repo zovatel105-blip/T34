@@ -1005,7 +1005,7 @@ const StoryEditPage = () => {
               
               return (
                 <div
-                  key={index}
+                  key={text.id || `text-overlay-${index}`}
                   className="absolute z-20"
                   style={{
                     top: `${text.y}%`,
@@ -1096,7 +1096,7 @@ const StoryEditPage = () => {
             {/* Stickers (independientes del zoom) - Ahora arrastrables */}
             {stickers.map((sticker, index) => (
               <div
-                key={index}
+                key={sticker.id || `sticker-${index}`}
                 onTouchStart={(e) => handleStickerDragStart(e, index)}
                 onMouseDown={(e) => handleStickerDragStart(e, index)}
                 className="absolute text-4xl z-10 cursor-move"
@@ -1505,7 +1505,7 @@ const GifEmojiPickerModal = ({ onClose, onSelect }) => {
         <div className="grid grid-cols-5 gap-3 max-h-64 overflow-y-auto">
           {(activeTab === 'emojis' ? emojis : gifs).map((item, index) => (
             <button
-              key={index}
+              key={`${item}-${index}`}
               onClick={() => onSelect(item)}
               className="text-4xl hover:scale-125 transition-transform p-2"
             >

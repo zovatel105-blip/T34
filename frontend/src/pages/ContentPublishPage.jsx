@@ -527,7 +527,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="flex h-full">
                             {contentData.options.slice(0, 2).map((option, index) => (
-                              <div key={index} className="flex-1 relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="flex-1 relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -540,7 +540,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="flex flex-col h-full">
                             {contentData.options.slice(0, 2).map((option, index) => (
-                              <div key={index} className="flex-1 relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="flex-1 relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -553,7 +553,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="flex h-full">
                             {contentData.options.slice(0, 3).map((option, index) => (
-                              <div key={index} className="flex-1 relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="flex-1 relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -566,7 +566,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="flex flex-col h-full">
                             {contentData.options.slice(0, 3).map((option, index) => (
-                              <div key={index} className="flex-1 relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="flex-1 relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -579,7 +579,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="grid grid-cols-2 grid-rows-2 h-full gap-0">
                             {contentData.options.slice(0, 4).map((option, index) => (
-                              <div key={index} className="relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -592,7 +592,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="grid grid-cols-3 grid-rows-2 h-full gap-0">
                             {contentData.options.slice(0, 6).map((option, index) => (
-                              <div key={index} className="relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}
@@ -605,7 +605,7 @@ const ContentPublishPage = () => {
                         return (
                           <div className="grid grid-cols-2 grid-rows-3 h-full gap-0">
                             {contentData.options.slice(0, 6).map((option, index) => (
-                              <div key={index} className="relative overflow-hidden">
+                              <div key={option.id || `opt-${index}`} className="relative overflow-hidden">
                                 {renderMedia(option, index)}
                               </div>
                             ))}

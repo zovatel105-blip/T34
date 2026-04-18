@@ -109,7 +109,7 @@ export const SearchResultsGridSkeleton = ({ count = 6 }) => (
   <div className="px-1 py-2 w-full">
     <div className="grid grid-cols-2 gap-1">
       {Array.from({ length: count }).map((_, index) => (
-        <SearchResultSkeleton key={index} delay={index * 50} />
+        <SearchResultSkeleton key={`search-skel-${index}`} delay={index * 50} />
       ))}
     </div>
   </div>
@@ -126,7 +126,7 @@ export const StoriesSectionSkeleton = ({ count = 5 }) => (
     
     <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2 px-4 lg:px-6 xl:px-8">
       {Array.from({ length: count }).map((_, index) => (
-        <StorySkeleton key={index} delay={index * 50} />
+        <StorySkeleton key={`story-skel-${index}`} delay={index * 50} />
       ))}
     </div>
   </div>
@@ -143,7 +143,7 @@ export const RecommendationsSectionSkeleton = ({ count = 6 }) => (
     
     <div className="flex space-x-3 sm:space-x-4 overflow-x-auto scrollbar-hide pb-2 w-full pl-3 sm:pl-0 lg:pl-6 xl:pl-8">
       {Array.from({ length: count }).map((_, index) => (
-        <RecommendationSkeleton key={index} delay={index * 50} />
+        <RecommendationSkeleton key={`rec-skel-${index}`} delay={index * 50} />
       ))}
     </div>
   </div>
@@ -161,7 +161,7 @@ export const RecentSearchesSkeleton = ({ count = 5 }) => (
     <div className="space-y-2">
       {Array.from({ length: count }).map((_, index) => (
         <div 
-          key={index} 
+          key={`recent-skel-${index}`} 
           className="flex items-center space-x-3 p-2"
           style={{ animationDelay: `${index * 50}ms` }}
         >

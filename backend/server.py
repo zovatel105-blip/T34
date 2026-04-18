@@ -94,12 +94,10 @@ load_dotenv(ROOT_DIR / '.env')
 # ✅ Inicializar configuración automática de entorno
 config.initialize_environment()
 
-# MongoDB connection using config with automatic detection
-mongo_url = config.MONGO_URL
-client = AsyncIOMotorClient(mongo_url)
-db = client[config.DB_NAME]
+# MongoDB connection - imported from shared database module to avoid circular imports
+from database import db, client
 
-print(f"🔗 MongoDB: Conectando a {mongo_url}")
+print(f"🔗 MongoDB: Conectando a {config.MONGO_URL}")
 print(f"🗄️ Database: Usando '{config.DB_NAME}'")
 
 # Initialize Feed Optimizer
@@ -326,7 +324,7 @@ async def get_or_create_device(user_id: str, ip_address: str, user_agent: str) -
     device_info = parse_user_agent(user_agent)
     
     # Create device fingerprint
-    device_fingerprint = hashlib.md5(
+    device_fingerprint = hashlib.sha256(
         f"{device_info['browser']}{device_info['os']}{user_agent}".encode()
     ).hexdigest()
     
@@ -1505,7 +1503,7 @@ async def get_music_library(
             search_lower in m['category'].lower()
         ]
     
-    if trending is True:
+    if trending:
         filtered_music = [m for m in filtered_music if m.get('isTrending', False)]
     
     # Sort by uses (popularity)

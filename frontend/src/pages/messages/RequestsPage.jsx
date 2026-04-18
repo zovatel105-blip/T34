@@ -40,7 +40,8 @@ const RequestsPage = () => {
       if (diffHours < 24) return `${diffHours} h`;
       if (diffDays < 7) return `${diffDays} d`;
       return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-    } catch {
+    } catch (e) {
+      console.warn('Date formatting error:', e);
       return '';
     }
   };
@@ -69,8 +70,8 @@ const RequestsPage = () => {
       if (Array.isArray(requestsData)) {
         setRequests(requestsData);
       }
-    } catch (_) {
-      // silencioso
+    } catch (e) {
+      console.warn('Silent refresh requests skipped:', e?.message);
     }
   }, [user, apiRequest]);
 

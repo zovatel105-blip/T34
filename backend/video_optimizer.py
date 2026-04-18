@@ -280,5 +280,6 @@ async def cleanup_task():
         await asyncio.sleep(3600)  # Run every hour
         video_optimizer.cleanup_temp_files()
 
-# Start cleanup task
-asyncio.create_task(cleanup_task())
+# NOTE: cleanup_task should be started via app startup event, not at module level.
+# asyncio.create_task() at import time fails because no event loop is running.
+# To use: call asyncio.create_task(cleanup_task()) inside an @app.on_event("startup") handler.

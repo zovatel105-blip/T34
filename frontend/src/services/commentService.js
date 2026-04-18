@@ -37,7 +37,7 @@ class CommentService {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
+          console.warn('Could not parse error response JSON:', e);
         }
         throw new Error(errorMessage);
       }
@@ -68,7 +68,7 @@ class CommentService {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
+          console.warn('Could not parse error response JSON:', e);
         }
         throw new Error(errorMessage);
       }
@@ -98,7 +98,7 @@ class CommentService {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
+          console.warn('Could not parse error response JSON:', e);
         }
         throw new Error(errorMessage);
       }
@@ -127,7 +127,7 @@ class CommentService {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
+          console.warn('Could not parse error response JSON:', e);
         }
         throw new Error(errorMessage);
       }
@@ -157,7 +157,7 @@ class CommentService {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
+          console.warn('Could not parse error response JSON:', e);
         }
         throw new Error(errorMessage);
       }

@@ -2736,7 +2736,7 @@ const ProfilePage = () => {
                 followersLoading ? (
                   <div className="space-y-0">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="animate-pulse flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+                      <div key={`follower-skeleton-${i}`} className="animate-pulse flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                         <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                         <div className="flex-1">
                           <div className="h-4 bg-gray-200 rounded mb-2 w-32"></div>
@@ -2805,7 +2805,7 @@ const ProfilePage = () => {
                 followingLoading ? (
                   <div className="space-y-0">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="animate-pulse flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+                      <div key={`following-skeleton-${i}`} className="animate-pulse flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                         <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                         <div className="flex-1">
                           <div className="h-4 bg-gray-200 rounded mb-2 w-32"></div>

@@ -68,7 +68,7 @@ const MessagesMainPage = () => {
           errorMessage = errorData.detail;
         }
       } catch (e) {
-        // If we can't parse the error body, use the status
+        console.warn('Could not parse error response body:', e);
       }
       
       const error = new Error(errorMessage);
