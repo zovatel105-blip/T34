@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Check, Play } from 'lucide-react';
+import AppConfig from '../config/config';
 
 // Resuelve URLs relativas a absolutas para APK nativa Android
 const resolveUrl = (url) => {
@@ -12,7 +13,7 @@ const resolveUrl = (url) => {
   ) {
     return url; // Ya es absoluta, no tocar
   }
-  const base = process.env.REACT_APP_BACKEND_URL || '';
+  const base = AppConfig.BACKEND_URL || '';
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 

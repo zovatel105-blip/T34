@@ -40,10 +40,7 @@ export const resolveAssetUrl = (url) => {
 
   // Obtener backend URL (AppConfig.BACKEND_URL ya maneja fallbacks
   // para APK / preview / localhost)
-  const backendUrl =
-    AppConfig?.BACKEND_URL ||
-    process.env.REACT_APP_BACKEND_URL ||
-    '';
+  const backendUrl = AppConfig?.BACKEND_URL || '';
 
   // Path relativo absoluto (/api/uploads/...)
   if (trimmed.startsWith('/')) {
