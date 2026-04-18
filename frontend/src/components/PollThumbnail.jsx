@@ -1,6 +1,21 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Check, Play } from 'lucide-react';
 
+// Resuelve URLs relativas a absolutas para APK nativa Android
+const resolveUrl = (url) => {
+  if (!url) return null;
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:')
+  ) {
+    return url; // Ya es absoluta, no tocar
+  }
+  const base = process.env.REACT_APP_BACKEND_URL || '';
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 /**
  * Componente de miniatura de poll que replica el layout completo del poll
  * Muestra todas las opciones con su layout original (grid, carousel, etc.)
@@ -33,7 +48,6 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   }, []);
   
   const handlePressMove = useCallback((e) => {
-    // Track movement to distinguish swipe from tap
     let clientX, clientY;
     if (e.type.includes('touch')) {
       if (e.touches.length > 0) {
@@ -59,7 +73,6 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     
     if (!showQuickVote || !containerRef.current) return;
     
-    // Encontrar elemento bajo el cursor
     const elements = document.elementsFromPoint(clientX, clientY);
     const optionElement = elements.find(el => el.dataset.optionIndex !== undefined);
     
@@ -76,18 +89,15 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       clearTimeout(longPressTimer.current);
     }
     
-    // Si se mostró el menú y hay una opción seleccionada, votar
     if (showQuickVote && selectedOption !== null && onQuickVote && result) {
       e.preventDefault();
       e.stopPropagation();
       await onQuickVote(result.id, selectedOption);
     }
     
-    // Resetear estado
     setShowQuickVote(false);
     setSelectedOption(null);
     
-    // Solo abrir si fue un tap (no swipe) y no se mostró el menú
     if (!showQuickVote && !hasMoved.current && onClick) {
       onClick();
     }
@@ -101,7 +111,6 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     setSelectedOption(null);
   }, []);
   
-  // Early return after hooks
   if (!result || result.type !== 'post') {
     return null;
   }
@@ -109,49 +118,36 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   const options = result.options || [];
   const layout = result.layout || 'vertical';
 
-  // Función para obtener las clases CSS del grid basado en el layout
   const getGridClasses = () => {
     switch (layout) {
-      case 'vertical': // 2 columnas lado a lado
-        return 'grid grid-cols-2 gap-0.5';
-      case 'horizontal': // 2 filas arriba y abajo
-        return 'grid grid-cols-1 grid-rows-2 gap-0.5';
-      case 'triptych-vertical': // 3 columnas lado a lado
-        return 'grid grid-cols-3 gap-0.5';
-      case 'triptych-horizontal': // 3 filas arriba y abajo
-        return 'grid grid-cols-1 grid-rows-3 gap-0.5';
-      case 'grid-2x2': // 4 partes (cuadrícula 2x2)
-        return 'grid grid-cols-2 grid-rows-2 gap-0.5';
-      case 'grid-3x2': // 6 partes (cuadrícula 3x2)
-        return 'grid grid-cols-3 grid-rows-2 gap-0.5';
-      case 'horizontal-3x2': // 6 partes (cuadrícula 2x3)
-        return 'grid grid-cols-2 grid-rows-3 gap-0.5';
-      case 'off': // Carrusel - mostrar solo primera imagen
-        return 'grid grid-cols-1 gap-0';
-      case 'moment': // Momento - imagen única
-        return 'grid grid-cols-1 gap-0';
-      default:
-        return 'grid grid-cols-2 gap-0.5';
+      case 'vertical':           return 'grid grid-cols-2 gap-0.5';
+      case 'horizontal':         return 'grid grid-cols-1 grid-rows-2 gap-0.5';
+      case 'triptych-vertical':  return 'grid grid-cols-3 gap-0.5';
+      case 'triptych-horizontal':return 'grid grid-cols-1 grid-rows-3 gap-0.5';
+      case 'grid-2x2':           return 'grid grid-cols-2 grid-rows-2 gap-0.5';
+      case 'grid-3x2':           return 'grid grid-cols-3 grid-rows-2 gap-0.5';
+      case 'horizontal-3x2':     return 'grid grid-cols-2 grid-rows-3 gap-0.5';
+      case 'off':                return 'grid grid-cols-1 gap-0';
+      case 'moment':             return 'grid grid-cols-1 gap-0';
+      default:                   return 'grid grid-cols-2 gap-0.5';
     }
   };
 
-  // Función para obtener el número máximo de opciones según el layout
   const getMaxOptions = () => {
     switch (layout) {
-      case 'vertical': return 2;
-      case 'horizontal': return 2;
-      case 'triptych-vertical': return 3;
+      case 'vertical':            return 2;
+      case 'horizontal':          return 2;
+      case 'triptych-vertical':   return 3;
       case 'triptych-horizontal': return 3;
-      case 'grid-2x2': return 4;
-      case 'grid-3x2': return 6;
-      case 'horizontal-3x2': return 6;
-      case 'off': return 1; // Solo mostrar primera imagen en carrusel
-      case 'moment': return 1; // Solo mostrar una imagen en momento
-      default: return 2;
+      case 'grid-2x2':            return 4;
+      case 'grid-3x2':            return 6;
+      case 'horizontal-3x2':      return 6;
+      case 'off':                 return 1;
+      case 'moment':              return 1;
+      default:                    return 2;
     }
   };
 
-  // Helper: Check if a URL points to a video file
   const isVideoUrl = (url) => {
     if (!url) return false;
     const lower = url.toLowerCase();
@@ -162,12 +158,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   const renderMediaElement = (option, altText, imgClassName = "w-full h-full object-cover") => {
     const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
     
-    // Determine the best image thumbnail (must be an actual image, NOT a video file)
     const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
     const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
-    const imageUrl = thumbnailIsImage ? option.thumbnail_url : (mediaIsImage ? option.media_url : null);
+    // resolveUrl applied for native APK compatibility
+    const imageUrl = resolveUrl(thumbnailIsImage ? option.thumbnail_url : (mediaIsImage ? option.media_url : null));
     
-    // Best case: we have a real image thumbnail → instant load
     if (imageUrl) {
       return (
         <>
@@ -189,8 +184,8 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       );
     }
     
-    // Video without image thumbnail → use <video> element to show first frame
-    const videoSrc = option.media_url || option.thumbnail_url;
+    // resolveUrl applied to video src for native APK compatibility
+    const videoSrc = resolveUrl(option.media_url || option.thumbnail_url);
     if (isVideo && videoSrc) {
       return (
         <>
@@ -217,32 +212,29 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     return null;
   };
 
-  // Debug logging
-  console.log('🔍 PollThumbnail Debug:', {
+  console.log('PollThumbnail Debug:', {
     pollId: result?.id,
-    layout: layout,
+    layout,
     optionsCount: options.length,
     options: options.map(opt => ({
       text: opt.text,
       media_type: opt.media_type,
       has_media_url: !!opt.media_url,
       has_thumbnail_url: !!opt.thumbnail_url,
-      media_url_preview: opt.media_url?.substring(0, 50),
-      thumbnail_url_preview: opt.thumbnail_url?.substring(0, 50)
+      media_url_resolved: resolveUrl(opt.media_url)?.substring(0, 60),
+      thumbnail_url_resolved: resolveUrl(opt.thumbnail_url)?.substring(0, 60)
     }))
   });
 
-  // Filtrar opciones que tienen media y limitar según layout
-  const optionsWithMedia = options.filter(option => 
+  const optionsWithMedia = options.filter(option =>
     option.media_url || option.thumbnail_url
   ).slice(0, getMaxOptions());
 
-  console.log('✅ Options with media:', optionsWithMedia.length);
+  console.log('Options with media:', optionsWithMedia.length);
 
-  // Si no hay opciones con media, usar fallback
   if (optionsWithMedia.length === 0) {
     return (
-      <div 
+      <div
         className={`relative aspect-[6/11] bg-gradient-to-br from-blue-400 to-purple-500 cursor-pointer rounded-xl overflow-hidden flex items-center justify-center ${className}`}
         onClick={onClick}
       >
@@ -254,11 +246,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     );
   }
 
-  // Para layout 'off' (carrusel), mostrar solo la primera imagen con indicador
+  // ─── Layout: CARRUSEL (off) ───────────────────────────────────────────────
   if (layout === 'off') {
     const firstOption = optionsWithMedia[0];
     return (
-      <div 
+      <div
         ref={containerRef}
         className={`relative aspect-[6/11] bg-gray-100 cursor-pointer rounded-xl overflow-hidden ${className}`}
         onMouseDown={handlePressStart}
@@ -271,11 +263,9 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
         onTouchCancel={handlePressCancel}
       >
         {renderMediaElement(firstOption, result.title || 'Poll option', "w-full h-full object-cover")}
-        {/* Indicador de carrusel - Eliminado por solicitud del usuario */}
-        
-        {/* Modal de votación rápida - Layout carrusel horizontal */}
+
         {showQuickVote && (
-          <div 
+          <div
             className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
             style={{ touchAction: 'none' }}
           >
@@ -283,78 +273,49 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
               <div className="text-white text-center mb-2 text-xs font-medium">
                 Mantén presionado para votar
               </div>
-              
               <div className="flex-1 flex overflow-x-auto gap-1 snap-x snap-mandatory scrollbar-hide">
                 {options.map((option, index) => {
                   const isSelected = selectedOption === index;
                   const isVoted = result.user_vote === index;
-                  const votePercentage = result.total_votes > 0 
-                    ? Math.round((option.votes / result.total_votes) * 100) 
-                    : 0;
-                  
+                  const votePercentage = result.total_votes > 0
+                    ? Math.round((option.votes / result.total_votes) * 100) : 0;
+                  const bgSrc = option.media_type === 'video'
+                    ? resolveUrl(option.thumbnail_url)
+                    : resolveUrl(option.media_url || option.thumbnail_url);
+
                   return (
                     <div
                       key={option.id || `carousel-opt-${index}`}
                       data-option-index={index}
-                      className={`relative flex-shrink-0 w-full h-full rounded-lg overflow-hidden transition-all duration-150 snap-center ${
-                        isSelected 
-                          ? 'ring-4 ring-blue-400 scale-105' 
-                          : 'scale-100'
-                      }`}
+                      className={`relative flex-shrink-0 w-full h-full rounded-lg overflow-hidden transition-all duration-150 snap-center ${isSelected ? 'ring-4 ring-blue-400 scale-105' : 'scale-100'}`}
                     >
-                      {/* Background Image */}
-                      {(option.media_url || option.thumbnail_url) && (
-                        <img 
-                          src={option.media_type === 'video' ? option.thumbnail_url : (option.media_url || option.thumbnail_url)}
+                      {bgSrc && (
+                        <img
+                          src={bgSrc}
                           alt={option.text || `Option ${index + 1}`}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                       )}
-                      
-                      {/* Overlay */}
-                      <div className={`absolute inset-0 transition-all duration-150 ${
-                        isSelected 
-                          ? 'bg-blue-500/40' 
-                          : 'bg-black/30'
-                      }`} />
-                      
-                      {/* Content */}
+                      <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-blue-500/40' : 'bg-black/30'}`} />
                       <div className="relative h-full flex flex-col justify-between p-3">
                         <div className="flex-1 flex items-center justify-center">
                           <span className="text-white text-lg font-bold drop-shadow-lg text-center">
                             {option.text || `Opción ${index + 1}`}
                           </span>
                         </div>
-                        
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {isVoted && (
-                              <div className="bg-white/90 rounded-full p-1">
-                                <Check size={14} className="text-blue-500" />
-                              </div>
-                            )}
-                            {isSelected && (
-                              <div className="bg-blue-500 rounded-full p-2 animate-pulse">
-                                <Check size={18} className="text-white" />
-                              </div>
-                            )}
+                            {isVoted && <div className="bg-white/90 rounded-full p-1"><Check size={14} className="text-blue-500" /></div>}
+                            {isSelected && <div className="bg-blue-500 rounded-full p-2 animate-pulse"><Check size={18} className="text-white" /></div>}
                           </div>
-                          <span className="text-white text-sm font-bold bg-black/50 px-2 py-1 rounded-full">
-                            {votePercentage}%
-                          </span>
+                          <span className="text-white text-sm font-bold bg-black/50 px-2 py-1 rounded-full">{votePercentage}%</span>
                         </div>
                       </div>
-                      
-                      {/* Progress bar */}
-                      <div 
-                        className="absolute bottom-0 left-0 h-1.5 bg-blue-500 transition-all duration-500"
-                        style={{ width: `${votePercentage}%` }}
-                      />
+                      <div className="absolute bottom-0 left-0 h-1.5 bg-blue-500 transition-all duration-500" style={{ width: `${votePercentage}%` }} />
                     </div>
                   );
                 })}
               </div>
-              
               <div className="text-center text-white text-xs opacity-70 mt-2">
                 {selectedOption !== null ? '✓ Suelta para votar' : 'Desliza para seleccionar'}
               </div>
@@ -365,11 +326,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     );
   }
 
-  // Para layout 'moment' (imagen única), mostrar solo la primera imagen sin indicadores
+  // ─── Layout: MOMENTO ────────────────────────────────────────────────────────
   if (layout === 'moment') {
     const firstOption = optionsWithMedia[0];
     return (
-      <div 
+      <div
         ref={containerRef}
         className={`relative aspect-[6/11] bg-gray-100 cursor-pointer rounded-xl overflow-hidden ${className}`}
         onMouseDown={handlePressStart}
@@ -382,96 +343,59 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
         onTouchCancel={handlePressCancel}
       >
         {renderMediaElement(firstOption, result.title || 'Momento', "w-full h-full object-cover")}
-        
-        {/* Badge de Momento */}
+
         {!hideBadge && (
-          <div className="absolute top-1 left-1 bg-amber-500/80 text-white text-xs px-2 py-0.5 rounded-full">
-            📸
-          </div>
+          <div className="absolute top-1 left-1 bg-amber-500/80 text-white text-xs px-2 py-0.5 rounded-full">📸</div>
         )}
-        
-        {/* Modal de votación rápida para momento */}
+
         {showQuickVote && (
-          <div 
+          <div
             className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
             style={{ touchAction: 'none' }}
           >
             <div className="w-full h-full flex flex-col">
-              <div className="text-white text-center mb-2 text-xs font-medium">
-                Mantén presionado para votar
-              </div>
-              
+              <div className="text-white text-center mb-2 text-xs font-medium">Mantén presionado para votar</div>
               <div className="flex-1 relative">
                 {options.slice(0, 1).map((option, index) => {
                   const isSelected = selectedOption === index;
                   const isVoted = result.user_vote === index;
-                  const votePercentage = result.total_votes > 0 
-                    ? Math.round((option.votes / result.total_votes) * 100) 
-                    : 0;
-                  
+                  const votePercentage = result.total_votes > 0
+                    ? Math.round((option.votes / result.total_votes) * 100) : 0;
+                  const bgSrc = option.media_type === 'video'
+                    ? resolveUrl(option.thumbnail_url)
+                    : resolveUrl(option.media_url || option.thumbnail_url);
+
                   return (
                     <div
                       key={option.id || `single-opt-${index}`}
                       data-option-index={index}
-                      className={`relative w-full h-full rounded-lg overflow-hidden transition-all duration-150 ${
-                        isSelected 
-                          ? 'ring-4 ring-amber-400 scale-[0.98]' 
-                          : 'scale-100'
-                      }`}
+                      className={`relative w-full h-full rounded-lg overflow-hidden transition-all duration-150 ${isSelected ? 'ring-4 ring-amber-400 scale-[0.98]' : 'scale-100'}`}
                     >
-                      {/* Background Image */}
-                      {(option.media_url || option.thumbnail_url) && (
-                        <img 
-                          src={option.media_type === 'video' ? option.thumbnail_url : (option.media_url || option.thumbnail_url)}
+                      {bgSrc && (
+                        <img
+                          src={bgSrc}
                           alt={option.text || 'Momento'}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                       )}
-                      
-                      {/* Overlay */}
-                      <div className={`absolute inset-0 transition-all duration-150 ${
-                        isSelected 
-                          ? 'bg-amber-500/40' 
-                          : 'bg-black/30'
-                      }`} />
-                      
-                      {/* Content */}
+                      <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-amber-500/40' : 'bg-black/30'}`} />
                       <div className="relative h-full flex flex-col justify-end p-3">
                         {option.text && (
-                          <span className="text-white text-sm font-medium drop-shadow-lg text-center mb-2">
-                            {option.text}
-                          </span>
+                          <span className="text-white text-sm font-medium drop-shadow-lg text-center mb-2">{option.text}</span>
                         )}
-                        
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            {isVoted && (
-                              <div className="bg-white/90 rounded-full p-1">
-                                <Check size={14} className="text-amber-500" />
-                              </div>
-                            )}
-                            {isSelected && (
-                              <div className="bg-amber-500 rounded-full p-2 animate-pulse">
-                                <Check size={18} className="text-white" />
-                              </div>
-                            )}
+                            {isVoted && <div className="bg-white/90 rounded-full p-1"><Check size={14} className="text-amber-500" /></div>}
+                            {isSelected && <div className="bg-amber-500 rounded-full p-2 animate-pulse"><Check size={18} className="text-white" /></div>}
                           </div>
-                          <span className="text-white text-sm font-bold bg-black/50 px-2 py-1 rounded-full">
-                            {votePercentage}%
-                          </span>
+                          <span className="text-white text-sm font-bold bg-black/50 px-2 py-1 rounded-full">{votePercentage}%</span>
                         </div>
                       </div>
-                      
-                      {/* Progress bar */}
-                      <div 
-                        className="absolute bottom-0 left-0 h-1.5 bg-amber-500 transition-all duration-500"
-                        style={{ width: `${votePercentage}%` }}
-                      />
+                      <div className="absolute bottom-0 left-0 h-1.5 bg-amber-500 transition-all duration-500" style={{ width: `${votePercentage}%` }} />
                     </div>
                   );
                 })}
               </div>
-              
               <div className="text-center text-white text-xs opacity-70 mt-2">
                 {selectedOption !== null ? '✓ Suelta para votar' : 'Toca para votar'}
               </div>
@@ -482,9 +406,9 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     );
   }
 
-  // Para layouts de grid, mostrar todas las opciones en su layout correspondiente
+  // ─── Layout: GRID (vertical, horizontal, triptych, grid-2x2, grid-3x2…) ───
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`relative aspect-[6/11] bg-black cursor-pointer rounded-xl overflow-hidden ${className}`}
       onMouseDown={handlePressStart}
@@ -505,15 +429,14 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
           >
             {(() => {
               const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
-              
-              // For thumbnails: only use URLs that are actual images (not .mp4 files!)
               const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
               const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
-              const imageUrl = isVideo 
-                ? (thumbnailIsImage ? option.thumbnail_url : null) 
-                : (option.media_url || option.thumbnail_url);
 
-              // Real image thumbnail → fast <img>
+              // resolveUrl in both branches for native APK compatibility
+              const imageUrl = isVideo
+                ? (thumbnailIsImage ? resolveUrl(option.thumbnail_url) : null)
+                : resolveUrl(option.media_url || option.thumbnail_url);
+
               if (imageUrl) {
                 return (
                   <>
@@ -534,9 +457,9 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   </>
                 );
               }
-              
-              // Video without image thumbnail → use <video> to show first frame
-              const videoSrc = option.media_url || option.thumbnail_url;
+
+              // resolveUrl on video fallback for native APK
+              const videoSrc = resolveUrl(option.media_url || option.thumbnail_url);
               if (isVideo && videoSrc) {
                 return (
                   <>
@@ -559,15 +482,14 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   </>
                 );
               }
-              
+
               return (
                 <div className="absolute inset-0 bg-gray-300 flex items-center justify-center text-xs text-gray-600 p-1 text-center">
                   {option.text || `Option ${index + 1}`}
                 </div>
               );
             })()}
-            
-            {/* Overlay con texto de la opción si existe */}
+
             {option.text && (option.media_url || option.thumbnail_url) && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
                 {option.text.length > 15 ? `${option.text.substring(0, 15)}...` : option.text}
@@ -575,8 +497,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             )}
           </div>
         ))}
-        
-        {/* Rellenar espacios vacíos en el grid si hay menos opciones que slots */}
+
         {Array.from({ length: Math.max(0, getMaxOptions() - optionsWithMedia.length) }).map((_, index) => (
           <div
             key={`empty-${index}`}
@@ -587,23 +508,22 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
         ))}
       </div>
 
-      {/* Badge con layout type en esquina superior izquierda - Solo si hideBadge es false */}
       {!hideBadge && (
         <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-          {layout === 'vertical' && '2️⃣'}
-          {layout === 'horizontal' && '⏸️'}
-          {layout === 'triptych-vertical' && '3️⃣'}
+          {layout === 'vertical'            && '2️⃣'}
+          {layout === 'horizontal'          && '⏸️'}
+          {layout === 'triptych-vertical'   && '3️⃣'}
           {layout === 'triptych-horizontal' && '3️⃣⏸️'}
-          {layout === 'grid-2x2' && '4️⃣'}
-          {layout === 'grid-3x2' && '6️⃣'}
-          {layout === 'horizontal-3x2' && '6️⃣⏸️'}
-          {layout === 'off' && '🎠'}
+          {layout === 'grid-2x2'            && '4️⃣'}
+          {layout === 'grid-3x2'            && '6️⃣'}
+          {layout === 'horizontal-3x2'      && '6️⃣⏸️'}
+          {layout === 'off'                 && '🎠'}
         </div>
       )}
-      
+
       {/* Modal de votación rápida - Adaptado al layout */}
       {showQuickVote && (
-        <div 
+        <div
           className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
           style={{ touchAction: 'none' }}
         >
@@ -611,78 +531,49 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             <div className="text-white text-center mb-2 text-xs font-medium">
               Mantén presionado para votar
             </div>
-            
             <div className={`flex-1 gap-1 ${getGridClasses()}`}>
               {options.map((option, index) => {
                 const isSelected = selectedOption === index;
                 const isVoted = result.user_vote === index;
-                const votePercentage = result.total_votes > 0 
-                  ? Math.round((option.votes / result.total_votes) * 100) 
-                  : 0;
-                
+                const votePercentage = result.total_votes > 0
+                  ? Math.round((option.votes / result.total_votes) * 100) : 0;
+                const bgSrc = option.media_type === 'video'
+                  ? resolveUrl(option.thumbnail_url)
+                  : resolveUrl(option.media_url || option.thumbnail_url);
+
                 return (
                   <div
                     key={option.id || `grid-vote-opt-${index}`}
                     data-option-index={index}
-                    className={`relative rounded-lg overflow-hidden transition-all duration-150 ${
-                      isSelected 
-                        ? 'ring-4 ring-blue-400 scale-105' 
-                        : 'scale-100'
-                    }`}
+                    className={`relative rounded-lg overflow-hidden transition-all duration-150 ${isSelected ? 'ring-4 ring-blue-400 scale-105' : 'scale-100'}`}
                   >
-                    {/* Background Image */}
-                    {(option.media_url || option.thumbnail_url) && (
-                      <img 
-                        src={option.media_type === 'video' ? option.thumbnail_url : (option.media_url || option.thumbnail_url)}
+                    {bgSrc && (
+                      <img
+                        src={bgSrc}
                         alt={option.text || `Option ${index + 1}`}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                     )}
-                    
-                    {/* Overlay */}
-                    <div className={`absolute inset-0 transition-all duration-150 ${
-                      isSelected 
-                        ? 'bg-blue-500/40' 
-                        : 'bg-black/30'
-                    }`} />
-                    
-                    {/* Content */}
+                    <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-blue-500/40' : 'bg-black/30'}`} />
                     <div className="relative h-full flex flex-col justify-between p-2">
                       <div className="flex-1 flex items-center justify-center">
                         <span className="text-white text-sm font-semibold drop-shadow-lg text-center">
                           {option.text || `Opción ${index + 1}`}
                         </span>
                       </div>
-                      
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
-                          {isVoted && (
-                            <div className="bg-white/90 rounded-full p-0.5">
-                              <Check size={12} className="text-blue-500" />
-                            </div>
-                          )}
-                          {isSelected && (
-                            <div className="bg-blue-500 rounded-full p-1 animate-pulse">
-                              <Check size={14} className="text-white" />
-                            </div>
-                          )}
+                          {isVoted && <div className="bg-white/90 rounded-full p-0.5"><Check size={12} className="text-blue-500" /></div>}
+                          {isSelected && <div className="bg-blue-500 rounded-full p-1 animate-pulse"><Check size={14} className="text-white" /></div>}
                         </div>
-                        <span className="text-white text-xs font-bold bg-black/50 px-1.5 py-0.5 rounded-full">
-                          {votePercentage}%
-                        </span>
+                        <span className="text-white text-xs font-bold bg-black/50 px-1.5 py-0.5 rounded-full">{votePercentage}%</span>
                       </div>
                     </div>
-                    
-                    {/* Progress bar */}
-                    <div 
-                      className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-500"
-                      style={{ width: `${votePercentage}%` }}
-                    />
+                    <div className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-500" style={{ width: `${votePercentage}%` }} />
                   </div>
                 );
               })}
             </div>
-            
             <div className="text-center text-white text-xs opacity-70 mt-2">
               {selectedOption !== null ? '✓ Suelta para votar' : 'Desliza para seleccionar'}
             </div>
