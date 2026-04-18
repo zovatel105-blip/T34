@@ -219,7 +219,7 @@ const ActiveChallengesPage = () => {
           {/* Opción única */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => navigate('/new')}
+              onClick={() => navigate('/create')}
               className="flex items-center gap-3 p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">

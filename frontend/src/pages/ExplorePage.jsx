@@ -276,7 +276,7 @@ const ExplorePage = () => {
   }, [battles, savedPolls, token, toast]);
 
   const handleCreatePoll = useCallback(() => {
-    navigate('/new');
+    navigate('/create');
   }, [navigate]);
 
   return (

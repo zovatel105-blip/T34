@@ -35,7 +35,7 @@ const ChallengeCreationPage = () => {
         description: "Primero debes crear tu contenido para el challenge",
         variant: "destructive"
       });
-      navigate('/new');
+      navigate('/create');
     }
   }, [creatorPollId, navigate, toast]);
 

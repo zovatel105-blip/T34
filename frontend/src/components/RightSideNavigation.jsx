@@ -145,10 +145,10 @@ const RightSideNavigation = () => {
 
       {/* Crear Poll */}
       <button
-        onClick={() => navigate('/new')}
+        onClick={() => navigate('/content-creation')}
         className={cn(
           "rounded-full transition-all duration-300 relative overflow-hidden",
-          (location.pathname === '/create' || location.pathname === '/new')
+          (location.pathname === '/create' || location.pathname === '/content-creation')
             ? "w-5 h-12 shadow-2xl"
             : "hover:scale-110 w-5 h-12 shadow-xl hover:opacity-90",
           "flex items-center justify-center flex-shrink-0"

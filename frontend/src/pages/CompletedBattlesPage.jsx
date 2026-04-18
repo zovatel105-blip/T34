@@ -464,7 +464,7 @@ const CompletedBattlesPage = () => {
 
         {/* Crear */}
         <button
-          onClick={() => navigate('/new')}
+          onClick={() => navigate('/create')}
           className="w-12 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 relative overflow-hidden hover:scale-105 shadow-xl"
           style={{
             background: 'linear-gradient(180deg, #000 0%, #000 100%)',
