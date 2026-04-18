@@ -53,11 +53,23 @@ export function formatApiError(errorData, statusCode) {
  * @throws {Error} Formatted error message
  */
 export async function handleApiResponse(response) {
+  // Check content type first
+  const contentType = response.headers.get('content-type');
+  const isJSON = contentType && contentType.includes('application/json');
+
   if (!response.ok) {
     try {
-      const errorData = await response.json();
-      const errorMessage = formatApiError(errorData, response.status);
-      throw new Error(errorMessage);
+      // Only try to parse as JSON if content-type indicates JSON
+      if (isJSON) {
+        const errorData = await response.json();
+        const errorMessage = formatApiError(errorData, response.status);
+        throw new Error(errorMessage);
+      } else {
+        // If not JSON, read as text for better debugging
+        const errorText = await response.text();
+        console.error(`Non-JSON error response (${response.status}):`, errorText.substring(0, 200));
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (jsonError) {
       // If response is not JSON, throw status error
       if (jsonError instanceof SyntaxError) {
@@ -67,5 +79,13 @@ export async function handleApiResponse(response) {
       throw jsonError;
     }
   }
+
+  // For successful responses, also check content type
+  if (!isJSON) {
+    const text = await response.text();
+    console.error('Expected JSON but received:', text.substring(0, 200));
+    throw new Error('Server returned non-JSON response. Expected JSON.');
+  }
+
   return response.json();
 }
