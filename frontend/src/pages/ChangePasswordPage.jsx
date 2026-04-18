@@ -86,7 +86,7 @@ const ChangePasswordPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">

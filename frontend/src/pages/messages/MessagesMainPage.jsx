@@ -1141,7 +1141,7 @@ const MessagesMainPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white overflow-x-hidden">
+    <div className="flex flex-col h-screen bg-white overflow-x-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {!showChat ? (
         <>
           {/* Header */}
