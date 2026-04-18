@@ -922,10 +922,11 @@ const FollowingPage = () => {
 
         {/* Stories Overlay - Instagram style (arriba, empuja contenido) */}
         <div 
-          className={`fixed top-0 left-0 right-0 z-[99999] bg-black transition-all duration-300 ease-out ${
+          className={`fixed left-0 right-0 z-[99999] bg-black transition-all duration-300 ease-out ${
             showStoriesOverlay ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
+            top: 'env(safe-area-inset-top, 0px)',
             height: showStoriesOverlay ? '115px' : '0px',
             overflow: 'hidden',
             transition: 'height 0.3s ease-out, opacity 0.3s ease-out'

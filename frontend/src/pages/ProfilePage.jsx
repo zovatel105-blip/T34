@@ -1897,7 +1897,7 @@ const ProfilePage = () => {
         <div className="min-h-screen bg-white safe-area-top">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white sticky top-0 z-40">
+          <header className="bg-white sticky z-40" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
