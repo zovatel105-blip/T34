@@ -211,7 +211,7 @@ const ShareModal = ({ isOpen, onClose, content }) => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            style={{ paddingBottom: `max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))` }}
+            style={{ paddingBottom: `max(1.5rem, calc(1.5rem + var(--safe-area-inset-bottom)))` }}
           >
             {/* Handle/Chevron */}
             {isBottomSheet ? (

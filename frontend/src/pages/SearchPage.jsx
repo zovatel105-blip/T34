@@ -980,7 +980,7 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-white safe-area-top">
       {/* Header Section - Minimalist Design */}
-      <div className="bg-white sticky z-50" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="bg-white sticky z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
         {/* Top Row - Back Button + Search Bar */}
         <div className="px-1 py-3">
           <div className="flex items-center gap-3">

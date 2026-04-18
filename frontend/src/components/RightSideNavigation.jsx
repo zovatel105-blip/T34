@@ -82,7 +82,7 @@ const RightSideNavigation = () => {
 
   return (
     <div className="fixed right-1 md:right-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-50"
-         style={{ right: 'max(0.25rem, env(safe-area-inset-right))' }}>
+         style={{ right: 'max(0.25rem, var(--safe-area-inset-right))' }}>
       
       {/* Home/Inicio with Long Press - Dynamic Colors */}
       <div className="relative">

@@ -60,6 +60,9 @@ import { useLocalNotifications } from './hooks/useLocalNotifications';
 // 📱 Dynamic Status Bar Color Hook
 import { useStatusBarColor } from './hooks/useStatusBarColor';
 
+// 📱 Safe-Area Calculator Hook (para Android WebView)
+import { useSafeArea } from './hooks/useSafeArea';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -99,6 +102,9 @@ function AppContent() {
 
   // 📱 Cambiar color de barra de estado según la página
   useStatusBarColor();
+
+  // 📱 Calcular y aplicar safe-area dinámicamente (Android WebView)
+  useSafeArea();
 
   // 📲 Notificaciones locales (funciona sin Firebase)
   useLocalNotifications(isAuthenticated, token);

@@ -436,7 +436,7 @@ const CompletedBattlesPage = () => {
       {/* Menú lateral derecho */}
       <div 
         className="fixed right-2 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-50"
-        style={{ right: 'max(0.5rem, env(safe-area-inset-right))' }}
+        style={{ right: 'max(0.5rem, var(--safe-area-inset-right))' }}
       >
         {/* Home/Feed */}
         <button

@@ -926,7 +926,7 @@ const FollowingPage = () => {
             showStoriesOverlay ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
-            top: 'env(safe-area-inset-top, 0px)',
+            top: 'var(--safe-area-inset-top)',
             height: showStoriesOverlay ? '115px' : '0px',
             overflow: 'hidden',
             transition: 'height 0.3s ease-out, opacity 0.3s ease-out'

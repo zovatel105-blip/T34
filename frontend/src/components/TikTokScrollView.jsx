@@ -629,7 +629,7 @@ const TikTokPollCard = ({
 
       {/* Header - Fixed at top with safe area */}
       <div className={`absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 to-transparent px-4 pt-safe-4 pb-8 ${isPostMiniature ? 'pointer-events-auto' : ''}`}
-           style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+           style={{ paddingTop: 'max(1rem, var(--safe-area-inset-top))' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
 
@@ -1080,9 +1080,9 @@ const TikTokPollCard = ({
       {/* Bottom info and actions - Enhanced with safe area */}
       <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
-             paddingBottom: isPostMiniature ? 'max(0.5rem, env(safe-area-inset-bottom))' : (isBottomNavVisible ? 'calc(56px + max(0.5rem, env(safe-area-inset-bottom)))' : 'max(1.5rem, env(safe-area-inset-bottom))'),
-             paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-             paddingRight: 'max(1rem, env(safe-area-inset-right))'
+             paddingBottom: isPostMiniature ? 'max(0.5rem, var(--safe-area-inset-bottom))' : (isBottomNavVisible ? 'calc(56px + max(0.5rem, var(--safe-area-inset-bottom)))' : 'max(1.5rem, var(--safe-area-inset-bottom))'),
+             paddingLeft: 'max(1rem, var(--safe-area-inset-left))',
+             paddingRight: 'max(1rem, var(--safe-area-inset-right))'
            }}>
         {/* Solo mostrar votos si show_vote_count es true (o por defecto si no existe) */}
         {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
@@ -1375,9 +1375,9 @@ const TikTokPollCard = ({
         return (
         <div className="absolute left-0 right-0 z-40 px-4 pointer-events-none"
              style={{ 
-               bottom: isBottomNavVisible ? 'calc(52px + max(0.15rem, env(safe-area-inset-bottom)))' : 'max(0.15rem, env(safe-area-inset-bottom))',
-               paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-               paddingRight: 'max(1rem, env(safe-area-inset-right))'
+               bottom: isBottomNavVisible ? 'calc(52px + max(0.15rem, var(--safe-area-inset-bottom)))' : 'max(0.15rem, var(--safe-area-inset-bottom))',
+               paddingLeft: 'max(1rem, var(--safe-area-inset-left))',
+               paddingRight: 'max(1rem, var(--safe-area-inset-right))'
              }}>
           <div 
             onClick={(e) => {
@@ -1419,7 +1419,7 @@ const TikTokPollCard = ({
       {showScrollHint && (
         <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3 z-20"
              style={{ 
-               bottom: 'max(8rem, calc(8rem + env(safe-area-inset-bottom)))'
+               bottom: 'max(8rem, calc(8rem + var(--safe-area-inset-bottom)))'
              }}>
           <div className="animate-bounce">
             <ChevronDown className="w-8 h-8 text-white/80" />
@@ -1919,8 +1919,8 @@ const TikTokScrollView = ({
         {showActiveChallengesButton && (
           <div className="fixed z-50"
                style={{
-                 top: 'max(1rem, env(safe-area-inset-top))',
-                 right: 'max(1rem, env(safe-area-inset-right))'
+                 top: 'max(1rem, var(--safe-area-inset-top))',
+                 right: 'max(1rem, var(--safe-area-inset-right))'
                }}>
             <Button
               onClick={() => {
@@ -1962,8 +1962,8 @@ const TikTokScrollView = ({
       {showActiveChallengesButton && (
         <div className="fixed z-50"
              style={{
-               top: 'max(1rem, env(safe-area-inset-top))',
-               right: 'max(1rem, env(safe-area-inset-right))'
+               top: 'max(1rem, var(--safe-area-inset-top))',
+               right: 'max(1rem, var(--safe-area-inset-right))'
              }}>
           <Button
             onClick={() => {
@@ -1983,8 +1983,8 @@ const TikTokScrollView = ({
       {showCloseButton && !showActiveChallengesButton && (
         <div className="fixed z-50"
              style={{
-               top: 'max(1rem, env(safe-area-inset-top))',
-               right: 'max(1rem, env(safe-area-inset-right))'
+               top: 'max(1rem, var(--safe-area-inset-top))',
+               right: 'max(1rem, var(--safe-area-inset-right))'
              }}>
           <Button
             onClick={async () => {
@@ -2004,8 +2004,8 @@ const TikTokScrollView = ({
       {fromAudioDetailPage && currentAudio && onUseSound && (
         <div className="fixed z-50"
              style={{
-               top: 'max(1rem, env(safe-area-inset-top))',
-               right: 'max(4rem, calc(env(safe-area-inset-right) + 3rem))'
+               top: 'max(1rem, var(--safe-area-inset-top))',
+               right: 'max(4rem, calc(var(--safe-area-inset-right) + 3rem))'
              }}>
           {/* Botón Use Sound */}
           <Button
