@@ -1,141 +1,105 @@
 /**
- * useSafeArea Hook - Compatible con edge-to-edge (overlay=true)
+ * useSafeArea Hook
  *
- * Cuando la WebView se extiende detrás de la barra de estado (overlay=true),
- * necesitamos conocer la altura de la barra para posicionar elementos correctamente.
+ * Lee los safe-area insets inyectados desde el código nativo de Android
+ * (MainActivity.java) mediante CSS custom properties.
  *
- * El hook:
- * 1. Obtiene la altura de la status bar usando el plugin de Capacitor
- * 2. La aplica como variable CSS --safe-area-inset-top
- * 3. Usa fallbacks robustos para Android
- * 4. Actualiza cuando cambia la orientación
+ * Flujo:
+ * 1. Java detecta insets reales con WindowInsetsCompat (100% confiable)
+ * 2. Java inyecta --safe-area-inset-top y --safe-area-inset-bottom como CSS vars
+ * 3. Este hook lee esos valores y los expone como estado React
+ * 4. Si Java no ha inyectado aún, usa un fallback seguro
  */
-import { useEffect, useState } from 'react';
-import { StatusBar } from '@capacitor/status-bar';
+import { useEffect, useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 
-// Altura estándar de status bar en Android (dp)
-const ANDROID_STATUS_BAR_DEFAULT = 24;
-// Altura para dispositivos con notch (dp)
-const ANDROID_STATUS_BAR_NOTCH = 48;
-
-/**
- * Detecta la altura de la status bar combinando múltiples fuentes.
- */
-const detectStatusBarHeight = async () => {
-  try {
-    // Método 1: Plugin de Capacitor
-    const info = await StatusBar.getInfo();
-    if (info && info.height && info.height > 0) {
-      return info.height;
-    }
-  } catch (e) {
-    // Plugin puede fallar, continuar con fallbacks
-  }
-
-  // Método 2: CSS env() - leer el valor computado
-  try {
-    const testEl = document.createElement('div');
-    testEl.style.position = 'fixed';
-    testEl.style.top = '0';
-    testEl.style.height = 'env(safe-area-inset-top, 0px)';
-    testEl.style.visibility = 'hidden';
-    testEl.style.pointerEvents = 'none';
-    document.body.appendChild(testEl);
-    const computed = getComputedStyle(testEl).height;
-    document.body.removeChild(testEl);
-    const parsed = parseInt(computed, 10);
-    if (parsed > 0) {
-      return parsed;
-    }
-  } catch (e) {
-    // Fallback silencioso
-  }
-
-  // Método 3: Heurística basada en screen vs viewport
-  try {
-    const screenTop = window.screen.availTop || 0;
-    if (screenTop > 0) {
-      return screenTop;
-    }
-  } catch (e) {
-    // Fallback silencioso
-  }
-
-  // Método 4: Detectar si el dispositivo tiene notch (pantalla alta)
-  const ratio = window.screen.height / window.screen.width;
-  if (ratio > 2.0) {
-    // Dispositivo con pantalla alargada (probablemente con notch)
-    return ANDROID_STATUS_BAR_NOTCH;
-  }
-
-  // Fallback final: altura estándar de Android
-  return ANDROID_STATUS_BAR_DEFAULT;
-};
+// Fallback: altura estándar de status bar en Android (dp)
+const ANDROID_DEFAULT_STATUS_BAR = 34;
 
 export const useSafeArea = () => {
   const [safeAreaTop, setSafeAreaTop] = useState(0);
   const [safeAreaBottom, setSafeAreaBottom] = useState(0);
 
+  const readNativeInsets = useCallback(() => {
+    // Método 1: Leer de window.__NATIVE_SAFE_AREA__ (inyectado por Java)
+    if (window.__NATIVE_SAFE_AREA__) {
+      const top = window.__NATIVE_SAFE_AREA__.top || 0;
+      const bottom = window.__NATIVE_SAFE_AREA__.bottom || 0;
+      if (top > 0) {
+        return { top, bottom };
+      }
+    }
+
+    // Método 2: Leer las CSS custom properties (también inyectadas por Java)
+    try {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const topVar = rootStyle.getPropertyValue('--safe-area-inset-top').trim();
+      const bottomVar = rootStyle.getPropertyValue('--safe-area-inset-bottom').trim();
+      const topPx = parseInt(topVar, 10);
+      const bottomPx = parseInt(bottomVar, 10);
+      if (topPx > 0) {
+        return { top: topPx, bottom: bottomPx || 0 };
+      }
+    } catch (e) {
+      // Silencioso
+    }
+
+    // No se encontraron valores nativos
+    return null;
+  }, []);
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) {
-      // En web, no hay safe-area
+      // En web, no hay safe-area nativa
       setSafeAreaTop(0);
       setSafeAreaBottom(0);
       return;
     }
 
-    const updateSafeArea = async () => {
-      try {
-        const statusBarHeight = await detectStatusBarHeight();
+    const applyInsets = () => {
+      const native = readNativeInsets();
 
-        // Calcular bottom inset (navigation bar en Android)
-        const windowHeight = window.innerHeight;
-        const screenHeight = window.screen.height;
-        // La diferencia entre screen height y window height puede indicar
-        // la presencia de barras del sistema (nav bar, etc.)
-        const bottomInset = Math.max(0, Math.min(screenHeight - windowHeight - statusBarHeight, 48));
-
-        setSafeAreaTop(statusBarHeight);
-        setSafeAreaBottom(bottomInset > 5 ? bottomInset : 0);
-
-        // Aplicar como variables CSS globales
-        document.documentElement.style.setProperty('--safe-area-inset-top', `${statusBarHeight}px`);
-        document.documentElement.style.setProperty('--safe-area-inset-bottom', `${bottomInset > 5 ? bottomInset : 0}px`);
-
-        console.log(`📱 Safe-area: top=${statusBarHeight}px, bottom=${bottomInset > 5 ? bottomInset : 0}px`);
-      } catch (error) {
-        console.error('Error calculando safe-area:', error);
-
-        // Fallback seguro
-        const fallback = ANDROID_STATUS_BAR_DEFAULT;
-        setSafeAreaTop(fallback);
+      if (native) {
+        // Valores inyectados por Java (confiables)
+        setSafeAreaTop(native.top);
+        setSafeAreaBottom(native.bottom);
+        // Asegurar que las CSS vars estén establecidas
+        document.documentElement.style.setProperty('--safe-area-inset-top', `${native.top}px`);
+        document.documentElement.style.setProperty('--safe-area-inset-bottom', `${native.bottom}px`);
+        console.log(`📱 Safe-area (nativa): top=${native.top}px, bottom=${native.bottom}px`);
+      } else {
+        // Fallback: Java aún no ha inyectado, usar valor por defecto
+        setSafeAreaTop(ANDROID_DEFAULT_STATUS_BAR);
         setSafeAreaBottom(0);
-        document.documentElement.style.setProperty('--safe-area-inset-top', `${fallback}px`);
+        document.documentElement.style.setProperty('--safe-area-inset-top', `${ANDROID_DEFAULT_STATUS_BAR}px`);
         document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
+        console.log(`📱 Safe-area (fallback): top=${ANDROID_DEFAULT_STATUS_BAR}px`);
       }
     };
 
-    // Ejecutar inmediatamente
-    updateSafeArea();
+    // Intentar leer inmediatamente
+    applyInsets();
 
-    // Reejecutar después de un pequeño delay (la status bar puede no estar lista)
-    const timeout = setTimeout(updateSafeArea, 500);
+    // Reintentar varias veces porque Java puede inyectar después
+    const timers = [
+      setTimeout(applyInsets, 100),
+      setTimeout(applyInsets, 300),
+      setTimeout(applyInsets, 600),
+      setTimeout(applyInsets, 1000),
+      setTimeout(applyInsets, 2000),
+    ];
 
-    // Actualizar cuando cambia la orientación o se redimensiona
-    const handleResize = () => {
-      setTimeout(updateSafeArea, 100);
-    };
-
+    // Escuchar cambios de orientación/tamaño
+    const handleResize = () => setTimeout(applyInsets, 200);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
 
     return () => {
-      clearTimeout(timeout);
+      timers.forEach(clearTimeout);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
     };
-  }, []);
+  }, [readNativeInsets]);
 
   return {
     safeAreaTop,
