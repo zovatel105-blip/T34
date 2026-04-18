@@ -1894,10 +1894,10 @@ const ProfilePage = () => {
 
       {/* Normal profile view - only show when NOT in TikTok mode */}
       {!isTikTokMode && (
-        <div className="min-h-screen bg-white safe-area-top">
+        <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
-          <header className="bg-white z-40 sticky" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+          <header className="bg-white z-40 sticky top-0">
             <div className="px-3 sm:px-6 py-3 relative overflow-hidden">
               {/* Versión compacta al hacer scroll - solo en perfiles ajenos */}
               {!isOwnProfile && (
@@ -2282,7 +2282,7 @@ const ProfilePage = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               
               {/* Navegación de tabs minimalista con padding lateral mínimo - STICKY debajo del header */}
-              <div className="px-1 sm:px-2 mb-1 sticky z-50 pb-1 pt-3 bg-white" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 52px)' }}>
+              <div className="px-1 sm:px-2 mb-1 sticky top-[52px] z-50 pb-1 pt-3 bg-white">
                 <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-5' : (Object.keys(socialLinks).length > 0 ? 'grid-cols-3' : 'grid-cols-2')} bg-gray-50 rounded-2xl p-1 h-auto`}>
                   <TabsTrigger 
                     value="polls" 

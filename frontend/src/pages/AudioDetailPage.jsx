@@ -472,7 +472,7 @@ const AudioDetailPage = () => {
     const errorUrl = typeof error === 'object' ? error?.url : null;
 
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center safe-area-top safe-area-bottom">
+      <div className="min-h-screen bg-white flex items-center justify-center safe-area-bottom">
         <div className="text-center space-y-4 p-8 max-w-md">
           <Music className="w-16 h-16 text-gray-400 mx-auto" />
           <h2 className="text-xl font-semibold text-gray-900">Audio no encontrado</h2>
@@ -508,9 +508,9 @@ const AudioDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white safe-area-top">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white z-40 sticky" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+      <header className="bg-white z-40 sticky" style={{ top: 0 }}>
         <div className="flex items-center justify-between px-4 py-3">
           <Button 
             variant="ghost" 

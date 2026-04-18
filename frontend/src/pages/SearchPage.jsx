@@ -978,7 +978,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white safe-area-top">
+    <div className="min-h-screen bg-white">
       {/* Header Section - Minimalist Design */}
       <div className="bg-white z-50">
         {/* Top Row - Back Button + Search Bar */}

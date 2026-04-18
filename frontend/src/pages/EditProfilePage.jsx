@@ -109,7 +109,7 @@ const EditProfilePage = () => {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <div 
-        className="relative w-full flex items-center justify-center px-4 py-4 safe-area-top transition-colors duration-300" 
+        className="relative w-full flex items-center justify-center px-4 py-4 transition-colors duration-300" 
         style={{backgroundColor: isScrolled ? 'white' : 'rgba(176, 97, 255, 0.1)'}}
       >
         <button

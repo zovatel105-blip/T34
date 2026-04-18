@@ -70,7 +70,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     return (
       <div className={`flex flex-col h-screen w-full ${backgroundClass} overflow-hidden`}>
         {isBottomNav && isAuthenticated && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
             {children}
           </div>
         )}
@@ -89,7 +89,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
       {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {children}
       </main>
 
