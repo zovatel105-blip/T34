@@ -132,17 +132,17 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 Configurar StatusBar inicial en dispositivos nativos
-  // useStatusBarColor ajusta overlay dinámicamente según la ruta.
+  // 📱 Configurar StatusBar inicial en dispositivos nativos (estilo TikTok)
+  // overlay=true SIEMPRE → contenido detrás de la barra de estado
   useEffect(() => {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Base segura al arrancar. useStatusBarColor lo cambia a overlay=true
-          // en rutas con TikTokScrollView.
-          await StatusBar.setOverlaysWebView({ overlay: false });
-          await StatusBar.setBackgroundColor({ color: '#ffffff' });
-          console.log('✅ StatusBar configurado correctamente');
+          // Edge-to-edge: contenido se extiende detrás de la barra de estado
+          await StatusBar.setOverlaysWebView({ overlay: true });
+          // Iconos claros por defecto (feed es oscuro)
+          await StatusBar.setStyle({ style: Style.Light });
+          console.log('✅ StatusBar configurado (edge-to-edge, estilo TikTok)');
         } catch (error) {
           console.error('❌ Error configurando StatusBar:', error);
         }

@@ -84,7 +84,7 @@ const BottomNavigation = () => {
         // EDGE-TO-EDGE: respetar la barra de navegación del sistema
         // (gesto o 3 botones). max() garantiza un mínimo aunque el
         // sistema no reporte insets.
-        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)'
+        paddingBottom: 'max(var(--safe-area-inset-bottom, 0px), 8px)'
       }}
     >
       {hideBottomNav && commentInputConfig ? (

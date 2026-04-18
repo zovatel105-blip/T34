@@ -1,90 +1,92 @@
 /**
- * useStatusBarColor Hook
- * Cambia dinámicamente el color de la barra de estado según la página.
+ * useStatusBarColor Hook - Estilo TikTok
  *
- * Comportamiento:
- * - TODAS las páginas usan overlay=false
- * - La barra de estado SIEMPRE tiene su propio espacio
- * - El contenido NUNCA se superpone con la barra de estado
+ * La barra de estado es SIEMPRE transparente y el contenido se extiende
+ * detrás de ella (edge-to-edge). Solo se cambia el estilo de los iconos
+ * (claros u oscuros) según el fondo de cada página.
+ *
+ * Comportamiento TikTok:
+ * - overlay = true SIEMPRE (contenido detrás de la barra de estado)
+ * - Barra de estado transparente (sin color de fondo)
+ * - Iconos blancos en páginas oscuras (feed, explore, create...)
+ * - Iconos oscuros en páginas claras (settings, messages...)
+ * - Cada página/componente maneja su propio safe-area padding
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
-// Páginas con fondo oscuro o contenido fullscreen
-const DARK_CONTENT_ROUTES = [
+// Rutas con fondo oscuro → iconos BLANCOS (Style.Light = iconos claros)
+const LIGHT_ICONS_ROUTES = [
   '/feed',
-  '/profile',
+  '/following',
   '/audio',
   '/explore',
   '/search',
-  '/following',
   '/create',
   '/content-creation',
+  '/content-publish',
   '/vs-create',
   '/vs-experience',
   '/story-creation',
   '/story-edit',
   '/moment-create',
+  '/challenges',
 ];
 
-// Configuración de colores para cada tipo de página
-const PAGE_COLORS = {
-  '/settings': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/edit-profile': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/change-password': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/messages': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/notifications': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/auth': { backgroundColor: '#ffffff', style: Style.Dark },
-  '/challenge': { backgroundColor: '#ffffff', style: Style.Dark },
-  // Páginas con fondo negro/oscuro
-  darkContent: { backgroundColor: '#000000', style: Style.Light },
-  default: { backgroundColor: '#ffffff', style: Style.Dark },
-};
+// Rutas con fondo claro → iconos OSCUROS (Style.Dark = iconos oscuros)
+const DARK_ICONS_ROUTES = [
+  '/settings',
+  '/edit-profile',
+  '/change-password',
+  '/messages',
+  '/notifications',
+  '/auth',
+];
 
 export const useStatusBarColor = () => {
   const location = useLocation();
+  const lastPath = useRef('');
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
+    const currentPath = location.pathname;
+
+    // Evitar actualizaciones innecesarias para la misma ruta
+    if (currentPath === lastPath.current) return;
+    lastPath.current = currentPath;
+
     const updateStatusBar = async () => {
       try {
-        const currentPath = location.pathname;
+        // SIEMPRE overlay=true → contenido detrás de la barra (estilo TikTok)
+        await StatusBar.setOverlaysWebView({ overlay: true });
 
-        // SIEMPRE overlay=false - la barra de estado tiene su propio espacio
-        await StatusBar.setOverlaysWebView({ overlay: false });
-
-        // Determinar si es una ruta con contenido oscuro
-        const isDarkContentRoute = DARK_CONTENT_ROUTES.some(route =>
+        // Determinar el estilo de iconos según la ruta
+        const needsLightIcons = LIGHT_ICONS_ROUTES.some(route =>
           currentPath === route || currentPath.startsWith(route + '/')
         );
 
-        if (isDarkContentRoute) {
-          // Páginas con fondo negro/oscuro: barra negra con iconos blancos
-          await StatusBar.setBackgroundColor({ color: PAGE_COLORS.darkContent.backgroundColor });
-          await StatusBar.setStyle({ style: PAGE_COLORS.darkContent.style });
-          console.log(`📱 StatusBar: Negro con iconos blancos para ${currentPath}`);
-        } else {
-          // Páginas normales: buscar configuración específica
-          let config = PAGE_COLORS[currentPath];
-          if (!config) {
-            for (const [path, colorConfig] of Object.entries(PAGE_COLORS)) {
-              if (currentPath.startsWith(path) && path !== 'default' && path !== 'darkContent') {
-                config = colorConfig;
-                break;
-              }
-            }
-          }
-          if (!config) config = PAGE_COLORS.default;
+        const needsDarkIcons = DARK_ICONS_ROUTES.some(route =>
+          currentPath === route || currentPath.startsWith(route + '/')
+        );
 
-          await StatusBar.setBackgroundColor({ color: config.backgroundColor });
-          await StatusBar.setStyle({ style: config.style });
-          console.log(`📱 StatusBar: Blanco con iconos oscuros para ${currentPath}`);
+        if (needsDarkIcons) {
+          // Páginas claras: iconos OSCUROS para que se vean sobre fondo blanco
+          await StatusBar.setStyle({ style: Style.Dark });
+        } else {
+          // Por defecto y páginas oscuras: iconos CLAROS (blancos)
+          await StatusBar.setStyle({ style: Style.Light });
         }
+
+        // Perfil: depende de si es propio (claro) o ajeno (puede variar)
+        if (currentPath.startsWith('/profile')) {
+          await StatusBar.setStyle({ style: Style.Dark });
+        }
+
       } catch (error) {
-        console.error('❌ Error actualizando StatusBar:', error);
+        console.error('Error actualizando StatusBar:', error);
       }
     };
 
@@ -93,25 +95,22 @@ export const useStatusBarColor = () => {
 };
 
 /**
- * Hook para cambiar el color de la barra manualmente
- * Útil para páginas dinámicas o con scroll
+ * Hook para cambiar el estilo de iconos de la barra manualmente.
+ * Útil para páginas con scroll que cambian de fondo claro a oscuro.
  */
-export const useCustomStatusBarColor = (backgroundColor, style) => {
+export const useCustomStatusBarColor = (lightIcons = false) => {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) {
-      return;
-    }
+    if (!Capacitor.isNativePlatform()) return;
 
     const updateStatusBar = async () => {
       try {
-        await StatusBar.setOverlaysWebView({ overlay: false });
-        await StatusBar.setStyle({ style });
-        await StatusBar.setBackgroundColor({ color: backgroundColor });
+        await StatusBar.setOverlaysWebView({ overlay: true });
+        await StatusBar.setStyle({ style: lightIcons ? Style.Light : Style.Dark });
       } catch (error) {
-        console.error('❌ Error actualizando StatusBar:', error);
+        console.error('Error actualizando StatusBar:', error);
       }
     };
 
     updateStatusBar();
-  }, [backgroundColor, style]);
+  }, [lightIcons]);
 };

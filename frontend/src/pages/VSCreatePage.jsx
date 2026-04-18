@@ -190,7 +190,7 @@ const VSCreatePage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col z-50">
+    <div className="fixed inset-0 bg-black flex flex-col z-50" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <button

@@ -751,7 +751,7 @@ const FollowingPage = () => {
             className="fixed top-1 right-0 z-[9999] flex items-center gap-2"
             style={{ 
               position: 'fixed',
-              top: '4px',
+              top: 'calc(var(--safe-area-inset-top) + 4px)',
               right: '0px',
               zIndex: 9999,
             }}

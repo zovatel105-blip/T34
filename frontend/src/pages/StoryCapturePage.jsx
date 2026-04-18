@@ -359,7 +359,7 @@ const StoryCapturePage = () => {
       />
 
       {/* Header con botones transparentes */}
-      <div className="absolute top-0 left-0 right-0 z-30 pt-3 px-4">
+      <div className="absolute top-0 left-0 right-0 z-30 px-4" style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)' }}>
         <div className="flex items-start justify-between">
           {/* Botón cerrar a la izquierda */}
           <button

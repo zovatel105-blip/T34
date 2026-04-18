@@ -64,18 +64,19 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
 
   if (shouldUseTikTokLayout) {
     // Mobile TikTok mode - full screen without sidebars
-    // For create page and story pages, don't apply bg-black to allow gradients
+    // Estilo TikTok: contenido fullscreen DETRÁS de la barra de estado
+    // TikTokScrollView maneja su propio safe-area para el header
     const backgroundClass = (isCreatePage || isStoryPage) ? '' : 'bg-black';
 
     return (
       <div className={`flex flex-col h-screen w-full ${backgroundClass} overflow-hidden`}>
         {isBottomNav && isAuthenticated && (
-          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         )}
         {!isBottomNav && (
-          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         )}
@@ -92,7 +93,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
       {/* Desktop Sidebar - Hidden on mobile */}
       {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
 
-      {/* Main Content Area */}
+      {/* Main Content Area - con safe-area para páginas normales */}
       <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
         {children}
       </main>

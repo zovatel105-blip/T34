@@ -368,7 +368,7 @@ const VSExperiencePage = () => {
       onTouchEnd={onTouchEnd}
     >
       {/* Progress indicators */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 p-2">
+      <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 px-2" style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 0.5rem)' }}>
         {questions.map((_, index) => (
           <div 
             key={index}
@@ -384,7 +384,8 @@ const VSExperiencePage = () => {
       {/* Close button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-8 right-4 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center"
+        className="absolute right-4 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center"
+        style={{ top: 'calc(var(--safe-area-inset-top) + 2rem)' }}
       >
         <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

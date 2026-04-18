@@ -695,7 +695,7 @@ const StoryEditPage = () => {
       
       <div className="fixed inset-0 z-50 bg-black overflow-hidden">
       {/* Header con botón de volver, controles de texto y botón Listo */}
-      <div className="absolute top-0 left-0 right-0 z-30 pt-3 px-4">
+      <div className="absolute top-0 left-0 right-0 z-30 px-4" style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)' }}>
         <div className="flex items-center justify-center">
           {/* Botón volver a la izquierda - Solo visible cuando NO se está editando texto */}
           {!(isTextMode && editingTextIndex !== null) && (
