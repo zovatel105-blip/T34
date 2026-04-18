@@ -7,6 +7,14 @@ const config = {
 };
 
 module.exports = {
+  babel: {
+    plugins: [
+      // Strip console.log/warn/info in production builds (keeps console.error)
+      ...(process.env.NODE_ENV === 'production' 
+        ? [['transform-remove-console', { exclude: ['error'] }]] 
+        : []),
+    ],
+  },
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

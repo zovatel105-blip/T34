@@ -51,7 +51,7 @@ const renderTextWithHashtags = (text, navigate) => {
       // This is a hashtag, make it clickable
       return (
         <span
-          key={index}
+          key={`hashtag-${part}-${index}`}
           className="text-white font-semibold hover:underline cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
@@ -63,7 +63,7 @@ const renderTextWithHashtags = (text, navigate) => {
       );
     }
     // Regular text
-    return <span key={index}>{part}</span>;
+    return <span key={`text-${index}`}>{part}</span>;
   });
 };
 

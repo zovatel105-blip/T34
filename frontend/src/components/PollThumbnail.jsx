@@ -294,7 +294,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   
                   return (
                     <div
-                      key={index}
+                      key={option.id || `carousel-opt-${index}`}
                       data-option-index={index}
                       className={`relative flex-shrink-0 w-full h-full rounded-lg overflow-hidden transition-all duration-150 snap-center ${
                         isSelected 
@@ -411,7 +411,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   
                   return (
                     <div
-                      key={index}
+                      key={option.id || `single-opt-${index}`}
                       data-option-index={index}
                       className={`relative w-full h-full rounded-lg overflow-hidden transition-all duration-150 ${
                         isSelected 
@@ -499,7 +499,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       <div className={`w-full h-full ${getGridClasses()}`}>
         {optionsWithMedia.map((option, index) => (
           <div
-            key={index}
+            key={option.id || `grid-opt-${index}`}
             className="relative bg-gray-200 overflow-hidden"
             style={{ minHeight: '30px' }}
           >
@@ -622,7 +622,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                 
                 return (
                   <div
-                    key={index}
+                    key={option.id || `grid-vote-opt-${index}`}
                     data-option-index={index}
                     className={`relative rounded-lg overflow-hidden transition-all duration-150 ${
                       isSelected 

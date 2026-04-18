@@ -1,6 +1,10 @@
 """
 TikTok-Style Video Optimization System
 Handles video processing, compression, and thumbnail generation efficiently
+
+NOTE: This module uses asyncio.create_subprocess_exec() for running ffmpeg/ffprobe commands.
+This is NOT the same as Python's built-in exec() — it is a safe async subprocess runner
+that does not evaluate arbitrary code.
 """
 
 import os

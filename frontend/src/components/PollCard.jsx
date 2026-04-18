@@ -29,7 +29,7 @@ const renderTextWithHashtags = (text, navigate) => {
       // This is a hashtag, make it clickable
       return (
         <span
-          key={index}
+          key={`hashtag-${part}-${index}`}
           className="text-blue-600 hover:text-blue-700 cursor-pointer underline"
           onClick={(e) => {
             e.stopPropagation();
@@ -41,7 +41,7 @@ const renderTextWithHashtags = (text, navigate) => {
       );
     }
     // Regular text
-    return <span key={index}>{part}</span>;
+    return <span key={`text-${index}`}>{part}</span>;
   });
 };
 
@@ -819,7 +819,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                 <div className="mt-2 flex flex-wrap gap-2">
                   {hashtags.map((tag, index) => (
                     <span
-                      key={index}
+                      key={`tag-${tag}-${index}`}
                       className="inline-block px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs font-medium rounded-full cursor-pointer transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -838,7 +838,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                 <div className="mt-2">
                   <div className="flex flex-wrap gap-1">
                     {poll.options.filter(opt => opt.text && opt.text.trim()).slice(0, 2).map((option, index) => (
-                      <span key={index} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                      <span key={option.id || `opt-desc-${index}`} className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
                         {option.text.length > 20 ? `${option.text.substring(0, 20)}...` : option.text}
                       </span>
                     ))}
@@ -1070,7 +1070,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
               <div className="mt-3 flex flex-wrap gap-2">
                 {hashtags.map((tag, index) => (
                   <span
-                    key={index}
+                    key={`tag-${tag}-${index}`}
                     className="inline-block px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-medium rounded-full cursor-pointer transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();

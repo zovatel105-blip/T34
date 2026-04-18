@@ -29,9 +29,13 @@ UPLOAD_DIR = Path(__file__).parent / "uploads"
 AUDIO_UPLOAD_DIR = UPLOAD_DIR / "audio"
 AUDIO_UPLOAD_DIR.mkdir(exist_ok=True)
 
-async def fix_carousel_posts():
+async def fix_carousel_posts() -> None:
     """
-    Encuentra posts carrusel sin música y extrae el audio de sus videos
+    Encuentra posts carrusel sin música y extrae el audio de sus videos.
+    
+    Scans the polls collection for carousel-layout posts without assigned music,
+    extracts audio from their video options, stores it in user_audio collection,
+    and updates the poll with the extracted audio references.
     """
     print("🔍 Buscando publicaciones carrusel sin audio...")
     
@@ -151,7 +155,7 @@ async def fix_carousel_posts():
                 updated_options.append(updated_option)
             
             if not extracted_audios:
-                print(f"   ⚠️ No se encontró ningún video con audio en este post")
+                print("   ⚠️ No se encontró ningún video con audio en este post")
                 continue
             
             # El primer audio será el music_id principal
