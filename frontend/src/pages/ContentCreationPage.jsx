@@ -1429,7 +1429,7 @@ const ContentCreationPage = () => {
 
   return (
     <>
-    <div className="fixed inset-0 z-50 relative h-screen w-screen overflow-hidden bg-black" style={{ margin: 0, padding: 0 }}>
+    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black" style={{ margin: 0, padding: 0 }}>
       {/* Main Content Area - Con espacio inferior como StoryEditPage */}
       <div className="absolute top-0 left-0 right-0 bottom-32">
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">

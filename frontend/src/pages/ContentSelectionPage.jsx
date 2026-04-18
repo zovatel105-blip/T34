@@ -13,7 +13,7 @@ const ContentSelectionPage = () => {
       description: 'Fotos y videos con votación',
       icon: Image,
       gradient: 'from-purple-500 to-pink-500',
-      route: '/create'
+      route: '/content-creation'
     },
     {
       id: 'moment',
