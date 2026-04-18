@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://mobile-ui-debug-2.preview.emergentagent.com"
+BASE_URL = "https://header-tabs-sticky.preview.emergentagent.com"
 TEST_USER = {
     "email": "backendtest@test.com",
     "password": "test1234",
