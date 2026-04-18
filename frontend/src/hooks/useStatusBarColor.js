@@ -3,20 +3,17 @@
  * Cambia dinámicamente el color de la barra de estado según la página.
  *
  * Comportamiento:
- * - TikTokScrollView (feed y páginas con contenido fullscreen): overlay=true,
- *   el contenido se superpone bajo la barra de estado.
- * - Resto de páginas (settings, perfil, mensajes, etc.): overlay=false,
- *   la barra tiene color sólido y el contenido empieza debajo.
+ * - TODAS las páginas usan overlay=false
+ * - La barra de estado SIEMPRE tiene su propio espacio
+ * - El contenido NUNCA se superpone con la barra de estado
  */
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
-// Rutas donde TikTokScrollView ocupa pantalla completa (overlay=true)
-// El video/imagen se superpone bajo la barra de estado — los objetos UI
-// no se tapan porque TikTokPollCard ya usa env(safe-area-inset-top).
-const TIKTOK_ROUTES = [
+// Páginas con fondo oscuro o contenido fullscreen
+const DARK_CONTENT_ROUTES = [
   '/feed',
   '/profile',
   '/audio',
@@ -32,8 +29,7 @@ const TIKTOK_ROUTES = [
   '/moment-create',
 ];
 
-// Páginas normales: barra sólida, contenido empieza debajo (overlay=false)
-// ResponsiveLayout añade env(safe-area-inset-top) automáticamente.
+// Configuración de colores para cada tipo de página
 const PAGE_COLORS = {
   '/settings': { backgroundColor: '#ffffff', style: Style.Dark },
   '/edit-profile': { backgroundColor: '#ffffff', style: Style.Dark },
@@ -42,6 +38,8 @@ const PAGE_COLORS = {
   '/notifications': { backgroundColor: '#ffffff', style: Style.Dark },
   '/auth': { backgroundColor: '#ffffff', style: Style.Dark },
   '/challenge': { backgroundColor: '#ffffff', style: Style.Dark },
+  // Páginas con fondo negro/oscuro
+  darkContent: { backgroundColor: '#000000', style: Style.Light },
   default: { backgroundColor: '#ffffff', style: Style.Dark },
 };
 
@@ -55,22 +53,25 @@ export const useStatusBarColor = () => {
       try {
         const currentPath = location.pathname;
 
-        // ¿Está activo el TikTokScrollView en esta ruta?
-        const isTikTokRoute = TIKTOK_ROUTES.some(route =>
+        // SIEMPRE overlay=false - la barra de estado tiene su propio espacio
+        await StatusBar.setOverlaysWebView({ overlay: false });
+
+        // Determinar si es una ruta con contenido oscuro
+        const isDarkContentRoute = DARK_CONTENT_ROUTES.some(route =>
           currentPath === route || currentPath.startsWith(route + '/')
         );
 
-        if (isTikTokRoute) {
-          // 🎬 Contenido fullscreen: se superpone bajo la barra de estado
-          await StatusBar.setOverlaysWebView({ overlay: true });
-          await StatusBar.setStyle({ style: Style.Light }); // iconos blancos
-          console.log(`📱 StatusBar: overlay=true para ${currentPath}`);
+        if (isDarkContentRoute) {
+          // Páginas con fondo negro/oscuro: barra negra con iconos blancos
+          await StatusBar.setBackgroundColor({ color: PAGE_COLORS.darkContent.backgroundColor });
+          await StatusBar.setStyle({ style: PAGE_COLORS.darkContent.style });
+          console.log(`📱 StatusBar: Negro con iconos blancos para ${currentPath}`);
         } else {
-          // 📱 Página normal: barra sólida, contenido empieza debajo
+          // Páginas normales: buscar configuración específica
           let config = PAGE_COLORS[currentPath];
           if (!config) {
             for (const [path, colorConfig] of Object.entries(PAGE_COLORS)) {
-              if (currentPath.startsWith(path) && path !== 'default') {
+              if (currentPath.startsWith(path) && path !== 'default' && path !== 'darkContent') {
                 config = colorConfig;
                 break;
               }
@@ -78,10 +79,9 @@ export const useStatusBarColor = () => {
           }
           if (!config) config = PAGE_COLORS.default;
 
-          await StatusBar.setOverlaysWebView({ overlay: false });
           await StatusBar.setBackgroundColor({ color: config.backgroundColor });
           await StatusBar.setStyle({ style: config.style });
-          console.log(`📱 StatusBar: overlay=false para ${currentPath}`, config);
+          console.log(`📱 StatusBar: Blanco con iconos oscuros para ${currentPath}`);
         }
       } catch (error) {
         console.error('❌ Error actualizando StatusBar:', error);
@@ -104,6 +104,7 @@ export const useCustomStatusBarColor = (backgroundColor, style) => {
 
     const updateStatusBar = async () => {
       try {
+        await StatusBar.setOverlaysWebView({ overlay: false });
         await StatusBar.setStyle({ style });
         await StatusBar.setBackgroundColor({ color: backgroundColor });
       } catch (error) {

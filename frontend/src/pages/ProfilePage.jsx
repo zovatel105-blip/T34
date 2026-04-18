@@ -1894,7 +1894,7 @@ const ProfilePage = () => {
 
       {/* Normal profile view - only show when NOT in TikTok mode */}
       {!isTikTokMode && (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white safe-area-top">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
           <header className="bg-white sticky top-0 z-40">

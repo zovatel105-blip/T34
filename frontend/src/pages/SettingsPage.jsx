@@ -199,7 +199,7 @@ const SettingsPage = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-white" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="min-h-screen bg-white safe-area-top">
       {/* Contenedor estilo modal — rounded top, handle bar, título centrado */}
       <div className="max-w-md mx-auto bg-white rounded-t-3xl">
 
