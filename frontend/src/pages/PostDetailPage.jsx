@@ -110,7 +110,7 @@ const PostDetailPage = () => {
       </div>
 
       {/* Header */}
-      <div className="sticky z-40 bg-black/80 backdrop-blur-md border-b border-gray-800" style={{ top: 'var(--safe-area-inset-top)' }}>
+      <div className="z-40 bg-black/80 backdrop-blur-md border-b border-gray-800">
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => navigate(-1)}

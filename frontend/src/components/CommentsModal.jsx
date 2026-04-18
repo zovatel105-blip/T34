@@ -245,10 +245,9 @@ const CommentsModal = ({
 
             {/* Header */}
             <div className={cn(
-              "sticky z-10 px-4 sm:px-6 py-2 flex-shrink-0",
+              "z-10 px-4 sm:px-6 py-2 flex-shrink-0",
               isBottomSheet ? "bg-white border-b border-gray-100" : "bg-zinc-900"
             )}
-            style={{ top: 'var(--safe-area-inset-top)' }}
             >
               <div className="flex items-center justify-center">
                 <h2 className={cn(

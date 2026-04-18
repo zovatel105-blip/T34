@@ -510,7 +510,7 @@ const AudioDetailPage = () => {
   return (
     <div className="min-h-screen bg-white safe-area-top">
       {/* Header */}
-      <header className="bg-white sticky z-40" style={{ top: 'var(--safe-area-inset-top)' }}>
+      <header className="bg-white z-40">
         <div className="flex items-center justify-between px-4 py-3">
           <Button 
             variant="ghost" 
