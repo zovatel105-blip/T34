@@ -7,6 +7,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { cn } from '../lib/utils';
 
 const CommentForm = ({ 
@@ -184,7 +185,7 @@ const Comment = ({
       <div className="comment-item flex gap-3">
         {/* Avatar */}
         <Avatar className={cn("flex-shrink-0 mt-0.5", bottomSheetMode ? "w-10 h-10" : "w-8 h-8")}>
-          <AvatarImage src={comment.user.avatar_url} />
+          <AvatarImage src={resolveAssetUrl(comment.user.avatar_url)} />
           <AvatarFallback className={cn(
             "flex items-center justify-center",
             bottomSheetMode ? "bg-gray-100 text-gray-400" : "bg-gray-50 text-gray-400"

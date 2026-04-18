@@ -4,6 +4,7 @@ import { User, Trophy } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { cn } from '../lib/utils';
 import { useModalBackButton } from '../hooks/useBackButton';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challengeTitle = '' }) => {
   // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
@@ -108,7 +109,7 @@ const ChallengeParticipantsModal = ({ isOpen, onClose, participants = [], challe
                 {/* Avatar — mismo estilo que el perfil */}
                 <Avatar className="w-11 h-11 rounded-full flex-shrink-0">
                   <AvatarImage
-                    src={participant.avatar_url || undefined}
+                    src={resolveAssetUrl(participant.avatar_url) || undefined}
                     className="object-cover"
                   />
                   <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">

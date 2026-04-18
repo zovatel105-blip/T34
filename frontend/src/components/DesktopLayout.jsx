@@ -30,6 +30,7 @@ import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
 import TrendingPanel from './TrendingPanel';
 import SuggestionsPanel from './SuggestionsPanel';
 import { cn } from '../lib/utils';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const DesktopLayout = ({ children }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -154,7 +155,7 @@ const DesktopLayout = ({ children }) => {
           {/* User info */}
           <div className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.avatar_url} alt={user?.display_name} />
+              <AvatarImage src={resolveAssetUrl(user?.avatar_url)} alt={user?.display_name} />
               <AvatarFallback>{user?.display_name?.[0]}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">

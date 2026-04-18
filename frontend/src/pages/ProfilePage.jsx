@@ -28,6 +28,7 @@ import { useFollow } from '../contexts/FollowContext';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
 import { cn } from '../lib/utils';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import config from '../config/config';
 
 const StatCard = ({ icon: Icon, label, value, color = "blue", onClick, clickable = false }) => (
@@ -2762,7 +2763,7 @@ const ProfilePage = () => {
                           <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {follower.avatar_url ? (
                               <img 
-                                src={follower.avatar_url} 
+                                src={resolveAssetUrl(follower.avatar_url)}
                                 alt={follower.username}
                                 className="w-full h-full object-cover"
                               />
@@ -2831,7 +2832,7 @@ const ProfilePage = () => {
                           <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {followedUser.avatar_url ? (
                               <img 
-                                src={followedUser.avatar_url} 
+                                src={resolveAssetUrl(followedUser.avatar_url)}
                                 alt={followedUser.username}
                                 className="w-full h-full object-cover"
                               />

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { useNavPreference } from '../hooks/useNavPreference';
 import { useModalBackButton } from '../hooks/useBackButton';
 
@@ -365,7 +366,7 @@ const VotersModal = ({ isOpen, onClose, pollId, onExpandChange = null }) => {
                           }}
                         >
                           <AvatarImage 
-                            src={voter.avatar_url} 
+                            src={resolveAssetUrl(voter.avatar_url)} 
                             alt={voter.display_name}
                             crossOrigin="anonymous"
                             onError={(e) => { e.target.style.display = 'none'; }}

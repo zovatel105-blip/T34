@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import AppConfig from '../config/config';
 import { useAuth } from '../contexts/AuthContext';
 import storyService from '../services/storyService';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 // Add CSS animation for marquee effect
 const marqueeStyles = `
@@ -550,7 +551,7 @@ const StoriesViewer = ({ storiesGroups, onClose, initialUserIndex = 0 }) => {
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
                         {viewer.user?.avatar_url ? (
                           <img
-                            src={viewer.user.avatar_url}
+                            src={resolveAssetUrl(viewer.user.avatar_url)}
                             alt={viewer.user.username}
                             className="w-full h-full object-cover"
                           />

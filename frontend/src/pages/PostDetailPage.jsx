@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, MessageCircle, Share, Play, User, MoreVertical } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import LogoWithQuickActions from '../components/LogoWithQuickActions';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const PostDetailPage = () => {
   const { postId } = useParams();
@@ -135,14 +136,14 @@ const PostDetailPage = () => {
             <div className="relative w-full h-full">
               {post.options[0].media_type === 'video' ? (
                 <video
-                  src={post.options[0].media_url}
+                  src={resolveAssetUrl(post.options[0].media_url)}
                   className="w-full h-full object-cover"
                   controls
-                  poster={post.options[0].thumbnail_url}
+                  poster={resolveAssetUrl(post.options[0].thumbnail_url)}
                 />
               ) : (
                 <img
-                  src={post.options[0].media_url}
+                  src={resolveAssetUrl(post.options[0].media_url)}
                   alt={post.title}
                   className="w-full h-full object-cover"
                 />

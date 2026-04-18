@@ -9,6 +9,7 @@ import uploadService from '../services/uploadService';  // ⚡ Import upload ser
 import challengeService from '../services/challengeService';  // ⚡ Import challenge service
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import AppConfig from '../config/config';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 // Bottom Sheet Modal with swipe-to-close
 const BottomSheetModal = ({ title, onClose, options, selectedValue, onSelect }) => {
@@ -462,7 +463,7 @@ const ContentPublishPage = () => {
   // ========== FIN VISTA SIMPLIFICADA ==========
 
   return (
-    <div className="fixed inset-0 bg-zinc-900 flex flex-col">
+    <div className="fixed inset-0 bg-zinc-900 flex flex-col" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Inject CSS for hiding scrollbar */}
       <style>{scrollableOptionsStyle}</style>
       
@@ -494,14 +495,14 @@ const ContentPublishPage = () => {
                         return option.media_type?.startsWith('image') ? (
                           <img 
                             key={key}
-                            src={option.media_url} 
+                            src={resolveAssetUrl(option.media_url)} 
                             alt="Preview"
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <video 
                             key={key}
-                            src={option.media_url}
+                            src={resolveAssetUrl(option.media_url)}
                             className="w-full h-full object-cover"
                             muted
                           />
@@ -768,7 +769,7 @@ const ContentPublishPage = () => {
                           >
                             <div className="flex items-center gap-3">
                               <Avatar className="w-9 h-9">
-                                <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
+                                <AvatarImage src={resolveAssetUrl(selectedUser.avatar_url)} alt={selectedUser.username} />
                                 <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                                   <Users className="w-4 h-4" />
                                 </AvatarFallback>
@@ -828,7 +829,7 @@ const ContentPublishPage = () => {
                                   className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700/50 transition-colors"
                                 >
                                   <Avatar className="w-9 h-9">
-                                    <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
+                                    <AvatarImage src={resolveAssetUrl(searchUser.avatar_url)} alt={searchUser.username} />
                                     <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                                       <Users className="w-4 h-4" />
                                     </AvatarFallback>

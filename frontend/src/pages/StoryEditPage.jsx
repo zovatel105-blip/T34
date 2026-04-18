@@ -19,6 +19,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import MusicSelector from '../components/MusicSelector';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const StoryEditPage = () => {
   const navigate = useNavigate();
@@ -1378,7 +1379,7 @@ const StoryEditPage = () => {
               <div className="relative w-8 h-8 flex-shrink-0">
                 {user?.avatar_url ? (
                   <img
-                    src={user.avatar_url}
+                    src={resolveAssetUrl(user.avatar_url)}
                     alt={user.username}
                     className="w-full h-full rounded-full object-cover border border-white"
                   />

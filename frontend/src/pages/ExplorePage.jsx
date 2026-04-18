@@ -280,7 +280,7 @@ const ExplorePage = () => {
   }, [navigate]);
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div className="fixed inset-0 bg-black overflow-hidden" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Header fijo con título */}
       <div className="absolute top-0 left-0 right-0 z-40 px-4 py-3 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none">
         <div className="flex items-center pointer-events-auto">

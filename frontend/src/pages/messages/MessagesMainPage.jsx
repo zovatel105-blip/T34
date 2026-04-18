@@ -4,6 +4,7 @@ import { MessageCircle, X, ArrowLeft, Users, Bell, Send, Plus, Inbox, User } fro
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 import useLivePoll from '../../hooks/useLivePoll';
 
 const MessagesMainPage = () => {
@@ -1238,7 +1239,7 @@ const MessagesMainPage = () => {
                         {otherUser.avatar_url ? (
                           <>
                             <img 
-                              src={otherUser.avatar_url} 
+                              src={resolveAssetUrl(otherUser.avatar_url)}
                               alt="Avatar" 
                               className="w-full h-full rounded-full object-cover"
                               onError={(e) => {
@@ -1312,7 +1313,7 @@ const MessagesMainPage = () => {
                     return otherUser?.avatar_url ? (
                       <>
                         <img 
-                          src={otherUser.avatar_url} 
+                          src={resolveAssetUrl(otherUser.avatar_url)} 
                           alt="Avatar" 
                           className="w-full h-full rounded-full object-cover"
                           onError={(e) => {
@@ -1349,7 +1350,7 @@ const MessagesMainPage = () => {
                   return otherUser?.avatar_url ? (
                     <>
                       <img 
-                        src={otherUser.avatar_url} 
+                        src={resolveAssetUrl(otherUser.avatar_url)} 
                         alt="Avatar" 
                         className="w-full h-full rounded-full object-cover"
                         onError={(e) => {
@@ -1689,7 +1690,7 @@ const MessagesMainPage = () => {
                         {result.avatar_url ? (
                           <>
                             <img 
-                              src={result.avatar_url} 
+                              src={resolveAssetUrl(result.avatar_url)} 
                               alt="Avatar" 
                               className="w-full h-full rounded-full object-cover"
                               onError={(e) => {

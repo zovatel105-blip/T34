@@ -7,6 +7,7 @@ import { useToast } from '../hooks/use-toast';
 import challengeService from '../services/challengeService';
 import AppConfig from '../config/config';
 import { cn } from '../lib/utils';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const ChallengeCreationPage = () => {
   const navigate = useNavigate();
@@ -169,7 +170,7 @@ const ChallengeCreationPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-900 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-zinc-900 overflow-hidden flex flex-col" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
@@ -258,7 +259,7 @@ const ChallengeCreationPage = () => {
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={selectedUser.avatar_url} alt={selectedUser.username} />
+                        <AvatarImage src={resolveAssetUrl(selectedUser.avatar_url)} alt={selectedUser.username} />
                         <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                           <Users className="w-4 h-4" />
                         </AvatarFallback>
@@ -316,7 +317,7 @@ const ChallengeCreationPage = () => {
                           className="w-full flex items-center gap-3 p-3 hover:bg-zinc-700/50 transition-colors"
                         >
                           <Avatar className="w-10 h-10">
-                            <AvatarImage src={searchUser.avatar_url} alt={searchUser.username} />
+                            <AvatarImage src={resolveAssetUrl(searchUser.avatar_url)} alt={searchUser.username} />
                             <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
                               <Users className="w-4 h-4" />
                             </AvatarFallback>

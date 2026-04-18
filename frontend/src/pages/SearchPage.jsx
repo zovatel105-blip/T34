@@ -17,6 +17,7 @@ import {
   RecommendationsSectionSkeleton,
   RecentSearchesSkeleton 
 } from '../components/search/SearchSkeletons';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 import PostsIcon from '../components/icons/PostsIcon';
 import SEARCH_CONFIG from '../config/searchConfig';

@@ -204,7 +204,7 @@ const ActiveChallengesPage = () => {
   // ============================================================
   if (!loading && battles.length === 0) {
     return (
-      <div className="fixed inset-0 bg-zinc-900 overflow-y-auto" ref={containerRef}>
+      <div className="fixed inset-0 bg-zinc-900 overflow-y-auto" ref={containerRef} style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
         <div className="min-h-full flex flex-col px-4 pt-14 pb-24">
 
           {/* Header con ícono */}
@@ -240,7 +240,7 @@ const ActiveChallengesPage = () => {
   // ESTADO CON CHALLENGES ACTIVOS
   // ============================================================
   return (
-    <div className="fixed inset-0 bg-zinc-900 overflow-hidden" ref={containerRef}>
+    <div className="fixed inset-0 bg-zinc-900 overflow-hidden" ref={containerRef} style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Barra superior simplificada */}
       <div className="absolute top-0 left-0 right-0 z-30 pt-4 pb-3 bg-gradient-to-b from-zinc-900/80 to-transparent">
       </div>

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 // Perfect TikTok-style Voting Card matching the reference image
 const TikTokVotingCard = ({ 
@@ -218,7 +219,7 @@ const TikTokVotingCard = ({
       <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10 ring-2 ring-white/30">
-            <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} />
+            <AvatarImage src={resolveAssetUrl(poll.author?.avatar_url) || "https://github.com/shadcn.png"} />
             <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white font-bold">
               {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
             </AvatarFallback>

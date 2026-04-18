@@ -5,6 +5,7 @@ import { X, Heart, MessageCircle, Send, MoreHorizontal } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import CommentsModal from './CommentsModal';
 
 const PollModal = ({ isOpen, onClose, poll, onVote, onLike, onShare, onComment }) => {
@@ -42,7 +43,7 @@ const PollModal = ({ isOpen, onClose, poll, onVote, onLike, onShare, onComment }
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={poll.author?.avatar_url || poll.authorUser?.avatar} />
+                  <AvatarImage src={resolveAssetUrl(poll.author?.avatar_url || poll.authorUser?.avatar)} />
                   <AvatarFallback>
                     {(poll.author?.display_name || poll.author?.username || poll.authorUser?.displayName || 'A').charAt(0).toUpperCase()}
                   </AvatarFallback>

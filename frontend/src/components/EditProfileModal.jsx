@@ -12,6 +12,7 @@ import AvatarUpload from './AvatarUpload';
 import CircularCrop from './CircularCrop';
 import uploadService from '../services/uploadService';
 import { useModalBackButton } from '../hooks/useBackButton';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
   // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
@@ -255,7 +256,7 @@ const EditProfileModal = ({ isOpen, onClose, onProfileUpdate }) => {
                 >
                   {formData.avatar_url ? (
                     <img
-                      src={formData.avatar_url}
+                      src={resolveAssetUrl(formData.avatar_url)}
                       alt="Foto de perfil"
                       className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
                     />

@@ -5,6 +5,7 @@ import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import CircularCrop from '../components/CircularCrop';
 import uploadService from '../services/uploadService';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
@@ -138,7 +139,7 @@ const EditProfilePage = () => {
                   className="relative w-36 h-36 rounded-full overflow-hidden bg-white ring-4 ring-white shadow-xl transition-all duration-300 group-hover:shadow-2xl hover:ring-blue-200 cursor-pointer group"
                 >
                   {formData.avatar_url ? (
-                    <img src={formData.avatar_url} alt="Foto de perfil" className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75" />
+                    <img src={resolveAssetUrl(formData.avatar_url)} alt="Foto de perfil" className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                       <User className="w-16 h-16 text-gray-400" />

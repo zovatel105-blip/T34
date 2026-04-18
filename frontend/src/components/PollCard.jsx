@@ -16,6 +16,7 @@ import storyService from '../services/storyService';
 import StoriesViewer from './StoriesViewer';
 import audioManager from '../services/AudioManager';
 import { useAuth } from '../contexts/AuthContext';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
@@ -111,7 +112,7 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
             }}
           >
             <Avatar className="w-6 h-6 border border-white shadow-sm">
-              <AvatarImage src={user.avatar_url} />
+              <AvatarImage src={resolveAssetUrl(user.avatar_url)} />
               <AvatarFallback className="bg-gray-400 text-white flex items-center justify-center">
                 <User className="w-3 h-3" />
               </AvatarFallback>
@@ -786,7 +787,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                   )}
                   <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
                     <Avatar className="w-full h-full cursor-pointer">
-                      <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
+                      <AvatarImage src={resolveAssetUrl(poll.author?.avatar_url) || "https://github.com/shadcn.png"} className="object-cover" />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
                         {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -1028,7 +1029,7 @@ const PollCard = ({ poll, onVote, onLike, onShare, onComment, onSave, fullScreen
                 )}
                 <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
                   <Avatar className="w-full h-full cursor-pointer">
-                    <AvatarImage src={poll.author?.avatar_url || "https://github.com/shadcn.png"} className="object-cover" />
+                    <AvatarImage src={resolveAssetUrl(poll.author?.avatar_url) || "https://github.com/shadcn.png"} className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
                       {(poll.author?.display_name || poll.author?.username || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>

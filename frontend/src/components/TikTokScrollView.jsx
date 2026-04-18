@@ -21,6 +21,7 @@ import { useShare } from '../hooks/useShare';
 import { useViewTracking } from '../hooks/useViewTracking';
 import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
@@ -662,7 +663,7 @@ const TikTokPollCard = ({
                       >
                         {poll.participants[1].avatar_url ? (
                           <img
-                            src={poll.participants[1].avatar_url}
+                            src={resolveAssetUrl(poll.participants[1].avatar_url)}
                             alt={poll.participants[1].username || ''}
                             className="w-full h-full object-cover"
                           />
@@ -681,7 +682,7 @@ const TikTokPollCard = ({
                       >
                         {poll.participants[0].avatar_url ? (
                           <img
-                            src={poll.participants[0].avatar_url}
+                            src={resolveAssetUrl(poll.participants[0].avatar_url)}
                             alt={poll.participants[0].username || ''}
                             className="w-full h-full object-cover"
                           />
@@ -740,7 +741,7 @@ const TikTokPollCard = ({
                     <div className="absolute rounded-full overflow-hidden" style={{ inset: '3.5px' }}>
                       <Avatar className="w-full h-full rounded-full">
                         <AvatarImage 
-                          src={poll.author?.avatar_url && poll.author.avatar_url !== null ? poll.author.avatar_url : undefined} 
+                          src={poll.author?.avatar_url && poll.author.avatar_url !== null ? resolveAssetUrl(poll.author.avatar_url) : undefined} 
                           className="object-cover" 
                         />
                         <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
@@ -905,7 +906,7 @@ const TikTokPollCard = ({
                                     className="flex items-center bg-white/20 px-1.5 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
                                   >
                                     <Avatar className="w-4 h-4 mr-1 border border-white/50">
-                                      <AvatarImage src={mentionedUser.avatar_url} />
+                                      <AvatarImage src={resolveAssetUrl(mentionedUser.avatar_url)} />
                                       <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
                                         <User className="w-2 h-2" />
                                       </AvatarFallback>
@@ -1002,7 +1003,7 @@ const TikTokPollCard = ({
                                     className="flex items-center bg-white/20 px-1 py-0.5 rounded-full backdrop-blur-sm cursor-pointer hover:bg-white/30 transition-all duration-200"
                                   >
                                     <Avatar className="w-3 h-3 mr-0.5 border border-white/50">
-                                      <AvatarImage src={mentionedUser.avatar_url} />
+                                      <AvatarImage src={resolveAssetUrl(mentionedUser.avatar_url)} />
                                       <AvatarFallback className="bg-gray-400 text-white text-[7px] flex items-center justify-center">
                                         <User className="w-2 h-2" />
                                       </AvatarFallback>

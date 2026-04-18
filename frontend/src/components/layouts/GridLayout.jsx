@@ -5,6 +5,7 @@ import { Trophy, User } from 'lucide-react';
 import videoMemoryManager from '../../services/videoMemoryManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 
 const GridLayout = ({ 
   poll, 
@@ -212,7 +213,7 @@ const GridLayout = ({
                     ref={(el) => {
                       if (el) videoRefs.current.set(option.id, el);
                     }}
-                    src={option.media.url}
+                    src={resolveAssetUrl(option.media.url)}
                     poster={option.thumbnail_url}
                     className="w-full h-full object-cover object-center rounded-lg"
                     // ✅ FIXED: Show videos when active (less restrictive)
@@ -244,7 +245,7 @@ const GridLayout = ({
                   />
                 ) : (
                   <img 
-                    src={option.media.url} 
+                    src={resolveAssetUrl(option.media.url)} 
                     alt={option.text}
                     className="w-full h-full object-cover object-center rounded-lg"
                     // 🚀 IMAGE OPTIMIZATION: Lazy loading
@@ -353,7 +354,7 @@ const GridLayout = ({
                       >
                         <Avatar className="w-3 h-3 mr-1 border border-white/50">
                           <AvatarImage 
-                            src={mentionedUser.avatar_url} 
+                            src={resolveAssetUrl(mentionedUser.avatar_url)} 
                             alt={`@${mentionedUser.username || mentionedUser.display_name}`}
                           />
                           <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">

@@ -6,6 +6,7 @@ import { useToast } from '../hooks/use-toast';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import useLivePoll from '../hooks/useLivePoll';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -649,7 +650,7 @@ const MessagesPage = () => {
                     <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       {otherUser.avatar_url ? (
                         <img 
-                          src={otherUser.avatar_url} 
+                          src={resolveAssetUrl(otherUser.avatar_url)} 
                           alt="Avatar" 
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -742,7 +743,7 @@ const MessagesPage = () => {
                 <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                   {getOtherParticipant(selectedConversation)?.avatar_url ? (
                     <img 
-                      src={getOtherParticipant(selectedConversation).avatar_url} 
+                      src={resolveAssetUrl(getOtherParticipant(selectedConversation).avatar_url)} 
                       alt="Avatar" 
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -788,7 +789,7 @@ const MessagesPage = () => {
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
                           {message.sender?.avatar_url ? (
                             <img 
-                              src={message.sender.avatar_url} 
+                              src={resolveAssetUrl(message.sender.avatar_url)} 
                               alt="Avatar" 
                               className="w-full h-full rounded-full object-cover"
                             />
@@ -978,7 +979,7 @@ const MessagesPage = () => {
                       <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
                         {user.avatar_url ? (
                           <img 
-                            src={user.avatar_url} 
+                            src={resolveAssetUrl(user.avatar_url)} 
                             alt="Avatar" 
                             className="w-full h-full rounded-full object-cover"
                           />

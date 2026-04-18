@@ -11,6 +11,7 @@ import { Trophy, User } from 'lucide-react';
 import audioManager from '../../services/AudioManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
+import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -351,8 +352,8 @@ const CarouselLayout = ({
                     ref={(el) => {
                       if (el) videoRefs.current.set(option.id, el);
                     }}
-                    src={option.media?.url || option.media_url}
-                    poster={option.thumbnail_url}
+                    src={resolveAssetUrl(option.media?.url || option.media_url)}
+                    poster={resolveAssetUrl(option.thumbnail_url)}
                     muted
                     playsInline
                     loop
@@ -376,7 +377,7 @@ const CarouselLayout = ({
                   />
                 ) : (
                   <img
-                    src={option.media?.url || option.media_url || option.thumbnail_url}
+                    src={resolveAssetUrl(option.media?.url || option.media_url || option.thumbnail_url)}
                     alt=""
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -446,7 +447,7 @@ const CarouselLayout = ({
                             }}
                           >
                             <Avatar className="w-3 h-3 mr-1 border border-white/50">
-                              <AvatarImage src={mentionedUser.avatar_url} />
+                              <AvatarImage src={resolveAssetUrl(mentionedUser.avatar_url)} />
                               <AvatarFallback className="bg-gray-400 text-white text-[8px] flex items-center justify-center">
                                 <User className="w-2 h-2" />
                               </AvatarFallback>

@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import commentService from '../services/commentService';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ const BottomNavigation = () => {
           <form onSubmit={handleCommentSubmit} className="flex items-center bg-gray-100 rounded-full px-2.5 py-1.5">
             <Avatar className="w-7 h-7 flex-shrink-0">
               {user?.avatar_url ? (
-                <AvatarImage src={user.avatar_url} alt={user?.username} />
+                <AvatarImage src={resolveAssetUrl(user.avatar_url)} alt={user?.username} />
               ) : null}
               <AvatarFallback className="bg-gray-300 text-gray-500 flex items-center justify-center">
                 <User className="w-3.5 h-3.5" />

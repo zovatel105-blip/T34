@@ -70,11 +70,15 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     return (
       <div className={`flex flex-col h-screen w-full ${backgroundClass} overflow-hidden`}>
         {isBottomNav && isAuthenticated && (
-          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
             {children}
           </div>
         )}
-        {!isBottomNav && children}
+        {!isBottomNav && (
+          <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+            {children}
+          </div>
+        )}
         {/* Navigation */}
         <div className="flex-shrink-0">
           {renderNavigation()}
@@ -89,7 +93,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
       {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
         {children}
       </main>
 

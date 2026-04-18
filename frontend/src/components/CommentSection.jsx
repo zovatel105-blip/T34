@@ -9,6 +9,7 @@ import commentService from '../services/commentService';
 import { cn } from '../lib/utils';
 import Comment from './Comment';
 import useLivePoll from '../hooks/useLivePoll';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const CommentSection = ({ 
   pollId, 
@@ -511,7 +512,7 @@ const CommentSection = ({
           {/* Input */}
           <div className="flex items-center gap-3 px-4 pb-4 pt-2">
             <Avatar className="w-8 h-8 flex-shrink-0">
-              <AvatarImage src={user.avatar_url} alt={user.username} />
+              <AvatarImage src={resolveAssetUrl(user.avatar_url)} alt={user.username} />
               <AvatarFallback className={`flex items-center justify-center ${bottomSheetMode ? 'bg-gray-100 text-gray-400' : darkMode ? 'bg-white text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
                 <User className="w-4 h-4" />
               </AvatarFallback>

@@ -393,7 +393,7 @@ const CompletedBattlesPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div className="fixed inset-0 bg-black overflow-hidden" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Header fijo */}
       <div className="absolute top-0 left-0 right-0 z-40 px-4 py-3 bg-gradient-to-b from-black/90 to-transparent">
         <div className="flex items-center justify-between">
