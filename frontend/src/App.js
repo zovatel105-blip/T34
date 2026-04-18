@@ -48,6 +48,7 @@ import AppConfig from './config/config';
 import ComingSoon from './components/ComingSoon';
 
 // 📱 Capacitor Status Bar Plugin
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
 // 🔔 Push Notifications Hook
@@ -58,9 +59,6 @@ import { useLocalNotifications } from './hooks/useLocalNotifications';
 
 // 📱 Dynamic Status Bar Color Hook
 import { useStatusBarColor } from './hooks/useStatusBarColor';
-
-// 🔙 Back Button Handler (Android)
-import { useBackButton } from './hooks/useBackButton';
 
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
@@ -102,9 +100,6 @@ function AppContent() {
   // 📱 Cambiar color de barra de estado según la página
   useStatusBarColor();
 
-  // 🔙 Manejar botón atrás de Android (doble tap para salir)
-  useBackButton();
-
   // 📲 Notificaciones locales (funciona sin Firebase)
   useLocalNotifications(isAuthenticated, token);
 
@@ -131,9 +126,25 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 StatusBar: el hook `useStatusBarColor()` ya maneja todo dinámicamente
-  // según la ruta actual (overlay en /feed, barra negra sólida en el resto).
-  // No hace falta setup inicial aquí.
+  // 📱 Configurar StatusBar inicial en dispositivos nativos
+  // useStatusBarColor ajusta overlay dinámicamente según la ruta.
+  useEffect(() => {
+    const setupStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // Base segura al arrancar. useStatusBarColor lo cambia a overlay=true
+          // en rutas con TikTokScrollView.
+          await StatusBar.setOverlaysWebView({ overlay: false });
+          await StatusBar.setBackgroundColor({ color: '#ffffff' });
+          console.log('✅ StatusBar configurado correctamente');
+        } catch (error) {
+          console.error('❌ Error configurando StatusBar:', error);
+        }
+      }
+    };
+
+    setupStatusBar();
+  }, []);
 
   // 🎵 CLEANUP GLOBAL: Detener audio en navegación de rutas
   React.useEffect(() => {
@@ -163,7 +174,7 @@ function AppContent() {
   const handleCreatePoll = async (pollData) => {
     // Poll creation now handled by backend services in ContentCreationPage
     console.log('Poll creation triggered:', pollData);
-    
+
     toast({
       title: "¡Votación creada!",
       description: "Tu votación ha sido publicada exitosamente",
@@ -173,12 +184,10 @@ function AppContent() {
   // Show loading while checking auth or initializing config
   if (authLoading || !configInitialized) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-700 text-lg">
-            {!configInitialized ? 'Configurando entorno...' : 'Cargando...'}
-          </p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">{!configInitialized ? 'Configurando entorno...' : 'Cargando...'}</p>
         </div>
       </div>
     );
@@ -187,55 +196,48 @@ function AppContent() {
   // Check if user is authenticated
   if (!isAuthenticated) {
     return (
-      <div className="App relative">
-        <Routes>
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="*" element={<Navigate to="/auth" replace />} />
-        </Routes>
-        <Toaster />
-      </div>
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
     );
   }
 
   return (
     <ResponsiveLayout onCreatePoll={handleCreatePoll}>
-      <div className="App relative">
-          <Routes>
-            {/* Redirect root to feed */}
-            <Route path="/" element={<Navigate to="/feed" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/feed" replace />} />
-            <Route path="/auth" element={<Navigate to="/feed" replace />} />
-            
-            {/* Main pages */}
-            <Route path="/feed" element={<FeedPage />} />
-            <Route path="/explore" element={<ExplorePage />} />
-            <Route path="/explore/active" element={<ActiveChallengesPage />} />
-            <Route path="/challenge/create" element={<ChallengeCreationPage />} />
-            <Route path="/messages" element={<MessagesMainPage />} />
-            <Route path="/messages/followers" element={<FollowersPage />} />
-            <Route path="/messages/activity" element={<ActivityPage />} />
-            <Route path="/messages/requests" element={<RequestsPage />} />
-            <Route path="/profile/:userId?" element={<ProfilePage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/edit-profile" element={<EditProfilePage />} />
-            <Route path="/change-password" element={<ChangePasswordPage />} />
-            <Route path="/audio/:audioId" element={<AudioDetailPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/new" element={<Navigate to="/create" replace />} />
-            <Route path="/content-creation" element={<ContentCreationPage />} />
-            <Route path="/create" element={<ContentCreationPage />} />
-            <Route path="/content-publish" element={<ContentPublishPage />} />
-            <Route path="/vs-create" element={<VSCreatePage />} />
-            <Route path="/vs-experience" element={<VSExperiencePage />} />
-            <Route path="/moment-create" element={<MomentCreationPage />} />
-            <Route path="/following" element={<FollowingPage />} />
-            <Route path="/story-creation" element={<StoryCapturePage />} />
-            <Route path="/story-edit" element={<StoryEditPage />} />
-          </Routes>
+      <Routes>
+        {/* Redirect root to feed */}
+        <Route path="/" element={<Navigate to="/feed" replace />} />
+        <Route path="/feed" element={<FeedPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
 
-          <Toaster />
-      </div>
+        {/* Main pages */}
+        <Route path="/profile/:username" element={<ProfilePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/messages/:conversationId" element={<MessagesPage />} />
+        <Route path="/messages" element={<MessagesMainPage />} />
+        <Route path="/messages/followers" element={<FollowersPage />} />
+        <Route path="/messages/activity" element={<ActivityPage />} />
+        <Route path="/messages/requests" element={<RequestsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/edit-profile" element={<EditProfilePage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route path="/audio/:audioId" element={<AudioDetailPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/create" element={<ContentSelectionPage />} />
+        <Route path="/content-creation" element={<ContentCreationPage />} />
+        <Route path="/content-publish" element={<ContentPublishPage />} />
+        <Route path="/vs-create" element={<VSCreatePage />} />
+        <Route path="/vs-experience" element={<VSExperiencePage />} />
+        <Route path="/moment-create" element={<MomentCreationPage />} />
+        <Route path="/following" element={<FollowingPage />} />
+        <Route path="/story-creation" element={<StoryCapturePage />} />
+        <Route path="/story-edit" element={<StoryEditPage />} />
+        <Route path="/explore/completed" element={<CompletedBattlesPage />} />
+        <Route path="/explore/active" element={<ActiveChallengesPage />} />
+        <Route path="/challenges/create" element={<ChallengeCreationPage />} />
+      </Routes>
     </ResponsiveLayout>
   );
 }
@@ -251,15 +253,16 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <FollowProvider>
+        <TikTokProvider>
           <AddictionProvider>
-            <UploadProvider>
-              <TikTokProvider>
+            <FollowProvider>
+              <UploadProvider>
                 <AppContent />
-              </TikTokProvider>
-            </UploadProvider>
+                <Toaster />
+              </UploadProvider>
+            </FollowProvider>
           </AddictionProvider>
-        </FollowProvider>
+        </TikTokProvider>
       </AuthProvider>
     </BrowserRouter>
   );

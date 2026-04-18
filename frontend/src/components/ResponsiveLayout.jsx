@@ -35,7 +35,6 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   // Mobile functionality continues below (existing logic)
   // Check if we're on a page that should use the TikTok-style layout
   const isFeedPage = location.pathname === '/feed';
-  const isFollowingPage = location.pathname === '/following';
   const isExplorePage = location.pathname === '/explore';
   const isCreatePage = location.pathname === '/create';
   const isStoryPage = location.pathname === '/story-creation' || location.pathname === '/story-edit';
@@ -49,20 +48,6 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isChallengePage = location.pathname.startsWith('/challenges') || location.pathname === '/explore/active';
   const shouldUseTikTokLayout = (isFeedPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
 
-  // 📱 EDGE-TO-EDGE: páginas fullscreen (video/feed/crear/stories) manejan
-  // sus propias safe-areas mediante overlays internos. El resto de páginas
-  // recibe padding-top para no quedar debajo de la status bar transparente.
-  const isFullscreenPage =
-    isFeedPage ||
-    isFollowingPage ||
-    isExplorePage ||
-    isCreatePage ||
-    isStoryPage ||
-    isContentPublishPage ||
-    location.pathname === '/vs-create' ||
-    location.pathname === '/vs-experience' ||
-    location.pathname === '/moment-create';
-
   // Force hide RightSideNavigation on create page, story pages, content publish page, search page, messages page, challenges page, and other users' profiles
   const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage;
 
@@ -73,7 +58,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     if (isBottomNav) {
       return <BottomNavigation />;
     } else {
-      return <RightSideNavigation onCreatePoll={onCreatePoll} />;
+      return <RightSideNavigation />;
     }
   };
 
@@ -83,55 +68,33 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     const backgroundClass = (isCreatePage || isStoryPage) ? '' : 'bg-black';
 
     return (
-      <div className={`relative h-screen ${backgroundClass}`}>
+      <div className={`flex flex-col h-screen w-full ${backgroundClass} overflow-hidden`}>
         {isBottomNav && isAuthenticated && (
-          <div
-            style={{
-              paddingBottom: 'calc(52px + env(safe-area-inset-bottom, 0px))'
-            }}
-          >
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
         )}
         {!isBottomNav && children}
         {/* Navigation */}
-        <div className="lg:hidden">
+        <div className="flex-shrink-0">
           {renderNavigation()}
         </div>
       </div>
     );
   }
 
-  // Clases dinámicas:
-  // - safe-area-top: añade padding-top = altura de la status bar (sólo en
-  //   páginas no-fullscreen donde hay headers que deben respetar la barra)
-  // - pb-bottom-nav: añade padding-bottom = altura del BottomNavigation
-  //   + la nav bar del sistema, para que el contenido scrolleable no
-  //   quede tapado.
-  const safeAreaClass = isFullscreenPage ? '' : 'safe-area-top';
-
   return (
-    <div
-      className={`min-h-screen bg-gray-50 lg:bg-gray-100 ${safeAreaClass}`}
-      style={{
-        paddingBottom:
-          isBottomNav && isAuthenticated
-            ? 'calc(52px + env(safe-area-inset-bottom, 0px))'
-            : undefined
-      }}
-    >
+    <div className="flex min-h-screen bg-white">
       {/* Desktop Sidebar - Hidden on mobile */}
-      {isAuthenticated && <DesktopSidebar />}
+      {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
 
       {/* Main Content Area */}
-      <div className={`${isAuthenticated ? 'lg:ml-60 lg:mr-16' : ''}`}>
-        <div className="relative">
-          {children}
-        </div>
-      </div>
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
 
       {/* Navigation */}
-      <div className="lg:hidden">
+      <div className="flex-shrink-0">
         {renderNavigation()}
       </div>
     </div>
