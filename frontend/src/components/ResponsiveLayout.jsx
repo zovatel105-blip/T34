@@ -9,19 +9,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavPreference } from '../hooks/useNavPreference';
 
 /**
- * Spacer fijo de 16px — replica el py-4 de StatisticsModal.
- * Está FUERA del área de scroll para que NUNCA se desplace.
- * Esto garantiza que siempre hay 16px entre la barra de estado y el contenido.
+ * ResponsiveLayout
+ *
+ * Estructura IDÉNTICA a StatisticsModal (la única que funciona bien en APK):
+ *   <div className="fixed inset-0 flex flex-col bg-... overflow-hidden">
+ *      ...header/nav opcional (flex-shrink-0)...
+ *      <main className="flex-1 overflow-y-auto">{children}</main>
+ *      ...nav inferior (flex-shrink-0)...
+ *   </div>
+ *
+ * La regla CSS global `.fixed.inset-0 { padding-top: var(--safe-area-inset-top) }`
+ * garantiza que el contenido NUNCA se superpone a la barra de estado del sistema.
+ * El `overflow-hidden` + `flex-1 overflow-y-auto` garantiza un scroll
+ * correctamente delimitado al viewport (no crece más allá de la pantalla).
  */
-const StatusBarSpacer = ({ bg = 'transparent' }) => (
-  <div style={{ 
-    height: '16px', 
-    minHeight: '16px',
-    flexShrink: 0, 
-    width: '100%',
-    backgroundColor: bg,
-  }} />
-);
 
 const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const location = useLocation();
@@ -50,7 +51,6 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isContentPublishPage = location.pathname === '/content-publish';
   const isSearchPage = location.pathname === '/search';
   const isMessagesPage = location.pathname.startsWith('/messages/');
-  const isMessagesMainPage = location.pathname === '/messages';
   const isAudioDetailPage = location.pathname.startsWith('/audio/');
   const isSettingsPage = location.pathname === '/settings' || location.pathname === '/edit-profile' || location.pathname === '/change-password';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
@@ -68,18 +68,18 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     }
   };
 
+  // Layout TikTok (Feed / Explore / Create / Story en modo TikTok)
   if (shouldUseTikTokLayout) {
-    const backgroundClass = (isCreatePage || isStoryPage) ? '' : 'bg-black';
-
+    const isBlackBg = !(isCreatePage || isStoryPage);
     return (
-      <div className={`flex flex-col h-screen w-full ${backgroundClass} overflow-hidden`}>
-        {/* Spacer fijo FUERA del scroll — como StatisticsModal */}
-        <StatusBarSpacer bg={backgroundClass === 'bg-black' ? '#000' : 'transparent'} />
-        {/* Contenido scrollable */}
+      <div
+        className={`fixed inset-0 flex flex-col w-full overflow-hidden ${isBlackBg ? 'bg-black' : ''}`}
+      >
+        {/* Scroll principal — la CSS global añade padding-top var(--safe-area-inset-top) */}
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>
-        {/* Navigation */}
+        {/* Navegación inferior — no scrollea */}
         <div className="flex-shrink-0">
           {renderNavigation()}
         </div>
@@ -87,16 +87,15 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     );
   }
 
+  // Layout estándar
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      {/* Spacer fijo FUERA del scroll — como StatisticsModal */}
-      <StatusBarSpacer bg="#ffffff" />
-      {/* Contenido principal */}
-      <div className="flex flex-1 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-white overflow-hidden">
+      {/* Contenido principal (la CSS global añade padding-top var(--safe-area-inset-top)) */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Desktop Sidebar - Hidden on mobile */}
         {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
-        {/* Área de scroll del contenido */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Área de scroll del contenido — única fuente de scroll */}
+        <main className="flex-1 overflow-y-auto min-h-0">
           {children}
         </main>
         {/* Navigation */}

@@ -50,27 +50,21 @@ code {
 }
 
 /* ============================================================
-   SAFE AREA - Separación del status bar (16px como StatisticsModal)
-   Tres reglas que cubren TODOS los tipos de layout:
-   1. Contenedores fixed inset-0: padding-top
-   2. Headers sticky top-0: se pegan a 16px, no a 0px
-   3. Headers absolute top-0 dentro de fixed: offset de 16px
+   SAFE AREA - Separación del status bar (altura REAL del dispositivo)
+   Usa var(--safe-area-inset-top) que se mide dinámicamente desde
+   JS (useSafeArea hook) usando StatusBar.getInfo() en nativo.
+
+   Regla ÚNICA que necesitamos: los contenedores fullscreen
+   (fixed inset-0) reciben padding-top con el alto de la status bar.
+   Todo lo demás (sticky headers, absolute top-0, etc.) queda
+   naturalmente por debajo de la barra de estado porque está
+   dentro del área ya desplazada por el padding-top.
    ============================================================ */
 
-/* 1. Contenedores fullscreen: padding-top directo */
+/* Contenedores fullscreen: padding-top dinámico */
 .fixed.inset-0,
 [class*="fixed"][class*="inset-0"] {
-  padding-top: 16px;
-}
-
-/* 2. Headers sticky: se pegan a 16px del borde, no a 0px */
-.sticky.top-0 {
-  top: 16px !important;
-}
-
-/* 3. Headers absolute top-0: offset de 16px */
-.fixed.inset-0 > .absolute.top-0 {
-  top: 16px !important;
+  padding-top: var(--safe-area-inset-top);
 }
 
 /* ============================================================
@@ -153,9 +147,12 @@ body::-webkit-scrollbar {
    quede cortado/superpuesto. Esto es más confiable que env() en Android.
    ============================================================ */
 
-/* Variables CSS globales — DEFAULT 16px para que funcione incluso sin JS */
+/* Variables CSS globales — DEFAULT 28px como fallback razonable.
+   useSafeArea hook sobreescribe con el valor REAL del dispositivo:
+   - Web: 0px
+   - Nativo: altura medida con StatusBar.getInfo() (típicamente 24-44px) */
 :root {
-  --safe-area-inset-top: 16px;
+  --safe-area-inset-top: 28px;
   --safe-area-inset-bottom: 0px;
   --safe-area-inset-left: 0px;
   --safe-area-inset-right: 0px;
