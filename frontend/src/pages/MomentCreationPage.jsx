@@ -448,8 +448,8 @@ const MomentCreationPage = () => {
   return (
     <>
     <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black" style={{ margin: 0, padding: 0, paddingTop: 'var(--safe-area-inset-top)' }}>
-      {/* Main Content Area */}
-      <div className="absolute top-0 left-0 right-0 bottom-32">
+      {/* Main Content Area (absolute ignora padding-top, usamos top inline con safe-area) */}
+      <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           {/* Single Image Preview */}
           <div className="w-full h-full">
@@ -586,8 +586,8 @@ const MomentCreationPage = () => {
         </div>
       </div>
 
-      {/* Header Controls - Floating on top */}
-      <div className="absolute top-0 left-0 right-0 z-50">
+      {/* Header Controls - Floating on top (absolute ignora padding-top, usamos top inline con safe-area) */}
+      <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
           {/* Close button - Left */}
           <button

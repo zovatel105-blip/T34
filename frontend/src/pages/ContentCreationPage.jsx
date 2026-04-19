@@ -1430,8 +1430,10 @@ const ContentCreationPage = () => {
   return (
     <>
     <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black pt-safe" style={{ margin: 0, padding: 0, paddingTop: 'var(--safe-area-inset-top)' }}>
-      {/* Main Content Area - Con espacio inferior como StoryEditPage */}
-      <div className="absolute top-0 left-0 right-0 bottom-32">
+      {/* Main Content Area - Con espacio inferior como StoryEditPage.
+          Nota: absolute top-0 ignora padding-top del padre, así que añadimos
+          explícitamente el offset de safe-area-top. */}
+      <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           <LayoutPreview
             layout={selectedLayout}
@@ -1455,9 +1457,10 @@ const ContentCreationPage = () => {
         </div>
       </div>
 
-      {/* Header Controls - Floating on top - Hidden in preview mode */}
+      {/* Header Controls - Floating on top - Hidden in preview mode.
+          Nota: absolute top-0 ignora padding-top del padre; usamos top inline con safe-area. */}
       {!previewMode && (
-        <div className="absolute top-0 left-0 right-0 z-50">
+        <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
           {/* Main Controls Row */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
             {/* Close button - Left */}
