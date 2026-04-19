@@ -4,18 +4,75 @@
  * Mide la altura REAL de la status bar en nativo (Android/iOS) usando
  * StatusBar.getInfo() y la aplica como variable CSS --safe-area-inset-top.
  *
- * Fallbacks:
- *  - Web: 0px (no hay status bar)
- *  - Nativo sin info: 28px (promedio razonable xhdpi)
+ * MODO SIMULACIÓN (solo web, para testing):
+ *   Permite simular la status bar del APK en el navegador sin recompilar:
+ *   - Vía URL:       http://localhost:3000/feed?statusbar=44
+ *   - Vía consola:   localStorage.setItem('simulate_statusbar', '44'); location.reload();
+ *   - Quitar:        localStorage.removeItem('simulate_statusbar');
+ *                    o navegar sin ?statusbar
+ *   Además pinta una banda negra arriba con texto "SIMULADO · 44px" para
+ *   que veas claramente dónde empieza el status bar del teléfono.
  *
- * Esto garantiza que los contenedores `.fixed.inset-0` y los headers
- * `.sticky.top-0` se posicionen debajo de la barra de estado del sistema.
+ * Fallbacks:
+ *  - Web sin simulación: 0px (no hay status bar)
+ *  - Nativo sin info: 28px (promedio razonable xhdpi)
  */
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 const DEFAULT_NATIVE_TOP = 28; // Fallback razonable si getInfo falla
 const DEFAULT_WEB_TOP = 0;
+const SIM_KEY = 'simulate_statusbar';
+const SIM_OVERLAY_ID = '__statusbar_sim_overlay__';
+
+const getSimulatedHeight = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('statusbar');
+    if (fromUrl !== null) {
+      const n = parseInt(fromUrl, 10);
+      if (!Number.isNaN(n) && n >= 0 && n <= 200) {
+        localStorage.setItem(SIM_KEY, String(n));
+        return n;
+      }
+    }
+    const fromLS = localStorage.getItem(SIM_KEY);
+    if (fromLS !== null) {
+      const n = parseInt(fromLS, 10);
+      if (!Number.isNaN(n) && n >= 0 && n <= 200) return n;
+    }
+  } catch (_) { /* noop */ }
+  return null;
+};
+
+const ensureSimOverlay = (height) => {
+  let el = document.getElementById(SIM_OVERLAY_ID);
+  if (height === null || height === 0) {
+    if (el) el.remove();
+    return;
+  }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = SIM_OVERLAY_ID;
+    el.style.cssText = [
+      'position:fixed',
+      'top:0', 'left:0', 'right:0',
+      'z-index:2147483647',
+      'background:#000',
+      'color:#ff4',
+      'font:600 10px/1 -apple-system,system-ui,sans-serif',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
+      'letter-spacing:.5px',
+      'pointer-events:none',
+      'text-shadow:0 0 2px #000',
+    ].join(';');
+    document.body.appendChild(el);
+  }
+  el.style.height = `${height}px`;
+  el.textContent = `STATUS BAR SIMULADO · ${height}px (quitar: borrar ?statusbar o localStorage.removeItem('simulate_statusbar'))`;
+};
 
 export const useSafeArea = () => {
   const [safeAreaTop, setSafeAreaTop] = useState(
@@ -32,8 +89,18 @@ export const useSafeArea = () => {
     };
 
     if (!Capacitor.isNativePlatform()) {
-      // WEB: sin status bar del sistema
+      // WEB: comprobar si hay modo simulación activo
+      const simulated = getSimulatedHeight();
+      if (simulated !== null) {
+        applyVars(simulated, 0);
+        ensureSimOverlay(simulated);
+        // eslint-disable-next-line no-console
+        console.log('🧪 Status bar SIMULADA:', simulated, 'px');
+        return;
+      }
+      // Web sin simulación
       applyVars(DEFAULT_WEB_TOP, 0);
+      ensureSimOverlay(null);
       return;
     }
 
