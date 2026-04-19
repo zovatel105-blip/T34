@@ -132,17 +132,19 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 Configurar StatusBar inicial en dispositivos nativos (estilo TikTok)
-  // El edge-to-edge (overlay) lo maneja Java nativo en MainActivity.java
-  // Aquí solo configuramos el estilo de iconos inicial
+  // 📱 Configurar StatusBar inicial en dispositivos nativos
+  // Modo NO-OVERLAY: el sistema maneja el espacio de la status bar
   useEffect(() => {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // Solo iconos claros por defecto (feed es oscuro)
-          // NO llamar setOverlaysWebView - lo maneja Java nativo
+          // overlay=false → contenido DEBAJO de la status bar, sin superposición
+          await StatusBar.setOverlaysWebView({ overlay: false });
+          // Fondo negro por defecto (feed)
+          await StatusBar.setBackgroundColor({ color: '#000000' });
+          // Iconos claros (blancos) por defecto
           await StatusBar.setStyle({ style: Style.Light });
-          console.log('✅ StatusBar iconos configurados');
+          console.log('✅ StatusBar configurado (modo no-overlay)');
         } catch (error) {
           console.error('❌ Error configurando StatusBar:', error);
         }

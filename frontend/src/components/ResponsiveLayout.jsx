@@ -93,8 +93,8 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
       {/* Desktop Sidebar - Hidden on mobile */}
       {isAuthenticated && <DesktopSidebar onCreatePoll={onCreatePoll} />}
 
-      {/* Main Content Area - con safe-area para páginas normales */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+      {/* Main Content Area - overlay=false: el sistema maneja status bar */}
+      <main className="flex-1 overflow-y-auto">
         {children}
       </main>
 

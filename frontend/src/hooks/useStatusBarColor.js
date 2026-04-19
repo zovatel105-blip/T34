@@ -1,19 +1,36 @@
 /**
- * useStatusBarColor Hook - Estilo TikTok
+ * useStatusBarColor Hook - Modo NO-OVERLAY
  *
- * Solo cambia el color de los iconos de la barra de estado según la ruta.
- * NO modifica overlay ni background - eso lo maneja el código nativo Java.
+ * La barra de estado tiene su propio espacio reservado. El contenido
+ * NUNCA se superpone con ella. Solo cambiamos:
+ * - Color de fondo de la barra (para que combine con la página)
+ * - Estilo de iconos (claros u oscuros)
  *
- * - Iconos BLANCOS (Style.Light): páginas con fondo oscuro (feed, explore, etc.)
- * - Iconos OSCUROS (Style.Dark): páginas con fondo claro (settings, messages, etc.)
+ * overlay = false SIEMPRE → Sin superposición posible
  */
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
-// Rutas con fondo CLARO → iconos OSCUROS para que se vean
-const DARK_ICONS_ROUTES = [
+// Configuración por ruta: { backgroundColor, style }
+// Style.Light = iconos BLANCOS (para fondos oscuros)
+// Style.Dark = iconos OSCUROS (para fondos claros)
+const ROUTE_CONFIG = {
+  // Páginas oscuras → status bar negra, iconos blancos
+  dark: {
+    backgroundColor: '#000000',
+    style: Style.Light,
+  },
+  // Páginas claras → status bar blanca, iconos oscuros
+  light: {
+    backgroundColor: '#FFFFFF',
+    style: Style.Dark,
+  },
+};
+
+// Rutas con fondo CLARO
+const LIGHT_ROUTES = [
   '/settings',
   '/edit-profile',
   '/change-password',
@@ -27,36 +44,37 @@ const DARK_ICONS_ROUTES = [
 
 export const useStatusBarColor = () => {
   const location = useLocation();
-  const lastStyle = useRef(null);
+  const lastPath = useRef('');
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     const currentPath = location.pathname;
+    if (currentPath === lastPath.current) return;
+    lastPath.current = currentPath;
 
-    const updateStyle = async () => {
+    const updateStatusBar = async () => {
       try {
-        // Determinar estilo de iconos según la ruta
-        const needsDarkIcons = DARK_ICONS_ROUTES.some(route =>
+        // Asegurar overlay=false SIEMPRE
+        await StatusBar.setOverlaysWebView({ overlay: false });
+
+        // Determinar si la página es clara u oscura
+        const isLight = LIGHT_ROUTES.some(route =>
           currentPath === route || currentPath.startsWith(route + '/')
         );
 
-        const newStyle = needsDarkIcons ? Style.Dark : Style.Light;
+        const config = isLight ? ROUTE_CONFIG.light : ROUTE_CONFIG.dark;
 
-        // Evitar actualizaciones innecesarias
-        if (newStyle === lastStyle.current) return;
-        lastStyle.current = newStyle;
-
-        // SOLO cambiar estilo de iconos
-        // NO tocar overlay ni background (lo maneja Java nativo)
-        await StatusBar.setStyle({ style: newStyle });
+        // Aplicar color de fondo y estilo de iconos
+        await StatusBar.setBackgroundColor({ color: config.backgroundColor });
+        await StatusBar.setStyle({ style: config.style });
 
       } catch (error) {
-        console.error('Error actualizando StatusBar style:', error);
+        console.error('Error actualizando StatusBar:', error);
       }
     };
 
-    updateStyle();
+    updateStatusBar();
   }, [location.pathname]);
 };
 

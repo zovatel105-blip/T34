@@ -4,24 +4,16 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.view.WindowManager;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
 
-    private static final String TAG = "MainActivity";
-    private int statusBarHeightDp = 0;
-    private int navBarHeightDp = 0;
+    private static final String TAG = "VotaTok";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,17 +21,20 @@ public class MainActivity extends BridgeActivity {
 
         try {
             // ============================================================
-            // EDGE-TO-EDGE DISPLAY - Estilo TikTok
-            // La WebView se extiende detrás de las barras del sistema.
-            // Los insets reales se inyectan como CSS variables.
+            // MODO NO-OVERLAY: El sistema maneja el espacio de la status bar.
+            // El contenido NUNCA se superpone con la barra de estado.
+            // La status bar tiene su propio espacio reservado arriba.
             // ============================================================
-            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
 
-            // Status bar y navigation bar TRANSPARENTES
-            getWindow().setStatusBarColor(Color.TRANSPARENT);
-            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            // Status bar NEGRA por defecto (para el feed oscuro)
+            // El plugin Capacitor cambia el color dinámicamente según la página
+            getWindow().setStatusBarColor(Color.BLACK);
 
-            // Iconos claros por defecto (fondos oscuros del feed)
+            // Navigation bar transparente o negra
+            getWindow().setNavigationBarColor(Color.BLACK);
+
+            // Iconos claros (blancos) por defecto (para fondo oscuro)
             WindowInsetsControllerCompat controller =
                 WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
             if (controller != null) {
@@ -54,11 +49,11 @@ public class MainActivity extends BridgeActivity {
             }
 
             // ============================================================
-            // INYECTAR SAFE-AREA INSETS REALES EN LA WEBVIEW
-            // Esto es 100% confiable porque usa WindowInsetsCompat de
-            // Android, que conoce las dimensiones exactas del sistema.
+            // OCULTAR SCROLLBAR NATIVA DEL WEBVIEW
+            // CSS no puede ocultar la scrollbar nativa de Android WebView.
+            // Esto DEBE hacerse desde Java.
             // ============================================================
-            setupSafeAreaInsets();
+            hideNativeScrollbars();
 
         } catch (Exception e) {
             Log.e(TAG, "Error en onCreate", e);
@@ -66,60 +61,26 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Detecta los insets reales del sistema (status bar, nav bar)
-     * y los inyecta en la WebView como CSS custom properties.
+     * Oculta las barras de desplazamiento nativas del WebView de Android.
+     * CSS scrollbar-width:none y ::-webkit-scrollbar NO funcionan para
+     * la scrollbar nativa del WebView. Solo se puede ocultar desde Java.
      */
-    private void setupSafeAreaInsets() {
-        View decorView = getWindow().getDecorView();
-
-        ViewCompat.setOnApplyWindowInsetsListener(decorView, (view, windowInsets) -> {
-            Insets statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
-            Insets navBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
-
-            float density = getResources().getDisplayMetrics().density;
-
-            // WindowInsets devuelve valores en px físicos.
-            // CSS en WebView usa dp (device-independent pixels).
-            // 1 CSS px = 1 dp en Android WebView con viewport width=device-width
-            statusBarHeightDp = Math.round(statusBars.top / density);
-            navBarHeightDp = Math.round(navBars.bottom / density);
-
-            Log.d(TAG, "Safe-area insets: top=" + statusBarHeightDp + "dp, bottom=" + navBarHeightDp + "dp"
-                    + " (raw px: top=" + statusBars.top + ", bottom=" + navBars.bottom + ", density=" + density + ")");
-
-            // Inyectar en la WebView
-            injectSafeAreaCSS();
-
-            return windowInsets;
-        });
-
-        // Forzar que se dispare el listener
-        ViewCompat.requestApplyInsets(decorView);
-    }
-
-    /**
-     * Inyecta las CSS custom properties en la WebView.
-     * Se llama cada vez que cambian los insets y después de cada carga de página.
-     */
-    private void injectSafeAreaCSS() {
+    private void hideNativeScrollbars() {
         try {
             WebView webView = getBridge().getWebView();
-            if (webView == null) return;
-
-            String js =
-                "document.documentElement.style.setProperty('--safe-area-inset-top','" + statusBarHeightDp + "px');" +
-                "document.documentElement.style.setProperty('--safe-area-inset-bottom','" + navBarHeightDp + "px');" +
-                "window.__NATIVE_SAFE_AREA__={top:" + statusBarHeightDp + ",bottom:" + navBarHeightDp + "};" +
-                "console.log('📱 Native safe-area inyectada: top=" + statusBarHeightDp + "px, bottom=" + navBarHeightDp + "px');";
-
-            webView.post(() -> {
-                webView.evaluateJavascript(js, null);
-            });
-
-            Log.d(TAG, "CSS safe-area inyectada: top=" + statusBarHeightDp + "px, bottom=" + navBarHeightDp + "px");
-
+            if (webView != null) {
+                webView.setVerticalScrollBarEnabled(false);
+                webView.setHorizontalScrollBarEnabled(false);
+                // También ocultar la barra de scroll cuando se arrastra fuera de límites
+                webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+                Log.d(TAG, "Scrollbars nativas del WebView ocultadas");
+            } else {
+                Log.w(TAG, "WebView no disponible aún para ocultar scrollbars");
+                // Reintentar después de un delay
+                getWindow().getDecorView().postDelayed(this::hideNativeScrollbars, 500);
+            }
         } catch (Exception e) {
-            Log.e(TAG, "Error inyectando safe-area CSS", e);
+            Log.e(TAG, "Error ocultando scrollbars", e);
         }
     }
 }
