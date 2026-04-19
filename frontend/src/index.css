@@ -49,43 +49,68 @@ code {
   user-select: none;
 }
 
-/* Hide scrollbar for horizontal scroll */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* ============================================================
+   OCULTAR SCROLLBARS GLOBALMENTE - Estilo TikTok
+   TikTok nunca muestra barras de desplazamiento.
+   Se ocultan en TODOS los elementos y TODOS los tamaños de pantalla.
+   El scroll sigue funcionando normalmente, solo se oculta el indicador visual.
+   ============================================================ */
+
+/* Global: ocultar scrollbar en TODOS los elementos */
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
-/* TikTok-style scrollbar hide */
+/* Clases de utilidad (para uso explícito en componentes) */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-/* Hide scrollbars globally on mobile devices */
-@media (max-width: 768px) {
-  *::-webkit-scrollbar {
-    display: none;
-  }
-  
-  * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  /* Ensure smooth scrolling on iOS */
-  [class*="overflow-y"],
-  [class*="overflow-x"],
-  [class*="overflow-auto"] {
-    -webkit-overflow-scrolling: touch;
-  }
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Smooth scrolling en contenedores scrollables */
+[class*="overflow-y"],
+[class*="overflow-x"],
+[class*="overflow-auto"],
+[class*="overflow-scroll"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* html y body sin scrollbar */
+html, body {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Inter font import */
