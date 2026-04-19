@@ -226,7 +226,7 @@ const ActivityPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex-shrink-0 bg-white px-4 pt-3 pb-2">
         <div className="flex items-center justify-center relative mb-3">

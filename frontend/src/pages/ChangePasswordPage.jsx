@@ -87,8 +87,8 @@ const ChangePasswordPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4">
+      {/* Header (sticky) */}
+      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 py-4 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
         </button>

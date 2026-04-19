@@ -203,8 +203,8 @@ const SettingsPage = () => {
       {/* Contenedor estilo modal — rounded top, handle bar, título centrado */}
       <div className="max-w-md mx-auto bg-white rounded-t-3xl">
 
-        {/* Header — centrado con botón de volver */}
-        <div className="flex items-center justify-between px-4 py-3">
+        {/* Header — centrado con botón de volver (sticky para que no se deslice) */}
+        <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <button
             onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"

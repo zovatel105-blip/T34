@@ -574,7 +574,7 @@ const MessagesPage = () => {
   // ===================== RENDER =====================
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-full bg-white">
       {/* Sidebar - Conversations List */}
       <div className={cn(
         "border-r bg-white transition-all duration-300",

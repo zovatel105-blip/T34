@@ -980,8 +980,8 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Section - Minimalist Design */}
-      <div className="bg-white z-50">
+      {/* Header Section - Minimalist Design (sticky para no deslizar con el scroll) */}
+      <div className="sticky top-0 bg-white z-50">
         {/* Top Row - Back Button + Search Bar */}
         <div className="px-1 py-3">
           <div className="flex items-center gap-3">
