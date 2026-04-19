@@ -50,13 +50,27 @@ code {
 }
 
 /* ============================================================
-   SAFE AREA - Separación automática del status bar
-   Aplica padding-top a TODOS los contenedores fixed inset-0.
-   --safe-area-inset-top es 16px en nativo (set by useSafeArea hook)
-   y 0px en web (sin efecto).
+   SAFE AREA - Separación del status bar (16px como StatisticsModal)
+   Tres reglas que cubren TODOS los tipos de layout:
+   1. Contenedores fixed inset-0: padding-top
+   2. Headers sticky top-0: se pegan a 16px, no a 0px
+   3. Headers absolute top-0 dentro de fixed: offset de 16px
    ============================================================ */
-.fixed.inset-0 {
-  padding-top: var(--safe-area-inset-top, 0px);
+
+/* 1. Contenedores fullscreen: padding-top directo */
+.fixed.inset-0,
+[class*="fixed"][class*="inset-0"] {
+  padding-top: 16px;
+}
+
+/* 2. Headers sticky: se pegan a 16px del borde, no a 0px */
+.sticky.top-0 {
+  top: 16px !important;
+}
+
+/* 3. Headers absolute top-0: offset de 16px */
+.fixed.inset-0 > .absolute.top-0 {
+  top: 16px !important;
 }
 
 /* ============================================================
@@ -139,9 +153,9 @@ body::-webkit-scrollbar {
    quede cortado/superpuesto. Esto es más confiable que env() en Android.
    ============================================================ */
 
-/* Variables CSS globales (establecidas por useSafeArea hook) */
+/* Variables CSS globales — DEFAULT 16px para que funcione incluso sin JS */
 :root {
-  --safe-area-inset-top: 0px;
+  --safe-area-inset-top: 16px;
   --safe-area-inset-bottom: 0px;
   --safe-area-inset-left: 0px;
   --safe-area-inset-right: 0px;
