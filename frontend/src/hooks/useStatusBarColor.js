@@ -1,35 +1,16 @@
 /**
- * useStatusBarColor Hook - Modo NO-OVERLAY
+ * useStatusBarColor Hook
  *
- * La barra de estado tiene su propio espacio reservado. El contenido
- * NUNCA se superpone con ella. Solo cambiamos:
- * - Color de fondo de la barra (para que combine con la página)
- * - Estilo de iconos (claros u oscuros)
- *
- * overlay = false SIEMPRE → Sin superposición posible
+ * SOLO cambia el color de fondo y estilo de iconos de la status bar.
+ * NO llama a setOverlaysWebView (eso lo maneja capacitor.config.json).
+ * Llamar setOverlaysWebView desde JS causa race condition en Android 15.
  */
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
-// Configuración por ruta: { backgroundColor, style }
-// Style.Light = iconos BLANCOS (para fondos oscuros)
-// Style.Dark = iconos OSCUROS (para fondos claros)
-const ROUTE_CONFIG = {
-  // Páginas oscuras → status bar negra, iconos blancos
-  dark: {
-    backgroundColor: '#000000',
-    style: Style.Light,
-  },
-  // Páginas claras → status bar blanca, iconos oscuros
-  light: {
-    backgroundColor: '#FFFFFF',
-    style: Style.Dark,
-  },
-};
-
-// Rutas con fondo CLARO
+// Rutas con fondo CLARO → status bar blanca, iconos oscuros
 const LIGHT_ROUTES = [
   '/settings',
   '/edit-profile',
@@ -44,37 +25,35 @@ const LIGHT_ROUTES = [
 
 export const useStatusBarColor = () => {
   const location = useLocation();
-  const lastPath = useRef('');
+  const lastConfig = useRef('');
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     const currentPath = location.pathname;
-    if (currentPath === lastPath.current) return;
-    lastPath.current = currentPath;
+    const isLight = LIGHT_ROUTES.some(route =>
+      currentPath === route || currentPath.startsWith(route + '/')
+    );
 
-    const updateStatusBar = async () => {
+    const configKey = isLight ? 'light' : 'dark';
+    if (configKey === lastConfig.current) return;
+    lastConfig.current = configKey;
+
+    const update = async () => {
       try {
-        // Asegurar overlay=false SIEMPRE
-        await StatusBar.setOverlaysWebView({ overlay: false });
-
-        // Determinar si la página es clara u oscura
-        const isLight = LIGHT_ROUTES.some(route =>
-          currentPath === route || currentPath.startsWith(route + '/')
-        );
-
-        const config = isLight ? ROUTE_CONFIG.light : ROUTE_CONFIG.dark;
-
-        // Aplicar color de fondo y estilo de iconos
-        await StatusBar.setBackgroundColor({ color: config.backgroundColor });
-        await StatusBar.setStyle({ style: config.style });
-
-      } catch (error) {
-        console.error('Error actualizando StatusBar:', error);
+        if (isLight) {
+          await StatusBar.setBackgroundColor({ color: '#FFFFFF' });
+          await StatusBar.setStyle({ style: Style.Dark });
+        } else {
+          await StatusBar.setBackgroundColor({ color: '#000000' });
+          await StatusBar.setStyle({ style: Style.Light });
+        }
+      } catch (e) {
+        console.error('StatusBar error:', e);
       }
     };
 
-    updateStatusBar();
+    update();
   }, [location.pathname]);
 };
 

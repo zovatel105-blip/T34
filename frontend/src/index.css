@@ -50,6 +50,16 @@ code {
 }
 
 /* ============================================================
+   SAFE AREA - Separación automática del status bar
+   Aplica padding-top a TODOS los contenedores fixed inset-0.
+   --safe-area-inset-top es 16px en nativo (set by useSafeArea hook)
+   y 0px en web (sin efecto).
+   ============================================================ */
+.fixed.inset-0 {
+  padding-top: var(--safe-area-inset-top, 0px);
+}
+
+/* ============================================================
    OCULTAR SCROLLBARS GLOBALMENTE - Estilo TikTok
    TikTok nunca muestra barras de desplazamiento.
    Se ocultan en TODOS los elementos y TODOS los tamaños de pantalla.

@@ -132,25 +132,19 @@ function AppContent() {
     initializeAppConfig();
   }, []);
 
-  // 📱 Configurar StatusBar inicial en dispositivos nativos
-  // Modo NO-OVERLAY: el sistema maneja el espacio de la status bar
+  // 📱 StatusBar inicial - solo colores, NO overlay (lo maneja capacitor.config.json)
   useEffect(() => {
     const setupStatusBar = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
-          // overlay=false → contenido DEBAJO de la status bar, sin superposición
-          await StatusBar.setOverlaysWebView({ overlay: false });
-          // Fondo negro por defecto (feed)
           await StatusBar.setBackgroundColor({ color: '#000000' });
-          // Iconos claros (blancos) por defecto
           await StatusBar.setStyle({ style: Style.Light });
-          console.log('✅ StatusBar configurado (modo no-overlay)');
+          console.log('✅ StatusBar colores configurados');
         } catch (error) {
-          console.error('❌ Error configurando StatusBar:', error);
+          console.error('❌ Error StatusBar:', error);
         }
       }
     };
-
     setupStatusBar();
   }, []);
 
