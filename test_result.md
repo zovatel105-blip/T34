@@ -251,6 +251,23 @@ Feed Post Layout (Posts PROPIOS):
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
+frontend:
+  - task: "Edge-to-edge fullscreen al abrir publicación desde Explore/AudioDetail/Search/Profile"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/ResponsiveLayout.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Cambio aplicado en ResponsiveLayout.jsx (línea 64-66): shouldUseTikTokLayout ahora se activa con cualquier página que entre en modo TikTok (antes solo Feed/Following/Explore/Create/Story). Así, al hacer click en una publicación desde Explore, AudioDetail, Search o Profile, el wrapper pasa a fondo negro edge-to-edge y el TikTokScrollView se ve completo detrás de la barra de notificaciones del sistema, igual que en el feed. Verificación final requiere rebuild del APK desde Android Studio."
+
+agent_communication:
+  - agent: "main"
+    message: "Se modificó ResponsiveLayout.jsx para extender el layout edge-to-edge a cualquier página en modo TikTok. El cambio es mínimo (1 línea efectiva). Frontend compila sin errores. El usuario debe regenerar el APK (yarn build + npx cap sync android + Android Studio) para ver el efecto en el dispositivo nativo."
+
 **🎨 LAYOUTS NO MOSTRABAN CONTENIDO NI MÚSICA - CORREGIDO (2025-01-11): Problema crítico en endpoint ultra-fast resuelto - ahora todos los layouts muestran correctamente imágenes, videos y música.**
 
 ✅ **PROBLEMA IDENTIFICADO:**
