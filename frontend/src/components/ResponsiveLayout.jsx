@@ -57,13 +57,7 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const isChallengePage = location.pathname.startsWith('/challenges') || location.pathname === '/explore/active';
   // /following debe verse como /feed (fondo negro detrás de la status bar, TikTok scroll)
-  // 🎬 Además, CUALQUIER página que entre en modo TikTok (Profile, Search, AudioDetail,
-  // PostViewer, etc. al hacer click sobre una publicación) debe usar este layout para
-  // que la publicación se vea COMPLETA detrás de la barra de notificaciones del sistema,
-  // exactamente como en el feed.
-  const shouldUseTikTokLayout =
-    ((isFeedPage || isFollowingPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode)
-    || isTikTokMode;
+  const shouldUseTikTokLayout = (isFeedPage || isFollowingPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
 
   const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage;
 
@@ -96,8 +90,13 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   }
 
   // Layout estándar
+  // 🎬 Cuando una página entra en modo TikTok (ej: Profile/Search/AudioDetail abre una
+  // publicación), el fondo cambia a negro para que NO se vea una franja blanca detrás
+  // del TikTokScrollView (que se renderiza como position: fixed encima). La estructura
+  // del árbol se mantiene IGUAL para que la página NO se desmonte y no se pierda el
+  // estado (tikTokPolls, initialPollIndex, etc.).
   return (
-    <div className="fixed inset-0 flex flex-col bg-white overflow-hidden">
+    <div className={`fixed inset-0 flex flex-col ${isTikTokMode ? 'bg-black' : 'bg-white'} overflow-hidden`}>
       {/* Contenido principal (la CSS global añade padding-top var(--safe-area-inset-top)) */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Desktop Sidebar - Hidden on mobile */}
