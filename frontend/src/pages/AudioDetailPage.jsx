@@ -603,7 +603,7 @@ const AudioDetailPage = () => {
         </div>
 
         {/* Action Buttons - Full width, pill shaped, thin */}
-        <div className="w-full flex gap-3">
+        <div className="w-full flex gap-5">
           <Button
             onClick={handleUseThisSound}
             className="flex-1 flex items-center justify-center gap-2 text-white hover:brightness-110 border-0 rounded-full h-10 text-sm font-semibold shadow-sm"
