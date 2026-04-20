@@ -1706,37 +1706,25 @@ const SearchPage = () => {
         }
       `}</style>
 
-      {/* TikTokScrollView for search results with back button */}
+      {/* TikTokScrollView for search results - renderizado directo sin
+          wrapper para que el contenido se vea edge-to-edge igual que en
+          el feed (sin franja entre status bar y la imagen). */}
       {showTikTokView && tikTokViewPosts.length > 0 && (
-        <div className="fixed inset-0 z-[999] bg-black overflow-hidden" style={{ 
-          height: '100vh', 
-          height: '100dvh',
-          width: '100vw',
-          width: '100dvw',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0
-        }}>
-          {/* Botón "Volver a búsqueda" eliminado: el botón "atrás" del
-              sistema (Android back / iOS swipe) cierra la vista TikTok. */}
-
-          <TikTokScrollView
-            polls={tikTokViewPosts}
-            initialIndex={currentTikTokIndex}
-            onVote={handleTikTokVote}
-            onLike={handleTikTokLike}
-            onShare={handleTikTokShare}
-            onComment={handleTikTokComment}
-            onSave={handleTikTokSave}
-            onCreatePoll={handleTikTokCreatePoll}
-            onUpdatePoll={handleTikTokUpdatePoll}
-            onDeletePoll={handleTikTokDeletePoll}
-            onIndexChange={loadMorePostsDynamic}
-            onExitTikTok={handleCloseTikTokView}
-            closeOnBack={true}
-          />
-        </div>
+        <TikTokScrollView
+          polls={tikTokViewPosts}
+          initialIndex={currentTikTokIndex}
+          onVote={handleTikTokVote}
+          onLike={handleTikTokLike}
+          onShare={handleTikTokShare}
+          onComment={handleTikTokComment}
+          onSave={handleTikTokSave}
+          onCreatePoll={handleTikTokCreatePoll}
+          onUpdatePoll={handleTikTokUpdatePoll}
+          onDeletePoll={handleTikTokDeletePoll}
+          onIndexChange={loadMorePostsDynamic}
+          onExitTikTok={handleCloseTikTokView}
+          closeOnBack={true}
+        />
       )}
     </div>
   );

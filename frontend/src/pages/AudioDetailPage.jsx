@@ -672,19 +672,17 @@ const AudioDetailPage = () => {
 
       {/* TikTok View */}
       {showTikTokView && (
-        <div className="fixed inset-0 z-50 bg-black">
-          <TikTokScrollView
-            polls={posts}
-            initialIndex={selectedPostIndex}
-            onExitTikTok={() => setShowTikTokView(false)}
-            showLogo={false}
-            currentAudio={audio}
-            onUseSound={handleUseThisSound}
-            onSave={handleSave}
-            fromAudioDetailPage={true}
-            closeOnBack={true}
-          />
-        </div>
+        <TikTokScrollView
+          polls={posts}
+          initialIndex={selectedPostIndex}
+          onExitTikTok={() => setShowTikTokView(false)}
+          showLogo={false}
+          currentAudio={audio}
+          onUseSound={handleUseThisSound}
+          onSave={handleSave}
+          fromAudioDetailPage={true}
+          closeOnBack={true}
+        />
       )}
     </div>
   );

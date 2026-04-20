@@ -292,9 +292,17 @@ const ExplorePage = () => {
   }, [navigate]);
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
-      {/* Header fijo con título */}
-      <div className="absolute top-0 left-0 right-0 z-40 px-4 py-3 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none">
+    <div
+      className="fixed inset-0 bg-black overflow-hidden"
+      style={{ paddingTop: 0 }} /* override regla global .fixed.inset-0 */
+    >
+      {/* Header fijo con título - respeta safe-area propio para
+          que la imagen/video debajo se vea edge-to-edge (detrás del
+          status bar), como en el feed. */}
+      <div
+        className="absolute top-0 left-0 right-0 z-40 px-4 pb-3 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none"
+        style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)' }}
+      >
         <div className="flex items-center pointer-events-auto">
           <h1 className="text-white text-lg font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
