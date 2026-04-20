@@ -15,7 +15,7 @@ import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 const AudioDetailPage = () => {
   const { audioId } = useParams();
   const navigate = useNavigate();
-  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+  const { hideRightNavigationBar, showRightNavigationBar, enterTikTokMode, exitTikTokMode } = useTikTok();
 
   // Ocultar barra de navegación en esta página
   useEffect(() => {
@@ -306,7 +306,20 @@ const AudioDetailPage = () => {
     const index = posts.findIndex(p => p.id === post.id);
     setSelectedPostIndex(index >= 0 ? index : 0);
     setShowTikTokView(true);
+    // 🎬 Entrar en modo TikTok para que la status bar se ponga oscura (fullscreen real)
+    enterTikTokMode();
   };
+
+  // Cuando se cierra la vista TikTok, salir del modo para restaurar status bar
+  useEffect(() => {
+    if (!showTikTokView) {
+      exitTikTokMode();
+    }
+    return () => {
+      // Al desmontar la página, asegurar que el modo TikTok quede desactivado
+      exitTikTokMode();
+    };
+  }, [showTikTokView]);
 
   const handleCreatePoll = async (newPoll) => {
     // This function is no longer needed since we navigate to ContentCreationPage

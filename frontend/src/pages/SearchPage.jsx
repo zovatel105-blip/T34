@@ -26,7 +26,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [autocompleteResults, setAutocompleteResults] = useState([]);
-  const { hideRightNavigationBar, showRightNavigationBar } = useTikTok();
+  const { hideRightNavigationBar, showRightNavigationBar, enterTikTokMode, exitTikTokMode } = useTikTok();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
@@ -78,6 +78,8 @@ const SearchPage = () => {
       document.body.style.height = '100%';
       document.body.style.top = '0';
       document.body.style.left = '0';
+      // 🎬 Entrar en modo TikTok → status bar oscura (fullscreen real en nativo)
+      enterTikTokMode();
     } else {
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -85,6 +87,8 @@ const SearchPage = () => {
       document.body.style.height = '';
       document.body.style.top = '';
       document.body.style.left = '';
+      // Salir del modo TikTok → restaura status bar según la ruta
+      exitTikTokMode();
     }
     return () => {
       document.body.style.overflow = '';
@@ -93,6 +97,8 @@ const SearchPage = () => {
       document.body.style.height = '';
       document.body.style.top = '';
       document.body.style.left = '';
+      // Al desmontar, asegurar salida del modo TikTok
+      exitTikTokMode();
     };
   }, [showTikTokView]);
 

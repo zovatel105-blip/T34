@@ -12,11 +12,13 @@ import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
 import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
+import { useTikTok } from '../contexts/TikTokContext';
 import AppConfig from '../config/config';
 
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
+  const { enterTikTokMode, exitTikTokMode } = useTikTok();
   const [battles, setBattles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedPolls, setSavedPolls] = useState(new Set());
@@ -28,6 +30,16 @@ const ExplorePage = () => {
   const [selectedPollAuthor, setSelectedPollAuthor] = useState('');
   const { toast } = useToast();
   const { shareModal, sharePoll, closeShareModal } = useShare();
+
+  // 🎬 ExplorePage siempre muestra TikTokScrollView → activar modo TikTok
+  // al entrar y desactivarlo al salir para que la status bar nativa se
+  // vea oscura (fullscreen real, sin franja blanca encima).
+  useEffect(() => {
+    enterTikTokMode();
+    return () => {
+      exitTikTokMode();
+    };
+  }, []);
 
   // Cargar challenges completados del backend
   useEffect(() => {

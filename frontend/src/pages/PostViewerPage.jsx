@@ -7,6 +7,7 @@ import savedPollsService from '../services/savedPollsService';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
+import { useTikTok } from '../contexts/TikTokContext';
 
 /**
  * Full-screen TikTok-style viewer for a single post.
@@ -19,6 +20,7 @@ const PostViewerPage = () => {
   const { user: authUser } = useAuth();
   const { toast } = useToast();
   const { sharePoll } = useShare();
+  const { enterTikTokMode, exitTikTokMode } = useTikTok();
 
   const [polls, setPolls] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,15 @@ const PostViewerPage = () => {
   const [selectedPollId, setSelectedPollId] = useState(null);
   const [selectedPollTitle, setSelectedPollTitle] = useState('');
   const [selectedPollAuthor, setSelectedPollAuthor] = useState('');
+
+  // 🎬 Activar modo TikTok mientras esta página está montada para que
+  // la status bar nativa sea oscura (fullscreen real).
+  useEffect(() => {
+    enterTikTokMode();
+    return () => {
+      exitTikTokMode();
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
