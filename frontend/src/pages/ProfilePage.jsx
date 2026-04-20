@@ -136,7 +136,8 @@ const ProfilePage = () => {
   const { getUserFollowers, getUserFollowing, followUser, unfollowUser, isFollowing, followsMe, getFollowStatus, followStateVersion, refreshTrigger, getUserByUsername } = useFollow();
   const { shareModal, shareProfile, closeShareModal } = useShare();
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
-  const { userId } = useParams();
+  // Route is /profile/:username → alias al nombre usado en todo el componente
+  const { username: userId } = useParams();
   const navigate = useNavigate();
 
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
