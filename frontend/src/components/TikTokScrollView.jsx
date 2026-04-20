@@ -2075,7 +2075,7 @@ const TikTokScrollView = ({
         <div className="fixed z-50"
              style={{
                top: 'max(1rem, var(--safe-area-inset-top))',
-               right: 'max(4rem, calc(var(--safe-area-inset-right) + 3rem))'
+               right: 'max(1rem, var(--safe-area-inset-right))'
              }}>
           {/* Botón Use Sound */}
           <Button
