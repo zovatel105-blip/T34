@@ -56,8 +56,11 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isSettingsPage = location.pathname === '/settings' || location.pathname === '/edit-profile' || location.pathname === '/change-password';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
   const isChallengePage = location.pathname.startsWith('/challenges') || location.pathname === '/explore/active';
-  // /following debe verse como /feed (fondo negro detrás de la status bar, TikTok scroll)
-  const shouldUseTikTokLayout = (isFeedPage || isFollowingPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
+  // Usar layout fullscreen (TikTok) siempre que isTikTokMode esté activo.
+  // Esto hace que el contenido se extienda detrás de la status bar (como en el
+  // feed) cuando se abre una publicación desde Profile / Audio / Search /
+  // Explore / PostViewer.
+  const shouldUseTikTokLayout = isTikTokMode;
 
   const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage;
 

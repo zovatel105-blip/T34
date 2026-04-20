@@ -17,11 +17,16 @@ const AudioDetailPage = () => {
   const navigate = useNavigate();
   const { hideRightNavigationBar, showRightNavigationBar, enterTikTokMode, exitTikTokMode } = useTikTok();
 
-  // Ocultar barra de navegación en esta página
+  // Ocultar barra de navegación SOLO cuando NO estemos en vista TikTok.
+  // En vista TikTok la barra debe estar visible como en el feed.
   useEffect(() => {
-    hideRightNavigationBar();
+    if (showTikTokView) {
+      showRightNavigationBar();
+    } else {
+      hideRightNavigationBar();
+    }
     return () => showRightNavigationBar();
-  }, []);
+  }, [showTikTokView]);
   const { toast } = useToast();
   
   const [audio, setAudio] = useState(null);

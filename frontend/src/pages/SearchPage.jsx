@@ -523,7 +523,8 @@ const SearchPage = () => {
       setTikTokViewPosts([instantPollData]);
       setCurrentTikTokIndex(0);
       setShowTikTokView(true);
-      hideRightNavigationBar();
+      // NOTA: ya no ocultamos la barra de navegación al abrir la vista
+      // TikTok; se mantiene visible como en el feed para consistencia.
       setLoadingAdjacentPosts(new Set());
       
       // 🔄 BACKGROUND: Fetch full data to get vote status, music, exact counts, etc.
