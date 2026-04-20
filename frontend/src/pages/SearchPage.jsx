@@ -1718,15 +1718,9 @@ const SearchPage = () => {
           right: 0,
           bottom: 0
         }}>
-          {/* Back to search button - moved closer to right edge */}
-          <button
-            onClick={handleCloseTikTokView}
-            className="fixed top-4 right-1 z-[1000] bg-black/50 hover:bg-black/70 text-white text-sm px-3 py-2 rounded-full backdrop-blur-sm transition-all duration-200 flex items-center gap-2"
-          >
-            <ArrowLeft size={16} />
-            Volver a búsqueda
-          </button>
-          
+          {/* Botón "Volver a búsqueda" eliminado: el botón "atrás" del
+              sistema (Android back / iOS swipe) cierra la vista TikTok. */}
+
           <TikTokScrollView
             polls={tikTokViewPosts}
             initialIndex={currentTikTokIndex}
