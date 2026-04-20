@@ -16,17 +16,6 @@ const AudioDetailPage = () => {
   const { audioId } = useParams();
   const navigate = useNavigate();
   const { hideRightNavigationBar, showRightNavigationBar, enterTikTokMode, exitTikTokMode } = useTikTok();
-
-  // Ocultar barra de navegación SOLO cuando NO estemos en vista TikTok.
-  // En vista TikTok la barra debe estar visible como en el feed.
-  useEffect(() => {
-    if (showTikTokView) {
-      showRightNavigationBar();
-    } else {
-      hideRightNavigationBar();
-    }
-    return () => showRightNavigationBar();
-  }, [showTikTokView]);
   const { toast } = useToast();
   
   const [audio, setAudio] = useState(null);
@@ -38,6 +27,17 @@ const AudioDetailPage = () => {
   const [showTikTokView, setShowTikTokView] = useState(false);
   const [selectedPostIndex, setSelectedPostIndex] = useState(0);
   const [dominantColor, setDominantColor] = useState('rgba(176, 97, 255, 0.15)');
+
+  // Ocultar barra de navegación SOLO cuando NO estemos en vista TikTok.
+  // En vista TikTok la barra debe estar visible como en el feed.
+  useEffect(() => {
+    if (showTikTokView) {
+      showRightNavigationBar();
+    } else {
+      hideRightNavigationBar();
+    }
+    return () => showRightNavigationBar();
+  }, [showTikTokView]);
 
   useEffect(() => {
     fetchAudioDetails();
