@@ -149,26 +149,38 @@ const ProfilePage = () => {
     setShowStickyHeader(false);
   }, [userId]);
 
-  // Detectar scroll para mostrar/ocultar mini header compacto
+  // Detectar cuándo la sección de perfil sale de vista para mostrar el mini header.
+  // Usamos IntersectionObserver porque el scroll real ocurre dentro de
+  // <main class="overflow-y-auto"> en ResponsiveLayout, NO en window.
+  // Antes usábamos window.addEventListener('scroll'), pero ese evento nunca
+  // se disparaba → el botón Seguir compacto no aparecía al scrollear el grid.
   useEffect(() => {
-    const handleScroll = () => {
-      const el = profileHeaderSectionRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      // Mostrar compact header cuando la sección de perfil sale de la vista
-      const shouldShow = rect.bottom < 60;
-      setShowStickyHeader(shouldShow);
-    };
+    const el = profileHeaderSectionRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Delay initial check to ensure DOM is rendered
-    const timer = setTimeout(handleScroll, 100);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(timer);
-    };
-  }, [viewedUser, loading]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        // Mostrar compact header cuando el header de perfil deja de ser visible
+        // (su parte inferior pasa por encima del top del viewport)
+        const shouldShow = !entry.isIntersecting && entry.boundingClientRect.bottom < 60;
+        setShowStickyHeader(shouldShow);
+      },
+      {
+        // root=null → usa el viewport (también funciona con scroll containers
+        // anidados porque la posición de boundingClientRect es global).
+        root: null,
+        // Margen negativo en el top para activar justo cuando el header sale
+        // por encima de los primeros 60px (zona del header sticky).
+        rootMargin: '-60px 0px 0px 0px',
+        threshold: [0, 0.01, 1],
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [viewedUser, loading, isTikTokMode]);
 
   // 🏆 Load own profile stats (includes challenge votes)
   useEffect(() => {
