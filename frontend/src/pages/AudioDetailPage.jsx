@@ -543,12 +543,12 @@ const AudioDetailPage = () => {
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
         {/* Audio Info Card - gradiente de color dominante + sombra
-            grande y suave tipo Material elevation (sin bordes visibles). */}
+            del MISMO color del gradiente (sin bordes visibles). */}
         <div
           className="w-full rounded-2xl overflow-hidden transition-all duration-500 border-0"
           style={{
             background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`,
-            boxShadow: '0 10px 30px -6px rgba(0, 0, 0, 0.18), 0 4px 12px -2px rgba(0, 0, 0, 0.08)'
+            boxShadow: `0 10px 30px -6px ${dominantColor.replace('0.2', '0.55')}, 0 4px 14px -2px ${dominantColor.replace('0.2', '0.35')}`
           }}
         >
           <div className="flex items-center gap-4 p-4">
