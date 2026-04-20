@@ -76,8 +76,10 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
     return (
       <div
         className={`fixed inset-0 flex flex-col w-full overflow-hidden ${isBlackBg ? 'bg-black' : ''}`}
+        style={{ paddingTop: 0 }}
       >
-        {/* Scroll principal — la CSS global añade padding-top var(--safe-area-inset-top) */}
+        {/* Scroll principal — sin padding-top para ir edge-to-edge (TikTokScrollView
+            interno usa position:fixed; top:0 y queda detrás de la barra del sistema). */}
         <div className="flex-1 overflow-y-auto">
           {children}
         </div>
@@ -91,12 +93,16 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
 
   // Layout estándar
   // 🎬 Cuando una página entra en modo TikTok (ej: Profile/Search/AudioDetail abre una
-  // publicación), el fondo cambia a negro para que NO se vea una franja blanca detrás
-  // del TikTokScrollView (que se renderiza como position: fixed encima). La estructura
-  // del árbol se mantiene IGUAL para que la página NO se desmonte y no se pierda el
-  // estado (tikTokPolls, initialPollIndex, etc.).
+  // publicación), el fondo cambia a negro y eliminamos el padding-top global de
+  // var(--safe-area-inset-top) via inline style. Esto permite que el TikTokScrollView
+  // interno (que usa position:fixed; top:0) llegue hasta el borde REAL del viewport
+  // y se vea completo detrás de la barra de notificaciones del sistema, como en el
+  // feed. La estructura del árbol se mantiene IGUAL para no desmontar la página.
   return (
-    <div className={`fixed inset-0 flex flex-col ${isTikTokMode ? 'bg-black' : 'bg-white'} overflow-hidden`}>
+    <div
+      className={`fixed inset-0 flex flex-col ${isTikTokMode ? 'bg-black' : 'bg-white'} overflow-hidden`}
+      style={isTikTokMode ? { paddingTop: 0 } : undefined}
+    >
       {/* Contenido principal (la CSS global añade padding-top var(--safe-area-inset-top)) */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Desktop Sidebar - Hidden on mobile */}

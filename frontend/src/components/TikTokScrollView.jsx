@@ -1963,8 +1963,8 @@ const TikTokScrollView = ({
   if (!polls.length) {
     // Si está cargando, mostrar spinner
     if (isInitialLoading) {
-      return createPortal(
-        <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+      return (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center"
              style={{
                height: '100vh',
                height: '100dvh'
@@ -1974,14 +1974,13 @@ const TikTokScrollView = ({
             <h3 className="text-xl font-semibold text-white mb-2">Cargando publicaciones...</h3>
             <p className="text-gray-400 text-sm">Por favor espera un momento</p>
           </div>
-        </div>,
-        document.body
+        </div>
       );
     }
     
     // Si terminó de cargar pero no hay contenido, mostrar mensaje vacío
-    return createPortal(
-      <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center"
            style={{
              height: '100vh',
              height: '100dvh'
@@ -2014,13 +2013,12 @@ const TikTokScrollView = ({
           <h3 className="text-xl font-semibold text-white mb-2">{emptyMessage}</h3>
           <p className="text-gray-400 text-sm">{emptySubMessage}</p>
         </div>
-      </div>,
-      document.body
+      </div>
     );
   }
 
-  return createPortal(
-    <div className="fixed z-[9999] bg-black overflow-hidden"
+  return (
+    <div className="fixed z-50 bg-black overflow-hidden"
          style={{
            top: storiesOverlayOpen ? '112px' : '0px',
            left: '0px',
@@ -2316,8 +2314,7 @@ const TikTokScrollView = ({
           transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
         }
       `}</style>
-    </div>,
-    document.body
+    </div>
   );
 };
 
