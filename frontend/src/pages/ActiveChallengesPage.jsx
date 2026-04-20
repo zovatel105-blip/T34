@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AppConfig from '../config/config';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import challengeService from '../services/challengeService';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const ActiveChallengesPage = () => {
   const navigate = useNavigate();
@@ -251,22 +252,33 @@ const ActiveChallengesPage = () => {
           const challengeId = selectedBattle?.challengeId || selectedBattle?.id;
           const polls = challengePolls[challengeId] || [];
           const firstPoll = polls[0];
-          const mediaUrl = firstPoll?.options?.[0]?.media?.url || 
+          const rawMediaUrl = firstPoll?.options?.[0]?.media?.url || 
                           firstPoll?.options?.[0]?.media?.thumbnail;
           const mediaType = firstPoll?.options?.[0]?.media?.type;
+          const rawThumbnail = firstPoll?.options?.[0]?.media?.thumbnail;
+          const isVideoUrl = (u) => u && /\.(mp4|webm|mov|avi)(\?|$)/i.test(u);
+          // For video: use the image thumbnail as bg; for image: use url directly
+          const mediaUrl = resolveAssetUrl(rawMediaUrl);
+          const thumbnailUrl = resolveAssetUrl(
+            rawThumbnail && !isVideoUrl(rawThumbnail) ? rawThumbnail : null
+          );
           
           if (mediaType === 'video' && mediaUrl) {
             return (
-              <video
-                src={mediaUrl}
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-              />
+              <>
+                <video
+                  src={mediaUrl}
+                  poster={thumbnailUrl || undefined}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none" />
+              </>
             );
-          } else if (mediaUrl) {
+          } else if (mediaUrl && !isVideoUrl(mediaUrl)) {
             return (
               <div 
                 className="w-full h-full bg-cover bg-center"

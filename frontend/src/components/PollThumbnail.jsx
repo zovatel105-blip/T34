@@ -155,14 +155,24 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     return lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || lower.includes('.avi');
   };
 
+  // Helper: Extract normalized media fields supporting both shapes:
+  // - Legacy: option.media_url / option.media_type / option.thumbnail_url
+  // - New:    option.media.url / option.media.type / option.media.thumbnail
+  const getMediaFields = (option) => ({
+    url: option.media?.url || option.media_url,
+    type: option.media?.type || option.media_type,
+    thumbnail: option.media?.thumbnail || option.thumbnail_url,
+  });
+
   // Helper: Render the correct media element for an option (image or video fallback)
   const renderMediaElement = (option, altText, imgClassName = "w-full h-full object-cover") => {
-    const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
+    const { url: optionUrl, type: optionType, thumbnail: optionThumb } = getMediaFields(option);
+    const isVideo = optionType === 'video' || isVideoUrl(optionUrl);
     
-    const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
-    const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
+    const thumbnailIsImage = optionThumb && !isVideoUrl(optionThumb);
+    const mediaIsImage = optionUrl && !isVideoUrl(optionUrl);
     // resolveUrl applied for native APK compatibility
-    const imageUrl = resolveUrl(thumbnailIsImage ? option.thumbnail_url : (mediaIsImage ? option.media_url : null));
+    const imageUrl = resolveUrl(thumbnailIsImage ? optionThumb : (mediaIsImage ? optionUrl : null));
     
     if (imageUrl) {
       return (
@@ -186,7 +196,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     }
     
     // resolveUrl applied to video src for native APK compatibility
-    const videoSrc = resolveUrl(option.media_url || option.thumbnail_url);
+    const videoSrc = resolveUrl(optionUrl || optionThumb);
     if (isVideo && videoSrc) {
       return (
         <>
@@ -217,19 +227,23 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
     pollId: result?.id,
     layout,
     optionsCount: options.length,
-    options: options.map(opt => ({
-      text: opt.text,
-      media_type: opt.media_type,
-      has_media_url: !!opt.media_url,
-      has_thumbnail_url: !!opt.thumbnail_url,
-      media_url_resolved: resolveUrl(opt.media_url)?.substring(0, 60),
-      thumbnail_url_resolved: resolveUrl(opt.thumbnail_url)?.substring(0, 60)
-    }))
+    options: options.map(opt => {
+      const f = getMediaFields(opt);
+      return {
+        text: opt.text,
+        media_type: f.type,
+        has_media_url: !!f.url,
+        has_thumbnail_url: !!f.thumbnail,
+        media_url_resolved: resolveUrl(f.url)?.substring(0, 60),
+        thumbnail_url_resolved: resolveUrl(f.thumbnail)?.substring(0, 60),
+      };
+    })
   });
 
-  const optionsWithMedia = options.filter(option =>
-    option.media_url || option.thumbnail_url
-  ).slice(0, getMaxOptions());
+  const optionsWithMedia = options.filter(option => {
+    const f = getMediaFields(option);
+    return f.url || f.thumbnail;
+  }).slice(0, getMaxOptions());
 
   console.log('Options with media:', optionsWithMedia.length);
 
@@ -280,9 +294,10 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   const isVoted = result.user_vote === index;
                   const votePercentage = result.total_votes > 0
                     ? Math.round((option.votes / result.total_votes) * 100) : 0;
-                  const bgSrc = option.media_type === 'video'
-                    ? resolveUrl(option.thumbnail_url)
-                    : resolveUrl(option.media_url || option.thumbnail_url);
+                  const mf = getMediaFields(option);
+                  const bgSrc = mf.type === 'video'
+                    ? resolveUrl(mf.thumbnail && !isVideoUrl(mf.thumbnail) ? mf.thumbnail : null)
+                    : resolveUrl(mf.url || mf.thumbnail);
 
                   return (
                     <div
@@ -362,9 +377,10 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                   const isVoted = result.user_vote === index;
                   const votePercentage = result.total_votes > 0
                     ? Math.round((option.votes / result.total_votes) * 100) : 0;
-                  const bgSrc = option.media_type === 'video'
-                    ? resolveUrl(option.thumbnail_url)
-                    : resolveUrl(option.media_url || option.thumbnail_url);
+                  const mf = getMediaFields(option);
+                  const bgSrc = mf.type === 'video'
+                    ? resolveUrl(mf.thumbnail && !isVideoUrl(mf.thumbnail) ? mf.thumbnail : null)
+                    : resolveUrl(mf.url || mf.thumbnail);
 
                   return (
                     <div
@@ -429,14 +445,15 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
             style={{ minHeight: '30px' }}
           >
             {(() => {
-              const isVideo = option.media_type === 'video' || isVideoUrl(option.media_url);
-              const thumbnailIsImage = option.thumbnail_url && !isVideoUrl(option.thumbnail_url);
-              const mediaIsImage = option.media_url && !isVideoUrl(option.media_url);
+              const mf = getMediaFields(option);
+              const isVideo = mf.type === 'video' || isVideoUrl(mf.url);
+              const thumbnailIsImage = mf.thumbnail && !isVideoUrl(mf.thumbnail);
+              const mediaIsImage = mf.url && !isVideoUrl(mf.url);
 
               // resolveUrl in both branches for native APK compatibility
               const imageUrl = isVideo
-                ? (thumbnailIsImage ? resolveUrl(option.thumbnail_url) : null)
-                : resolveUrl(option.media_url || option.thumbnail_url);
+                ? (thumbnailIsImage ? resolveUrl(mf.thumbnail) : null)
+                : resolveUrl(mf.url || mf.thumbnail);
 
               if (imageUrl) {
                 return (
@@ -460,7 +477,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
               }
 
               // resolveUrl on video fallback for native APK
-              const videoSrc = resolveUrl(option.media_url || option.thumbnail_url);
+              const videoSrc = resolveUrl(mf.url || mf.thumbnail);
               if (isVideo && videoSrc) {
                 return (
                   <>
@@ -491,7 +508,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
               );
             })()}
 
-            {option.text && (option.media_url || option.thumbnail_url) && (
+            {option.text && (option.media?.url || option.media_url || option.thumbnail_url) && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
                 {option.text.length > 15 ? `${option.text.substring(0, 15)}...` : option.text}
               </div>
@@ -538,9 +555,10 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                 const isVoted = result.user_vote === index;
                 const votePercentage = result.total_votes > 0
                   ? Math.round((option.votes / result.total_votes) * 100) : 0;
-                const bgSrc = option.media_type === 'video'
-                  ? resolveUrl(option.thumbnail_url)
-                  : resolveUrl(option.media_url || option.thumbnail_url);
+                const mf = getMediaFields(option);
+                const bgSrc = mf.type === 'video'
+                  ? resolveUrl(mf.thumbnail && !isVideoUrl(mf.thumbnail) ? mf.thumbnail : null)
+                  : resolveUrl(mf.url || mf.thumbnail);
 
                 return (
                   <div

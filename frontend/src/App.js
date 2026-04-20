@@ -30,6 +30,7 @@ import StoryEditPage from './pages/StoryEditPage';
 import CompletedBattlesPage from './pages/CompletedBattlesPage';
 import ActiveChallengesPage from './pages/ActiveChallengesPage';
 import ChallengeCreationPage from './pages/ChallengeCreationPage';
+import PostViewerPage from './pages/PostViewerPage';
 import { Toaster } from './components/ui/toaster';
 // Mock data imports removed - using real backend services
 import { useToast } from './hooks/use-toast';
@@ -239,6 +240,8 @@ function AppContent() {
         <Route path="/explore/completed" element={<CompletedBattlesPage />} />
         <Route path="/explore/active" element={<ActiveChallengesPage />} />
         <Route path="/challenges/create" element={<ChallengeCreationPage />} />
+        <Route path="/post/:postId" element={<PostViewerPage />} />
+        <Route path="/poll/:postId" element={<PostViewerPage />} />
       </Routes>
     </ResponsiveLayout>
   );

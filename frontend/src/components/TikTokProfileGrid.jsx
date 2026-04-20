@@ -33,13 +33,11 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
 
   // Check if poll has video content
   const hasVideoContent = (poll) => {
-    return poll.options?.some(option => 
-      option.media_url && (
-        option.media_url.includes('.mp4') || 
-        option.media_url.includes('.webm') ||
-        option.media_type === 'video'
-      )
-    );
+    return poll.options?.some(option => {
+      const url = option.media?.url || option.media_url;
+      const type = option.media?.type || option.media_type;
+      return type === 'video' || (url && /\.(mp4|webm|mov|avi)(\?|$)/i.test(url));
+    });
   };
 
   // Get thumbnail for the poll
@@ -49,18 +47,52 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
       return poll.thumbnail_url;
     }
 
-    // For video content, use generated thumbnail or first frame
+    // Helper to extract media fields from an option (handles both shapes)
+    const getMediaFields = (opt) => ({
+      url: opt.media?.url || opt.media_url,
+      type: opt.media?.type || opt.media_type,
+      thumbnail: opt.media?.thumbnail || opt.thumbnail_url,
+    });
+
+    const isVideoUrl = (u) => u && /\.(mp4|webm|mov|avi)(\?|$)/i.test(u);
+
+    // For video content, use generated thumbnail (must be a real image, not the video URL)
     if (hasVideoContent(poll)) {
-      const videoOption = poll.options?.find(opt => opt.media_type === 'video' || opt.media_url?.includes('.mp4'));
-      return videoOption?.thumbnail_url || null;
+      const videoOption = poll.options?.find(opt => {
+        const f = getMediaFields(opt);
+        return f.type === 'video' || isVideoUrl(f.url);
+      });
+      if (videoOption) {
+        const f = getMediaFields(videoOption);
+        // Only return thumbnail if it's a valid image URL (not the video itself)
+        if (f.thumbnail && !isVideoUrl(f.thumbnail)) {
+          return f.thumbnail;
+        }
+      }
+      return null;
     }
 
     // For image content, use the first image
-    const imageOption = poll.options?.find(opt => 
-      opt.media_url && (opt.media_type === 'image' || opt.media_url.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-    );
+    const imageOption = poll.options?.find(opt => {
+      const f = getMediaFields(opt);
+      return f.url && (f.type === 'image' || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(f.url));
+    });
     
-    return imageOption?.media_url || null;
+    if (imageOption) {
+      const f = getMediaFields(imageOption);
+      return f.url;
+    }
+    return null;
+  };
+
+  // Get first video URL (fallback when no image thumbnail is available)
+  const getFirstVideoUrl = (poll) => {
+    const videoOption = poll.options?.find(opt => {
+      const url = opt.media?.url || opt.media_url;
+      const type = opt.media?.type || opt.media_type;
+      return type === 'video' || (url && /\.(mp4|webm|mov|avi)(\?|$)/i.test(url));
+    });
+    return videoOption?.media?.url || videoOption?.media_url || null;
   };
 
   return (
@@ -140,6 +172,7 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
               {(() => {
                 const thumbnail = getPostThumbnail(poll);
                 const isVideo = hasVideoContent(poll);
+                const videoUrl = isVideo ? getFirstVideoUrl(poll) : null;
                 
                 if (thumbnail) {
                   return (
@@ -149,25 +182,43 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                       className="w-full h-full object-cover rounded-lg"
                       style={(() => {
                         // Find the option with media to get transform
-                        const imageOption = poll.options?.find(opt => 
-                          opt.media_url && (opt.media_url.includes('.jpg') || opt.media_url.includes('.png') || opt.media_url.includes('.gif'))
-                        );
-                        return imageOption?.transform ? {
-                          objectPosition: `${imageOption.transform.position?.x || 50}% ${imageOption.transform.position?.y || 50}%`,
-                          transform: `scale(${imageOption.transform.scale || 1})`,
+                        const imageOption = poll.options?.find(opt => {
+                          const url = opt.media?.url || opt.media_url;
+                          return url && (url.includes('.jpg') || url.includes('.png') || url.includes('.gif'));
+                        });
+                        const transform = imageOption?.media?.transform || imageOption?.transform;
+                        return transform ? {
+                          objectPosition: `${transform.position?.x || 50}% ${transform.position?.y || 50}%`,
+                          transform: `scale(${transform.scale || 1})`,
                           transformOrigin: 'center center'
                         } : {};
                       })()}
                       onError={(e) => {
                         // Fallback to layout renderer if thumbnail fails
                         e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                  );
+                }
+
+                // Fallback 1: Video preview using <video> element (first frame)
+                if (videoUrl) {
+                  return (
+                    <video
+                      src={uploadService.getPublicUrl(videoUrl)}
+                      className="w-full h-full object-cover rounded-lg"
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={(e) => {
+                        try { e.target.currentTime = 0.1; } catch (err) {}
                       }}
                     />
                   );
                 }
                 
-                // Fallback: Render static version of layout
+                // Fallback 2: Render static version of layout
                 return (
                   <div className="w-full h-full" style={{ display: thumbnail ? 'none' : 'block' }}>
                     <LayoutRenderer 

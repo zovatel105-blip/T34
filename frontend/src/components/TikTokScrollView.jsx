@@ -1804,6 +1804,54 @@ const TikTokScrollView = ({
   // Performance optimization - prevent unnecessary re-renders
   const memoizedActiveIndex = useMemo(() => activeIndex, [activeIndex]);
 
+  // 🛡️ SAFETY NET: sync audio centralizado basado en activeIndex.
+  // Esto resuelve bugs donde el per-card useEffect no alcanza a ejecutarse
+  // durante scrolls rápidos (los setTimeout se cancelan) o cuando se scrollea
+  // hacia atrás y el audio del post anterior sigue reproduciéndose.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+    const activePoll = polls[activeIndex];
+    if (!activePoll) return;
+
+    let cancelled = false;
+    const syncTimeoutId = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        const hasExtractedAudio = activePoll.layout === 'off' && activePoll.options?.some(opt => opt.extracted_audio_id);
+        const hasMusic = activePoll.music && activePoll.music.preview_url && !hasExtractedAudio;
+
+        if (hasMusic) {
+          // Si no está reproduciendo la música de este post, forzar el cambio
+          if (!audioManager.isPlayingPost(activePoll.id)) {
+            await audioManager.stop();
+            if (cancelled) return;
+            await audioManager.play(activePoll.music.preview_url, {
+              startTime: 0,
+              loop: true,
+              volume: 0.7,
+              postId: activePoll.id,
+            });
+          }
+        } else {
+          // Post activo sin música global: detener audioManager si reproducía
+          // (el audio extraído del carrusel es gestionado por CarouselLayout)
+          if (audioManager.isPlaying) {
+            await audioManager.stop();
+          }
+        }
+      } catch (err) {
+        console.error('🛡️ Top-level audio sync error:', err);
+      }
+    }, 80); // pequeño debounce para evitar thrashing en scroll rápido
+
+    return () => {
+      cancelled = true;
+      clearTimeout(syncTimeoutId);
+    };
+  }, [activeIndex, polls]);
+
+
+
   // Swiper slide change handler
   const handleSlideChange = (swiper) => {
     const newIndex = swiper.activeIndex;

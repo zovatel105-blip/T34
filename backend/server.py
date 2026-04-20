@@ -5291,6 +5291,31 @@ async def get_image_dimensions(file_path: Path) -> tuple[Optional[int], Optional
         print(f"Error getting image dimensions: {e}")
         return None, None
 
+def _is_video_url(url: Optional[str]) -> bool:
+    """Check if URL ends with a video extension"""
+    if not url or not isinstance(url, str):
+        return False
+    lower = url.lower().split('?')[0]
+    return any(lower.endswith(ext) for ext in ['.mp4', '.mov', '.webm', '.avi', '.mkv'])
+
+
+async def resolve_video_thumbnail(media_url: Optional[str], stored_thumbnail_url: Optional[str]) -> Optional[str]:
+    """
+    Resolve a proper image thumbnail URL for a video.
+    Handles the legacy case where stored_thumbnail_url was set to the video URL itself.
+    Returns a JPG thumbnail URL, or None if it cannot be generated.
+    """
+    # If stored_thumbnail_url is set AND it's a real image (not a video), use it
+    if stored_thumbnail_url and not _is_video_url(stored_thumbnail_url) and stored_thumbnail_url != media_url:
+        return stored_thumbnail_url
+    # Otherwise try to generate from media_url
+    if media_url:
+        thumb = await get_thumbnail_for_media_url(media_url)
+        if thumb and not _is_video_url(thumb):
+            return thumb
+    return None
+
+
 async def get_thumbnail_for_media_url(media_url: str) -> Optional[str]:
     """Get thumbnail URL from uploaded_files collection - Generate if doesn't exist"""
     try:
@@ -5309,9 +5334,10 @@ async def get_thumbnail_for_media_url(media_url: str) -> Optional[str]:
                 uploaded_file = await db.uploaded_files.find_one({"filename": filename})
                 
                 if uploaded_file:
-                    # If thumbnail exists in DB, return it
-                    if uploaded_file.get("thumbnail_url"):
-                        return uploaded_file["thumbnail_url"]
+                    # If thumbnail exists in DB AND is a valid image, return it
+                    cached = uploaded_file.get("thumbnail_url")
+                    if cached and not _is_video_url(cached):
+                        return cached
                     
                     # If no thumbnail but it's a video, try to generate it
                     if uploaded_file.get("file_type") == "video":
@@ -5863,10 +5889,11 @@ async def get_polls(
             # Keep media_url as relative path for frontend to handle
             media_url = option.get("media_url")
             
-            # Get thumbnail URL for videos
-            thumbnail_url = option.get("thumbnail_url")
-            if not thumbnail_url and media_url and option.get("media_type") == "video":
-                thumbnail_url = await get_thumbnail_for_media_url(media_url)
+            # Get thumbnail URL for videos (handles legacy bogus thumbnail_url == media_url)
+            if option.get("media_type") == "video" and media_url:
+                thumbnail_url = await resolve_video_thumbnail(media_url, option.get("thumbnail_url"))
+            else:
+                thumbnail_url = option.get("thumbnail_url")
             
             # Resolve mentioned users for this option
             option_mentioned_users_data = []
@@ -6212,7 +6239,11 @@ async def get_ultra_fast_feed(
                     # Get media fields from database
                     media_url = opt.get("media_url")
                     media_type = opt.get("media_type")
-                    thumbnail_url = opt.get("thumbnail_url")
+                    # Resolve thumbnail (handles legacy bogus thumbnail_url == media_url for videos)
+                    if media_type == "video" and media_url:
+                        thumbnail_url = await resolve_video_thumbnail(media_url, opt.get("thumbnail_url"))
+                    else:
+                        thumbnail_url = opt.get("thumbnail_url")
                     
                     # Resolve mentioned users from IDs to full objects
                     raw_mentions = opt.get("mentioned_users", [])
@@ -6894,10 +6925,11 @@ async def get_following_polls(
             # Keep media_url as relative path for frontend to handle
             media_url = option.get("media_url")
             
-            # Get thumbnail URL for videos
-            thumbnail_url = option.get("thumbnail_url")
-            if not thumbnail_url and media_url and option.get("media_type") == "video":
-                thumbnail_url = await get_thumbnail_for_media_url(media_url)
+            # Get thumbnail URL for videos (handles legacy bogus thumbnail_url == media_url)
+            if option.get("media_type") == "video" and media_url:
+                thumbnail_url = await resolve_video_thumbnail(media_url, option.get("thumbnail_url"))
+            else:
+                thumbnail_url = option.get("thumbnail_url")
             
             # Resolve mentioned_users from IDs to full objects
             raw_mentions = option.get("mentioned_users", [])
@@ -7269,7 +7301,11 @@ async def get_user_polls(
             for opt in poll_data.get("options", []):
                 media_url = opt.get("media_url")
                 media_type = opt.get("media_type")
-                thumbnail_url = opt.get("thumbnail_url")
+                # Resolve thumbnail (handles legacy bogus thumbnail_url == media_url for videos)
+                if media_type == "video" and media_url:
+                    thumbnail_url = await resolve_video_thumbnail(media_url, opt.get("thumbnail_url"))
+                else:
+                    thumbnail_url = opt.get("thumbnail_url")
                 
                 raw_mentions = opt.get("mentioned_users", [])
                 resolved_mentions = []
@@ -8320,10 +8356,11 @@ async def get_poll_by_id(
         if option_user:
             media_url = option.get("media_url")
             
-            # Get thumbnail URL for videos
-            thumbnail_url = option.get("thumbnail_url")
-            if not thumbnail_url and media_url and option.get("media_type") == "video":
-                thumbnail_url = await get_thumbnail_for_media_url(media_url)
+            # Get thumbnail URL for videos (handles legacy bogus thumbnail_url == media_url)
+            if option.get("media_type") == "video" and media_url:
+                thumbnail_url = await resolve_video_thumbnail(media_url, option.get("thumbnail_url"))
+            else:
+                thumbnail_url = option.get("thumbnail_url")
             
             option_dict = {
                 "id": option["id"],
@@ -11833,7 +11870,11 @@ async def get_challenge_polls(
             for opt in poll.get("options", []):
                 media_url = opt.get("media_url")
                 media_type = opt.get("media_type")
-                thumbnail_url = opt.get("thumbnail_url")
+                # Resolve thumbnail (handles legacy bogus thumbnail_url == media_url for videos)
+                if media_type == "video" and media_url:
+                    thumbnail_url = await resolve_video_thumbnail(media_url, opt.get("thumbnail_url"))
+                else:
+                    thumbnail_url = opt.get("thumbnail_url")
                 
                 option_dict = {
                     "id": opt.get("id"),
