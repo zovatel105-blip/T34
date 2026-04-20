@@ -64,6 +64,9 @@ import { useStatusBarColor } from './hooks/useStatusBarColor';
 // 📱 Safe-Area Calculator Hook (para Android WebView)
 import { useSafeArea } from './hooks/useSafeArea';
 
+// 📱 App Lifecycle Hook (pausa audio/video cuando la app pasa a background)
+import { useAppLifecycle } from './hooks/useAppLifecycle';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -106,6 +109,9 @@ function AppContent() {
 
   // 📱 Calcular y aplicar safe-area dinámicamente (Android WebView)
   useSafeArea();
+
+  // 📱 Pausar audio y vídeo cuando la app pasa a background o se cierra
+  useAppLifecycle();
 
   // 📲 Notificaciones locales (funciona sin Firebase)
   useLocalNotifications(isAuthenticated, token);
