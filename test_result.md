@@ -267,6 +267,8 @@ frontend:
 agent_communication:
   - agent: "main"
     message: "Se modificó ResponsiveLayout.jsx para extender el layout edge-to-edge a cualquier página en modo TikTok. El cambio es mínimo (1 línea efectiva). Frontend compila sin errores. El usuario debe regenerar el APK (yarn build + npx cap sync android + Android Studio) para ver el efecto en el dispositivo nativo."
+  - agent: "main"
+    message: "Fix V2: Se revirtió el cambio problemático en ResponsiveLayout (rompía la apertura de publicaciones por remount al cambiar estructura del árbol). Se aplicó una solución más robusta: se envolvieron los 3 returns de TikTokScrollView.jsx con createPortal(..., document.body). Esto garantiza que el componente se renderice directamente en <body>, escapando cualquier containing block ancestral (transform/filter) y haciendo que position: fixed sea verdaderamente viewport-relative. Además, en ResponsiveLayout se cambia bg a negro cuando isTikTokMode para evitar flash blanco. Frontend compila. Usuario debe rebuild APK."
 
 **🎨 LAYOUTS NO MOSTRABAN CONTENIDO NI MÚSICA - CORREGIDO (2025-01-11): Problema crítico en endpoint ultra-fast resuelto - ahora todos los layouts muestran correctamente imágenes, videos y música.**
 
