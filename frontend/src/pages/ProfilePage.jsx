@@ -1902,6 +1902,7 @@ const ProfilePage = () => {
             onDeletePoll={handleDeletePoll}
             isOwnProfile={isOwnProfile}
             currentUser={authUser}
+            closeOnBack={true}
           />
         </>
       )}

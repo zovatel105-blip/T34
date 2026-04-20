@@ -682,6 +682,7 @@ const AudioDetailPage = () => {
             onUseSound={handleUseThisSound}
             onSave={handleSave}
             fromAudioDetailPage={true}
+            closeOnBack={true}
           />
         </div>
       )}

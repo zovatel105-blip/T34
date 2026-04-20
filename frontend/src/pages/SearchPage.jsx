@@ -1739,6 +1739,8 @@ const SearchPage = () => {
             onUpdatePoll={handleTikTokUpdatePoll}
             onDeletePoll={handleTikTokDeletePoll}
             onIndexChange={loadMorePostsDynamic}
+            onExitTikTok={handleCloseTikTokView}
+            closeOnBack={true}
           />
         </div>
       )}

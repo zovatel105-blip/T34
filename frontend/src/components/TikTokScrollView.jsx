@@ -1513,7 +1513,8 @@ const TikTokScrollView = ({
   isInitialLoading = false,
   hasMoreContent = true,
   showLogo = true,
-  showCloseButton = true,
+  showCloseButton = false,
+  closeOnBack = false,
   showActiveChallengesButton = false,
   initialIndex = 0,
   fromAudioDetailPage = false,
@@ -1762,6 +1763,26 @@ const TikTokScrollView = ({
       window.removeEventListener('pagehide', handleBeforeUnload);
     };
   }, []);
+
+  // ⬅️ Interceptar botón "atrás" del sistema (Android back / iOS swipe)
+  // cuando esta vista TikTok está mostrada como overlay sobre otra página
+  // (Profile / Audio / Search). Llamamos onExitTikTok y prevenimos el
+  // comportamiento por defecto para que el back NO navegue fuera de la
+  // página padre, sino solo cierre esta vista TikTok.
+  useEffect(() => {
+    if (!closeOnBack || typeof onExitTikTok !== 'function') return;
+
+    const handleAppBack = async (event) => {
+      try { event.preventDefault?.(); } catch (_) { /* noop */ }
+      try { await audioManager.stop(); } catch (_) { /* noop */ }
+      onExitTikTok();
+    };
+
+    window.addEventListener('app:backbutton', handleAppBack);
+    return () => {
+      window.removeEventListener('app:backbutton', handleAppBack);
+    };
+  }, [closeOnBack, onExitTikTok]);
 
   // Initialize position when component mounts
   useEffect(() => {
