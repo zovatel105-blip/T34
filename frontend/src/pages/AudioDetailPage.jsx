@@ -542,12 +542,9 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info Card - Full width */}
-        <div 
-          className="w-full rounded-2xl overflow-hidden transition-all duration-500"
-          style={{ 
-            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`
-          }}
+        {/* Audio Info Card - sin marco de color, con efecto sombra */}
+        <div
+          className="w-full rounded-2xl overflow-hidden transition-all duration-500 bg-white shadow-lg shadow-black/10"
         >
           <div className="flex items-center gap-4 p-4">
             {/* Album Art */}
