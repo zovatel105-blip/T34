@@ -542,9 +542,14 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info Card - sin marco de color, con efecto sombra */}
+        {/* Audio Info Card - mantiene gradiente de color dominante pero
+            sin líneas de marco; en su lugar usa sombra (shadow) para
+            dar profundidad y destacar la tarjeta. */}
         <div
-          className="w-full rounded-2xl overflow-hidden transition-all duration-500 bg-white shadow-lg shadow-black/10"
+          className="w-full rounded-2xl overflow-hidden transition-all duration-500 border-0 shadow-lg shadow-black/10"
+          style={{
+            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`
+          }}
         >
           <div className="flex items-center gap-4 p-4">
             {/* Album Art */}
