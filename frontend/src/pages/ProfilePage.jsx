@@ -135,7 +135,7 @@ const ProfilePage = () => {
   const { user: authUser, refreshUser } = useAuth();
   const { getUserFollowers, getUserFollowing, followUser, unfollowUser, isFollowing, followsMe, getFollowStatus, followStateVersion, refreshTrigger, getUserByUsername } = useFollow();
   const { shareModal, shareProfile, closeShareModal } = useShare();
-  const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
+  const { enterTikTokMode, exitTikTokMode, isTikTokMode, hideRightNavigationBar, showRightNavigationBar } = useTikTok();
   // Route is /profile/:username → alias al nombre usado en todo el componente
   const { username: userId } = useParams();
   const navigate = useNavigate();
@@ -486,6 +486,21 @@ const ProfilePage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryRefreshKey]);
+
+  // 🚫 Ocultar la barra de navegación lateral derecha mientras el modal de
+  // Seguidores/Siguiendo esté abierto, y restaurarla al cerrarlo o desmontar.
+  useEffect(() => {
+    const isModalOpen = showFollowersModal || showFollowingModal;
+    if (isModalOpen) {
+      hideRightNavigationBar();
+    } else {
+      showRightNavigationBar();
+    }
+    return () => {
+      showRightNavigationBar();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showFollowersModal, showFollowingModal]);
 
   // Load user data when userId changes
   useEffect(() => {

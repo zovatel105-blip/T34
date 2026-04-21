@@ -74,13 +74,11 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   const isAudioDetailPage = location.pathname.startsWith('/audio/');
   const isSettingsPage = location.pathname === '/settings' || location.pathname === '/edit-profile' || location.pathname === '/change-password';
   const isOtherUserProfile = location.pathname.startsWith('/profile/') && user?.username && location.pathname !== `/profile/${user.username}`;
-  // Perfil propio: /profile/<mi_username>  (o /profile sin parámetro)
-  const isOwnProfilePage = (location.pathname === '/profile' || (user?.username && location.pathname === `/profile/${user.username}`));
   const isChallengePage = location.pathname.startsWith('/challenges') || location.pathname === '/explore/active';
   // /following debe verse como /feed (fondo negro detrás de la status bar, TikTok scroll)
   const shouldUseTikTokLayout = (isFeedPage || isFollowingPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
 
-  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isOwnProfilePage || isSettingsPage || isChallengePage || isAudioDetailPage || isViewingPublicationInTikTokMode;
+  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage || isViewingPublicationInTikTokMode;
 
   const renderNavigation = () => {
     if (!isAuthenticated || shouldHideRightNavigation || isCreatePage) return null;
