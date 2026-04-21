@@ -68,6 +68,37 @@ code {
 }
 
 /* ============================================================
+   OCULTAR EL BOTÓN DE PLAY POR DEFECTO DEL WEBVIEW ANDROID
+   Cuando un <video> aún no se ha cargado o no tiene poster,
+   el WebView/Chromium muestra un enorme círculo con un icono
+   de "play" (internal-media-controls-overlay-cast-button / 
+   start-playback-button). Eso rompe el diseño de nuestras
+   miniaturas (el usuario lo ve como un placeholder gris con
+   un play enorme). Aquí lo ocultamos globalmente para toda
+   la aplicación — nuestros propios controles/poster seguirán
+   funcionando.
+   ============================================================ */
+
+video::-webkit-media-controls,
+video::-webkit-media-controls-enclosure,
+video::-webkit-media-controls-panel,
+video::-webkit-media-controls-overlay-play-button,
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Android WebView: fondo negro por defecto en lugar del gris que
+   deja ver el botón de play nativo antes de que el primer frame
+   o el poster se rendericen. */
+video {
+  background-color: #000 !important;
+}
+
+
+/* ============================================================
    OCULTAR SCROLLBARS GLOBALMENTE - Estilo TikTok
    TikTok nunca muestra barras de desplazamiento.
    Se ocultan en TODOS los elementos y TODOS los tamaños de pantalla.
