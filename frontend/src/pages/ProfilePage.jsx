@@ -2748,6 +2748,25 @@ const ProfilePage = () => {
             <div className="flex border-b border-gray-200 flex-shrink-0">
               <button
                 onClick={() => {
+                  setShowFollowersModal(true);
+                  setShowFollowingModal(false);
+                  // 🔄 Cargar la lista al cambiar de pestaña
+                  loadFollowersList();
+                }}
+                className={cn(
+                  "flex-1 py-3 text-sm font-medium transition-colors relative",
+                  showFollowersModal
+                    ? "text-gray-900"
+                    : "text-gray-500 hover:text-gray-700"
+                )}
+              >
+                Seguidores {followersCount}
+                {showFollowersModal && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+                )}
+              </button>
+              <button
+                onClick={() => {
                   setShowFollowingModal(true);
                   setShowFollowersModal(false);
                   // 🔄 Cargar la lista al cambiar de pestaña (evita mostrar datos
@@ -2763,25 +2782,6 @@ const ProfilePage = () => {
               >
                 Siguiendo {followingCount}
                 {showFollowingModal && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setShowFollowersModal(true);
-                  setShowFollowingModal(false);
-                  // 🔄 Cargar la lista al cambiar de pestaña
-                  loadFollowersList();
-                }}
-                className={cn(
-                  "flex-1 py-3 text-sm font-medium transition-colors relative",
-                  showFollowersModal
-                    ? "text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                )}
-              >
-                Seguidores {followersCount}
-                {showFollowersModal && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
                 )}
               </button>
@@ -2851,7 +2851,7 @@ const ProfilePage = () => {
                           <button
                             onClick={() => handleFollowToggle(follower)}
                             className={cn(
-                              "px-6 py-1.5 rounded-md text-sm font-medium transition-colors flex-shrink-0 ml-2",
+                              "px-6 py-1.5 rounded-full text-sm font-medium transition-colors flex-shrink-0 ml-2",
                               isFollowing(follower.id)
                                 ? "bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300"
                                 : "text-white hover:opacity-90"
@@ -2918,7 +2918,7 @@ const ProfilePage = () => {
                         </div>
                         <button
                           onClick={() => handleFollowToggle(followedUser)}
-                          className="px-6 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300 transition-colors flex-shrink-0 ml-2"
+                          className="px-6 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300 transition-colors flex-shrink-0 ml-2"
                         >
                           Siguiendo
                         </button>
