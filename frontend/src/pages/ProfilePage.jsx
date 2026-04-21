@@ -2787,12 +2787,7 @@ const ProfilePage = () => {
               </button>
             </div>
 
-            {/* Privacy Notice (optional) */}
-            {isOwnProfile && (
-              <div className="px-4 py-2 text-xs text-gray-500 text-center bg-gray-50 flex-shrink-0">
-                Solo tú puedes ver todos tus {showFollowersModal ? 'seguidores' : 'seguidos'}
-              </div>
-            )}
+            {/* Privacy Notice removido a petición del usuario */}
             
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto scrollbar-hide">
