@@ -527,6 +527,10 @@ const AudioDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Contenido normal del audio - OCULTO cuando se abre una publicación en TikTok view
+          para que no se filtre nada (ej: header sticky bg-white) detrás del TikTokScrollView,
+          que se renderiza edge-to-edge detrás de la barra del sistema como en el feed. */}
+      <div style={{ display: showTikTokView ? 'none' : 'block' }}>
       {/* Header */}
       <header className="bg-white z-40 sticky" style={{ top: 0 }}>
         <div className="flex items-center justify-between px-4 py-3">
@@ -675,6 +679,7 @@ const AudioDetailPage = () => {
             </Button>
           </div>
         )}
+      </div>
       </div>
 
       {/* TikTok View */}
