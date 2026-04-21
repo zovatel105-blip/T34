@@ -315,16 +315,26 @@ const AudioDetailPage = () => {
     enterTikTokMode();
   };
 
-  // Cuando se cierra la vista TikTok, salir del modo para restaurar status bar
+  // Cuando se cierra la vista TikTok, salir del modo para restaurar status bar.
+  // ⚠️ IMPORTANTE: NO poner una función de cleanup que llame exitTikTokMode() aquí,
+  // porque React ejecuta la cleanup en CADA cambio de dep (no solo al desmontar).
+  // Eso provocaba que justo después de entrar en modo TikTok (handleVideoClick)
+  // la cleanup previa reseteara isTikTokMode a false, dejando la status bar blanca
+  // (porque /audio está en LIGHT_ROUTES). El cleanup de unmount va en otro effect.
   useEffect(() => {
     if (!showTikTokView) {
       exitTikTokMode();
     }
+  }, [showTikTokView]);
+
+  // Cleanup exclusivo para desmontaje: al salir de la página aseguramos que el
+  // modo TikTok quede desactivado para que la status bar vuelva a su estado normal.
+  useEffect(() => {
     return () => {
-      // Al desmontar la página, asegurar que el modo TikTok quede desactivado
       exitTikTokMode();
     };
-  }, [showTikTokView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreatePoll = async (newPoll) => {
     // This function is no longer needed since we navigate to ContentCreationPage
