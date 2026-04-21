@@ -525,12 +525,28 @@ const AudioDetailPage = () => {
     );
   }
 
+  // 🎬 Cuando el usuario toca una publicación, renderizar SOLO el TikTokScrollView
+  // (como hace ProfilePage) — sin wrapper `<div className="min-h-screen bg-white">`
+  // que filtre bg blanco o cree containing block. Esto garantiza que el modal se
+  // vea edge-to-edge detrás de la barra de notificaciones, idéntico al feed.
+  if (showTikTokView) {
+    return (
+      <TikTokScrollView
+        polls={posts}
+        initialIndex={selectedPostIndex}
+        onExitTikTok={() => setShowTikTokView(false)}
+        showLogo={false}
+        currentAudio={audio}
+        onUseSound={handleUseThisSound}
+        onSave={handleSave}
+        fromAudioDetailPage={true}
+        closeOnBack={true}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Contenido normal del audio - OCULTO cuando se abre una publicación en TikTok view
-          para que no se filtre nada (ej: header sticky bg-white) detrás del TikTokScrollView,
-          que se renderiza edge-to-edge detrás de la barra del sistema como en el feed. */}
-      <div style={{ display: showTikTokView ? 'none' : 'block' }}>
       {/* Header */}
       <header className="bg-white z-40 sticky" style={{ top: 0 }}>
         <div className="flex items-center justify-between px-4 py-3">
@@ -680,22 +696,6 @@ const AudioDetailPage = () => {
           </div>
         )}
       </div>
-      </div>
-
-      {/* TikTok View */}
-      {showTikTokView && (
-        <TikTokScrollView
-          polls={posts}
-          initialIndex={selectedPostIndex}
-          onExitTikTok={() => setShowTikTokView(false)}
-          showLogo={false}
-          currentAudio={audio}
-          onUseSound={handleUseThisSound}
-          onSave={handleSave}
-          fromAudioDetailPage={true}
-          closeOnBack={true}
-        />
-      )}
     </div>
   );
 };
