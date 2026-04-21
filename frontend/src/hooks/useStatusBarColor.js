@@ -52,11 +52,11 @@ export const useStatusBarColor = () => {
       currentPath === route || currentPath.startsWith(route + '/')
     );
 
-    // 🎬 Si el modo TikTok está activo, siempre usar oscura (negra) para
-    // que la franja del sistema se vea integrada con el contenido fullscreen.
+    // 🎬 Si el modo TikTok está activo, siempre usar oscura (transparente en ese caso)
+    // para que la franja del sistema se vea integrada con el contenido fullscreen.
     const isLight = isTikTokMode ? false : isLightRoute;
 
-    const configKey = isLight ? 'light' : 'dark';
+    const configKey = isLight ? 'light' : (isTikTokMode ? 'transparent' : 'dark');
     if (configKey === lastConfig.current) return;
     lastConfig.current = configKey;
 
@@ -65,6 +65,12 @@ export const useStatusBarColor = () => {
         if (isLight) {
           await StatusBar.setBackgroundColor({ color: '#FFFFFF' });
           await StatusBar.setStyle({ style: Style.Dark });
+        } else if (isTikTokMode) {
+          // 🎬 En modo TikTok (viendo publicación fullscreen) usar TRANSPARENTE
+          // para que el contenido del video se vea claramente detrás de los
+          // iconos del sistema sin ningún tinte/overlay oscuro encima.
+          await StatusBar.setBackgroundColor({ color: '#00000000' });
+          await StatusBar.setStyle({ style: Style.Light });
         } else {
           await StatusBar.setBackgroundColor({ color: '#000000' });
           await StatusBar.setStyle({ style: Style.Light });
