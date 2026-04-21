@@ -59,7 +59,12 @@ const ResponsiveLayout = ({ children, onCreatePoll }) => {
   // /following debe verse como /feed (fondo negro detrás de la status bar, TikTok scroll)
   const shouldUseTikTokLayout = (isFeedPage || isFollowingPage || isExplorePage || isCreatePage || isStoryPage) && isTikTokMode;
 
-  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage;
+  // Ocultar navegación cuando se está viendo una publicación en modo TikTok desde
+  // páginas como Profile propio, PostViewer, etc. Excepción: Feed/Following/Explore
+  // están permanentemente en TikTok mode y DEBEN mostrar la navegación.
+  const isViewingPublicationInTikTokMode = isTikTokMode && !(isFeedPage || isFollowingPage || isExplorePage);
+
+  const shouldHideRightNavigation = hideRightNavigation || isCreatePage || isStoryPage || isContentPublishPage || isSearchPage || isMessagesPage || isOtherUserProfile || isSettingsPage || isChallengePage || isAudioDetailPage || isViewingPublicationInTikTokMode;
 
   const renderNavigation = () => {
     if (!isAuthenticated || shouldHideRightNavigation || isCreatePage) return null;
