@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
@@ -139,6 +139,37 @@ const ProfilePage = () => {
   // Route is /profile/:username → alias al nombre usado en todo el componente
   const { username: userId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 🔄 REFRESH AL ENTRAR AL PERFIL
+  // Incrementa cada vez que:
+  //   1. El usuario navega a la página (aunque sea la misma ruta — p.ej. tocar
+  //      "Perfil" en la bottom nav estando ya en el perfil: location.key cambia).
+  //   2. La app vuelve a primer plano desde background (visibilitychange / focus).
+  //   3. El usuario vuelve a la app con el botón "atrás" del móvil (pageshow).
+  // Este key se añade como dep a los useEffect que cargan datos del perfil
+  // (profile, polls, follow stats, stories, social links, own stats) para
+  // forzar un re-fetch sin remount del componente (preservamos scroll, tabs…).
+  const [entryRefreshKey, setEntryRefreshKey] = useState(0);
+
+  useEffect(() => {
+    // location.key cambia en cada navegación, incluso si la URL es idéntica
+    setEntryRefreshKey((k) => k + 1);
+  }, [location.key]);
+
+  useEffect(() => {
+    const bump = () => {
+      if (!document.hidden) setEntryRefreshKey((k) => k + 1);
+    };
+    document.addEventListener('visibilitychange', bump);
+    window.addEventListener('focus', bump);
+    window.addEventListener('pageshow', bump);
+    return () => {
+      document.removeEventListener('visibilitychange', bump);
+      window.removeEventListener('focus', bump);
+      window.removeEventListener('pageshow', bump);
+    };
+  }, []);
 
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
@@ -198,7 +229,7 @@ const ProfilePage = () => {
       }
     };
     loadOwnProfileStats();
-  }, [authUser?.id]);
+  }, [authUser?.id, entryRefreshKey]);
 
   // Load user's polls using dedicated endpoint
   useEffect(() => {
@@ -242,7 +273,7 @@ const ProfilePage = () => {
     };
 
     loadUserPolls();
-  }, [authUser?.id, authUser?.username, userId, viewedUser, toast]);
+  }, [authUser?.id, authUser?.username, userId, viewedUser, toast, entryRefreshKey]);
 
   // Load follow statistics
   useEffect(() => {
@@ -294,7 +325,7 @@ const ProfilePage = () => {
     };
 
     loadFollowStats();
-  }, [authUser?.id, userId, getUserFollowers, getUserFollowing, followStateVersion, refreshTrigger]);
+  }, [authUser?.id, userId, getUserFollowers, getUserFollowing, followStateVersion, refreshTrigger, entryRefreshKey]);
 
   // Load followers list when tab is activated
   const loadFollowersList = async () => {
@@ -500,7 +531,7 @@ const ProfilePage = () => {
       setViewedUser(null);
       setLoading(false);
     }
-  }, [userId, navigate, toast]);
+  }, [userId, navigate, toast, entryRefreshKey]);
 
   // Define isOwnProfile early - needed by useEffect hooks
   const isOwnProfile = useMemo(() => {
@@ -698,7 +729,7 @@ const ProfilePage = () => {
       }
     };
     loadUserStories();
-  }, [userId, authUser?.id, viewedUser?.id]);
+  }, [userId, authUser?.id, viewedUser?.id, entryRefreshKey]);
 
   const handleShareProfile = () => {
     // Intentar usar Web Share API primero (mejor para móviles)
@@ -1212,7 +1243,7 @@ const ProfilePage = () => {
     };
 
     loadUserSocialLinks();
-  }, [authUser?.id, userId, viewedUser?.id, isOwnProfile]);
+  }, [authUser?.id, userId, viewedUser?.id, isOwnProfile, entryRefreshKey]);
 
   // Handle when a new story is created - REMOVED (Stories feature disabled)
   // const handleStoryCreated = async (newStory) => {
