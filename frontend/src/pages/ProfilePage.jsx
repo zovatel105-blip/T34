@@ -473,6 +473,20 @@ const ProfilePage = () => {
     await loadFollowingList();
   };
 
+  // 🔄 Refresh automático del modal Seguidores/Siguiendo cuando:
+  //   - El usuario vuelve a entrar a la página (location.key change)
+  //   - La app vuelve desde background / pageshow
+  // Solo refresca si alguno de los modales está abierto; si están cerrados,
+  // no hacemos nada (se cargarán al abrirlos por primera vez).
+  useEffect(() => {
+    if (showFollowersModal) {
+      loadFollowersList();
+    } else if (showFollowingModal) {
+      loadFollowingList();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entryRefreshKey]);
+
   // Load user data when userId changes
   useEffect(() => {
     if (userId) {
@@ -2736,6 +2750,9 @@ const ProfilePage = () => {
                 onClick={() => {
                   setShowFollowingModal(true);
                   setShowFollowersModal(false);
+                  // 🔄 Cargar la lista al cambiar de pestaña (evita mostrar datos
+                  // vacíos cuando abres "Seguidores" y luego tocas "Siguiendo").
+                  loadFollowingList();
                 }}
                 className={cn(
                   "flex-1 py-3 text-sm font-medium transition-colors relative",
@@ -2753,6 +2770,8 @@ const ProfilePage = () => {
                 onClick={() => {
                   setShowFollowersModal(true);
                   setShowFollowingModal(false);
+                  // 🔄 Cargar la lista al cambiar de pestaña
+                  loadFollowersList();
                 }}
                 className={cn(
                   "flex-1 py-3 text-sm font-medium transition-colors relative",
