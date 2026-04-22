@@ -25,14 +25,34 @@ const AvatarImage = React.forwardRef(({ className, src, ...props }, ref) => (
 ))
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
-const AvatarFallback = React.forwardRef(({ className, ...props }, ref) => (
+// 🖼️ AvatarFallback: cuando no hay foto de perfil (src inválido, falla al
+// cargar, o el usuario no tiene avatar) SIEMPRE se muestra la imagen por
+// defecto `default-avatar.svg`. Nunca iniciales ni iconos genéricos — esto
+// evita "contenido roto" y da una estética uniforme a toda la app.
+//
+// Los `children` que los componentes pasaban (ej. `<User />` o iniciales)
+// se ignoran a propósito: la imagen por defecto toma su lugar.
+const AvatarFallback = React.forwardRef(({ className, children: _ignored, ...props }, ref) => (
   <AvatarPrimitive.Fallback
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      "flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gray-100",
       className
     )}
-    {...props} />
+    {...props}
+  >
+    <img
+      src="/default-avatar.svg"
+      alt=""
+      draggable={false}
+      className="h-full w-full object-cover select-none pointer-events-none"
+      onError={(e) => {
+        // Defensa extra: si por algún motivo el SVG no carga, dejamos el
+        // fondo gris en vez de mostrar un icono roto del navegador.
+        e.currentTarget.style.visibility = 'hidden';
+      }}
+    />
+  </AvatarPrimitive.Fallback>
 ))
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 

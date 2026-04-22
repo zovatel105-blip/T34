@@ -82,13 +82,20 @@ from auth import (
 )
 from media_validator import compute_status_for_poll
 
-# 🩺 FILTRO GLOBAL DE PUBLICACIONES ROTAS
-# Se aplica a todos los endpoints que listan polls para que las publicaciones
-# con medios inexistentes/inalcanzables (status="broken") nunca se muestren.
-# Usamos $ne: "broken" porque tambien matchea documentos sin el campo (polls
-# antiguos creados antes de este sistema siguen funcionando → son "ready" de
-# facto).
-POLL_STATUS_FILTER = {"status": {"$ne": "broken"}}
+# 🩺 FILTRO GLOBAL DE VISIBILIDAD DE PUBLICACIONES
+# ------------------------------------------------------------------
+# State machine de `status` en un poll:
+#   • (ausente)   → legacy, visible (equivalente a "ready")
+#   • "ready"     → publicación válida, visible en feed/perfil/explore/etc.
+#   • "processing"→ subida en proceso (ffmpeg transcoding), NO visible
+#   • "failed"    → falló el pipeline de upload/transcoding, NO visible
+#   • "broken"    → media inaccesible (validación en tiempo real), NO visible
+#   • "hidden"    → soft-delete (usuario borró o cuenta desactivada), NO visible
+#
+# Usamos $nin para un único filtro componible: Mongo considera un $nin
+# como "match" también cuando el campo NO existe, por lo que los polls
+# legacy sin campo `status` siguen apareciendo.
+POLL_STATUS_FILTER = {"status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
 
 # Import configuration
 from config import config
@@ -2605,7 +2612,7 @@ async def search_posts_optimized(query: str, current_user_id: str, limit: int):
             {
                 "$match": {
                     "is_active": True,
-                    "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+                    "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
                     "$or": [
                         {"title": {"$regex": query, "$options": "i"}},
                         {"content": {"$regex": query, "$options": "i"}}
@@ -3204,7 +3211,7 @@ async def search_posts_advanced(query: str, current_user_id: str, limit: int):
     # Find posts matching query in description or title  
     posts = await db.polls.find({
         "is_active": True,
-        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+        "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"description": search_regex},
             {"title": search_regex}
@@ -5833,7 +5840,7 @@ async def get_polls(
     # 🔒 CRITICAL: Excluir polls de challenges no publicados
     filter_query = {
         "is_active": True,
-        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+        "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"challenge_pending": {"$exists": False}},
             {"challenge_pending": False},
@@ -6160,7 +6167,7 @@ async def get_ultra_fast_feed(
         # 🔒 CRITICAL: Excluir polls que pertenecen a challenges no publicados
         filter_query = {
             "is_active": True,
-            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+            "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 {"challenge_pending": {"$exists": False}},  # No tiene el campo
                 {"challenge_pending": False},               # Campo existe pero es false
@@ -6701,7 +6708,7 @@ async def get_battle_polls(
     # Build filter query for VS battles
     filter_query = {
         "is_active": True,
-        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+        "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"layout": "vs"},
             {"type": "vs"}
@@ -6840,7 +6847,7 @@ async def get_following_polls(
     # 🔒 CRITICAL: Excluir polls de challenges no publicados
     filter_query = {
         "is_active": True,
-        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+        "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
         "author_id": {"$in": following_user_ids},
         "$or": [
             {"challenge_pending": {"$exists": False}},
@@ -7260,7 +7267,7 @@ async def get_user_polls(
         filter_query = {
             "author_id": target_user_id,
             "is_active": True,
-            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+            "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 {"challenge_pending": {"$exists": False}},
                 {"challenge_pending": False},
@@ -7528,7 +7535,7 @@ async def get_user_mentioned_polls(
         # Find polls where user is mentioned (either in poll level or option level)
         polls_cursor = db.polls.find({
             "is_active": True,
-            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
+            "status": {"$nin": ["broken", "hidden", "failed", "processing"]},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 # User mentioned in poll level
                 {"mentioned_users": user_id},
@@ -9109,14 +9116,14 @@ async def get_posts_using_audio(
         
         # Estrategia 1: Buscar por music_id directo
         logger.info(f"🔍 Buscando posts con music_id = {audio_id}")
-        polls_filter = {"music_id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
+        polls_filter = {"music_id": audio_id, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
         direct_polls = await db.polls.find(polls_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por music_id directo: {len(direct_polls)}")
         all_polls.extend(direct_polls)
         
         # Estrategia 2: Buscar por music.id en el objeto music embebido
         logger.info(f"🔍 Buscando posts con music.id = {audio_id}")
-        music_nested_filter = {"music.id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
+        music_nested_filter = {"music.id": audio_id, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
         nested_polls = await db.polls.find(music_nested_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por music.id embebido: {len(nested_polls)}")
         
@@ -9136,7 +9143,7 @@ async def get_posts_using_audio(
                 logger.info(f"🔄 COMPATIBILIDAD: Buscando posts con UUID sin prefijo = {bare_uuid}")
                 
                 # Buscar por music_id directo sin prefijo (posts antiguos)
-                backward_filter = {"music_id": bare_uuid, "is_active": True, "status": {"$ne": "broken"}}
+                backward_filter = {"music_id": bare_uuid, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
                 backward_polls = await db.polls.find(backward_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por UUID sin prefijo: {len(backward_polls)}")
                 
@@ -9147,7 +9154,7 @@ async def get_posts_using_audio(
                         existing_ids.add(poll["id"])
                 
                 # También buscar en music.id embebido sin prefijo
-                backward_nested_filter = {"music.id": bare_uuid, "is_active": True, "status": {"$ne": "broken"}}
+                backward_nested_filter = {"music.id": bare_uuid, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
                 backward_nested_polls = await db.polls.find(backward_nested_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por music.id sin prefijo: {len(backward_nested_polls)}")
                 
@@ -9166,7 +9173,7 @@ async def get_posts_using_audio(
                 logger.info(f"🔄 COMPATIBILIDAD: Buscando posts con UUID con prefijo = {prefixed_id}")
                 
                 # Buscar por music_id directo con prefijo (posts nuevos)
-                forward_filter = {"music_id": prefixed_id, "is_active": True, "status": {"$ne": "broken"}}
+                forward_filter = {"music_id": prefixed_id, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
                 forward_polls = await db.polls.find(forward_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por UUID con prefijo: {len(forward_polls)}")
                 
@@ -9177,7 +9184,7 @@ async def get_posts_using_audio(
                         existing_ids.add(poll["id"])
                 
                 # También buscar en music.id embebido con prefijo
-                forward_nested_filter = {"music.id": prefixed_id, "is_active": True, "status": {"$ne": "broken"}}
+                forward_nested_filter = {"music.id": prefixed_id, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
                 forward_nested_polls = await db.polls.find(forward_nested_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por music.id con prefijo: {len(forward_nested_polls)}")
                 
@@ -9199,7 +9206,7 @@ async def get_posts_using_audio(
             logger.info(f"📊 Poll IDs de usos de audio: {len(poll_ids_from_uses)}")
             
             if poll_ids_from_uses:
-                use_polls = await db.polls.find({"id": {"$in": poll_ids_from_uses}, "is_active": True, "status": {"$ne": "broken"}}).to_list(1000)
+                use_polls = await db.polls.find({"id": {"$in": poll_ids_from_uses}, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}).to_list(1000)
                 logger.info(f"📊 Posts encontrados por usos de audio: {len(use_polls)}")
                 
                 # Evitar duplicados
@@ -9210,7 +9217,7 @@ async def get_posts_using_audio(
         
         # Estrategia 4: Buscar en options.extracted_audio_id (carruseles con audio extraído por slide)
         logger.info(f"🔍 Buscando posts con options.extracted_audio_id = {audio_id}")
-        extracted_filter = {"options.extracted_audio_id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
+        extracted_filter = {"options.extracted_audio_id": audio_id, "is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
         extracted_polls = await db.polls.find(extracted_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por options.extracted_audio_id: {len(extracted_polls)}")
         
@@ -9822,30 +9829,55 @@ async def delete_poll(
     poll_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
-    """Delete a poll (only by owner)"""
+    """Soft-delete a poll (only by owner).
+
+    El poll NO se borra físicamente de la base de datos; se marca con
+    `status="hidden"` para (1) preservar integridad referencial de votos,
+    likes, comentarios y notificaciones que lo apuntan, y (2) permitir
+    auditoría / restauración futura. El filtro global `POLL_STATUS_FILTER`
+    excluye los hidden de todos los listados, por lo que desde el punto de
+    vista del usuario el contenido desaparece instantáneamente.
+    """
     try:
         # Get the poll to check ownership
         poll = await db.polls.find_one({"id": poll_id})
         if not poll:
             raise HTTPException(status_code=404, detail="Poll not found")
-        
+
         # Check if user is the owner
         if poll.get("author_id") != current_user.id:
             raise HTTPException(status_code=403, detail="You can only delete your own polls")
-        
-        # Delete associated data
+
+        # Si ya estaba soft-deleted, devolver éxito idempotente (evita 400
+        # al pulsar "eliminar" dos veces seguidas desde la UI).
+        if poll.get("status") == "hidden":
+            return {"message": "Poll already deleted", "idempotent": True}
+
+        # Limpieza de datos auxiliares efímeros. Estos registros no aportan
+        # valor histórico una vez oculto el poll y su persistencia sólo
+        # inflaría contadores y feeds.
         await db.votes.delete_many({"poll_id": poll_id})
         await db.poll_likes.delete_many({"poll_id": poll_id})
         await db.comments.delete_many({"poll_id": poll_id})
-        
-        # Delete the poll
-        result = await db.polls.delete_one({"id": poll_id})
-        
-        if result.deleted_count == 0:
+
+        # Soft-delete: marcar como oculto en lugar de borrar.
+        result = await db.polls.update_one(
+            {"id": poll_id},
+            {
+                "$set": {
+                    "status": "hidden",
+                    "hidden_at": datetime.utcnow(),
+                    "hidden_by": current_user.id,
+                }
+            },
+        )
+
+        if result.matched_count == 0:
             raise HTTPException(status_code=400, detail="Failed to delete poll")
-        
+
+        logger.info(f"🗑️ Poll {poll_id} soft-deleted by user {current_user.id}")
         return {"message": "Poll deleted successfully"}
-        
+
     except HTTPException:
         raise
     except Exception as e:

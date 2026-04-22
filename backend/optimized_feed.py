@@ -28,7 +28,7 @@ class FeedOptimizer:
         
         # 1. GET BASIC POLLS DATA (Single Query)
         polls_cursor = self.db.polls.find(
-            {"is_active": True, "status": {"$ne": "broken"}},  # 🩺 ocultar publicaciones rotas
+            {"is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}},  # 🩺 ocultar publicaciones rotas
             {
                 "id": 1,
                 "title": 1, 
@@ -157,7 +157,7 @@ class FeedOptimizer:
         
         # Minimal data query
         polls_cursor = self.db.polls.find(
-            {"is_active": True, "status": {"$ne": "broken"}},  # 🩺 ocultar publicaciones rotas
+            {"is_active": True, "status": {"$nin": ["broken", "hidden", "failed", "processing"]}},  # 🩺 ocultar publicaciones rotas
             {
                 "id": 1,
                 "title": 1,

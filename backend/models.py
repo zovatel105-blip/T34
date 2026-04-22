@@ -463,10 +463,18 @@ class Poll(BaseModel):
     voting_privacy: Optional[str] = None  # Voting privacy setting
     mature_content: Optional[str] = None  # Mature content rating
     allow_downloads: bool = True  # Allow users to download content
-    # Estado de validacion de medios: "pending" | "ready" | "broken".
-    # Los listados filtran posts con status="broken" para no mostrar
-    # publicaciones con imagenes/videos faltantes o inalcanzables.
+    # Estado de validación de medios y ciclo de vida del post:
+    #   "ready"      → publicado y visible (estado por defecto)
+    #   "processing" → subida en curso, transcoding / generación de thumb
+    #   "failed"     → falló el pipeline, NO visible en ningún listado
+    #   "broken"     → media inaccesible detectada en runtime, NO visible
+    #   "hidden"     → soft-delete (usuario borró o cuenta desactivada)
+    # El filtro global `POLL_STATUS_FILTER` excluye
+    # {broken, hidden, failed, processing} de todos los listados.
     status: str = "ready"
+    # Soft-delete metadata (sólo presente cuando status == "hidden")
+    hidden_at: Optional[datetime] = None
+    hidden_by: Optional[str] = None
 
 class PollCreate(BaseModel):
     title: str

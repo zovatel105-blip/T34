@@ -7967,3 +7967,74 @@ test_plan:
     - "Login with email or username"
   test_all: false
   test_priority: "high_first"
+
+
+#====================================================================================================
+# PHASE 1A — Status pipeline + soft-delete + avatar fallback (backend changes)
+#====================================================================================================
+backend:
+  - task: "Phase 1A — Poll status state machine + VISIBLE_POLL_FILTER whitelist"
+    implemented: true
+    working: "NA"
+    file: "server.py, models.py, optimized_feed.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            State machine extendida: status in {ready, processing, failed, broken, hidden}.
+            Filtro global POLL_STATUS_FILTER = {"status": {"$nin": ["broken", "hidden", "failed", "processing"]}}
+            (mongo $nin también matchea documentos sin el campo → legacy sigue visible).
+            Aplicado vía replace_all a TODAS las ocurrencias inline en server.py y optimized_feed.py.
+            Tests a verificar:
+            1. GET /api/polls (feed) NO devuelve polls con status hidden / failed / processing / broken.
+            2. GET /api/polls?author=<id> (perfil) respeta el filtro.
+            3. GET /api/polls/search respeta el filtro.
+            4. GET /api/audio/{id}/polls respeta el filtro.
+            5. Un poll sin campo `status` (legacy) SÍ aparece en el feed.
+
+  - task: "Phase 1A — Soft delete de polls (DELETE /api/polls/{id})"
+    implemented: true
+    working: "NA"
+    file: "server.py (delete_poll endpoint ~L9820)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            DELETE ya NO borra físicamente el poll: hace update a status='hidden'
+            con timestamps hidden_at y hidden_by. Votes/likes/comments sí se borran
+            (limpieza auxiliar). Delete idempotente: si ya está hidden devuelve 200.
+            Tests a verificar:
+            1. Crear poll → DELETE → el poll sigue en db.polls pero con status=hidden.
+            2. GET /api/polls (feed) no lo muestra.
+            3. DELETE repetido devuelve 200 + idempotent:true.
+            4. DELETE por un usuario que NO es el author → 403.
+            5. DELETE de un poll_id inexistente → 404.
+
+frontend:
+  - task: "Phase 1A — AvatarFallback muestra default-avatar.svg (nunca iniciales)"
+    implemented: true
+    working: "NA"
+    file: "components/ui/avatar.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            AvatarFallback reescrito para renderizar <img src="/default-avatar.svg"/>
+            siempre que no se pueda cargar el AvatarImage. Ignora children (iconos/
+            iniciales) que algunos componentes pasaban. No requiere testing backend.
+
+test_plan:
+  current_focus:
+    - "Phase 1A — Poll status state machine + VISIBLE_POLL_FILTER whitelist"
+    - "Phase 1A — Soft delete de polls (DELETE /api/polls/{id})"
+  test_all: false
+  test_priority: "high_first"
