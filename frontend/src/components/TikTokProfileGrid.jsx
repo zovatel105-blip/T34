@@ -202,19 +202,20 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                   );
                 }
 
-                // Fallback 1: Video preview using <video> element (first frame)
-                if (videoUrl) {
+                // Fallback 1: Placeholder estilizado para vídeos sin miniatura.
+                // ⚠️ NO renderizar <video> aquí: en Android WebView, un <video>
+                // sin frame cargado muestra un ENORME botón de play por defecto
+                // (conocido bug de Chromium que no se puede ocultar de forma
+                // fiable con pseudo-elementos CSS). Mostramos un fondo oscuro
+                // con nuestro propio icono de play — consistente con el diseño
+                // del grid y sin el placeholder nativo feo.
+                if (videoUrl || isVideo) {
                   return (
-                    <video
-                      src={uploadService.getPublicUrl(videoUrl)}
-                      className="w-full h-full object-cover rounded-lg"
-                      muted
-                      playsInline
-                      preload="metadata"
-                      onLoadedMetadata={(e) => {
-                        try { e.target.currentTime = 0.1; } catch (err) {}
-                      }}
-                    />
+                    <div className="w-full h-full bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 flex items-center justify-center rounded-lg">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm border border-white/40 flex items-center justify-center shadow-lg">
+                        <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white ml-0.5" />
+                      </div>
+                    </div>
                   );
                 }
                 
