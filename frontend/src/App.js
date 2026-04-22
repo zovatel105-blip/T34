@@ -67,6 +67,9 @@ import { useSafeArea } from './hooks/useSafeArea';
 // 📱 App Lifecycle Hook (pausa audio/video cuando la app pasa a background)
 import { useAppLifecycle } from './hooks/useAppLifecycle';
 
+// 🔙 Back Button Hook (Android hardware back / gesto atrás – estilo TikTok)
+import { useBackButton } from './hooks/useBackButton';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -112,6 +115,11 @@ function AppContent() {
 
   // 📱 Pausar audio y vídeo cuando la app pasa a background o se cierra
   useAppLifecycle();
+
+  // 🔙 Botón/gesto atrás (Android/iOS nativo) – cierra modales, sale de la
+  //    vista TikTok superpuesta (perfil/búsqueda/audio) y respeta el historial
+  //    para volver a la pantalla anterior en lugar de saltar siempre al feed.
+  useBackButton();
 
   // 📲 Notificaciones locales (funciona sin Firebase)
   useLocalNotifications(isAuthenticated, token);
