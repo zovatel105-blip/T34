@@ -463,6 +463,10 @@ class Poll(BaseModel):
     voting_privacy: Optional[str] = None  # Voting privacy setting
     mature_content: Optional[str] = None  # Mature content rating
     allow_downloads: bool = True  # Allow users to download content
+    # Estado de validacion de medios: "pending" | "ready" | "broken".
+    # Los listados filtran posts con status="broken" para no mostrar
+    # publicaciones con imagenes/videos faltantes o inalcanzables.
+    status: str = "ready"
 
 class PollCreate(BaseModel):
     title: str

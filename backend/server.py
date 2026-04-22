@@ -80,6 +80,15 @@ from auth import (
     verify_password, get_password_hash, create_access_token, 
     verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from media_validator import compute_status_for_poll
+
+# 🩺 FILTRO GLOBAL DE PUBLICACIONES ROTAS
+# Se aplica a todos los endpoints que listan polls para que las publicaciones
+# con medios inexistentes/inalcanzables (status="broken") nunca se muestren.
+# Usamos $ne: "broken" porque tambien matchea documentos sin el campo (polls
+# antiguos creados antes de este sistema siguen funcionando → son "ready" de
+# facto).
+POLL_STATUS_FILTER = {"status": {"$ne": "broken"}}
 
 # Import configuration
 from config import config
@@ -2595,6 +2604,8 @@ async def search_posts_optimized(query: str, current_user_id: str, limit: int):
         pipeline = [
             {
                 "$match": {
+                    "is_active": True,
+                    "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
                     "$or": [
                         {"title": {"$regex": query, "$options": "i"}},
                         {"content": {"$regex": query, "$options": "i"}}
@@ -3192,6 +3203,8 @@ async def search_posts_advanced(query: str, current_user_id: str, limit: int):
     
     # Find posts matching query in description or title  
     posts = await db.polls.find({
+        "is_active": True,
+        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"description": search_regex},
             {"title": search_regex}
@@ -5820,6 +5833,7 @@ async def get_polls(
     # 🔒 CRITICAL: Excluir polls de challenges no publicados
     filter_query = {
         "is_active": True,
+        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"challenge_pending": {"$exists": False}},
             {"challenge_pending": False},
@@ -6146,6 +6160,7 @@ async def get_ultra_fast_feed(
         # 🔒 CRITICAL: Excluir polls que pertenecen a challenges no publicados
         filter_query = {
             "is_active": True,
+            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 {"challenge_pending": {"$exists": False}},  # No tiene el campo
                 {"challenge_pending": False},               # Campo existe pero es false
@@ -6686,6 +6701,7 @@ async def get_battle_polls(
     # Build filter query for VS battles
     filter_query = {
         "is_active": True,
+        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
         "$or": [
             {"layout": "vs"},
             {"type": "vs"}
@@ -6824,6 +6840,7 @@ async def get_following_polls(
     # 🔒 CRITICAL: Excluir polls de challenges no publicados
     filter_query = {
         "is_active": True,
+        "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
         "author_id": {"$in": following_user_ids},
         "$or": [
             {"challenge_pending": {"$exists": False}},
@@ -7243,6 +7260,7 @@ async def get_user_polls(
         filter_query = {
             "author_id": target_user_id,
             "is_active": True,
+            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 {"challenge_pending": {"$exists": False}},
                 {"challenge_pending": False},
@@ -7510,6 +7528,7 @@ async def get_user_mentioned_polls(
         # Find polls where user is mentioned (either in poll level or option level)
         polls_cursor = db.polls.find({
             "is_active": True,
+            "status": {"$ne": "broken"},  # 🩺 ocultar publicaciones rotas
             "$or": [
                 # User mentioned in poll level
                 {"mentioned_users": user_id},
@@ -7839,7 +7858,29 @@ async def create_poll(
     
     # Insert into database
     await db.polls.insert_one(poll.model_dump())  # Pydantic v2
-    
+
+    # 🩺 VALIDACION DE MEDIOS: marcar el post como "ready" o "broken" segun
+    # si todos sus media_url existen en disco (uploads locales) o responden
+    # a un HEAD (URLs externas). Los endpoints de listado filtran los
+    # "broken" para no mostrar publicaciones rotas al usuario.
+    try:
+        poll_dict_for_validation = poll.model_dump()
+        new_status = await compute_status_for_poll(poll_dict_for_validation)
+        if new_status != poll.status:
+            await db.polls.update_one(
+                {"id": poll.id},
+                {"$set": {"status": new_status}}
+            )
+            poll.status = new_status
+            if new_status == "broken":
+                logger.warning(
+                    f"Poll {poll.id} created but marked as BROKEN (media validation failed)"
+                )
+    except Exception as validation_error:
+        # La validacion no debe bloquear la creacion. Si algo falla,
+        # el poll queda en el status por defecto ("ready").
+        logger.error(f"Media validation error for poll {poll.id}: {validation_error}")
+
     # Send notifications to mentioned users (both general and option-specific)
     all_mentioned_users = set(poll_data.mentioned_users)
     
@@ -9068,14 +9109,14 @@ async def get_posts_using_audio(
         
         # Estrategia 1: Buscar por music_id directo
         logger.info(f"🔍 Buscando posts con music_id = {audio_id}")
-        polls_filter = {"music_id": audio_id}
+        polls_filter = {"music_id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
         direct_polls = await db.polls.find(polls_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por music_id directo: {len(direct_polls)}")
         all_polls.extend(direct_polls)
         
         # Estrategia 2: Buscar por music.id en el objeto music embebido
         logger.info(f"🔍 Buscando posts con music.id = {audio_id}")
-        music_nested_filter = {"music.id": audio_id}
+        music_nested_filter = {"music.id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
         nested_polls = await db.polls.find(music_nested_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por music.id embebido: {len(nested_polls)}")
         
@@ -9095,7 +9136,7 @@ async def get_posts_using_audio(
                 logger.info(f"🔄 COMPATIBILIDAD: Buscando posts con UUID sin prefijo = {bare_uuid}")
                 
                 # Buscar por music_id directo sin prefijo (posts antiguos)
-                backward_filter = {"music_id": bare_uuid}
+                backward_filter = {"music_id": bare_uuid, "is_active": True, "status": {"$ne": "broken"}}
                 backward_polls = await db.polls.find(backward_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por UUID sin prefijo: {len(backward_polls)}")
                 
@@ -9106,7 +9147,7 @@ async def get_posts_using_audio(
                         existing_ids.add(poll["id"])
                 
                 # También buscar en music.id embebido sin prefijo
-                backward_nested_filter = {"music.id": bare_uuid}
+                backward_nested_filter = {"music.id": bare_uuid, "is_active": True, "status": {"$ne": "broken"}}
                 backward_nested_polls = await db.polls.find(backward_nested_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por music.id sin prefijo: {len(backward_nested_polls)}")
                 
@@ -9125,7 +9166,7 @@ async def get_posts_using_audio(
                 logger.info(f"🔄 COMPATIBILIDAD: Buscando posts con UUID con prefijo = {prefixed_id}")
                 
                 # Buscar por music_id directo con prefijo (posts nuevos)
-                forward_filter = {"music_id": prefixed_id}
+                forward_filter = {"music_id": prefixed_id, "is_active": True, "status": {"$ne": "broken"}}
                 forward_polls = await db.polls.find(forward_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por UUID con prefijo: {len(forward_polls)}")
                 
@@ -9136,7 +9177,7 @@ async def get_posts_using_audio(
                         existing_ids.add(poll["id"])
                 
                 # También buscar en music.id embebido con prefijo
-                forward_nested_filter = {"music.id": prefixed_id}
+                forward_nested_filter = {"music.id": prefixed_id, "is_active": True, "status": {"$ne": "broken"}}
                 forward_nested_polls = await db.polls.find(forward_nested_filter).to_list(1000)
                 logger.info(f"📊 Posts encontrados por music.id con prefijo: {len(forward_nested_polls)}")
                 
@@ -9158,7 +9199,7 @@ async def get_posts_using_audio(
             logger.info(f"📊 Poll IDs de usos de audio: {len(poll_ids_from_uses)}")
             
             if poll_ids_from_uses:
-                use_polls = await db.polls.find({"id": {"$in": poll_ids_from_uses}}).to_list(1000)
+                use_polls = await db.polls.find({"id": {"$in": poll_ids_from_uses}, "is_active": True, "status": {"$ne": "broken"}}).to_list(1000)
                 logger.info(f"📊 Posts encontrados por usos de audio: {len(use_polls)}")
                 
                 # Evitar duplicados
@@ -9169,7 +9210,7 @@ async def get_posts_using_audio(
         
         # Estrategia 4: Buscar en options.extracted_audio_id (carruseles con audio extraído por slide)
         logger.info(f"🔍 Buscando posts con options.extracted_audio_id = {audio_id}")
-        extracted_filter = {"options.extracted_audio_id": audio_id}
+        extracted_filter = {"options.extracted_audio_id": audio_id, "is_active": True, "status": {"$ne": "broken"}}
         extracted_polls = await db.polls.find(extracted_filter).to_list(1000)
         logger.info(f"📊 Posts encontrados por options.extracted_audio_id: {len(extracted_polls)}")
         

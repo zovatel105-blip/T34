@@ -1,510 +1,613 @@
 #!/usr/bin/env python3
+"""
+Backend Test Suite for Poll Status System
 
-import requests
+Tests the new "status" field implementation for hiding broken posts.
+Validates that:
+1. Listing endpoints filter out posts with status="broken"
+2. Individual poll endpoint still returns broken polls
+3. Poll creation validates media and sets status correctly
+4. Audio posts endpoint filters broken polls
+"""
+
+import asyncio
+import httpx
 import json
-import time
-from typing import Dict, Any, Optional
+import os
+import sys
+from typing import Dict, List, Optional
+from datetime import datetime
 
-# Configuration
-BASE_URL = "https://audio-details-ui-fix.preview.emergentagent.com"
-TEST_USER = {
-    "email": "backendtest@test.com",
-    "password": "test1234",
-    "username": "backendtest",
-    "display_name": "Backend Test"
-}
+# Test configuration
+BACKEND_URL = "https://audio-details-ui-fix.preview.emergentagent.com/api"
+BROKEN_POLL_ID = "685e9de8-8dc4-49ec-94c0-8e0da20e2ae4"
 
-# Demo user credentials from test_credentials.md
-DEMO_USER = {
-    "email": "demo@example.com",
-    "password": "demo123",
-    "username": "demo_user"
-}
+# Test credentials - using created test user
+TEST_EMAIL = "test@test.com"
+TEST_PASSWORD = "test123"
 
-# Test user for polls testing
-POLLS_TEST_USER = {
-    "email": "pollstest@test.com",
-    "password": "test1234",
-    "username": "pollstest",
-    "display_name": "Polls Test User"
-}
-
-class UserPollsEndpointTester:
+class PollStatusTester:
     def __init__(self):
-        self.base_url = BASE_URL
-        self.session = requests.Session()
-        self.access_token = None
-        self.demo_user_id = None
-        self.results = []
-
-    def log_result(self, test_name: str, success: bool, details: str = ""):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        result = f"{status} {test_name}"
-        if details:
-            result += f" - {details}"
-        print(result)
-        self.results.append({
-            "test": test_name,
-            "success": success,
-            "details": details
-        })
-
-    def login_demo_user(self) -> bool:
-        """Login with demo user credentials"""
+        self.client = httpx.AsyncClient(timeout=30.0)
+        self.auth_token = None
+        self.current_user = None
+        
+    async def __aenter__(self):
+        return self
+        
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.aclose()
+    
+    async def authenticate(self) -> bool:
+        """Authenticate with test credentials"""
         try:
-            # Try polls test user first
-            login_url = f"{self.base_url}/api/auth/login"
-            login_data = {
-                "email": POLLS_TEST_USER["email"],
-                "password": POLLS_TEST_USER["password"]
-            }
-            response = self.session.post(login_url, json=login_data)
+            print(f"🔐 Authenticating with {TEST_EMAIL}...")
+            
+            response = await self.client.post(f"{BACKEND_URL}/auth/login", json={
+                "email": TEST_EMAIL,
+                "password": TEST_PASSWORD
+            })
             
             if response.status_code == 200:
                 data = response.json()
-                self.access_token = data.get("access_token")
-                user_data = data.get("user", {})
-                self.demo_user_id = user_data.get("id")
-                self.log_result("Polls test user login", True, f"Token obtained, User ID: {self.demo_user_id}")
-                return True
-            
-            # Fallback to demo user
-            login_data = {
-                "email": DEMO_USER["email"],
-                "password": DEMO_USER["password"]
-            }
-            response = self.session.post(login_url, json=login_data)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.access_token = data.get("access_token")
-                user_data = data.get("user", {})
-                self.demo_user_id = user_data.get("id")
-                self.log_result("Demo user login", True, f"Token obtained, User ID: {self.demo_user_id}")
+                self.auth_token = data.get("access_token")
+                self.current_user = data.get("user")
+                print(f"✅ Authentication successful for user: {self.current_user.get('username')}")
                 return True
             else:
-                self.log_result("User login", False, f"Status: {response.status_code}, Response: {response.text}")
+                print(f"❌ Authentication failed: {response.status_code} - {response.text}")
                 return False
                 
         except Exception as e:
-            self.log_result("User login", False, f"Exception: {str(e)}")
+            print(f"❌ Authentication error: {e}")
             return False
-
-    def test_user_polls_with_auth(self, user_id: str, limit: Optional[int] = None, offset: Optional[int] = None) -> Dict[str, Any]:
-        """Test GET /api/users/{user_id}/polls with authentication"""
+    
+    def get_headers(self) -> Dict[str, str]:
+        """Get headers with authentication"""
+        headers = {"Content-Type": "application/json"}
+        if self.auth_token:
+            headers["Authorization"] = f"Bearer {self.auth_token}"
+        return headers
+    
+    async def test_listing_endpoints_filter_broken(self) -> Dict[str, bool]:
+        """Test that all listing endpoints filter out broken posts"""
+        print("\n🔍 Testing listing endpoints filter broken posts...")
+        
+        endpoints_to_test = [
+            "/polls",
+            "/polls/fast", 
+            "/polls/ultra-fast",
+            "/polls/battles",
+            "/polls/following",
+            "/search?query=test"
+        ]
+        
+        results = {}
+        
+        for endpoint in endpoints_to_test:
+            try:
+                print(f"  Testing {endpoint}...")
+                response = await self.client.get(
+                    f"{BACKEND_URL}{endpoint}",
+                    headers=self.get_headers()
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Handle different response structures
+                    if isinstance(data, list):
+                        polls = data
+                    else:
+                        polls = data.get("polls", data.get("results", []))
+                    
+                    # Check if broken poll is NOT in results
+                    broken_poll_found = any(
+                        poll.get("id") == BROKEN_POLL_ID 
+                        for poll in polls
+                    )
+                    
+                    if broken_poll_found:
+                        print(f"    ❌ BROKEN POLL FOUND in {endpoint}")
+                        results[endpoint] = False
+                    else:
+                        print(f"    ✅ Broken poll correctly filtered from {endpoint}")
+                        results[endpoint] = True
+                        
+                else:
+                    print(f"    ⚠️  {endpoint} returned {response.status_code}")
+                    results[endpoint] = False
+                    
+            except Exception as e:
+                print(f"    ❌ Error testing {endpoint}: {e}")
+                results[endpoint] = False
+        
+        return results
+    
+    async def test_individual_poll_endpoint(self) -> bool:
+        """Test that individual poll endpoint still returns broken polls"""
+        print(f"\n🔍 Testing individual poll endpoint for broken poll {BROKEN_POLL_ID}...")
+        
         try:
-            url = f"{self.base_url}/api/users/{user_id}/polls"
-            params = {}
-            if limit is not None:
-                params["limit"] = limit
-            if offset is not None:
-                params["offset"] = offset
-            
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            response = self.session.get(url, params=params, headers=headers)
-            
-            test_name = f"GET /api/users/{user_id}/polls (authenticated)"
-            if params:
-                test_name += f" with params {params}"
+            response = await self.client.get(
+                f"{BACKEND_URL}/polls/{BROKEN_POLL_ID}",
+                headers=self.get_headers()
+            )
             
             if response.status_code == 200:
                 data = response.json()
-                polls = data.get("polls", [])
-                total = data.get("total", 0)
+                poll_id = data.get("id")
                 
-                details = f"Status: 200, Polls: {len(polls)}, Total: {total}"
-                self.log_result(test_name, True, details)
-                return {"success": True, "data": data, "status": 200}
+                if poll_id == BROKEN_POLL_ID:
+                    print("✅ Individual poll endpoint correctly returns broken poll")
+                    return True
+                else:
+                    print(f"❌ Individual poll endpoint returned wrong poll: {poll_id}")
+                    return False
             else:
-                details = f"Status: {response.status_code}, Response: {response.text[:200]}"
-                self.log_result(test_name, False, details)
-                return {"success": False, "status": response.status_code, "response": response.text}
+                print(f"❌ Individual poll endpoint failed: {response.status_code} - {response.text}")
+                return False
                 
         except Exception as e:
-            self.log_result(test_name, False, f"Exception: {str(e)}")
-            return {"success": False, "error": str(e)}
-
-    def test_user_polls_without_auth(self, user_id: str) -> Dict[str, Any]:
-        """Test GET /api/users/{user_id}/polls without authentication (should return 401)"""
-        try:
-            url = f"{self.base_url}/api/users/{user_id}/polls"
-            response = self.session.get(url)  # No Authorization header
-            
-            test_name = f"GET /api/users/{user_id}/polls (no auth)"
-            
-            if response.status_code == 401:
-                self.log_result(test_name, True, "Status: 401 (Unauthorized as expected)")
-                return {"success": True, "status": 401}
-            else:
-                details = f"Status: {response.status_code} (expected 401), Response: {response.text[:200]}"
-                self.log_result(test_name, False, details)
-                return {"success": False, "status": response.status_code}
-                
-        except Exception as e:
-            self.log_result(test_name, False, f"Exception: {str(e)}")
-            return {"success": False, "error": str(e)}
-
-    def test_user_polls_invalid_user(self) -> Dict[str, Any]:
-        """Test GET /api/users/{user_id}/polls with invalid user ID (should return 404)"""
-        try:
-            invalid_user_id = "00000000-0000-0000-0000-000000000000"  # Non-existent UUID
-            url = f"{self.base_url}/api/users/{invalid_user_id}/polls"
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            response = self.session.get(url, headers=headers)
-            
-            test_name = f"GET /api/users/{invalid_user_id}/polls (invalid user)"
-            
-            if response.status_code == 404:
-                self.log_result(test_name, True, "Status: 404 (Not Found as expected)")
-                return {"success": True, "status": 404}
-            else:
-                details = f"Status: {response.status_code} (expected 404), Response: {response.text[:200]}"
-                self.log_result(test_name, False, details)
-                return {"success": False, "status": response.status_code}
-                
-        except Exception as e:
-            self.log_result(test_name, False, f"Exception: {str(e)}")
-            return {"success": False, "error": str(e)}
-
-    def test_user_polls_by_username(self) -> Dict[str, Any]:
-        """Test GET /api/users/{username}/polls using username instead of UUID"""
-        try:
-            username = DEMO_USER["username"]
-            url = f"{self.base_url}/api/users/{username}/polls"
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            response = self.session.get(url, headers=headers)
-            
-            test_name = f"GET /api/users/{username}/polls (by username)"
-            
-            if response.status_code == 200:
-                data = response.json()
-                polls = data.get("polls", [])
-                total = data.get("total", 0)
-                
-                details = f"Status: 200, Polls: {len(polls)}, Total: {total}"
-                self.log_result(test_name, True, details)
-                return {"success": True, "data": data, "status": 200}
-            else:
-                details = f"Status: {response.status_code}, Response: {response.text[:200]}"
-                self.log_result(test_name, False, details)
-                return {"success": False, "status": response.status_code}
-                
-        except Exception as e:
-            self.log_result(test_name, False, f"Exception: {str(e)}")
-            return {"success": False, "error": str(e)}
-
-    def run_comprehensive_tests(self):
-        """Run all user polls endpoint tests"""
-        print("👤 USER POLLS ENDPOINT TESTING - GET /api/users/{user_id}/polls")
-        print("=" * 70)
-        
-        # Step 1: Authentication
-        if not self.login_demo_user():
-            print("❌ CRITICAL: Authentication failed - cannot proceed with tests")
+            print(f"❌ Error testing individual poll endpoint: {e}")
             return False
+    
+    async def test_poll_creation_validation(self) -> Dict[str, bool]:
+        """Test poll creation with valid and invalid media URLs"""
+        print("\n🔍 Testing poll creation validation...")
         
-        print(f"\n🔍 TESTING USER POLLS ENDPOINT")
-        print("-" * 50)
+        results = {}
         
-        # Step 2: Test with valid user ID and authentication
-        print("\n1. Testing with valid user ID and authentication")
-        valid_auth_test = self.test_user_polls_with_auth(self.demo_user_id)
-        
-        # Step 3: Test without authentication (should return 401)
-        print("\n2. Testing without authentication (should return 401)")
-        no_auth_test = self.test_user_polls_without_auth(self.demo_user_id)
-        
-        # Step 4: Test with invalid user ID (should return 404)
-        print("\n3. Testing with invalid user ID (should return 404)")
-        invalid_user_test = self.test_user_polls_invalid_user()
-        
-        # Step 5: Test with username instead of UUID
-        print("\n4. Testing with username instead of UUID")
-        username_test = self.test_user_polls_by_username()
-        
-        # Step 6: Test with limit parameter
-        print("\n5. Testing with limit parameter")
-        limit_test = self.test_user_polls_with_auth(self.demo_user_id, limit=10)
-        
-        # Step 7: Test with offset parameter
-        print("\n6. Testing with offset parameter")
-        offset_test = self.test_user_polls_with_auth(self.demo_user_id, offset=5)
-        
-        # Step 8: Test with both limit and offset
-        print("\n7. Testing with both limit and offset parameters")
-        limit_offset_test = self.test_user_polls_with_auth(self.demo_user_id, limit=5, offset=2)
-        
-        # Summary
-        print("\n" + "=" * 70)
-        print("📊 TEST SUMMARY")
-        print("=" * 70)
-        
-        passed_tests = sum(1 for r in self.results if r["success"])
-        total_tests = len(self.results)
-        
-        for result in self.results:
-            status = "✅" if result["success"] else "❌"
-            print(f"{status} {result['test']}: {result['details']}")
-        
-        print(f"\n🎯 OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
-        
-        # Check specific requirements
-        print("\n🔍 REQUIREMENT VERIFICATION:")
-        
-        # Requirement 1: Authentication required
-        if no_auth_test["success"]:
-            print("✅ Requires authentication (returns 401 without token)")
-        else:
-            print("❌ Authentication requirement not working properly")
-        
-        # Requirement 2: Valid user ID works
-        if valid_auth_test["success"]:
-            print("✅ Works with valid user ID and authentication")
-        else:
-            print("❌ Does not work with valid user ID")
-        
-        # Requirement 3: Invalid user returns 404
-        if invalid_user_test["success"]:
-            print("✅ Returns 404 for invalid user ID")
-        else:
-            print("❌ Does not return 404 for invalid user ID")
-        
-        # Requirement 4: Username support
-        if username_test["success"]:
-            print("✅ Supports username parameter")
-        else:
-            print("❌ Username parameter not working")
-        
-        # Requirement 5: Query parameters work
-        if limit_test["success"] and offset_test["success"]:
-            print("✅ Limit and offset parameters work")
-        else:
-            print("❌ Query parameters not working properly")
-        
-        return passed_tests == total_tests
-
-
-class MusicSearchTester:
-    def __init__(self):
-        self.base_url = BASE_URL
-        self.session = requests.Session()
-        self.access_token = None
-        self.results = []
-
-    def log_result(self, test_name: str, success: bool, details: str = ""):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        result = f"{status} {test_name}"
-        if details:
-            result += f" - {details}"
-        print(result)
-        self.results.append({
-            "test": test_name,
-            "success": success,
-            "details": details
-        })
-
-    def register_and_login(self) -> bool:
-        """Register and login user, return auth token"""
+        # Test 1: Valid poll creation
+        print("  Testing valid poll creation...")
         try:
-            # Try login first (in case user already exists)
-            login_url = f"{self.base_url}/api/auth/login"
-            login_data = {
-                "email": TEST_USER["email"],
-                "password": TEST_USER["password"]
+            valid_poll_data = {
+                "title": "Test Poll - Valid Media",
+                "description": "Testing poll creation with valid media",
+                "options": [
+                    {
+                        "text": "Option 1",
+                        "media_type": "image",
+                        "media_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400"
+                    },
+                    {
+                        "text": "Option 2", 
+                        "media_type": "image",
+                        "media_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400"
+                    }
+                ],
+                "tags": ["test"],
+                "category": "test"
             }
-            login_response = self.session.post(login_url, json=login_data)
             
-            if login_response.status_code == 200:
-                data = login_response.json()
-                self.access_token = data.get("access_token")
-                self.log_result("User login", True, f"Token obtained: {self.access_token[:20]}...")
-                return True
-            
-            # If login fails, try to register
-            register_url = f"{self.base_url}/api/auth/register"
-            response = self.session.post(register_url, json=TEST_USER)
+            response = await self.client.post(
+                f"{BACKEND_URL}/polls",
+                json=valid_poll_data,
+                headers=self.get_headers()
+            )
             
             if response.status_code in [200, 201]:
                 data = response.json()
-                self.access_token = data.get("access_token")
-                self.log_result("User registration", True, f"Token obtained: {self.access_token[:20]}...")
-                return True
+                poll_id = data.get("id")
+                
+                # Check the poll status in database by fetching it
+                poll_response = await self.client.get(
+                    f"{BACKEND_URL}/polls/{poll_id}",
+                    headers=self.get_headers()
+                )
+                
+                if poll_response.status_code == 200:
+                    poll_data = poll_response.json()
+                    # For valid polls, they should appear in listings (status="ready")
+                    print(f"    ✅ Valid poll created successfully: {poll_id}")
+                    results["valid_poll_creation"] = True
+                else:
+                    print(f"    ❌ Could not fetch created poll: {poll_response.status_code}")
+                    results["valid_poll_creation"] = False
             else:
-                self.log_result("Auth", False, f"Login Status: {login_response.status_code}, Register Status: {response.status_code}")
+                print(f"    ❌ Valid poll creation failed: {response.status_code} - {response.text}")
+                results["valid_poll_creation"] = False
+                
+        except Exception as e:
+            print(f"    ❌ Error testing valid poll creation: {e}")
+            results["valid_poll_creation"] = False
+        
+        # Test 2: Invalid poll creation (broken media)
+        print("  Testing invalid poll creation...")
+        try:
+            invalid_poll_data = {
+                "title": "Test Poll - Invalid Media",
+                "description": "Testing poll creation with invalid media",
+                "options": [
+                    {
+                        "text": "Option 1",
+                        "media_type": "video",
+                        "media_url": "/api/uploads/videos/NONEXISTENT.mp4"
+                    },
+                    {
+                        "text": "Option 2",
+                        "media_type": "image", 
+                        "media_url": "https://nonexistent-domain-12345.com/image.jpg"
+                    }
+                ],
+                "tags": ["test"],
+                "category": "test"
+            }
+            
+            response = await self.client.post(
+                f"{BACKEND_URL}/polls",
+                json=invalid_poll_data,
+                headers=self.get_headers()
+            )
+            
+            if response.status_code in [200, 201]:
+                data = response.json()
+                poll_id = data.get("id")
+                
+                # The poll should be created but marked as broken
+                # Check if it appears in listings (it shouldn't)
+                await asyncio.sleep(2)  # Give time for validation
+                
+                listing_response = await self.client.get(
+                    f"{BACKEND_URL}/polls",
+                    headers=self.get_headers()
+                )
+                
+                if listing_response.status_code == 200:
+                    listing_data = listing_response.json()
+                    
+                    # Handle different response structures
+                    if isinstance(listing_data, list):
+                        polls = listing_data
+                    else:
+                        polls = listing_data.get("polls", [])
+                    
+                    # Check if the broken poll appears in listings
+                    broken_poll_in_listing = any(
+                        poll.get("id") == poll_id 
+                        for poll in polls
+                    )
+                    
+                    if not broken_poll_in_listing:
+                        print(f"    ✅ Invalid poll correctly marked as broken and filtered: {poll_id}")
+                        results["invalid_poll_creation"] = True
+                    else:
+                        print(f"    ❌ Invalid poll appears in listings (should be filtered): {poll_id}")
+                        results["invalid_poll_creation"] = False
+                else:
+                    print(f"    ❌ Could not fetch polls listing: {listing_response.status_code}")
+                    results["invalid_poll_creation"] = False
+            else:
+                print(f"    ❌ Invalid poll creation failed: {response.status_code} - {response.text}")
+                results["invalid_poll_creation"] = False
+                
+        except Exception as e:
+            print(f"    ❌ Error testing invalid poll creation: {e}")
+            results["invalid_poll_creation"] = False
+        
+        return results
+    
+    async def test_user_profile_endpoints(self) -> Dict[str, bool]:
+        """Test user profile endpoints filter broken polls"""
+        print("\n🔍 Testing user profile endpoints...")
+        
+        results = {}
+        
+        # We need to find a user who might have the broken poll
+        # Let's try to get the broken poll first to find its author
+        try:
+            broken_poll_response = await self.client.get(
+                f"{BACKEND_URL}/polls/{BROKEN_POLL_ID}",
+                headers=self.get_headers()
+            )
+            
+            if broken_poll_response.status_code == 200:
+                broken_poll_data = broken_poll_response.json()
+                author_id = broken_poll_data.get("author", {}).get("id")
+                
+                if author_id:
+                    print(f"  Testing user polls endpoint for author: {author_id}")
+                    
+                    user_polls_response = await self.client.get(
+                        f"{BACKEND_URL}/users/{author_id}/polls",
+                        headers=self.get_headers()
+                    )
+                    
+                    if user_polls_response.status_code == 200:
+                        user_polls_data = user_polls_response.json()
+                        polls = user_polls_data.get("polls", [])
+                        
+                        # Check if broken poll is filtered from user's polls
+                        broken_poll_found = any(
+                            poll.get("id") == BROKEN_POLL_ID 
+                            for poll in polls
+                        )
+                        
+                        if not broken_poll_found:
+                            print("    ✅ User polls endpoint correctly filters broken poll")
+                            results["user_polls"] = True
+                        else:
+                            print("    ❌ User polls endpoint shows broken poll")
+                            results["user_polls"] = False
+                    else:
+                        print(f"    ⚠️  User polls endpoint returned {user_polls_response.status_code}")
+                        results["user_polls"] = False
+                else:
+                    print("    ⚠️  Could not find author ID for broken poll")
+                    results["user_polls"] = False
+            else:
+                print(f"    ⚠️  Could not fetch broken poll: {broken_poll_response.status_code}")
+                results["user_polls"] = False
+                
+        except Exception as e:
+            print(f"    ❌ Error testing user profile endpoints: {e}")
+            results["user_polls"] = False
+        
+        return results
+    
+    async def test_audio_posts_endpoint(self) -> bool:
+        """Test that audio posts endpoint filters broken polls"""
+        print("\n🔍 Testing audio posts endpoint...")
+        
+        try:
+            # Get a sample audio ID to test with
+            # We'll use a common audio ID or test with any available audio
+            response = await self.client.get(
+                f"{BACKEND_URL}/music/library?limit=1",
+                headers=self.get_headers()
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                music_list = data.get("music", [])
+                
+                if music_list:
+                    audio_id = music_list[0].get("id")
+                    
+                    # Test the audio posts endpoint
+                    audio_posts_response = await self.client.get(
+                        f"{BACKEND_URL}/audio/{audio_id}/posts",
+                        headers=self.get_headers()
+                    )
+                    
+                    if audio_posts_response.status_code == 200:
+                        audio_posts_data = audio_posts_response.json()
+                        posts = audio_posts_data.get("posts", [])
+                        
+                        # Check if any broken polls appear
+                        broken_poll_found = any(
+                            post.get("id") == BROKEN_POLL_ID 
+                            for post in posts
+                        )
+                        
+                        if not broken_poll_found:
+                            print("    ✅ Audio posts endpoint correctly filters broken polls")
+                            return True
+                        else:
+                            print("    ❌ Audio posts endpoint shows broken poll")
+                            return False
+                    else:
+                        print(f"    ⚠️  Audio posts endpoint returned {audio_posts_response.status_code}")
+                        return False
+                else:
+                    print("    ⚠️  No music found to test audio posts endpoint")
+                    return False
+            else:
+                print(f"    ⚠️  Music library endpoint returned {response.status_code}")
                 return False
                 
         except Exception as e:
-            self.log_result("Auth setup", False, f"Exception: {str(e)}")
+            print(f"    ❌ Error testing audio posts endpoint: {e}")
             return False
-
-    def test_music_search(self, query: str, limit: Optional[int] = None, expected_min_results: int = 20) -> Dict[str, Any]:
-        """Test music search endpoint"""
+    
+    async def check_broken_poll_exists(self) -> bool:
+        """Check if the specific broken poll exists in database"""
+        print(f"\n🔍 Checking if broken poll {BROKEN_POLL_ID} exists...")
+        
         try:
-            # Prepare request
-            url = f"{self.base_url}/api/music/search-realtime"
-            params = {"query": query}
-            if limit is not None:
-                params["limit"] = limit
+            response = await self.client.get(
+                f"{BACKEND_URL}/polls/{BROKEN_POLL_ID}",
+                headers=self.get_headers()
+            )
             
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            
-            # Make request
-            response = self.session.get(url, params=params, headers=headers)
-            
-            if response.status_code != 200:
-                self.log_result(f"Music search '{query}'", False, f"Status: {response.status_code}, Response: {response.text}")
-                return {"success": False, "total": 0, "results_count": 0}
-            
-            # Parse response
-            data = response.json()
-            
-            # Verify response structure
-            if not data.get("success"):
-                self.log_result(f"Music search '{query}'", False, f"Response success=false: {data}")
-                return {"success": False, "total": 0, "results_count": 0}
-            
-            total = data.get("total", 0)
-            results = data.get("results", [])
-            results_count = len(results)
-            
-            # Check if meets minimum requirements
-            success = total > expected_min_results and results_count > expected_min_results
-            
-            details = f"Total: {total}, Results: {results_count}, Limit: {limit or 'default'}"
-            self.log_result(f"Music search '{query}'", success, details)
-            
-            return {
-                "success": success,
-                "total": total,
-                "results_count": results_count,
-                "limit_used": limit,
-                "raw_response": data
-            }
-            
+            if response.status_code == 200:
+                data = response.json()
+                poll_id = data.get("id")
+                title = data.get("title", "")
+                
+                if poll_id == BROKEN_POLL_ID:
+                    print(f"✅ Broken poll exists: '{title}'")
+                    return True
+                else:
+                    print(f"❌ Poll ID mismatch: expected {BROKEN_POLL_ID}, got {poll_id}")
+                    return False
+            elif response.status_code == 404:
+                print(f"❌ Broken poll {BROKEN_POLL_ID} not found in database")
+                return False
+            else:
+                print(f"❌ Error fetching broken poll: {response.status_code} - {response.text}")
+                return False
+                
         except Exception as e:
-            self.log_result(f"Music search '{query}'", False, f"Exception: {str(e)}")
-            return {"success": False, "total": 0, "results_count": 0}
-
-    def run_comprehensive_tests(self):
-        """Run all music search tests"""
-        print("🎵 MUSIC SEARCH TESTING - VERIFYING 200 RESULT LIMIT")
-        print("=" * 60)
-        
-        # Step 1: Authentication
-        if not self.register_and_login():
-            print("❌ CRITICAL: Authentication failed - cannot proceed with tests")
+            print(f"❌ Error checking broken poll existence: {e}")
             return False
+    
+    async def run_all_tests(self) -> Dict[str, any]:
+        """Run all tests and return results"""
+        print("🚀 Starting Poll Status System Tests")
+        print("=" * 50)
         
-        print("\n🔍 TESTING MUSIC SEARCH ENDPOINTS")
-        print("-" * 40)
+        # Authenticate first
+        if not await self.authenticate():
+            return {"error": "Authentication failed"}
         
-        # Step 2: Test with explicit limit=200
-        print("\n1. Testing Bad Bunny with limit=200")
-        bad_bunny_200 = self.test_music_search("bad bunny", limit=200, expected_min_results=20)
+        results = {
+            "authentication": True,
+            "broken_poll_exists": False,
+            "listing_endpoints": {},
+            "individual_poll": False,
+            "poll_creation": {},
+            "user_profile": {},
+            "audio_posts": False
+        }
         
-        # Step 3: Test default behavior (should default to 200)
-        print("\n2. Testing Bad Bunny with default limit")
-        bad_bunny_default = self.test_music_search("bad bunny", expected_min_results=20)
+        # Check if broken poll exists
+        results["broken_poll_exists"] = await self.check_broken_poll_exists()
         
-        # Step 4: Test with Drake
-        print("\n3. Testing Drake with limit=200")
-        drake_200 = self.test_music_search("drake", limit=200, expected_min_results=20)
+        # Test listing endpoints
+        results["listing_endpoints"] = await self.test_listing_endpoints_filter_broken()
         
-        # Step 5: Test with Taylor Swift
-        print("\n4. Testing Taylor Swift with limit=200")
-        taylor_200 = self.test_music_search("taylor swift", limit=200, expected_min_results=20)
+        # Test individual poll endpoint
+        results["individual_poll"] = await self.test_individual_poll_endpoint()
         
-        # Step 6: Verify consistency between default and explicit limit
-        print("\n5. Testing consistency - default vs explicit limit")
-        consistency_test = (bad_bunny_default["total"] == bad_bunny_200["total"] and 
-                          bad_bunny_default["results_count"] == bad_bunny_200["results_count"])
-        self.log_result("Default limit consistency", consistency_test, 
-                       f"Default: {bad_bunny_default['total']}, Explicit 200: {bad_bunny_200['total']}")
+        # Test poll creation validation
+        results["poll_creation"] = await self.test_poll_creation_validation()
         
-        # Summary
-        print("\n" + "=" * 60)
-        print("📊 TEST SUMMARY")
-        print("=" * 60)
+        # Test user profile endpoints
+        results["user_profile"] = await self.test_user_profile_endpoints()
         
-        passed_tests = sum(1 for r in self.results if r["success"])
-        total_tests = len(self.results)
+        # Test audio posts endpoint
+        results["audio_posts"] = await self.test_audio_posts_endpoint()
         
-        for result in self.results:
-            status = "✅" if result["success"] else "❌"
-            print(f"{status} {result['test']}: {result['details']}")
-        
-        print(f"\n🎯 OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
-        
-        # Check specific requirements
-        print("\n🔍 REQUIREMENT VERIFICATION:")
-        
-        # Requirement 1: More than 20 results
-        if bad_bunny_200["total"] > 20:
-            print("✅ Returns more than 20 results (Bad Bunny)")
-        else:
-            print("❌ Does not return more than 20 results")
-        
-        # Requirement 2: Approaching 200 results 
-        if bad_bunny_200["total"] > 150:  # Should get close to 200 for popular artists
-            print(f"✅ Returns substantial results approaching 200 (Got: {bad_bunny_200['total']})")
-        else:
-            print(f"⚠️ Results count lower than expected (Got: {bad_bunny_200['total']})")
-        
-        # Requirement 3: Multiple queries work
-        multiple_queries_work = (bad_bunny_200["success"] and drake_200["success"] and taylor_200["success"])
-        if multiple_queries_work:
-            print("✅ Multiple different queries work correctly")
-        else:
-            print("❌ Some queries failed")
-        
-        # Requirement 4: Default behavior works
-        if bad_bunny_default["success"] and consistency_test:
-            print("✅ Default behavior works (defaults to 200)")
-        else:
-            print("❌ Default behavior inconsistent or failing")
-        
-        return passed_tests == total_tests
+        return results
 
-def main():
-    """Main test execution"""
-    print("🚀 BACKEND API TESTING SUITE")
+def print_test_summary(results: Dict[str, any]):
+    """Print a summary of test results"""
+    print("\n" + "=" * 50)
+    print("📊 TEST SUMMARY")
     print("=" * 50)
     
-    # Test 1: User Polls Endpoint
-    print("\n🔥 TESTING NEW ENDPOINT: GET /api/users/{user_id}/polls")
-    user_polls_tester = UserPollsEndpointTester()
-    user_polls_success = user_polls_tester.run_comprehensive_tests()
+    total_tests = 0
+    passed_tests = 0
     
-    # Test 2: Music Search (existing test)
-    print("\n\n🎵 TESTING EXISTING ENDPOINT: Music Search")
-    music_tester = MusicSearchTester()
-    music_success = music_tester.run_comprehensive_tests()
-    
-    # Overall summary
-    print("\n" + "=" * 70)
-    print("🏁 FINAL TESTING SUMMARY")
-    print("=" * 70)
-    
-    if user_polls_success:
-        print("✅ User Polls Endpoint: ALL TESTS PASSED")
+    # Authentication
+    if results.get("authentication"):
+        print("✅ Authentication: PASSED")
+        passed_tests += 1
     else:
-        print("❌ User Polls Endpoint: SOME TESTS FAILED")
+        print("❌ Authentication: FAILED")
+    total_tests += 1
     
-    if music_success:
-        print("✅ Music Search Endpoint: ALL TESTS PASSED")
+    # Broken poll exists
+    if results.get("broken_poll_exists"):
+        print("✅ Broken poll exists: PASSED")
+        passed_tests += 1
     else:
-        print("❌ Music Search Endpoint: SOME TESTS FAILED")
+        print("❌ Broken poll exists: FAILED")
+    total_tests += 1
     
-    overall_success = user_polls_success and music_success
+    # Listing endpoints
+    listing_results = results.get("listing_endpoints", {})
+    listing_passed = sum(1 for v in listing_results.values() if v)
+    listing_total = len(listing_results)
     
-    if overall_success:
-        print("\n🎉 ALL BACKEND TESTS PASSED!")
+    if listing_passed == listing_total and listing_total > 0:
+        print(f"✅ Listing endpoints filter: PASSED ({listing_passed}/{listing_total})")
+        passed_tests += 1
     else:
-        print("\n⚠️ SOME BACKEND TESTS FAILED - See details above")
+        print(f"❌ Listing endpoints filter: FAILED ({listing_passed}/{listing_total})")
+        for endpoint, result in listing_results.items():
+            status = "✅" if result else "❌"
+            print(f"    {status} {endpoint}")
+    total_tests += 1
     
-    return overall_success
+    # Individual poll endpoint
+    if results.get("individual_poll"):
+        print("✅ Individual poll endpoint: PASSED")
+        passed_tests += 1
+    else:
+        print("❌ Individual poll endpoint: FAILED")
+    total_tests += 1
+    
+    # Poll creation validation
+    creation_results = results.get("poll_creation", {})
+    creation_passed = sum(1 for v in creation_results.values() if v)
+    creation_total = len(creation_results)
+    
+    if creation_passed == creation_total and creation_total > 0:
+        print(f"✅ Poll creation validation: PASSED ({creation_passed}/{creation_total})")
+        passed_tests += 1
+    else:
+        print(f"❌ Poll creation validation: FAILED ({creation_passed}/{creation_total})")
+        for test, result in creation_results.items():
+            status = "✅" if result else "❌"
+            print(f"    {status} {test}")
+    total_tests += 1
+    
+    # User profile endpoints
+    profile_results = results.get("user_profile", {})
+    profile_passed = sum(1 for v in profile_results.values() if v)
+    profile_total = len(profile_results)
+    
+    if profile_passed == profile_total and profile_total > 0:
+        print(f"✅ User profile endpoints: PASSED ({profile_passed}/{profile_total})")
+        passed_tests += 1
+    else:
+        print(f"❌ User profile endpoints: FAILED ({profile_passed}/{profile_total})")
+        for test, result in profile_results.items():
+            status = "✅" if result else "❌"
+            print(f"    {status} {test}")
+    total_tests += 1
+    
+    # Audio posts endpoint
+    if results.get("audio_posts"):
+        print("✅ Audio posts endpoint: PASSED")
+        passed_tests += 1
+    else:
+        print("❌ Audio posts endpoint: FAILED")
+    total_tests += 1
+    
+    print("\n" + "=" * 50)
+    print(f"📈 OVERALL RESULT: {passed_tests}/{total_tests} tests passed")
+    
+    if passed_tests == total_tests:
+        print("🎉 ALL TESTS PASSED! Poll status system is working correctly.")
+    else:
+        print("⚠️  Some tests failed. Please review the implementation.")
+    
+    print("=" * 50)
+
+async def main():
+    """Main test runner"""
+    async with PollStatusTester() as tester:
+        results = await tester.run_all_tests()
+        print_test_summary(results)
+        
+        # Return exit code based on results
+        if "error" in results:
+            return 1
+        
+        # Count successful tests
+        total_success = 0
+        total_tests = 0
+        
+        # Count individual test results
+        if results.get("authentication"): total_success += 1
+        total_tests += 1
+        
+        if results.get("broken_poll_exists"): total_success += 1
+        total_tests += 1
+        
+        listing_results = results.get("listing_endpoints", {})
+        if all(listing_results.values()) and listing_results: total_success += 1
+        total_tests += 1
+        
+        if results.get("individual_poll"): total_success += 1
+        total_tests += 1
+        
+        creation_results = results.get("poll_creation", {})
+        if all(creation_results.values()) and creation_results: total_success += 1
+        total_tests += 1
+        
+        profile_results = results.get("user_profile", {})
+        if all(profile_results.values()) and profile_results: total_success += 1
+        total_tests += 1
+        
+        if results.get("audio_posts"): total_success += 1
+        total_tests += 1
+        
+        return 0 if total_success == total_tests else 1
 
 if __name__ == "__main__":
-    main()
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code)
