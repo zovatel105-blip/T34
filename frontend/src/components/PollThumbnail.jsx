@@ -158,11 +158,24 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
   // Helper: Extract normalized media fields supporting both shapes:
   // - Legacy: option.media_url / option.media_type / option.thumbnail_url
   // - New:    option.media.url / option.media.type / option.media.thumbnail
-  const getMediaFields = (option) => ({
-    url: option.media?.url || option.media_url,
-    type: option.media?.type || option.media_type,
-    thumbnail: option.media?.thumbnail || option.thumbnail_url,
-  });
+  //
+  // Para video preferir optimized_media_url (transcodificado 720p H.264+AAC
+  // por el pipeline backend) cuando esté disponible.
+  const getMediaFields = (option) => {
+    const rawUrl = option.media?.url || option.media_url;
+    const optimizedUrl =
+      option.media?.optimizedUrl ||
+      option.media?.optimized_media_url ||
+      option.optimized_media_url;
+    const type = option.media?.type || option.media_type;
+    const isVideo = type === 'video';
+    return {
+      // Para vídeos: optimizado si lo hay, si no el original
+      url: (isVideo && optimizedUrl) ? optimizedUrl : rawUrl,
+      type,
+      thumbnail: option.media?.thumbnail || option.thumbnail_url,
+    };
+  };
 
   // Helper: Render the correct media element for an option (image or video fallback)
   const renderMediaElement = (option, altText, imgClassName = "w-full h-full object-cover") => {

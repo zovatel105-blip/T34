@@ -12,6 +12,7 @@ import audioManager from '../../services/AudioManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
+import { pickPlayableVideoUrl } from '../../utils/mediaUrl';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -352,7 +353,7 @@ const CarouselLayout = ({
                     ref={(el) => {
                       if (el) videoRefs.current.set(option.id, el);
                     }}
-                    src={resolveAssetUrl(option.media?.url || option.media_url)}
+                    src={pickPlayableVideoUrl(option) || resolveAssetUrl(option.media?.url || option.media_url)}
                     poster={resolveAssetUrl(option.thumbnail_url)}
                     muted
                     playsInline

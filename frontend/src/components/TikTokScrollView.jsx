@@ -22,6 +22,7 @@ import { useViewTracking } from '../hooks/useViewTracking';
 import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { pickPlayableVideoUrl } from '../utils/mediaUrl';
 import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
@@ -875,7 +876,8 @@ const TikTokPollCard = ({
                             {/* Media del participante */}
                             {option.media?.type?.includes('video') ? (
                               <video
-                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                                src={pickPlayableVideoUrl(option) || (option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url)}
+                                poster={option.thumbnail_url ? resolveAssetUrl(option.thumbnail_url) : undefined}
                                 className="w-full h-full object-cover"
                                 autoPlay
                                 loop
@@ -972,7 +974,8 @@ const TikTokPollCard = ({
                             >
                             {option.media?.type?.includes('video') ? (
                               <video
-                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
+                                src={pickPlayableVideoUrl(option) || (option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url)}
+                                poster={option.thumbnail_url ? resolveAssetUrl(option.thumbnail_url) : undefined}
                                 className="w-full h-full object-cover"
                                 autoPlay
                                 loop

@@ -70,6 +70,9 @@ import { useAppLifecycle } from './hooks/useAppLifecycle';
 // 🔙 Back Button Hook (Android hardware back / gesto atrás – estilo TikTok)
 import { useBackButton } from './hooks/useBackButton';
 
+// 🛜 Banner de estado offline (estilo Instagram/TikTok)
+import OfflineBanner from './components/common/OfflineBanner';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -277,6 +280,7 @@ function App() {
             <FollowProvider>
               <UploadProvider>
                 <AppContent />
+                <OfflineBanner />
                 <Toaster />
               </UploadProvider>
             </FollowProvider>

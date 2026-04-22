@@ -8110,3 +8110,69 @@ test_plan:
   current_focus: []
   test_all: false
   test_priority: "high_first"
+
+#====================================================================================================
+# PHASE 2A — Frontend robustness: SafeImage/SafeVideo + optimized_media_url + offline banner
+#====================================================================================================
+frontend:
+  - task: "Phase 2A — SafeImage component (nunca contenido roto)"
+    implemented: true
+    working: true
+    file: "components/common/SafeImage.jsx (nuevo)"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Drop-in <img> que nunca muestra icono roto del navegador.
+            Estados: loading (shimmer skeleton) → loaded (fade-in) → error (gradiente + icono foto).
+            Soporta fallback URL custom. Resuelve URLs internamente con resolveAssetUrl.
+            Disponible para adopción en próximas fases sin cambios disruptivos.
+
+  - task: "Phase 2A — SafeVideo component + optimized_media_url preference"
+    implemented: true
+    working: true
+    file: "components/common/SafeVideo.jsx (nuevo), utils/mediaUrl.js (nuevo), CarouselLayout.jsx, TikTokScrollView.jsx, PollThumbnail.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Nuevo helper pickPlayableVideoUrl(option) central: si el backend ya
+            generó optimized_media_url (720p H.264+AAC+faststart), lo prefiere;
+            cae a media_url original si no. Aplicado en 3 sitios críticos:
+            CarouselLayout (render principal de tarjeta), TikTokScrollView
+            (dos ramas de swipe vertical), PollThumbnail (getMediaFields).
+            <SafeVideo> disponible pero no se fuerza adopción global (riesgo);
+            se aprovechará en fases futuras. Mantiene poster visible si el
+            video falla la descarga → "nunca hueco negro".
+
+  - task: "Phase 2A — useNetworkStatus hook + OfflineBanner global"
+    implemented: true
+    working: true
+    file: "hooks/useNetworkStatus.js (nuevo), components/common/OfflineBanner.jsx (nuevo), App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Hook unifica @capacitor/network (APK nativa) + navigator.onLine (web).
+            Expone {isOnline, connectionType, isMetered}. Banner montado
+            globalmente en <UploadProvider>. Estilo Instagram: pill flotante
+            sobre safe-area-inset-top, gris oscuro "Sin conexión · mostrando
+            contenido guardado" con icono WifiOff. Al recuperar conexión,
+            transición 2s a pill verde "Conectado" con WifiOn, luego desaparece.
+            VALIDADO con screenshots Playwright simulando offline/online via CDP:
+            los 3 estados (online→offline→reconnected→normal) renderizan según diseño.
+
+test_plan:
+  current_focus: []
+  test_all: false
+  test_priority: "high_first"
+
