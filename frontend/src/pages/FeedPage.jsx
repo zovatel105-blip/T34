@@ -9,6 +9,8 @@ import LogoWithQuickActions from '../components/LogoWithQuickActions';
 // import StoriesContainer from '../components/StoriesContainer'; // Removed - Stories feature disabled
 import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
+import feedCache from '../services/feedCacheService';
+import thumbnailPrefetch from '../services/thumbnailPrefetchService';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -116,11 +118,36 @@ const FeedPage = () => {
               timestamp: Date.now()
             })));
             setPolls(freshData);
+            // 💾 Persistir en disco para el proximo arranque / offline
+            feedCache.setCachedFeed(freshData, 'main').catch(() => {});
           }).catch(console.warn);
           
           return;
         }
-        
+
+        // 💾 PRIMERA CARGA: intentar cache PERSISTENTE (disco) antes de la red.
+        // Asi, al reabrir la app (incluso sin red) se renderiza instantaneo el
+        // ultimo feed visto. Si hay red, despues refrescamos.
+        const diskCache = await feedCache.getCachedFeed('main');
+        if (diskCache && diskCache.polls.length > 0) {
+          console.log(`💾 FeedPage: hidratado desde disco (${diskCache.polls.length} posts, age=${Math.round(diskCache.age / 1000)}s)`);
+          setPolls(diskCache.polls);
+          setIsLoading(false);
+          // Si el cache es suficientemente reciente y ya estamos online,
+          // aun asi pedimos los nuevos en background para mantenerlo al dia.
+          pollService.getPollsForFrontend({ limit: 30 }).then(freshData => {
+            setPollsCache(prev => new Map(prev.set(cacheKey, {
+              data: freshData,
+              timestamp: Date.now()
+            })));
+            setPolls(freshData);
+            feedCache.setCachedFeed(freshData, 'main').catch(() => {});
+          }).catch((err) => {
+            console.warn('[FeedPage] refresh en background fallo (probablemente offline):', err?.message);
+          });
+          return;
+        }
+
         const pollsData = await pollService.getPollsForFrontend({ limit: 30 });
         
         // 🚀 CACHE: Store for next time
@@ -128,6 +155,8 @@ const FeedPage = () => {
           data: pollsData,
           timestamp: Date.now()
         })));
+        // 💾 Persistir en disco para los siguientes arranques
+        feedCache.setCachedFeed(pollsData, 'main').catch(() => {});
         console.log('🔍 FeedPage loaded polls:', pollsData.map(p => ({
           title: p.title, 
           mentioned_users: p.mentioned_users ? p.mentioned_users.length : 0
@@ -206,7 +235,29 @@ const FeedPage = () => {
   const handleActiveIndexChange = useCallback((newIndex) => {
     activeIndexRef.current = newIndex;
     updateFeedSnapshotActiveIndex(newIndex);
-  }, []);
+    // 📥 Prefetch silencioso de los thumbnails de los proximos 3 posts.
+    // Asi cuando el usuario llegue a ellos la imagen ya esta en el HTTP
+    // cache del WebView → carga instantanea, no se ven rectangulos grises.
+    try {
+      thumbnailPrefetch.prefetchAroundIndex(polls, newIndex, 3);
+    } catch (err) {
+      // No bloquear UX si el prefetch falla
+      console.debug('[FeedPage] thumbnail prefetch skipped:', err?.message);
+    }
+  }, [polls]);
+
+  // 📥 Al cargar/cambiar la lista de polls, prefetchar los primeros 3 thumbnails
+  // inmediatamente (antes siquiera de que el usuario scrollee) — esto es lo que
+  // hace que el feed se sienta "instantaneo" como TikTok/Instagram.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+    const startIdx = activeIndexRef.current ?? 0;
+    try {
+      thumbnailPrefetch.prefetchAroundIndex(polls, startIdx, 3);
+    } catch (_) {
+      /* noop */
+    }
+  }, [polls]);
 
   // 🔴 LIVE REFRESH estilo TikTok/Instagram — refrescar contadores de posts visibles cada 15s.
   //
