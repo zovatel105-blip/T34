@@ -18,8 +18,9 @@
  *   - onLoad / onError: callbacks opcionales
  */
 import React, { useState, useEffect } from 'react';
-import resolveAssetUrl from '../utils/resolveAssetUrl';
-import { cn } from '../lib/utils';
+import resolveAssetUrl from '../../utils/resolveAssetUrl';
+import useCachedMedia from '../../hooks/useCachedMedia';
+import { cn } from '../../lib/utils';
 
 const SHIMMER_CLASS =
   'animate-pulse bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800';
@@ -39,21 +40,24 @@ const SafeImage = React.forwardRef(
       onLoad,
       onError,
       draggable = false,
+      cache = true,
       ...rest
     },
     ref
   ) => {
     const resolved = resolveAssetUrl(src);
+    // Auto-cache del asset en filesystem (Capacitor). En web es no-op.
+    const { src: cachedSrc } = useCachedMedia(resolved, { enabled: cache });
     const [status, setStatus] = useState(resolved ? 'loading' : 'error');
-    const [currentSrc, setCurrentSrc] = useState(resolved);
+    const [currentSrc, setCurrentSrc] = useState(cachedSrc);
 
-    // Re-iniciar cuando cambia src
+    // Re-iniciar cuando cambia src o llega la versión cacheada
     useEffect(() => {
-      if (resolved !== currentSrc) {
-        setCurrentSrc(resolved);
-        setStatus(resolved ? 'loading' : 'error');
+      if (cachedSrc !== currentSrc) {
+        setCurrentSrc(cachedSrc);
+        setStatus(cachedSrc ? 'loading' : 'error');
       }
-    }, [resolved, currentSrc]);
+    }, [cachedSrc, currentSrc]);
 
     const handleLoad = (e) => {
       setStatus('loaded');

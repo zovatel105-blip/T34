@@ -8176,3 +8176,66 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+
+#====================================================================================================
+# PHASE 2B — Disk media cache (Capacitor Filesystem) + predictive prefetch
+#====================================================================================================
+frontend:
+  - task: "Phase 2B — mediaCacheService (Capacitor Filesystem + LRU)"
+    implemented: true
+    working: true
+    file: "services/mediaCacheService.js (new), services/hashUrl.js (new)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Caché on-disk en APK nativo (Directory.Cache/mediacache/<hash>.<ext>).
+            Índice LRU persistente en Preferences. Quota 250MB. Evicción por
+            accessed_at ascendente. Deduplica prefetch in-flight. Web = no-op
+            (el navegador ya cachea vía HTTP). API: init, lookupSync, prefetch,
+            clear, stats. hashUrl.js usa djb2 (sync, 32-bit) para nombres.
+
+  - task: "Phase 2B — useCachedMedia hook + auto-integration in SafeImage"
+    implemented: true
+    working: true
+    file: "hooks/useCachedMedia.js (new), components/common/SafeImage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Hook lookupSync al montar → si cacheado, URI local inmediata; sino
+            URL original + prefetch en background → actualiza src cuando termine.
+            SafeImage lo adopta por defecto (prop cache=true, opt-out si necesario).
+            Fix bonus: imports de SafeImage estaban rotos (../utils en vez de
+            ../../utils); corregido. mediaCache.init() ejecutado en App.js.
+
+  - task: "Phase 2B — Predictive prefetch N+1..N+3 in TikTokScrollView"
+    implemented: true
+    working: true
+    file: "components/TikTokScrollView.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            useEffect observando activeIndex: al avanzar, prefetch silencioso de
+            los próximos 3 polls. Thumbnails siempre (<=2MB); videos sólo en WiFi
+            (<=10MB), sólo el primer video de cada poll para no disparar datos.
+            En cellular (navigator.connection) videoMaxBytes=0 → sólo thumbnails.
+            Importación dinámica de mediaCache/mediaUrl para no impactar el
+            render inicial. VALIDADO con screenshot: feed carga sin regresiones,
+            hash determinístico, web en modo no-op como se esperaba.
+
+test_plan:
+  current_focus: []
+  test_all: false
+  test_priority: "high_first"
+

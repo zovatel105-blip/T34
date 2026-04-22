@@ -73,6 +73,9 @@ import { useBackButton } from './hooks/useBackButton';
 // 🛜 Banner de estado offline (estilo Instagram/TikTok)
 import OfflineBanner from './components/common/OfflineBanner';
 
+// 💾 Caché de media (thumbnails/videos) en Capacitor Filesystem
+import mediaCache from './services/mediaCacheService';
+
 // Umbral para considerar el dispositivo como móvil/tablet (px)
 const MOBILE_BREAKPOINT = 1024;
 
@@ -118,6 +121,15 @@ function AppContent() {
 
   // 📱 Pausar audio y vídeo cuando la app pasa a background o se cierra
   useAppLifecycle();
+
+  // 💾 Inicializar caché de media (filesystem en APK, no-op en web).
+  //    Idempotente, una sola vez.
+  React.useEffect(() => {
+    mediaCache.init().catch((e) => {
+      // eslint-disable-next-line no-console
+      console.warn('[mediaCache] init skipped:', e?.message);
+    });
+  }, []);
 
   // 🔙 Botón/gesto atrás (Android/iOS nativo) – cierra modales, sale de la
   //    vista TikTok superpuesta (perfil/búsqueda/audio) y respeta el historial

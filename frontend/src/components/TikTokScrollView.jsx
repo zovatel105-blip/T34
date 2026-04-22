@@ -1730,6 +1730,73 @@ const TikTokScrollView = ({
     }
   }, [activeIndex, polls]);
 
+  // 🚀 PREFETCH PREDICTIVO (estilo TikTok): descarga silenciosamente los
+  // medios de las publicaciones N+1..N+3 en la caché de disco (APK nativo)
+  // para que el swipe se sienta instantáneo. En WiFi incluye vídeos cortos;
+  // en red móvil (metered) sólo thumbnails para no consumir datos del usuario.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+
+    // Importación dinámica para no bloquear el render inicial
+    let cancelled = false;
+    Promise.all([
+      import('../services/mediaCacheService'),
+      import('../utils/mediaUrl'),
+      import('../hooks/useNetworkStatus'),
+    ])
+      .then(([cacheMod, mediaMod, _netMod]) => {
+        if (cancelled) return;
+        const cache = cacheMod.default;
+        const { pickPlayableVideoUrl, pickVideoPosterUrl, pickImageUrl } = mediaMod;
+
+        // Detectar red metered usando la API del plugin directamente
+        // (evitar montar el hook aquí para no re-renderizar).
+        const isCellular =
+          typeof navigator !== 'undefined' &&
+          navigator.connection &&
+          (navigator.connection.type === 'cellular' ||
+            navigator.connection.effectiveType === '2g' ||
+            navigator.connection.effectiveType === '3g');
+
+        // Límite por archivo: en WiFi 10MB, en metered 500KB (solo thumbs)
+        const videoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024;
+        const imageMaxBytes = 2 * 1024 * 1024;
+
+        // Prefetch N+1..N+3
+        for (let offset = 1; offset <= 3; offset++) {
+          const idx = activeIndex + offset;
+          if (idx >= polls.length) break;
+          const poll = polls[idx];
+          if (!poll || !poll.options) continue;
+
+          for (const option of poll.options) {
+            // Thumbnails siempre
+            const thumbUrl = pickVideoPosterUrl(option) || pickImageUrl(option);
+            if (thumbUrl) {
+              cache.prefetch(thumbUrl, { maxBytes: imageMaxBytes });
+            }
+            // Vídeos solo en WiFi y solo la primera opción visible de cada
+            // publicación (evita descargar 4 vídeos por poll).
+            if (videoMaxBytes > 0 && option.media_type === 'video') {
+              const videoUrl = pickPlayableVideoUrl(option);
+              if (videoUrl) {
+                cache.prefetch(videoUrl, { maxBytes: videoMaxBytes });
+                break; // solo primer vídeo del poll
+              }
+            }
+          }
+        }
+      })
+      .catch(() => {
+        /* silencioso — caché es opcional */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeIndex, polls]);
+
+
   // 🎵 SINCRONIZACIÓN CRÍTICA: Detener audio al salir del componente
   useEffect(() => {
     return () => {
