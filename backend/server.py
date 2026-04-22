@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request, Response, UploadFile, File, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request, Response, UploadFile, File, Query, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -81,6 +81,7 @@ from auth import (
     verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from media_validator import compute_status_for_poll
+import video_pipeline
 
 # 🩺 FILTRO GLOBAL DE VISIBILIDAD DE PUBLICACIONES
 # ------------------------------------------------------------------
@@ -1932,6 +1933,107 @@ async def login(login_data: UserLogin, request: Request):
 async def get_me(current_user: UserResponse = Depends(get_current_user)):
     """Get current user information"""
     return current_user
+
+
+@api_router.delete("/auth/me", status_code=200)
+async def delete_my_account(current_user: UserResponse = Depends(get_current_user)):
+    """Soft-delete / desactivar la propia cuenta del usuario.
+
+    El registro NO se elimina físicamente para preservar integridad
+    referencial (votos emitidos por este usuario en polls de otros,
+    comentarios, menciones, etc. siguen existiendo). En su lugar:
+      • `is_active = False`, `deleted_at` = ahora → bloquea login.
+      • `username` y `display_name` se anonimizan a "usuario_eliminado"
+        (+ sufijo corto para unicidad).
+      • `avatar_url`, `bio`, `cover_url` y datos personales → None / vacío.
+      • Todas las publicaciones propias → `status = "hidden"` (soft-delete
+        cascada). El filtro global `POLL_STATUS_FILTER` las oculta de
+        feed/perfil/explore/búsqueda automáticamente.
+
+    Es idempotente: llamar dos veces devuelve 200 igualmente.
+    """
+    user_id = current_user.id
+    now = datetime.utcnow()
+
+    try:
+        existing = await db.users.find_one({"id": user_id})
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Idempotencia: si ya está desactivada, devolver éxito sin volver a
+        # modificar (evita regenerar el sufijo del username).
+        if existing.get("is_active") is False and existing.get("deleted_at"):
+            return {
+                "message": "Account already deleted",
+                "idempotent": True,
+                "hidden_polls": 0,
+            }
+
+        # Anonimización: sufijo corto del UUID para evitar colisiones de
+        # username único. Ej: "usuario_eliminado_a1b2c3d4"
+        anon_suffix = user_id.split("-")[0] if "-" in user_id else user_id[:8]
+        anon_username = f"usuario_eliminado_{anon_suffix}"
+        anon_display_name = "Usuario eliminado"
+
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "is_active": False,
+                "deleted_at": now,
+                "username": anon_username,
+                "display_name": anon_display_name,
+                "avatar_url": None,
+                "cover_url": None,
+                "bio": "",
+                "phone": None,
+                "location": None,
+                "website": None,
+                # Limpiar datos potencialmente sensibles
+                "google_id": None,
+                "apple_id": None,
+                # Preferencias de privacidad: forzar perfil privado para que
+                # la cuenta anonimizada no sea descubrible.
+                "is_public": False,
+                "allow_messages": False,
+                "push_notifications": False,
+            }},
+        )
+
+        # Cascade: soft-delete de TODAS las publicaciones del usuario que
+        # no estuvieran ya ocultas.
+        cascade = await db.polls.update_many(
+            {"author_id": user_id, "status": {"$ne": "hidden"}},
+            {"$set": {
+                "status": "hidden",
+                "hidden_at": now,
+                "hidden_by": user_id,
+            }},
+        )
+
+        # Invalidar tokens/devices activos para forzar logout inmediato en
+        # todos los dispositivos del usuario (buenas prácticas de seguridad).
+        try:
+            await db.refresh_tokens.delete_many({"user_id": user_id})
+            await db.user_devices.delete_many({"user_id": user_id})
+        except Exception as token_err:
+            logger.warning(f"[delete-account] token cleanup warning for {user_id}: {token_err}")
+
+        logger.info(
+            f"👋 Account {user_id} soft-deleted. "
+            f"Cascaded {cascade.modified_count} polls to hidden."
+        )
+
+        return {
+            "message": "Account deleted successfully",
+            "hidden_polls": cascade.modified_count,
+            "idempotent": False,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error soft-deleting account {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # =============  GOOGLE OAUTH ENDPOINTS =============
 
@@ -7702,6 +7804,7 @@ async def get_user_mentioned_polls(
 @api_router.post("/polls", response_model=PollResponse)
 async def create_poll(
     poll_data: PollCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Create a new poll"""
@@ -7887,6 +7990,39 @@ async def create_poll(
         # La validacion no debe bloquear la creacion. Si algo falla,
         # el poll queda en el status por defecto ("ready").
         logger.error(f"Media validation error for poll {poll.id}: {validation_error}")
+
+    # 🎬 VIDEO PIPELINE: si la publicación contiene videos y ya pasó la
+    # validación básica de archivos (no está "broken"), la movemos a
+    # "processing" y lanzamos un BackgroundTask que:
+    #   1. Valida ffprobe cada video (detecta archivos corruptos).
+    #   2. Genera thumbnails server-side si faltan.
+    #   3. Deja el poll en "ready" (ya visible en feed) o "failed".
+    #   4. Transcodifica a 720p mobile-friendly en paralelo (NO bloquea ready).
+    # Nota: el status "processing" es muy breve (< 5 s) porque sólo la validación
+    # y el thumbnail son síncronos; el transcoding actualiza `optimized_media_url`
+    # cuando termina sin cambiar el status.
+    try:
+        has_video_option = any(
+            getattr(opt, "media_type", None) == "video" and getattr(opt, "media_url", None)
+            for opt in options
+        )
+        if has_video_option and poll.status != "broken":
+            await db.polls.update_one(
+                {"id": poll.id},
+                {"$set": {
+                    "status": "processing",
+                    "processing_started_at": datetime.utcnow(),
+                }},
+            )
+            poll.status = "processing"
+            # BackgroundTasks de FastAPI ejecuta esto después de devolver la
+            # respuesta al cliente. Si el proceso muere en medio, el reaper
+            # lo marcará "failed" tras 10 min.
+            background_tasks.add_task(video_pipeline.process_poll_media, db, poll.id)
+            logger.info(f"🎬 Poll {poll.id} queued to video pipeline")
+    except Exception as pipeline_err:
+        # Si el hook falla, no rompemos la creación del poll.
+        logger.error(f"Error queuing video pipeline for poll {poll.id}: {pipeline_err}")
 
     # Send notifications to mentioned users (both general and option-specific)
     all_mentioned_users = set(poll_data.mentioned_users)
@@ -13121,6 +13257,37 @@ try:
     logger.info("✅ Push notification routes loaded")
 except Exception as e:
     logger.warning(f"⚠️  Push notification routes not loaded: {e}")
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# 🧹 Reaper startup hook: polls que se quedan en "processing" más de 10 min
+# (p.ej. por un reinicio del backend durante transcoding) se marcan "failed"
+# para que el estado nunca se bloquee y el usuario pueda reintentar.
+# ──────────────────────────────────────────────────────────────────────────
+_reaper_task = None
+
+@app.on_event("startup")
+async def _start_video_pipeline_reaper():
+    global _reaper_task
+    try:
+        _reaper_task = asyncio.create_task(
+            video_pipeline.reaper_loop(db, interval_seconds=300, max_age_minutes=10)
+        )
+        logger.info("🧹 Video pipeline reaper started")
+    except Exception as e:
+        logger.error(f"Failed to start reaper: {e}")
+
+@app.on_event("shutdown")
+async def _stop_video_pipeline_reaper():
+    global _reaper_task
+    if _reaper_task and not _reaper_task.done():
+        _reaper_task.cancel()
+        try:
+            await _reaper_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        logger.info("🧹 Video pipeline reaper stopped")
+
 
 if __name__ == "__main__":
     import uvicorn

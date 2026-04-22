@@ -425,6 +425,11 @@ class PollOption(BaseModel):
     votes: int = 0
     media_type: Optional[str] = None  # "image", "video", None
     media_url: Optional[str] = None
+    # URL del video transcodificado a 720p H.264+AAC+faststart (mobile-friendly).
+    # Lo genera asíncronamente el video_pipeline tras la subida. Si está presente,
+    # el cliente debería preferirlo sobre `media_url` para mejor rendimiento.
+    # Si el transcoding falla, queda como None y el cliente usa `media_url`.
+    optimized_media_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     media_transform: Optional[dict] = None  # ✅ Transform data for image cropping/positioning
     mentioned_users: List[str] = []  # List of user IDs mentioned in this option
@@ -472,6 +477,10 @@ class Poll(BaseModel):
     # El filtro global `POLL_STATUS_FILTER` excluye
     # {broken, hidden, failed, processing} de todos los listados.
     status: str = "ready"
+    # Metadatos del pipeline de processing (sólo presentes cuando aplica).
+    processing_started_at: Optional[datetime] = None
+    processing_completed_at: Optional[datetime] = None
+    processing_error: Optional[str] = None
     # Soft-delete metadata (sólo presente cuando status == "hidden")
     hidden_at: Optional[datetime] = None
     hidden_by: Optional[str] = None

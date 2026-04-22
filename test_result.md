@@ -8045,3 +8045,68 @@ test_plan:
   current_focus: []
   test_all: false
   test_priority: "high_first"
+
+
+#====================================================================================================
+# PHASE 1B — Video pipeline + Reaper + User soft-delete cascade
+#====================================================================================================
+backend:
+  - task: "Phase 1B — Video pipeline (validation + thumbnail + transcoding) via BackgroundTasks"
+    implemented: true
+    working: true
+    file: "video_pipeline.py (new), server.py (create_poll hook), models.py (optimized_media_url, processing_*)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Nuevo módulo video_pipeline.py orquesta ffprobe validation + thumbnail
+            server-side + transcoding 720p H.264+AAC+faststart mobile-friendly.
+            Hook en POST /api/polls vía FastAPI BackgroundTasks. Semáforo global
+            limita ffmpeg concurrente a 2. Archivos bajo uploads/thumbnails/ y
+            uploads/videos/optimized/. PASS validación manual 4/4:
+            - A) poll texto: no entra pipeline, ready al instante.
+            - B) video 3s válido: pipeline < 5s → thumbnail JPEG + MP4 optimizado H.264.
+            - C) feed muestra polls ready.
+            - D) video corrupto (bytes aleatorios): ffprobe falla → failed → fuera del feed.
+
+  - task: "Phase 1B — Reaper task (polls zombie en processing > 10 min)"
+    implemented: true
+    working: true
+    file: "video_pipeline.py (reaper_loop), server.py (on_event startup/shutdown)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            Loop asincrónico inicia en @app.on_event("startup"), cancela en shutdown.
+            Cada 300s marca como failed polls processing con processing_started_at
+            más antiguo que 10min. PASS: inserté zombie de hace 30min → reap → failed.
+
+  - task: "Phase 1B — Soft-delete de cuenta DELETE /api/auth/me (cascade a polls)"
+    implemented: true
+    working: true
+    file: "server.py (delete_my_account endpoint)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: |
+            DELETE /api/auth/me: is_active=False, deleted_at, username anonimizado
+            (usuario_eliminado_<suffix>), display_name "Usuario eliminado",
+            avatar/cover/bio/phone/location/website → null, is_public=False,
+            google_id/apple_id cleared. Cascade: polls del author → status=hidden.
+            Invalida refresh_tokens + user_devices (force logout). Idempotente.
+            PASS validación manual: 3 polls cascadeados (incluía failed y text),
+            segundo DELETE devolvió {"idempotent":true}.
+
+test_plan:
+  current_focus: []
+  test_all: false
+  test_priority: "high_first"
