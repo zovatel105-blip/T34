@@ -15,6 +15,7 @@ import TikTokProfileGrid from '../components/TikTokProfileGrid';
 import TikTokScrollView from '../components/TikTokScrollView';
 import { useUpload } from '../contexts/UploadContext';
 import StoriesViewer from '../components/StoriesViewer';
+import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
 import { 
   Settings, SlidersHorizontal, Cog, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
   Share2, UserPlus, UserCheck, ChevronDown, Plus, BarChart3, Mail, MessageCircle, Send, Hash, Bell, BellOff, UserCircle, Link, X, Trash2, TrendingUp, User 
@@ -1996,8 +1997,8 @@ const ProfilePage = () => {
                   <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
                     <Avatar className="w-8 h-8 ring-1 ring-gray-200">
                       <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                      <AvatarFallback className="bg-gray-50 text-gray-400 text-xs">
-                        <User className="w-4 h-4" />
+                      <AvatarFallback className="p-0 overflow-hidden">
+                        <DefaultAvatarSvg className="w-full h-full" />
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[10px] text-gray-500 font-medium mt-0.5 truncate max-w-[100px]">
@@ -2144,8 +2145,8 @@ const ProfilePage = () => {
                           <div className="w-full h-full bg-white rounded-full overflow-hidden">
                             <Avatar className="w-full h-full rounded-full">
                               <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                              <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
-                                <User className="w-8 h-8 sm:w-10 sm:h-10" />
+                              <AvatarFallback className="p-0 overflow-hidden">
+                                <DefaultAvatarSvg className="w-full h-full" />
                               </AvatarFallback>
                             </Avatar>
                           </div>
@@ -2154,8 +2155,8 @@ const ProfilePage = () => {
                         <div className="w-full h-full bg-white rounded-full overflow-hidden">
                           <Avatar className="w-full h-full rounded-full">
                             <AvatarImage src={displayUser?.avatar} alt={displayUser?.displayName} className="object-cover" />
-                            <AvatarFallback className="bg-gray-50 text-gray-400 flex items-center justify-center">
-                              <User className="w-8 h-8 sm:w-10 sm:h-10" />
+                            <AvatarFallback className="p-0 overflow-hidden">
+                              <DefaultAvatarSvg className="w-full h-full" />
                             </AvatarFallback>
                           </Avatar>
                         </div>
