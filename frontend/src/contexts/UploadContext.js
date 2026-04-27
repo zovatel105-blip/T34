@@ -309,12 +309,6 @@ export const UploadProvider = ({ children }) => {
       } catch (e) { /* ignore */ }
     }
 
-    setActiveUploads(prev => {
-      const next = [upload, ...prev];
-      uploadsRef.current = next;
-      return next;
-    });
-
     // Persist to IndexedDB so we can resume after reload
     (async () => {
       // Convert File objects to Blobs for IndexedDB storage
