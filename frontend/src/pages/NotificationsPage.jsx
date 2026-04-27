@@ -4,6 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Bell, Heart, MessageCircle, Users, Vote, Trophy, Clock, User } from 'lucide-react';
+import PullToRefresh from '../components/PullToRefresh';
 
 const NotificationItem = ({ type, user, message, time, poll, isNew = false }) => {
   const getIcon = () => {
@@ -154,7 +155,17 @@ const NotificationsPage = () => {
 
   const newNotificationsCount = notifications.filter(n => n.isNew).length;
 
+  // 🔄 Pull-to-refresh handler. Las notificaciones de momento son mock;
+  // aún así mostramos el spinner unos 700 ms para dar el feedback visual
+  // estilo Instagram (cuando se conecte el backend real, solo basta con
+  // sustituir este body por el fetch real).
+  const handleNotificationsRefresh = async () => {
+    console.log('🔄 [NotificationsPage] Pull-to-refresh triggered');
+    await new Promise((resolve) => setTimeout(resolve, 700));
+  };
+
   return (
+    <PullToRefresh onRefresh={handleNotificationsRefresh}>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20">
       {/* Header */}
       <header className="z-40 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 shadow-sm">
@@ -232,6 +243,7 @@ const NotificationsPage = () => {
         )}
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

@@ -216,6 +216,33 @@ const FeedPage = () => {
     loadPolls();
   }, [isAuthenticated, toast]);
 
+  // 🔄 Handler de pull-to-refresh: fuerza recarga desde la red (salta caches)
+  // y reemplaza el feed por los datos más frescos. Se invoca cuando el
+  // usuario arrastra hacia abajo estando en el primer slide.
+  const handleRefresh = useCallback(async () => {
+    try {
+      console.log('🔄 [FeedPage] Pull-to-refresh triggered');
+      setCurrentPage(0);
+      setHasMoreContent(true);
+      const freshData = await pollService.getPollsForFrontend({ limit: 30 });
+      const cacheKey = 'feed_initial_30';
+      setPollsCache(prev => new Map(prev.set(cacheKey, {
+        data: freshData,
+        timestamp: Date.now()
+      })));
+      setPolls(freshData);
+      feedCache.setCachedFeed(freshData, 'main').catch(() => {});
+      console.log(`✅ [FeedPage] Refresh complete: ${freshData.length} polls`);
+    } catch (err) {
+      console.error('[FeedPage] Refresh error:', err);
+      toast({
+        title: 'No se pudo actualizar',
+        description: 'Revisa tu conexión e inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
   // 📸 Guardar snapshot del feed (polls + pagination + savedPolls) para poder
   // restaurar la posición cuando el usuario navega a otra página y vuelve.
   useEffect(() => {
@@ -992,6 +1019,7 @@ const FeedPage = () => {
           showLogo={false}
           initialIndex={initialIndex}
           onActiveIndexChange={handleActiveIndexChange}
+          onRefresh={handleRefresh}
         />
       </>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
@@ -81,6 +81,23 @@ const FollowingPage = () => {
 
     loadFollowingPolls();
   }, [isAuthenticated, toast]);
+
+  // 🔄 Pull-to-refresh handler para Following feed
+  const handleRefreshFollowing = useCallback(async () => {
+    try {
+      console.log('🔄 [FollowingPage] Pull-to-refresh triggered');
+      const freshData = await pollService.getFollowingPolls({ limit: 30 });
+      setPolls(freshData);
+      console.log(`✅ [FollowingPage] Refresh complete: ${freshData.length} polls`);
+    } catch (err) {
+      console.error('[FollowingPage] Refresh error:', err);
+      toast({
+        title: 'No se pudo actualizar',
+        description: 'Revisa tu conexión e inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
 
   // Load real stories from backend
   useEffect(() => {
@@ -1042,6 +1059,7 @@ const FollowingPage = () => {
           showCloseButton={false}
           onSwipeStart={() => setShowStoriesOverlay(false)}
           storiesOverlayOpen={showStoriesOverlay}
+          onRefresh={handleRefreshFollowing}
         />
 
         <style jsx>{`

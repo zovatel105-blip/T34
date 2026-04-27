@@ -1531,7 +1531,11 @@ const TikTokScrollView = ({
   emptyMessage = 'No hay publicaciones disponibles',
   emptySubMessage = 'Vuelve más tarde para ver nuevo contenido',
   onSwipeStart = null,
-  storiesOverlayOpen = false
+  storiesOverlayOpen = false,
+  // 🔄 Pull-to-refresh: cuando el usuario arrastra hacia abajo estando en
+  // el primer slide, se dispara esta función. El spinner circular aparece
+  // sobre el feed (similar a Instagram/TikTok).
+  onRefresh = null
 }) => {
   const containerRef = useRef(null);
   const swiperRef = useRef(null);
@@ -1571,6 +1575,71 @@ const TikTokScrollView = ({
   const [lastActiveIndex, setLastActiveIndex] = useState(initialIndex);
   const navigate = useNavigate();
   const controls = useAnimation();
+
+  // 🔄 Pull-to-refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullStartYRef = useRef(null);
+  const isPullingRef = useRef(false);
+  const PTR_THRESHOLD = 80;  // distance (in px, post-resistance) to trigger
+  const PTR_MAX = 140;       // max drag distance allowed (rubber-band cap)
+
+  // Handlers fired from Swiper native touch events (see <Swiper> props below).
+  // We only activate pull-to-refresh when the user is on the very first slide
+  // AND drags downward. On any other slide, Swiper handles the gesture normally.
+  const handlePTRTouchStart = useCallback((swiper, e) => {
+    if (!onRefresh || isRefreshing) return;
+    if (swiper.activeIndex !== 0) return;
+    const t = e.touches ? e.touches[0] : e;
+    pullStartYRef.current = t?.clientY ?? null;
+    isPullingRef.current = false;
+  }, [onRefresh, isRefreshing]);
+
+  const handlePTRTouchMove = useCallback((swiper, e) => {
+    if (!onRefresh || isRefreshing) return;
+    if (swiper.activeIndex !== 0) {
+      if (isPullingRef.current) setPullDistance(0);
+      isPullingRef.current = false;
+      return;
+    }
+    const startY = pullStartYRef.current;
+    if (startY === null) return;
+    const t = e.touches ? e.touches[0] : e;
+    if (!t) return;
+    const diff = t.clientY - startY;
+    if (diff <= 0) {
+      if (isPullingRef.current) setPullDistance(0);
+      isPullingRef.current = false;
+      return;
+    }
+    // Active pull: show spinner and apply rubber-band resistance.
+    isPullingRef.current = true;
+    const resisted = Math.min(diff * 0.5, PTR_MAX);
+    setPullDistance(resisted);
+  }, [onRefresh, isRefreshing]);
+
+  const handlePTRTouchEnd = useCallback(async () => {
+    if (!onRefresh) return;
+    const wasPulling = isPullingRef.current;
+    isPullingRef.current = false;
+    pullStartYRef.current = null;
+    if (!wasPulling) return;
+
+    if (pullDistance >= PTR_THRESHOLD && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullDistance(60); // park at spinner resting height
+      try {
+        await Promise.resolve(onRefresh());
+      } catch (err) {
+        console.warn('[TikTokScrollView] onRefresh failed:', err);
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
+    }
+  }, [pullDistance, isRefreshing, onRefresh]);
   
   // 🔒 Estado para bloquear el swipe cuando un modal está abierto
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -2179,13 +2248,75 @@ const TikTokScrollView = ({
         {/* 🚀 Prefetch de los próximos 2 posts (imágenes/vídeos) estilo TikTok/IG */}
         <MediaPrefetcher polls={polls} activeIndex={activeIndex} count={2} />
 
+        {/* 🔄 Pull-to-refresh spinner overlay (solo visible al arrastrar en el primer slide) */}
+        {onRefresh && (pullDistance > 0 || isRefreshing) && (
+          <div
+            className="pointer-events-none absolute left-0 right-0 flex items-center justify-center"
+            style={{
+              top: 0,
+              height: 60,
+              // Slide down from -60 (hidden) to pullDistance - 60.
+              transform: `translateY(${pullDistance - 60}px)`,
+              transition: isPullingRef.current ? 'none' : 'transform 280ms cubic-bezier(0.2, 0.9, 0.3, 1)',
+              zIndex: 60,
+            }}
+          >
+            <div
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-sm shadow-lg text-gray-800"
+              style={{
+                opacity: isRefreshing ? 1 : Math.min(pullDistance / (PTR_THRESHOLD * 0.5), 1),
+                transform: `scale(${isRefreshing ? 1 : 0.7 + Math.min(pullDistance / PTR_THRESHOLD, 1) * 0.3})`,
+                transition: isPullingRef.current ? 'none' : 'opacity 200ms, transform 200ms',
+              }}
+            >
+              {isRefreshing ? (
+                <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+                  <path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              ) : (
+                (() => {
+                  const progress = Math.min(pullDistance / PTR_THRESHOLD, 1);
+                  const C = 56.5; // 2π·9
+                  return (
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      style={{ transform: `rotate(${progress * 360}deg)` }}
+                    >
+                      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2.5" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray={C}
+                        strokeDashoffset={C - C * progress}
+                        transform="rotate(-90 12 12)"
+                      />
+                    </svg>
+                  );
+                })()
+              )}
+            </div>
+          </div>
+        )}
+
         <Swiper
           modules={[Mousewheel, Keyboard]}
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
           onSlideChange={handleSlideChange}
-          onTouchStart={() => { if (onSwipeStart) onSwipeStart(); }}
+          onTouchStart={(swiper, e) => {
+            if (onSwipeStart) onSwipeStart();
+            handlePTRTouchStart(swiper, e);
+          }}
+          onSliderMove={handlePTRTouchMove}
+          onTouchEnd={handlePTRTouchEnd}
           direction="vertical"
           slidesPerView={1}
           spaceBetween={0}

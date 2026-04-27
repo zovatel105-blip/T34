@@ -42,95 +42,101 @@ const ExplorePage = () => {
   }, []);
 
   // Cargar challenges completados del backend
-  useEffect(() => {
-    const loadCompletedChallenges = async () => {
-      try {
-        setLoading(true);
-        const challenges = await challengeService.getCompletedChallenges(20, 0, token);
-        console.log('✅ Challenges completados cargados:', challenges);
+  const loadCompletedChallenges = useCallback(async ({ showLoader = true } = {}) => {
+    try {
+      if (showLoader) setLoading(true);
+      const challenges = await challengeService.getCompletedChallenges(20, 0, token);
+      console.log('✅ Challenges completados cargados:', challenges);
+      
+      // Transformar challenges al formato de TikTokScrollView
+      const transformedChallenges = challenges.map(challenge => {
+        // Obtener los participantes con contenido
+        const participantsWithContent = challenge.participants?.filter(
+          p => p.status === 'content_submitted'
+        ) || [];
         
-        // Transformar challenges al formato de TikTokScrollView
-        const transformedChallenges = challenges.map(challenge => {
-          // Obtener los participantes con contenido
-          const participantsWithContent = challenge.participants?.filter(
-            p => p.status === 'content_submitted'
-          ) || [];
-          
-          // Construir opciones del challenge (cada participante es una opción)
-          const options = participantsWithContent.map((participant, idx) => ({
-            id: participant.user_id, // Usar user_id como id de opción para coincidir con userVote
-            text: '',
-            votes: participant.votes_received || 0,
-            participant_id: participant.user_id,
-            participant_username: participant.username,
-            participant_avatar: participant.avatar_url,
-            media: participant.poll_media ? {
-              type: participant.poll_media.type || 'image',
-              url: participant.poll_media.url,
-              thumbnail: participant.poll_media.thumbnail || participant.poll_media.url
-            } : null
-          }));
-          
-          return {
-            id: `challenge_${challenge.id}`,
-            challenge_id: challenge.id,
-            title: challenge.title || 'Challenge',
-            type: 'vs',
-            layout: challenge.required_layout || challenge.final_layout || 'vs-horizontal',
-            is_challenge: true,
-            isCompleted: true,
-            category: 'Challenge',
-            totalVotes: challenge.total_votes || 0,
-            total_votes: challenge.total_votes || 0,
-            views: 0,
-            likes: challenge.likes_count || 0,
-            likes_count: challenge.likes_count || 0,
-            comments: challenge.comments_count || 0,
-            comments_count: challenge.comments_count || 0,
-            shares: 0,
-            saves_count: challenge.saves_count || 0,
-            userLiked: challenge.user_liked || false,
-            isSaved: challenge.is_saved || false,
-            userCommented: challenge.user_commented || false,
-            comments_enabled: true,
-            created_at: challenge.published_at || challenge.created_at,
-            userVote: challenge.user_vote_participant_id || null,
-            author: {
-              id: challenge.creator_id,
-              username: challenge.creator_username,
-              display_name: challenge.creator_display_name || challenge.creator_username,
-              avatar_url: challenge.creator_avatar_url,
-              is_verified: false
-            },
-            options: options,
-            music: challenge.music || null,
-            participants: participantsWithContent.map(p => ({
-              id: p.user_id,
-              username: p.username,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url
-            }))
-          };
-        });
+        // Construir opciones del challenge (cada participante es una opción)
+        const options = participantsWithContent.map((participant, idx) => ({
+          id: participant.user_id, // Usar user_id como id de opción para coincidir con userVote
+          text: '',
+          votes: participant.votes_received || 0,
+          participant_id: participant.user_id,
+          participant_username: participant.username,
+          participant_avatar: participant.avatar_url,
+          media: participant.poll_media ? {
+            type: participant.poll_media.type || 'image',
+            url: participant.poll_media.url,
+            thumbnail: participant.poll_media.thumbnail || participant.poll_media.url
+          } : null
+        }));
         
-        console.log('🔄 Challenges transformados:', transformedChallenges);
-        setBattles(transformedChallenges);
-        
-        // Initialize savedPolls from backend data
-        const initialSaved = new Set(
-          transformedChallenges.filter(c => c.isSaved).map(c => c.id)
-        );
-        setSavedPolls(initialSaved);
-      } catch (error) {
-        console.error('Error loading completed challenges:', error);
-        setBattles([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCompletedChallenges();
+        return {
+          id: `challenge_${challenge.id}`,
+          challenge_id: challenge.id,
+          title: challenge.title || 'Challenge',
+          type: 'vs',
+          layout: challenge.required_layout || challenge.final_layout || 'vs-horizontal',
+          is_challenge: true,
+          isCompleted: true,
+          category: 'Challenge',
+          totalVotes: challenge.total_votes || 0,
+          total_votes: challenge.total_votes || 0,
+          views: 0,
+          likes: challenge.likes_count || 0,
+          likes_count: challenge.likes_count || 0,
+          comments: challenge.comments_count || 0,
+          comments_count: challenge.comments_count || 0,
+          shares: 0,
+          saves_count: challenge.saves_count || 0,
+          userLiked: challenge.user_liked || false,
+          isSaved: challenge.is_saved || false,
+          userCommented: challenge.user_commented || false,
+          comments_enabled: true,
+          created_at: challenge.published_at || challenge.created_at,
+          userVote: challenge.user_vote_participant_id || null,
+          author: {
+            id: challenge.creator_id,
+            username: challenge.creator_username,
+            display_name: challenge.creator_display_name || challenge.creator_username,
+            avatar_url: challenge.creator_avatar_url,
+            is_verified: false
+          },
+          options: options,
+          music: challenge.music || null,
+          participants: participantsWithContent.map(p => ({
+            id: p.user_id,
+            username: p.username,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url
+          }))
+        };
+      });
+      
+      console.log('🔄 Challenges transformados:', transformedChallenges);
+      setBattles(transformedChallenges);
+      
+      // Initialize savedPolls from backend data
+      const initialSaved = new Set(
+        transformedChallenges.filter(c => c.isSaved).map(c => c.id)
+      );
+      setSavedPolls(initialSaved);
+    } catch (error) {
+      console.error('Error loading completed challenges:', error);
+      if (showLoader) setBattles([]);
+    } finally {
+      if (showLoader) setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    loadCompletedChallenges();
+  }, [loadCompletedChallenges]);
+
+  // 🔄 Pull-to-refresh handler: recarga los challenges sin mostrar el loader
+  // pantalla completa; el spinner circular del PTR ya da feedback.
+  const handleRefreshExplore = useCallback(async () => {
+    await loadCompletedChallenges({ showLoader: false });
+  }, [loadCompletedChallenges]);
 
   // Handlers para interacciones
   const handleVote = useCallback(async (pollId, optionId) => {
@@ -331,6 +337,7 @@ const ExplorePage = () => {
         setCommentedPolls={setCommentedPolls}
         sharedPolls={sharedPolls}
         setSharedPolls={setSharedPolls}
+        onRefresh={handleRefreshExplore}
       />
 
       {/* Comments Modal */}

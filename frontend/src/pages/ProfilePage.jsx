@@ -13,6 +13,7 @@ import ShareModal from '../components/ShareModal';
 import StatisticsModal from '../components/StatisticsModal';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
 import TikTokScrollView from '../components/TikTokScrollView';
+import PullToRefresh from '../components/PullToRefresh';
 import { useUpload } from '../contexts/UploadContext';
 import StoriesViewer from '../components/StoriesViewer';
 import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
@@ -174,6 +175,16 @@ const ProfilePage = () => {
 
   // Verificar si hay múltiples cuentas (por ahora simulado - implementar lógica real más adelante)
   const hasMultipleAccounts = false; // Cambiar a true cuando haya múltiples cuentas
+
+  // 🔄 Pull-to-refresh: incrementar el entryRefreshKey fuerza el re-fetch
+  // de todos los datos del perfil (profile, polls, stats, stories, etc.).
+  // Esperamos ~800 ms para dar tiempo a que el usuario vea el spinner
+  // y se completen los fetches encadenados.
+  const handleProfileRefresh = useCallback(async () => {
+    console.log('🔄 [ProfilePage] Pull-to-refresh triggered');
+    setEntryRefreshKey((k) => k + 1);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  }, []);
 
   // Reset scroll al entrar a un nuevo perfil
   useEffect(() => {
@@ -1970,6 +1981,7 @@ const ProfilePage = () => {
 
       {/* Normal profile view - only show when NOT in TikTok mode */}
       {!isTikTokMode && (
+        <PullToRefresh onRefresh={handleProfileRefresh} className="min-h-full">
         <div className="min-h-screen bg-white">
           
           {/* Header minimalista - cambia a compacto al hacer scroll */}
@@ -2737,6 +2749,7 @@ const ProfilePage = () => {
           </div>
 
         </div>
+        </PullToRefresh>
       )}
 
       {/* Modals - Combined Followers/Following Modal */}
