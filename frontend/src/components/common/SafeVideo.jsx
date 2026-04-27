@@ -3,9 +3,14 @@
  *
  * Drop-in replacement de `<video>` que nunca muestra la UI rota del navegador:
  *  - Mientras carga: usa el `poster` como fondo (o gradiente si no hay poster).
- *  - Si la descarga del video falla: muestra el poster estático en vez del
- *    icono de "error" del navegador. El usuario ve igualmente el contenido.
+ *  - Si la descarga del video falla (offline, 404, etc.): muestra el poster
+ *    estático en vez del icono "play roto" / fondo negro del WebView.
  *  - Selecciona automáticamente `optimized_media_url` si el `option` tiene uno.
+ *  - 🚀 Soporte OFFLINE-FIRST: usa `useCachedMedia` para servir desde el
+ *    filesystem local (Capacitor) si el video o el poster ya fueron
+ *    cacheados en una sesión anterior. Esto es lo que permite que el feed
+ *    se vea instantáneamente al abrir la APK sin conexión, igual que
+ *    Instagram/TikTok.
  *
  * Two usage modes:
  *   (1) Con `option` directo (recomendado):
@@ -18,11 +23,20 @@
  *   - option:  objeto option del backend (alternativa a src+poster manuales)
  *   - showPlaceholderOnError: si true (default) mantiene el poster visible si
  *                             el video falla, con pointer-events en el poster.
+ *   - cacheVideo: si true (default true en APK), prefetch el vídeo al
+ *                 filesystem para reproducción offline. Pásalo a `false` si
+ *                 no quieres ocupar disco con vídeos pesados (en feeds muy
+ *                 largos por ejemplo).
+ *   - videoMaxBytes: límite de tamaño del vídeo a cachear en disco (default
+ *                    25 MB — cubre clips cortos tipo TikTok/Reels).
  */
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
+import useCachedMedia from '../../hooks/useCachedMedia';
 import { cn } from '../../lib/utils';
+
+const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25MB
 
 const SafeVideo = forwardRef(
   (
@@ -35,6 +49,8 @@ const SafeVideo = forwardRef(
       onError,
       onLoadedData,
       children,
+      cacheVideo = true,
+      videoMaxBytes = VIDEO_MAX_BYTES_DEFAULT,
       ...rest
     },
     ref
@@ -42,9 +58,21 @@ const SafeVideo = forwardRef(
     const videoRef = useRef(null);
     useImperativeHandle(ref, () => videoRef.current, []);
 
-    // Resolver URLs
-    const src = option ? pickPlayableVideoUrl(option) : resolveAssetUrl(srcProp);
-    const poster = option ? pickVideoPosterUrl(option) : resolveAssetUrl(posterProp);
+    // Resolver URLs originales (remotas)
+    const rawSrc = option ? pickPlayableVideoUrl(option) : resolveAssetUrl(srcProp);
+    const rawPoster = option ? pickVideoPosterUrl(option) : resolveAssetUrl(posterProp);
+
+    // 🚀 Sustituir por URI local si está cacheada (offline-first).
+    // Los videos suelen ser pesados → solo cachear si cacheVideo=true.
+    // Los posters son baratos → siempre se cachean.
+    const { src: cachedVideoSrc } = useCachedMedia(rawSrc, {
+      enabled: cacheVideo,
+      maxBytes: videoMaxBytes,
+    });
+    const { src: cachedPosterSrc } = useCachedMedia(rawPoster, { enabled: true });
+
+    const src = cachedVideoSrc || rawSrc;
+    const poster = cachedPosterSrc || rawPoster;
 
     const [status, setStatus] = useState(src ? 'loading' : 'error');
 
@@ -60,7 +88,7 @@ const SafeVideo = forwardRef(
 
     const handleError = (e) => {
       // eslint-disable-next-line no-console
-      console.warn('[SafeVideo] error loading video:', src);
+      console.warn('[SafeVideo] error loading video (offline?):', src);
       setStatus('error');
       onError?.(e);
     };

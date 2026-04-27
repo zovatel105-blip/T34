@@ -17,6 +17,7 @@ import StoriesViewer from './StoriesViewer';
 import audioManager from '../services/AudioManager';
 import { useAuth } from '../contexts/AuthContext';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import useCachedSrc from '../hooks/useCachedSrc';
 
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
@@ -52,6 +53,17 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbnailSrc, setThumbnailSrc] = useState(null);
+
+  // 🚀 OFFLINE-FIRST: usar URI cacheada del filesystem si existe.
+  // Aplicado a thumbnail, vídeo principal e imagen estática.
+  const cachedThumbnailSrc = useCachedSrc(thumbnailSrc, { enabled: !!thumbnailSrc });
+  const cachedVideoUrl = useCachedSrc(media?.url, {
+    enabled: media?.type === 'video' && !!media?.url,
+    maxBytes: 25 * 1024 * 1024,
+  });
+  const cachedImageUrl = useCachedSrc(media?.url, {
+    enabled: media?.type !== 'video' && !!media?.url,
+  });
   
   useEffect(() => {
     const handleResize = () => {
@@ -246,10 +258,10 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
           <Play className="w-12 h-12 text-white/30" />
         </div>
         
-        {/* Thumbnail del video - usando la mejor fuente disponible */}
+        {/* Thumbnail del video - usando la mejor fuente disponible (cacheado) */}
         {thumbnailSrc && (
           <img 
-            src={thumbnailSrc} 
+            src={cachedThumbnailSrc || thumbnailSrc} 
             alt="Video thumbnail"
             loading="eager"
             fetchPriority="high"
@@ -274,10 +286,11 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
           />
         )}
         
-        {/* Fallback: Video element con poster para generar thumbnail on-demand */}
+        {/* Fallback: Video element con poster para generar thumbnail on-demand (cacheado offline) */}
         {(!thumbnailSrc || imageError) && !imageLoaded && (
           <video
-            src={media.url}
+            src={cachedVideoUrl || media.url}
+            poster={cachedThumbnailSrc || thumbnailSrc || undefined}
             muted
             playsInline
             preload="metadata"
@@ -350,7 +363,7 @@ const MediaPreview = ({ media, isWinner, isSelected, onClick, percentage, option
     >
       {renderMentionedUsers()}
       <img 
-        src={media.url} 
+        src={cachedImageUrl || media.url} 
         alt="Poll option"
         className="w-full h-full object-cover transition-transform duration-300"
         style={media.transform ? {

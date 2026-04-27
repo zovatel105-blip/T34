@@ -31,6 +31,7 @@ import audioManager from '../services/AudioManager';
 import realMusicService from '../services/realMusicService';
 import LayoutRenderer from './layouts/LayoutRenderer';
 import DoubleTapVoteAnimation from './DoubleTapVoteAnimation';
+import PollOptionMedia from './common/PollOptionMedia';
 import feedMenuService from '../services/feedMenuService';
 import storyService from '../services/storyService';
 import { useNavPreference } from '../hooks/useNavPreference';
@@ -873,26 +874,17 @@ const TikTokPollCard = ({
                               onDoubleTap={() => !hasUserVoted && handleVote(option.id)}
                               disabled={hasUserVoted}
                             >
-                            {/* Media del participante */}
-                            {option.media?.type?.includes('video') ? (
-                              <video
-                                src={pickPlayableVideoUrl(option) || (option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url)}
-                                poster={option.thumbnail_url ? resolveAssetUrl(option.thumbnail_url) : undefined}
-                                className="w-full h-full object-cover"
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                              />
-                            ) : option.media?.url ? (
-                              <img
-                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />
-                            )}
+                            {/* Media del participante (offline-first cacheable) */}
+                            <PollOptionMedia
+                              option={option}
+                              className="w-full h-full"
+                              videoProps={{
+                                autoPlay: true,
+                                loop: true,
+                                muted: true,
+                                playsInline: true,
+                              }}
+                            />
                             
                             {/* Mentioned Users */}
                             {option.mentioned_users?.length > 0 && (
@@ -972,21 +964,16 @@ const TikTokPollCard = ({
                               onDoubleTap={() => !hasUserVoted && handleVote(option.id)}
                               disabled={hasUserVoted}
                             >
-                            {option.media?.type?.includes('video') ? (
-                              <video
-                                src={pickPlayableVideoUrl(option) || (option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url)}
-                                poster={option.thumbnail_url ? resolveAssetUrl(option.thumbnail_url) : undefined}
-                                className="w-full h-full object-cover"
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                              />
-                            ) : option.media?.url ? (
-                              <img
-                                src={option.media.url?.startsWith('/') ? `${AppConfig.BACKEND_URL}${option.media.url}` : option.media.url}
-                                alt=""
-                                className="w-full h-full object-cover"
+                            {option.media?.type?.includes('video') || option.media?.url ? (
+                              <PollOptionMedia
+                                option={option}
+                                className="w-full h-full"
+                                videoProps={{
+                                  autoPlay: true,
+                                  loop: true,
+                                  muted: true,
+                                  playsInline: true,
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-purple-900 to-pink-900" />

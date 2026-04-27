@@ -11,18 +11,21 @@ import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
 import feedCache from '../services/feedCacheService';
 import thumbnailPrefetch from '../services/thumbnailPrefetchService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
 import useLivePoll from '../hooks/useLivePoll';
+import useNetworkStatus from '../hooks/useNetworkStatus';
 import {
   getFeedSnapshot,
   setFeedSnapshot,
   updateFeedSnapshotActiveIndex,
 } from '../lib/feedSnapshot';
 import { Plus } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const FeedPage = () => {
   const location = useLocation();
@@ -72,9 +75,23 @@ const FeedPage = () => {
   const { enterTikTokMode, exitTikTokMode, isTikTokMode } = useTikTok();
   const { shareModal, sharePoll, closeShareModal } = useShare();
   const { isAuthenticated, user } = useAuth();
+  const { isOnline } = useNetworkStatus();
 
   // Detect if we're on mobile or desktop
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  // 🚀 OFFLINE-FIRST: Cada vez que cambia la lista de polls, persistir en
+  // el filesystem nativo (Capacitor) los thumbnails/avatares/posters de TODOS
+  // los posts. Es barato (archivos pequeños) y crítico para que el feed se
+  // vea correctamente al abrir la APK sin conexión, igual que Instagram.
+  // Los vídeos pesados se prefetchan a demanda en handleActiveItemChange.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+    feedMediaPrefetcher.prefetchLightweightForAll(polls);
+    // También prefetch los vídeos del primer post + los siguientes 4 (los que
+    // el usuario verá inmediatamente al abrir la app).
+    feedMediaPrefetcher.prefetchVideosAroundIndex(polls, 0, 4);
+  }, [polls]);
 
   // Load polls from backend
   useEffect(() => {
@@ -270,6 +287,14 @@ const FeedPage = () => {
     } catch (err) {
       // No bloquear UX si el prefetch falla
       console.debug('[FeedPage] thumbnail prefetch skipped:', err?.message);
+    }
+    // 💾 Prefetch PERSISTENTE de los vídeos de los próximos 4 posts (para
+    // que estén disponibles offline al reabrir la APK sin red, estilo
+    // Instagram/TikTok).
+    try {
+      feedMediaPrefetcher.prefetchVideosAroundIndex(polls, newIndex, 4);
+    } catch (err) {
+      console.debug('[FeedPage] video prefetch skipped:', err?.message);
     }
   }, [polls]);
 
@@ -866,8 +891,9 @@ const FeedPage = () => {
     );
   }
 
-  // Show error state
+  // Show error state — si estamos offline mostramos UI amigable de "Sin conexión"
   if (error && !isLoading) {
+    const offlineMode = !isOnline;
     return (
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Error State */}
@@ -883,15 +909,32 @@ const FeedPage = () => {
           <LogoWithQuickActions size={75} />
         </div>
         
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-          <div className="text-center px-6">
-            <div className="w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
-              <svg className="w-16 h-16 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+        <div className="fixed inset-0 z-50 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black flex items-center justify-center">
+          <div className="text-center px-6 max-w-sm">
+            <div className={cn(
+              "w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8",
+              offlineMode
+                ? "bg-gradient-to-br from-zinc-700 to-zinc-900"
+                : "bg-gray-800"
+            )}>
+              {offlineMode ? (
+                <svg className="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636L5.636 18.364m12.728 0L5.636 5.636M12 4a8 8 0 100 16 8 8 0 000-16z" />
+                </svg>
+              ) : (
+                <svg className="w-16 h-16 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              )}
             </div>
-            <h3 className="text-3xl font-bold text-white mb-4">Error al cargar</h3>
-            <p className="text-white/70 text-lg mb-6">{error}</p>
+            <h3 className="text-3xl font-bold text-white mb-4">
+              {offlineMode ? 'Sin conexión' : 'Error al cargar'}
+            </h3>
+            <p className="text-white/70 text-base mb-6">
+              {offlineMode
+                ? 'Conéctate a internet para ver las votaciones más recientes. Tu última sesión sigue disponible.'
+                : error}
+            </p>
             <button 
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
@@ -954,6 +997,8 @@ const FeedPage = () => {
   console.log('💾 isLoading:', isLoading, 'error:', error);
   
   if (polls.length === 0) {
+    // Si estamos offline y sin caché → UI dedicada de "Sin conexión"
+    const offlineMode = !isOnline;
     return (
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Empty State */}
@@ -969,15 +1014,40 @@ const FeedPage = () => {
           <LogoWithQuickActions size={75} />
         </div>
         
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-          <div className="text-center px-6">
-            <div className="w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
-              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+        <div className="fixed inset-0 z-50 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black flex items-center justify-center">
+          <div className="text-center px-6 max-w-sm">
+            <div className={cn(
+              "w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8",
+              offlineMode
+                ? "bg-gradient-to-br from-zinc-700 to-zinc-900"
+                : "bg-gray-800"
+            )}>
+              {offlineMode ? (
+                <svg className="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636L5.636 18.364m12.728 0L5.636 5.636M12 4a8 8 0 100 16 8 8 0 000-16z" />
+                </svg>
+              ) : (
+                <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              )}
             </div>
-            <h3 className="text-3xl font-bold text-white mb-4">Tu feed está vacío</h3>
-            <p className="text-white/70 text-lg">¡Sigue a más usuarios para ver sus votaciones aquí!</p>
+            <h3 className="text-3xl font-bold text-white mb-4">
+              {offlineMode ? 'Sin conexión' : 'Tu feed está vacío'}
+            </h3>
+            <p className="text-white/70 text-base mb-6">
+              {offlineMode
+                ? 'Conéctate a internet para descubrir las votaciones más recientes.'
+                : '¡Sigue a más usuarios para ver sus votaciones aquí!'}
+            </p>
+            {offlineMode && (
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
+              >
+                Reintentar
+              </button>
+            )}
           </div>
         </div>
       </>

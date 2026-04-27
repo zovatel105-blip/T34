@@ -6,6 +6,7 @@ import videoMemoryManager from '../../services/videoMemoryManager';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
+import PollOptionMedia from '../common/PollOptionMedia';
 
 const GridLayout = ({ 
   poll, 
@@ -205,62 +206,36 @@ const GridLayout = ({
               onDoubleTap={() => onVote(option.id)}
               disabled={!!poll.userVote}
             >
-            {/* 🚀 OPTIMIZED Background media with performance controls */}
+            {/* 🚀 OPTIMIZED Background media with performance controls (offline-first) */}
             <div className="absolute inset-0 w-full h-full">
               {option.media?.url ? (
-                option.media?.type === 'video' ? (
-                  <video 
-                    ref={(el) => {
-                      if (el) videoRefs.current.set(option.id, el);
-                    }}
-                    src={resolveAssetUrl(option.media.url)}
-                    poster={option.thumbnail_url}
-                    className="w-full h-full object-cover object-center rounded-lg"
-                    // ✅ FIXED: Show videos when active (less restrictive)
-                    autoPlay={isActive}
-                    muted
-                    loop
-                    playsInline
-                    // ✅ FIXED: Always preload metadata, simpler logic
-                    preload="metadata"
-                    // ✅ FIXED: Always show videos
-                    style={{
-                      display: 'block'
-                    }}
-                    // 🚀 VIDEO OPTIMIZATION: Lazy loading for non-active posts
-                    loading={isActive ? "eager" : "lazy"}
-                    onLoadStart={() => {
-                      console.log(`🎬 Video loading started: ${optionIndex} (Priority: ${renderPriority}) - Layout: ${gridType}, URL length: ${option.media.url.length}`);
-                    }}
-                    onCanPlay={() => {
+                <PollOptionMedia
+                  option={option}
+                  className="w-full h-full rounded-lg"
+                  videoRef={(el) => {
+                    if (el) videoRefs.current.set(option.id, el);
+                  }}
+                  videoProps={{
+                    autoPlay: isActive,
+                    muted: true,
+                    loop: true,
+                    playsInline: true,
+                    preload: 'metadata',
+                    loading: isActive ? 'eager' : 'lazy',
+                    style: { display: 'block' },
+                    onLoadStart: () => {
+                      console.log(`🎬 Video loading started: ${optionIndex} (Priority: ${renderPriority}) - Layout: ${gridType}`);
+                    },
+                    onCanPlay: () => {
                       console.log(`▶️ Video ready to play: ${optionIndex} - Layout: ${gridType}`);
-                    }}
-                    onError={(e) => {
-                      console.error(`❌ Video load failed for option ${optionIndex}:`, {
-                        urlLength: option.media.url.length,
-                        urlStart: option.media.url.substring(0, 100),
-                        error: e
-                      });
-                    }}
-                  />
-                ) : (
-                  <img 
-                    src={resolveAssetUrl(option.media.url)} 
-                    alt={option.text}
-                    className="w-full h-full object-cover object-center rounded-lg"
-                    // 🚀 IMAGE OPTIMIZATION: Lazy loading
-                    loading={isActive ? "eager" : "lazy"}
-                    style={{
-                      display: shouldUnload ? 'none' : 'block'
-                    }}
-                    onError={(e) => {
-                      console.error(`❌ Image load failed for option ${optionIndex}:`, {
-                        urlLength: option.media.url.length,
-                        urlStart: option.media.url.substring(0, 100)
-                      });
-                    }}
-                  />
-                )
+                    },
+                  }}
+                  imgProps={{
+                    alt: option.text,
+                    loading: isActive ? 'eager' : 'lazy',
+                    style: { display: shouldUnload ? 'none' : 'block' },
+                  }}
+                />
               ) : (
                 <div className={cn(
                   "w-full h-full",

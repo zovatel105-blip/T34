@@ -13,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 import { pickPlayableVideoUrl } from '../../utils/mediaUrl';
+import PollOptionMedia from '../common/PollOptionMedia';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -346,43 +347,35 @@ const CarouselLayout = ({
               <div
                 className="relative w-full h-full overflow-hidden rounded-lg"
               >
-              {/* MEDIA */}
+              {/* MEDIA (offline-first cacheable) */}
               <div className="absolute inset-0">
-                {(option.media?.type === 'video' || option.media_type === 'video') ? (
-                  <video
-                    ref={(el) => {
-                      if (el) videoRefs.current.set(option.id, el);
-                    }}
-                    src={pickPlayableVideoUrl(option) || resolveAssetUrl(option.media?.url || option.media_url)}
-                    poster={resolveAssetUrl(option.thumbnail_url)}
-                    muted
-                    playsInline
-                    loop
-                    preload={
+                <PollOptionMedia
+                  option={option}
+                  className="w-full h-full rounded-lg"
+                  videoRef={(el) => {
+                    if (el) videoRefs.current.set(option.id, el);
+                  }}
+                  videoProps={{
+                    muted: true,
+                    playsInline: true,
+                    loop: true,
+                    preload:
                       // Precarga agresiva para carrusel con audio original
                       option.extracted_audio_id
                         ? (idx === currentSlide
-                            ? 'auto'  // Slide actual: carga completa
+                            ? 'auto'
                             : Math.abs(currentSlide - idx) <= 1
-                            ? 'auto'  // Slides adyacentes: carga completa para audio original
+                            ? 'auto'
                             : Math.abs(currentSlide - idx) <= 2
-                            ? 'metadata'  // Slides a 2 distancia: solo metadata
-                            : 'none')  // Slides lejanos: no cargar
+                            ? 'metadata'
+                            : 'none')
                         : (idx === currentSlide
                             ? 'auto'
                             : Math.abs(currentSlide - idx) <= 1
                             ? 'metadata'
-                            : 'none')
-                    }
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <img
-                    src={resolveAssetUrl(option.media?.url || option.media_url || option.thumbnail_url)}
-                    alt=""
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                )}
+                            : 'none'),
+                  }}
+                />
               </div>
 
               {/* TEXT OVERLAY - Descripción del slide */}

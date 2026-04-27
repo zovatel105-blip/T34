@@ -42,13 +42,40 @@ const INDEX_KEY = 'media_cache_index_v1';
 const CACHE_DIR = 'mediacache';
 
 // Estructura del índice en memoria:
-//   { [urlHash]: { url, path, bytes, accessed_at, created_at, ext } }
+//   { [urlHash]: { url, path, bytes, accessed_at, created_at, ext, nativeUri, localSrc } }
+//
+// `localSrc` es la URI ya transformada por `Capacitor.convertFileSrc()`,
+// lista para usarse directamente en <img src> y <video src>. La cacheamos
+// en el índice para evitar tener que llamar a convertFileSrc en cada
+// lookup síncrono (esto permite servir el caché desde el PRIMER paint
+// sin esperar a que `init()` termine, hidratando el índice desde
+// localStorage de forma 100% síncrona en el bootstrap).
 let _index = {};
 let _initialized = false;
 let _Filesystem = null;
 let _Directory = null;
 let _Preferences = null;
 let _Capacitor = null;
+
+// 🚀 Bootstrap SÍNCRONO desde localStorage (Web Storage API, disponible
+// inmediatamente sin esperar a Capacitor Preferences). Esto permite que
+// `lookupSync()` devuelva la URI local desde el primer render — clave para
+// que el feed se vea instantáneamente al abrir la APK sin conexión, igual
+// que Instagram/TikTok.
+const LOCAL_INDEX_KEY = 'twyk_media_cache_index_v1';
+try {
+  if (typeof localStorage !== 'undefined') {
+    const raw = localStorage.getItem(LOCAL_INDEX_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        _index = parsed;
+      }
+    }
+  }
+} catch {
+  /* localStorage no disponible o JSON corrupto — ignorar */
+}
 
 // Peticiones de prefetch "en vuelo" para dedupe.
 const _inflight = new Map(); // urlHash -> Promise
@@ -83,6 +110,16 @@ const _lazyLoadPlugins = async () => {
 };
 
 const _persistIndex = async () => {
+  // 🚀 Espejo SÍNCRONO en localStorage para que `lookupSync` funcione antes
+  // de que `init()` termine en el siguiente arranque (TikTok/Instagram-style:
+  // contenido cacheado disponible al PRIMER paint sin red).
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(LOCAL_INDEX_KEY, JSON.stringify(_index));
+    }
+  } catch {
+    /* quota llena — ignorar, el índice sigue funcionando en memoria */
+  }
   if (!isNative) return;
   if (!_Preferences) return;
   try {
@@ -153,6 +190,11 @@ const _evictIfOverQuota = async () => {
 /**
  * Inicializa el servicio. Llamar una vez en el bootstrap del app.
  * Hidrata el índice desde Preferences y limpia entradas con archivo faltante.
+ *
+ * Nota: aunque el índice ya viene pre-hidratado desde localStorage de forma
+ * síncrona al cargar el módulo (para soportar lookupSync en el primer paint),
+ * `init()` lo refresca desde Capacitor Preferences (la fuente de verdad en
+ * disco) y prune las entradas cuyos archivos hayan desaparecido.
  */
 export const init = async () => {
   if (_initialized) return;
@@ -166,7 +208,8 @@ export const init = async () => {
   await _loadIndex();
 
   // Sanitize: si archivos del índice ya no existen (OS limpió la cache),
-  // descartamos esas entradas.
+  // descartamos esas entradas. También recomputamos localSrc para entradas
+  // que fueron guardadas por una versión anterior sin ese campo.
   const pruneList = [];
   for (const [hash, meta] of Object.entries(_index)) {
     try {
@@ -174,22 +217,36 @@ export const init = async () => {
         path: `${CACHE_DIR}/${meta.path}`,
         directory: _Directory.Cache,
       });
+      // Archivo existe — asegurar que tenemos localSrc precomputada
+      if (!meta.localSrc && _Capacitor?.convertFileSrc && meta.nativeUri) {
+        try {
+          meta.localSrc = _Capacitor.convertFileSrc(meta.nativeUri);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       pruneList.push(hash);
     }
   }
   if (pruneList.length) {
     pruneList.forEach((h) => delete _index[h]);
-    await _persistIndex();
   }
+  // Persist (always, para guardar las localSrc recomputadas)
+  await _persistIndex();
 };
 
 /**
  * Lookup SÍNCRONO. Devuelve URI local usable en <img>/<video> si existe;
  * null si no. No inicia descargas.
+ *
+ * 🚀 Funciona desde el PRIMER paint (incluso antes de `init()`), porque el
+ * índice se hidrata síncronamente desde localStorage al cargar el módulo.
+ * Esto permite que el feed cacheado se renderice de inmediato al abrir la
+ * APK sin conexión, igual que Instagram/TikTok.
  */
 export const lookupSync = (url) => {
-  if (!url || !isNative || !_initialized) return null;
+  if (!url || !isNative) return null;
   const hash = sha1Url(url);
   const meta = _index[hash];
   if (!meta) return null;
@@ -197,12 +254,21 @@ export const lookupSync = (url) => {
   meta.accessed_at = Date.now();
   // No persistimos aquí (sería demasiado I/O por cada render). Se persistirá
   // en el próximo prefetch/clear/shutdown.
+
+  // Caso 1: ya tenemos la URI lista para WebView (cacheada en el índice
+  // desde la primera vez que `prefetch()` la guardó). Servimos directo.
+  if (meta.localSrc) return meta.localSrc;
+
+  // Caso 2: tenemos la nativeUri pero aún no la hemos transformado.
+  // Si `Capacitor.convertFileSrc` ya está disponible (init() ya cargó los
+  // plugins) la transformamos y cacheamos. Si no, devolvemos null y el
+  // consumidor usará la URL remota como fallback (cuando init() termine,
+  // los próximos lookups ya devolverán la URI local).
   try {
-    // convertFileSrc transforma una ruta del filesystem en una URI que el
-    // WebView puede resolver (capacitor://... en iOS, http://localhost/_capacitor_file_/... en Android).
-    const nativePath = meta.nativeUri || meta.path;
     if (_Capacitor && _Capacitor.convertFileSrc && meta.nativeUri) {
-      return _Capacitor.convertFileSrc(nativePath);
+      const localSrc = _Capacitor.convertFileSrc(meta.nativeUri);
+      meta.localSrc = localSrc;
+      return localSrc;
     }
     return null;
   } catch {
@@ -266,10 +332,23 @@ export const prefetch = async (url, opts = {}) => {
         directory: _Directory.Cache,
       });
 
+      // Pre-computar la URI lista para WebView (convertFileSrc) para que
+      // los `lookupSync` futuros la sirvan directo sin tener que llamar al
+      // plugin nativo en cada render.
+      let localSrc = null;
+      try {
+        if (_Capacitor?.convertFileSrc && write?.uri) {
+          localSrc = _Capacitor.convertFileSrc(write.uri);
+        }
+      } catch {
+        /* ignore */
+      }
+
       _index[hash] = {
         url,
         path: filename,
         nativeUri: write?.uri || null,
+        localSrc,
         bytes: blob.size,
         created_at: Date.now(),
         accessed_at: Date.now(),

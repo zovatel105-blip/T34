@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
+import SafeImage from '../common/SafeImage';
 
 // Colores por país - TODOS LOS PAÍSES DEL MUNDO
 const countryColors = {
@@ -546,11 +547,11 @@ const QuestionSlide = ({
               <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse" />
             )}
             
-            {/* Imagen de fondo completo */}
+            {/* Imagen de fondo completo (offline-first cacheable) */}
             {imageUrl && (
-              <img 
-                src={imageUrl} 
-                alt="" 
+              <SafeImage
+                src={imageUrl}
+                alt=""
                 loading={isActive ? "eager" : "lazy"}
                 decoding="async"
                 className="absolute inset-0 w-full h-full object-cover"
@@ -901,12 +902,12 @@ const VSLayout = ({
             return (
               <div key={option.id} className={cn("flex-1 relative overflow-hidden", !imageUrl && bgColor)}>
                 {imageUrl && (
-                  <img 
-                    src={imageUrl} 
-                    alt="" 
+                  <SafeImage
+                    src={imageUrl}
+                    alt=""
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover" 
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 )}
               </div>
