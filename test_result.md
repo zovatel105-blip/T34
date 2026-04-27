@@ -5754,13 +5754,13 @@ backend:
     status_history:
         - working: true
           agent: "main"
-          comment: "✅ PROBLEMA RESUELTO COMPLETAMENTE (2025-08-22): Las imágenes subidas desde dispositivos móviles ahora se muestran correctamente. SOLUCIÓN IMPLEMENTADA: Siguiendo recomendación del soporte técnico de Emergent, creado endpoint API GET /api/uploads/{category}/{filename} para servir archivos estáticos a través del backend en lugar de rutas estáticas directas. CAMBIOS REALIZADOS: 1) ✅ BACKEND: Agregado endpoint /api/uploads/{category}/{filename} con FileResponse y validación de categorías, manejo correcto de MIME types, 2) ✅ URLs ACTUALIZADAS: Modificada función get_upload_path para generar URLs con formato /api/uploads/ en lugar de /uploads/, 3) ✅ FRONTEND: Actualizado uploadService.js y pollService.js para manejar nuevas rutas API y compatibilidad con rutas legacy, 4) ✅ TESTING CONFIRMADO: curl https://ffmpeg-deploy.preview.emergentagent.com/api/uploads/general/filename.jpg devuelve 200 con content-type: image/jpeg correcto. PROBLEMA DE INFRAESTRUCTURA RESUELTO: En Emergent solo las rutas /api/ van al backend, todo lo demás va al frontend. La nueva implementación usa rutas API que se enrutan correctamente al backend puerto 8001."
+          comment: "✅ PROBLEMA RESUELTO COMPLETAMENTE (2025-08-22): Las imágenes subidas desde dispositivos móviles ahora se muestran correctamente. SOLUCIÓN IMPLEMENTADA: Siguiendo recomendación del soporte técnico de Emergent, creado endpoint API GET /api/uploads/{category}/{filename} para servir archivos estáticos a través del backend en lugar de rutas estáticas directas. CAMBIOS REALIZADOS: 1) ✅ BACKEND: Agregado endpoint /api/uploads/{category}/{filename} con FileResponse y validación de categorías, manejo correcto de MIME types, 2) ✅ URLs ACTUALIZADAS: Modificada función get_upload_path para generar URLs con formato /api/uploads/ en lugar de /uploads/, 3) ✅ FRONTEND: Actualizado uploadService.js y pollService.js para manejar nuevas rutas API y compatibilidad con rutas legacy, 4) ✅ TESTING CONFIRMADO: curl https://pending-sync.preview.emergentagent.com/api/uploads/general/filename.jpg devuelve 200 con content-type: image/jpeg correcto. PROBLEMA DE INFRAESTRUCTURA RESUELTO: En Emergent solo las rutas /api/ van al backend, todo lo demás va al frontend. La nueva implementación usa rutas API que se enrutan correctamente al backend puerto 8001."
         - working: false
           agent: "testing"
           comment: "🔍 PROBLEMA RAÍZ CONFIRMADO - PROXY/INGRESS ROUTING ISSUE (2025-08-22): Testing exhaustivo completado confirmando el problema específico de static file serving. RESULTADOS CRÍTICOS: 1) ✅ BACKEND FILE UPLOAD: Sistema de subida funciona perfectamente - archivos JPG/PNG se suben correctamente, URLs relativas generadas apropiadamente (/uploads/general/filename.jpg), metadata y dimensiones capturadas correctamente, 2) ✅ BACKEND STATIC SERVING: Backend sirve archivos correctamente en localhost:8001 con content-type: image/jpeg apropiado, archivos físicamente presentes en /app/backend/uploads/general/, 3) ❌ PROXY/INGRESS ROUTING: El problema confirmado es que mediapolls.preview.emergentagent.com/uploads/ retorna content-type: text/html en lugar de image/jpeg, indicando que el proxy/ingress NO está redirigiendo /uploads/ al backend puerto 8001, 4) ✅ URL FORMAT: URLs son correctamente relativas (/uploads/...) como implementado por main agent, 5) ✅ FRONTEND NORMALIZATION: Código frontend está preparado para normalizar URLs relativas a absolutas. CONCLUSIÓN: El backend y las correcciones del main agent están funcionando correctamente. El problema es de infraestructura - el proxy/ingress de Kubernetes no está configurado para rutear /uploads/ al backend. Las imágenes subidas desde móvil no se muestran porque el navegador recibe HTML en lugar de la imagen real."
         - working: true
           agent: "testing"
-          comment: "🎉 SISTEMA DE ARCHIVOS ESTÁTICOS COMPLETAMENTE FUNCIONAL (2025-08-22): Testing exhaustivo del nuevo sistema de static file serving completado exitosamente con resultados perfectos (8/10+ tests passed). CONTEXTO: Se solicitó testing específico de la nueva solución implementada para el problema de imágenes móviles. VERIFICACIÓN COMPLETA: 1) ✅ NUEVO ENDPOINT GET /api/uploads/{category}/{filename}: Funciona perfectamente - archivos PNG/JPG servidos correctamente con content-type apropiado (image/png, image/jpeg), validación de categorías funcional (avatars, poll_options, poll_backgrounds, general), manejo de errores 404 para archivos inexistentes y categorías inválidas, 2) ✅ GENERACIÓN DE URLs ACTUALIZADA: Todas las URLs ahora usan formato /api/uploads/ correctamente, función get_upload_path genera URLs con prefijo /api/uploads/ en lugar de /uploads/, 3) ✅ UPLOAD SYSTEM INTEGRATION: Sistema de subida funciona perfectamente con nuevas URLs, archivos JPG (825 bytes, 100x100) y PNG (287 bytes, 100x100) subidos exitosamente, metadata y dimensiones capturadas correctamente, 4) ✅ EXTERNAL URL ACCESS: URLs externas funcionan perfectamente - https://ffmpeg-deploy.preview.emergentagent.com/api/uploads/general/filename.png devuelve 200 OK con content-type: image/png correcto, confirmando que el routing de Kubernetes funciona correctamente para rutas /api/, 5) ✅ ERROR HANDLING: Categorías inválidas retornan 404 apropiadamente, archivos no existentes retornan 404 correctamente, validación de formatos funcional. RESULTADO CRÍTICO: La solución implementada por el main agent está funcionando perfectamente. Las imágenes subidas desde dispositivos móviles ahora se mostrarán correctamente en toda la aplicación porque el sistema usa rutas /api/uploads/ que se enrutan correctamente al backend a través del proxy/ingress de Kubernetes."
+          comment: "🎉 SISTEMA DE ARCHIVOS ESTÁTICOS COMPLETAMENTE FUNCIONAL (2025-08-22): Testing exhaustivo del nuevo sistema de static file serving completado exitosamente con resultados perfectos (8/10+ tests passed). CONTEXTO: Se solicitó testing específico de la nueva solución implementada para el problema de imágenes móviles. VERIFICACIÓN COMPLETA: 1) ✅ NUEVO ENDPOINT GET /api/uploads/{category}/{filename}: Funciona perfectamente - archivos PNG/JPG servidos correctamente con content-type apropiado (image/png, image/jpeg), validación de categorías funcional (avatars, poll_options, poll_backgrounds, general), manejo de errores 404 para archivos inexistentes y categorías inválidas, 2) ✅ GENERACIÓN DE URLs ACTUALIZADA: Todas las URLs ahora usan formato /api/uploads/ correctamente, función get_upload_path genera URLs con prefijo /api/uploads/ en lugar de /uploads/, 3) ✅ UPLOAD SYSTEM INTEGRATION: Sistema de subida funciona perfectamente con nuevas URLs, archivos JPG (825 bytes, 100x100) y PNG (287 bytes, 100x100) subidos exitosamente, metadata y dimensiones capturadas correctamente, 4) ✅ EXTERNAL URL ACCESS: URLs externas funcionan perfectamente - https://pending-sync.preview.emergentagent.com/api/uploads/general/filename.png devuelve 200 OK con content-type: image/png correcto, confirmando que el routing de Kubernetes funciona correctamente para rutas /api/, 5) ✅ ERROR HANDLING: Categorías inválidas retornan 404 apropiadamente, archivos no existentes retornan 404 correctamente, validación de formatos funcional. RESULTADO CRÍTICO: La solución implementada por el main agent está funcionando perfectamente. Las imágenes subidas desde dispositivos móviles ahora se mostrarán correctamente en toda la aplicación porque el sistema usa rutas /api/uploads/ que se enrutan correctamente al backend a través del proxy/ingress de Kubernetes."
   - task: "Sistema de Seguimiento de Usuarios (Follow/Unfollow)"
     implemented: true
   - task: "Corrección Sistema de Perfil de Usuario"
@@ -5854,7 +5854,7 @@ frontend:
     status_history:
         - working: true
           agent: "main"
-          comment: "✅ PROBLEMA CRÍTICO DE VARIABLES DE ENTORNO RESUELTO COMPLETAMENTE (2025-01-25): Identificado y solucionado problema donde import.meta.env.REACT_APP_BACKEND_URL estaba undefined causando errores en servicios backend. PROBLEMA IDENTIFICADO: Múltiples servicios usando mezcla incorrecta de process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL cuando Create React App solo soporta process.env, no import.meta.env (que es para Vite). ARCHIVOS CORREGIDOS: 1) ✅ AuthContext.js: Removido fallback a import.meta.env, 2) ✅ commentService.js: Corregida configuración de BACKEND_URL, 3) ✅ addictionApi.js: Corregida configuración de API_BASE, 4) ✅ uploadService.js: Corregida configuración de BACKEND_URL, 5) ✅ realMusicService.js: Corregida configuración de API_BASE_URL, 6) ✅ pollService.js: Corregida configuración de BACKEND_URL, 7) ✅ UserMentionInput.jsx: Corregidas ambas instancias de backendUrl (líneas 37 y 91). VERIFICACIONES: ✅ Variable REACT_APP_BACKEND_URL existe en frontend/.env con valor correcto, ✅ Servicios frontend y backend reiniciados exitosamente, ✅ Backend responde correctamente en https://ffmpeg-deploy.preview.emergentagent.com/api/, ✅ Eliminadas todas las referencias a import.meta.env en el proyecto. RESULTADO: Los servicios ahora usan exclusivamente process.env.REACT_APP_BACKEND_URL que está definida correctamente, eliminando errores de undefined backend URL."
+          comment: "✅ PROBLEMA CRÍTICO DE VARIABLES DE ENTORNO RESUELTO COMPLETAMENTE (2025-01-25): Identificado y solucionado problema donde import.meta.env.REACT_APP_BACKEND_URL estaba undefined causando errores en servicios backend. PROBLEMA IDENTIFICADO: Múltiples servicios usando mezcla incorrecta de process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL cuando Create React App solo soporta process.env, no import.meta.env (que es para Vite). ARCHIVOS CORREGIDOS: 1) ✅ AuthContext.js: Removido fallback a import.meta.env, 2) ✅ commentService.js: Corregida configuración de BACKEND_URL, 3) ✅ addictionApi.js: Corregida configuración de API_BASE, 4) ✅ uploadService.js: Corregida configuración de BACKEND_URL, 5) ✅ realMusicService.js: Corregida configuración de API_BASE_URL, 6) ✅ pollService.js: Corregida configuración de BACKEND_URL, 7) ✅ UserMentionInput.jsx: Corregidas ambas instancias de backendUrl (líneas 37 y 91). VERIFICACIONES: ✅ Variable REACT_APP_BACKEND_URL existe en frontend/.env con valor correcto, ✅ Servicios frontend y backend reiniciados exitosamente, ✅ Backend responde correctamente en https://pending-sync.preview.emergentagent.com/api/, ✅ Eliminadas todas las referencias a import.meta.env en el proyecto. RESULTADO: Los servicios ahora usan exclusivamente process.env.REACT_APP_BACKEND_URL que está definida correctamente, eliminando errores de undefined backend URL."
   - task: "Gestión de Logo en Dispositivos Móviles"
     implemented: true
     working: true
@@ -5933,13 +5933,13 @@ agent_communication:
     - agent: "main"
       message: "🎥 SISTEMA DE GENERACIÓN AUTOMÁTICA DE MINIATURAS DE VIDEO IMPLEMENTADO COMPLETAMENTE (2025-01-24): Desarrollado sistema completo para resolver el problema de miniaturas de video usando OpenCV. PROBLEMA IDENTIFICADO: Las miniaturas de videos no se generaban automáticamente, causando que los videos no tuvieran previews adecuadas en el feed y perfiles. SOLUCIÓN IMPLEMENTADA: 1) ✅ DEPENDENCIAS INSTALADAS: opencv-python>=4.8.0 y moviepy>=1.0.3 agregadas e instaladas exitosamente, 2) ✅ FUNCIÓN get_video_info COMPLETAMENTE REESCRITA: Implementación con OpenCV para extraer frame del medio del video, generar thumbnail JPG optimizada (800px max), detectar dimensiones reales, calcular duración precisa, guardar en directorio /thumbnails/, 3) ✅ MODELOS ACTUALIZADOS: Campo thumbnail_url agregado a UploadedFile y UploadResponse para almacenar URLs de miniaturas, 4) ✅ ENDPOINTS DE SERVIR ARCHIVOS: Nuevo endpoint /api/uploads/{category}/thumbnails/{filename} para servir miniaturas via API con MIME type correcto, 5) ✅ INTEGRACIÓN AUTOMÁTICA CON POLLS: Función get_thumbnail_for_media_url para obtener thumbnails desde DB, actualización automática en respuestas de polls para videos, fallback inteligente a media_url si no hay thumbnail, 6) ✅ WORKFLOW END-TO-END: Upload video → OpenCV extrae frame → genera JPG thumbnail → guarda en DB con URL → sirve via API → muestra automáticamente en polls. RESULTADO: Los videos ahora tendrán miniaturas automáticamente generadas al subirlos, resolviendo completamente el problema reportado. Sistema listo para testing exhaustivo."
     - agent: "main"
-      message: "🎉 PROBLEMA DE IMÁGENES MÓVILES COMPLETAMENTE SOLUCIONADO (2025-08-22): Las imágenes subidas desde dispositivos móviles ahora se muestran correctamente en toda la aplicación. ANÁLISIS FINAL: El problema no era del código sino de la infraestructura - en Emergent solo las rutas /api/ van al backend, todas las demás van al frontend. SOLUCIÓN DEFINITIVA: Implementado endpoint API GET /api/uploads/{category}/{filename} para servir archivos estáticos a través del backend. CAMBIOS FINALES: 1) ✅ ENDPOINT BACKEND: Creado /api/uploads/{category}/{filename} con FileResponse, validación de categorías y MIME types correctos, 2) ✅ URLs ACTUALIZADAS: Todas las URLs ahora usan formato /api/uploads/ que se enruta correctamente al backend, 3) ✅ COMPATIBILIDAD: Frontend actualizado para manejar nuevas rutas API y convertir rutas legacy automáticamente, 4) ✅ TESTING CONFIRMADO: https://ffmpeg-deploy.preview.emergentagent.com/api/uploads/general/filename.jpg devuelve 200 OK con content-type: image/jpeg. RESULTADO: Los usuarios ahora pueden subir imágenes desde dispositivos móviles y verlas correctamente en el feed, perfiles y todas las secciones de la aplicación."
+      message: "🎉 PROBLEMA DE IMÁGENES MÓVILES COMPLETAMENTE SOLUCIONADO (2025-08-22): Las imágenes subidas desde dispositivos móviles ahora se muestran correctamente en toda la aplicación. ANÁLISIS FINAL: El problema no era del código sino de la infraestructura - en Emergent solo las rutas /api/ van al backend, todas las demás van al frontend. SOLUCIÓN DEFINITIVA: Implementado endpoint API GET /api/uploads/{category}/{filename} para servir archivos estáticos a través del backend. CAMBIOS FINALES: 1) ✅ ENDPOINT BACKEND: Creado /api/uploads/{category}/{filename} con FileResponse, validación de categorías y MIME types correctos, 2) ✅ URLs ACTUALIZADAS: Todas las URLs ahora usan formato /api/uploads/ que se enruta correctamente al backend, 3) ✅ COMPATIBILIDAD: Frontend actualizado para manejar nuevas rutas API y convertir rutas legacy automáticamente, 4) ✅ TESTING CONFIRMADO: https://pending-sync.preview.emergentagent.com/api/uploads/general/filename.jpg devuelve 200 OK con content-type: image/jpeg. RESULTADO: Los usuarios ahora pueden subir imágenes desde dispositivos móviles y verlas correctamente en el feed, perfiles y todas las secciones de la aplicación."
     - agent: "main"
       message: "🎉 ERROR DEL BOTÓN PLUS DE SEGUIR COMPLETAMENTE SOLUCIONADO (2025-08-16): Identificado y corregido el bug crítico que causaba el error al hacer clic en el botón plus de seguir usuarios. PROBLEMA IDENTIFICADO: Error en AuthContext.js función refreshUser - intentaba usar métodos Response (response.ok, response.json()) en resultado de apiRequest que ya devuelve JSON parseado, causando pérdida de autenticación al interactuar con botones. SOLUCIÓN IMPLEMENTADA: Corregida función refreshUser para usar directamente el resultado de apiRequest sin métodos Response adicionales. VERIFICACIÓN EXITOSA: 1) ✅ Login persistente después de corrección, 2) ✅ Botones plus funcionales sin pérdida de sesión, 3) ✅ Usuario permanece autenticado en /feed después de hacer clic, 4) ✅ No más redirección automática a login, 5) ✅ Funcionalidad de seguir usuarios completamente operacional. RESULTADO: Los usuarios ahora pueden hacer clic en botones plus para seguir usuarios sin experimentar errores de autenticación."
     - agent: "testing"
     - agent: "main"
       message: "🔧 SISTEMA DE PERFIL COMPLETAMENTE CORREGIDO (2025-08-22): Solucionados todos los problemas reportados por el usuario en el sistema de perfil. DIAGNÓSTICO DE PROBLEMAS: 1) Publicaciones no se mostraban porque el filtrado estaba hardcodeado para 'Noviago' en lugar de usar el ID real del usuario, 2) Estadísticas incorrectas porque estaban hardcodeadas en lugar de calcularse dinámicamente, 3) Upload de avatar no funcionaba porque faltaba función updateUser en AuthContext. SOLUCIONES IMPLEMENTADAS: ✅ FILTRADO CORRECTO: Corregido filtrado de polls para usar poll.authorUser?.id === authUser?.id para perfil propio y poll.authorUser?.username === userId para otros perfiles, ✅ ESTADÍSTICAS DINÁMICAS: Implementado cálculo real basado en userPolls (totalVotesReceived, totalLikesReceived, pollsCreated), ✅ UPLOAD DE AVATAR: Agregada función updateUser en AuthContext que llama PUT /api/auth/profile, componente AvatarUpload ya estaba bien implementado. RESULTADO: El perfil ahora muestra las publicaciones reales del usuario, estadísticas correctas basadas en datos reales, y permite subir fotos de perfil exitosamente."
-      message: "🎉 SISTEMA DE ARCHIVOS ESTÁTICOS COMPLETAMENTE FUNCIONAL - PROBLEMA DE IMÁGENES MÓVILES RESUELTO (2025-08-22): Testing exhaustivo completado exitosamente confirmando que la nueva solución implementada por el main agent funciona perfectamente. RESULTADOS CRÍTICOS: 1) ✅ NUEVO ENDPOINT GET /api/uploads/{category}/{filename}: Funciona perfectamente - archivos PNG/JPG servidos correctamente con content-type apropiado (image/png, image/jpeg), validación de categorías funcional, manejo de errores 404 para archivos/categorías inexistentes, 2) ✅ URL GENERATION FIXED: Todas las URLs ahora usan formato /api/uploads/ correctamente, función get_upload_path genera URLs con prefijo /api/uploads/ en lugar de /uploads/, 3) ✅ EXTERNAL ACCESS CONFIRMED: URLs externas funcionan perfectamente - https://ffmpeg-deploy.preview.emergentagent.com/api/uploads/general/filename.png devuelve 200 OK con content-type correcto, confirmando que el routing de Kubernetes funciona para rutas /api/, 4) ✅ UPLOAD INTEGRATION: Sistema de subida funciona perfectamente con nuevas URLs, archivos subidos exitosamente con metadata correcta, 5) ✅ ERROR HANDLING: Categorías inválidas y archivos no existentes retornan 404 apropiadamente. CONCLUSIÓN DEFINITIVA: La solución implementada por el main agent está funcionando perfectamente. Las imágenes subidas desde dispositivos móviles ahora se mostrarán correctamente en toda la aplicación porque el sistema usa rutas /api/uploads/ que se enrutan correctamente al backend a través del proxy/ingress de Kubernetes. El problema de infraestructura ha sido completamente resuelto."
+      message: "🎉 SISTEMA DE ARCHIVOS ESTÁTICOS COMPLETAMENTE FUNCIONAL - PROBLEMA DE IMÁGENES MÓVILES RESUELTO (2025-08-22): Testing exhaustivo completado exitosamente confirmando que la nueva solución implementada por el main agent funciona perfectamente. RESULTADOS CRÍTICOS: 1) ✅ NUEVO ENDPOINT GET /api/uploads/{category}/{filename}: Funciona perfectamente - archivos PNG/JPG servidos correctamente con content-type apropiado (image/png, image/jpeg), validación de categorías funcional, manejo de errores 404 para archivos/categorías inexistentes, 2) ✅ URL GENERATION FIXED: Todas las URLs ahora usan formato /api/uploads/ correctamente, función get_upload_path genera URLs con prefijo /api/uploads/ en lugar de /uploads/, 3) ✅ EXTERNAL ACCESS CONFIRMED: URLs externas funcionan perfectamente - https://pending-sync.preview.emergentagent.com/api/uploads/general/filename.png devuelve 200 OK con content-type correcto, confirmando que el routing de Kubernetes funciona para rutas /api/, 4) ✅ UPLOAD INTEGRATION: Sistema de subida funciona perfectamente con nuevas URLs, archivos subidos exitosamente con metadata correcta, 5) ✅ ERROR HANDLING: Categorías inválidas y archivos no existentes retornan 404 apropiadamente. CONCLUSIÓN DEFINITIVA: La solución implementada por el main agent está funcionando perfectamente. Las imágenes subidas desde dispositivos móviles ahora se mostrarán correctamente en toda la aplicación porque el sistema usa rutas /api/uploads/ que se enrutan correctamente al backend a través del proxy/ingress de Kubernetes. El problema de infraestructura ha sido completamente resuelto."
     - agent: "testing"
       message: "🎯 PLUS BUTTON FUNCTIONALITY SUCCESSFULLY TESTED (2025-08-16): Comprehensive testing of the plus button functionality completed with overall success. CORE FUNCTIONALITY VERIFIED: ✅ The main user requirement 'Al darle a botón de plus del perfil (significa que ya estás siguiendo al usuario y el botón de plus desaparezce)' is working correctly in desktop view. DETAILED RESULTS: 1) ✅ AUTHENTICATION: User registration and login working perfectly with proper JWT token persistence, 2) ✅ DESKTOP PLUS BUTTONS: Found and successfully clicked 2 blue plus buttons (bg-blue-500 styling) in desktop feed - buttons are functional and properly integrated with follow system, 3) ✅ TIKTOK INTERFACE: Mobile TikTok-style interface is properly implemented with full-screen polls, 2x2 grid voting, snap scrolling, and author avatars visible, 4) ✅ BACKEND INTEGRATION: Follow system backend is operational and responding correctly to user interactions. MINOR ISSUE NOTED: Plus buttons are not visible in mobile TikTok view specifically, though all infrastructure is present (15 TikTok elements, 12 full-screen elements, 10 grid layouts detected). This appears to be a UI rendering issue in mobile TikTok component rather than a functional problem. RECOMMENDATION: The core plus button functionality is working as requested by the user. The mobile visibility issue is minor and doesn't affect the primary use case."
     - agent: "testing"
@@ -6958,7 +6958,7 @@ agent_communication:
 6. **Experiencia Moderna**: UI/UX responsive, loading states, navegación fluida
 
 **ACCESO:** Long-press en logo del feed → Botón "Buscar (azul)" → Sistema de búsqueda universal completo    - agent: "testing"
-      message: "✅ NEW AUTH PAGE BACKEND TESTING COMPLETADO EXITOSAMENTE (2025-01-27): Testing exhaustivo de endpoints backend para nueva página de autenticación simplificada completado con 100% de éxito. CONTEXTO: Usuario creó NewAuthPage.jsx para reemplazar AuthPage complejo - funcionalidad simplificada (login + register, sin Google OAuth, validación básica, redirección a /feed). TESTING REALIZADO: 10/10 tests pasados - Health check API, registro de usuarios (POST /api/auth/register), login (POST /api/auth/login), validación JWT, manejo de errores (credenciales inválidas, emails duplicados, campos faltantes), seguridad (contraseñas no expuestas), formato de respuesta compatible con frontend. RESULTADO: Backend 100% listo para nueva página de autenticación. Todos los endpoints necesarios funcionando correctamente con URL externa (https://ffmpeg-deploy.preview.emergentagent.com/api). Sistema de autenticación robusto y seguro implementado correctamente."
+      message: "✅ NEW AUTH PAGE BACKEND TESTING COMPLETADO EXITOSAMENTE (2025-01-27): Testing exhaustivo de endpoints backend para nueva página de autenticación simplificada completado con 100% de éxito. CONTEXTO: Usuario creó NewAuthPage.jsx para reemplazar AuthPage complejo - funcionalidad simplificada (login + register, sin Google OAuth, validación básica, redirección a /feed). TESTING REALIZADO: 10/10 tests pasados - Health check API, registro de usuarios (POST /api/auth/register), login (POST /api/auth/login), validación JWT, manejo de errores (credenciales inválidas, emails duplicados, campos faltantes), seguridad (contraseñas no expuestas), formato de respuesta compatible con frontend. RESULTADO: Backend 100% listo para nueva página de autenticación. Todos los endpoints necesarios funcionando correctamente con URL externa (https://pending-sync.preview.emergentagent.com/api). Sistema de autenticación robusto y seguro implementado correctamente."
     - agent: "testing"
       message: "✅ LAYOUT FUNCTIONALITY TESTING COMPLETAMENTE EXITOSO (2025-01-27): Realizado testing exhaustivo de funcionalidad de layouts mejorados según solicitud de revisión. RESULTADOS PERFECTOS: ✅ AUTENTICACIÓN: Login con layouttest@example.com/test123 exitoso, usuario autenticado correctamente (ID: 8aba09d2-0579-465d-b595-65eaebb067dc). ✅ API POLLS: GET /api/polls retorna 5 posts con layouts diferentes - encontrados todos los layouts esperados: horizontal, grid-3x2, horizontal-3x2, triptych-vertical, triptych-horizontal. ✅ ESTRUCTURA DATOS: Campo 'layout' correctamente guardado y retornado, ejemplo verificado con triptych-horizontal mostrando estructura completa. ✅ BACKEND HEALTH: API Social Network v1.0 funcionando al 100%. CONCLUSIÓN: Layout functionality completamente operacional - backend devuelve posts con layouts correctos, autenticación funciona sin problemas de JSON, estructura de datos es correcta. Sistema listo para continuar con desarrollo frontend."
 
@@ -8238,4 +8238,125 @@ test_plan:
   current_focus: []
   test_all: false
   test_priority: "high_first"
+
+
+#====================================================================================================
+# PHASE 2C — Offline action queue (IndexedDB) + auto-flush on reconnect
+#====================================================================================================
+frontend:
+  - task: "Phase 2C — offlineQueueService (IndexedDB + dedup + retry)"
+    implemented: true
+    working: "NA"
+    file: "services/offlineQueueService.js (nuevo)"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            Cola persistente en IndexedDB (store `queued_actions`, index por
+            status/resource_key/created_at). Acciones: like_toggle, vote,
+            comment_create, comment_like_toggle, follow, unfollow.
+            Dedup en toggles: si ya hay un pending con el mismo resource_key,
+            ambos se cancelan (net-zero). Resto se guardan y se flushean en
+            orden cronológico ascendente.
+            Flush: token fresco por intento, 2xx→borrar, 4xx→descartar (no
+            retryable), 5xx/red→reintentar hasta MAX_RETRIES=5, luego marcar
+            failed. Detiene el flush si pierde red en mitad. Idempotente:
+            múltiples llamadas concurrentes → un solo flush.
+            Helper central `queuedFetch({type,resourceKey,endpoint,method,
+            body,headers,optimistic,requiresAuth})`: si offline o error de red,
+            encola + devuelve `{...optimistic, queued:true}` sin lanzar. Si
+            hay HTTP error (4xx/5xx con respuesta) re-lanza para que el caller
+            revierta su UI optimista (comportamiento preservado).
+
+  - task: "Phase 2C — pollService/userService/commentService offline-aware"
+    implemented: true
+    working: "NA"
+    file: "services/pollService.js, services/userService.js, services/commentService.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            Envueltos: pollService.toggleLike, pollService.voteOnPoll,
+            userService.followUser, userService.unfollowUser,
+            commentService.createComment, commentService.toggleCommentLike.
+            Cada uno acepta `{optimistic}` opcional para que, cuando se encole,
+            la UI optimista no se pierda al reconciliar con el "server
+            response" devuelto por el servicio. Resource keys:
+            poll:{id}:like, poll:{id}:vote, user:{id}:follow,
+            comment:{id}:like, poll:{id}:comment.
+            Retrocompatibles: callers que no pasan `optimistic` seguirán
+            funcionando online; offline recibirán `{queued:true}` y deberán
+            comprobar el flag para evitar sobrescribir estado (hecho en
+            FeedPage y FollowingPage para likes/votos).
+
+  - task: "Phase 2C — OfflineQueueFlusher + useOfflineQueue hook"
+    implemented: true
+    working: "NA"
+    file: "components/common/OfflineQueueFlusher.jsx (nuevo), hooks/useOfflineQueue.js (nuevo), App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            Hook `useOfflineQueue` expone `{pendingCount, flush, refresh}`
+            y se suscribe al emitter interno del servicio para re-renderizar
+            en cambios. Componente `OfflineQueueFlusher` (sin UI) se monta
+            una vez en App.js dentro del UploadProvider. Dispara flush en
+            dos casos:
+              1) Mount inicial si pendingCount>0 y online.
+              2) Transición offline→online (800ms de cortesía).
+            Muestra toast "✓ N acciones sincronizadas" al completar.
+            Compatible con `useNetworkStatus` ya existente (Capacitor
+            Network en APK + navigator.onLine en web).
+
+  - task: "Phase 2C — FeedPage/FollowingPage: handleLike/handleVote queued-aware"
+    implemented: true
+    working: "NA"
+    file: "pages/FeedPage.jsx, pages/FollowingPage.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            Actualizados los handlers de like y voto más usados para pasar
+            `optimistic:{liked, likes}` al servicio y comprobar `result.queued`.
+            Cuando queued=true: se muestra toast "Sin conexión. Se sincronizará
+            cuando vuelvas a estar online" y NO se relanza el refreshPoll
+            (no hay data fresca en el server todavía).
+            Otros callers (ExplorePage, SearchPage, ProfilePage, PostViewerPage)
+            no se tocaron por minimizar diff. En su caso, al estar offline,
+            result.liked/result.likes serán undefined → el próximo render usará
+            el state optimista hasta que la app refresque; degradación aceptable.
+
+test_plan:
+  current_focus: []
+  test_all: false
+  test_priority: "high_first"
+
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Fase 2C completada: cola offline persistente en IndexedDB para likes,
+      votos, comentarios y follows. Arquitectura de 3 capas:
+      1) services/offlineQueueService.js — cola + dedup + retry + flush.
+      2) Capa de servicio (pollService/userService/commentService) con
+         helper queuedFetch que es transparente online y encola offline.
+      3) OfflineQueueFlusher global + useOfflineQueue hook que automatiza
+         el sync en cuanto vuelve la red.
+      UI optimista ya existente preservada gracias al parámetro `{optimistic}`.
+      Lint limpio, frontend compila, smoke test de schema IndexedDB ok.
+      Pendiente: validación funcional E2E en APK real (flujo offline→like→
+      reconnect→sync). No invocamos testing agent automáticamente por la
+      regla del protocolo (esperar luz verde del usuario para frontend tests).
 

@@ -1,6 +1,7 @@
 /**
  * Comment Service - Handles all comment-related API calls
  */
+import { queuedFetch, isNetworkError } from './offlineQueueService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -53,62 +54,51 @@ class CommentService {
     }
   }
 
-  // Create a comment
-  async createComment(pollId, commentData) {
+  // Create a comment (offline-aware). Accepts optional { optimistic } with
+  // a shape similar al del backend (id temporal, author, content, etc.)
+  // para que el caller no tenga que distinguir online vs queued.
+  async createComment(pollId, commentData, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/polls/${pollId}/comments`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        type: 'comment_create',
+        resourceKey: `poll:${pollId}:comment`,
+        endpoint: `${this.baseURL}/polls/${pollId}/comments`,
         method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(commentData)
+        body: commentData,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-        } catch (e) {
-          console.warn('Could not parse error response JSON:', e);
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
+      return result;
     } catch (error) {
-      console.error('Create comment error:', error);
-      // Asegurar que siempre se lanza un Error con un mensaje string
-      if (error instanceof Error) {
-        throw error;
+      if (!isNetworkError(error)) {
+        console.error('Create comment error:', error);
       }
+      if (error instanceof Error) throw error;
       throw new Error(String(error));
     }
   }
 
-  // Like a comment
-  async toggleCommentLike(commentId) {
+  // Like a comment (offline-aware).
+  async toggleCommentLike(commentId, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/comments/${commentId}/like`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        type: 'comment_like_toggle',
+        resourceKey: `comment:${commentId}:like`,
+        endpoint: `${this.baseURL}/comments/${commentId}/like`,
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-        } catch (e) {
-          console.warn('Could not parse error response JSON:', e);
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
+      return result;
     } catch (error) {
-      console.error('Toggle comment like error:', error);
-      if (error instanceof Error) {
-        throw error;
+      if (!isNetworkError(error)) {
+        console.error('Toggle comment like error:', error);
       }
+      if (error instanceof Error) throw error;
       throw new Error(String(error));
     }
   }

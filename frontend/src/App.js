@@ -73,6 +73,9 @@ import { useBackButton } from './hooks/useBackButton';
 // 🛜 Banner de estado offline (estilo Instagram/TikTok)
 import OfflineBanner from './components/common/OfflineBanner';
 
+// 🔁 Auto-flush de acciones encoladas offline cuando recuperamos conexión
+import OfflineQueueFlusher from './components/common/OfflineQueueFlusher';
+
 // 💾 Caché de media (thumbnails/videos) en Capacitor Filesystem
 import mediaCache from './services/mediaCacheService';
 
@@ -293,6 +296,7 @@ function App() {
               <UploadProvider>
                 <AppContent />
                 <OfflineBanner />
+                <OfflineQueueFlusher />
                 <Toaster />
               </UploadProvider>
             </FollowProvider>

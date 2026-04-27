@@ -2,6 +2,7 @@
  * Poll Service - Handles all poll-related API calls
  * Replaces mock data with real backend integration
  */
+import { queuedFetch } from './offlineQueueService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -128,15 +129,21 @@ class PollService {
   }
 
   // Vote on a poll
-  async voteOnPoll(pollId, optionId) {
+  // Accepts optional { optimistic } to support offline queue.
+  async voteOnPoll(pollId, optionId, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/polls/${pollId}/vote`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        type: 'vote',
+        resourceKey: `poll:${pollId}:vote`, // votes NO se deduplican, pero guardamos clave
+        endpoint: `${this.baseURL}/polls/${pollId}/vote`,
         method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({ option_id: optionId }),
+        body: { option_id: optionId },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      return await this.handleResponse(response);
+      return result;
     } catch (error) {
       console.error('Error voting on poll:', error);
       throw error;
@@ -160,14 +167,22 @@ class PollService {
   }
 
   // Toggle like on a poll
-  async toggleLike(pollId) {
+  // Accepts optional { optimistic } so que la UI no se revierta cuando la
+  // acción es encolada offline. Si offline, el resource_key permite que dos
+  // toggles consecutivos se cancelen en el queue.
+  async toggleLike(pollId, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/polls/${pollId}/like`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        type: 'like_toggle',
+        resourceKey: `poll:${pollId}:like`,
+        endpoint: `${this.baseURL}/polls/${pollId}/like`,
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      return await this.handleResponse(response);
+      return result;
     } catch (error) {
       console.error('Error toggling like:', error);
       throw error;

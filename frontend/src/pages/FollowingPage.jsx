@@ -404,25 +404,29 @@ const FollowingPage = () => {
     try {
       // Optimistic update
       let wasLiked = false;
+      let optimisticLikes = 0;
       setPolls(prev => prev.map(poll => {
         if (poll.id === pollId) {
           wasLiked = poll.userLiked;
+          optimisticLikes = poll.userLiked ? poll.likes - 1 : poll.likes + 1;
           return {
             ...poll,
             userLiked: !poll.userLiked,
-            likes: poll.userLiked ? poll.likes - 1 : poll.likes + 1
+            likes: optimisticLikes
           };
         }
         return poll;
       }));
 
-      // Send like to backend
-      const result = await pollService.toggleLike(pollId);
-      
+      // Send like to backend (offline-aware)
+      const result = await pollService.toggleLike(pollId, {
+        optimistic: { liked: !wasLiked, likes: optimisticLikes },
+      });
+
       // Track action for addiction system
       await trackAction('like');
-      
-      // Update with actual server response
+
+      // Update with actual server response (o con el optimista si queued)
       setPolls(prev => prev.map(poll => {
         if (poll.id === pollId) {
           return {
@@ -433,11 +437,18 @@ const FollowingPage = () => {
         }
         return poll;
       }));
-      
-      toast({
-        title: result.liked ? "¡Te gusta!" : "Like removido",
-        description: result.liked ? "Has dado like a esta votación" : "Ya no te gusta esta votación",
-      });
+
+      if (result.queued) {
+        toast({
+          title: 'Sin conexión',
+          description: 'Tu like se sincronizará cuando vuelvas a estar online.',
+        });
+      } else {
+        toast({
+          title: result.liked ? "¡Te gusta!" : "Like removido",
+          description: result.liked ? "Has dado like a esta votación" : "Ya no te gusta esta votación",
+        });
+      }
     } catch (error) {
       console.error('Error liking poll:', error);
       

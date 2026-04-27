@@ -1,4 +1,5 @@
 import { formatApiError } from '../utils/apiErrorHandler';
+import { queuedFetch, isNetworkError } from './offlineQueueService';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -94,41 +95,59 @@ class UserService {
     }
   }
 
-  async followUser(userId) {
+  async followUser(userId, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/users/${userId}/follow`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        // follow y unfollow se consideran mutuamente inversos:
+        // si el usuario hace follow → unfollow → follow sin red, los toggles
+        // se irán cancelando. Para eso reutilizamos el mismo resource_key y
+        // type 'like_toggle'? No: follow no es propiamente toggle en el API
+        // (son dos endpoints). Usamos types distintos; la cancelación natural
+        // ocurre porque quedan dos entradas pero al flushear se ejecutan
+        // en orden → resultado final correcto.
+        type: 'follow',
+        resourceKey: `user:${userId}:follow`,
+        endpoint: `${this.baseURL}/users/${userId}/follow`,
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = formatApiError(errorData, response.status);
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
+      return result;
     } catch (error) {
+      if (!isNetworkError(error)) {
+        // errores HTTP reales: log + re-throw con mensaje amigable
+        try {
+          const msg = formatApiError({ detail: error.message }, error.status || 500);
+          throw new Error(msg);
+        } catch (e) { throw e; }
+      }
       console.error('Error following user:', error);
       throw error;
     }
   }
 
-  async unfollowUser(userId) {
+  async unfollowUser(userId, { optimistic } = {}) {
     try {
-      const response = await fetch(`${this.baseURL}/users/${userId}/unfollow`, {
+      const token = localStorage.getItem('token');
+      const result = await queuedFetch({
+        type: 'unfollow',
+        resourceKey: `user:${userId}:follow`,
+        endpoint: `${this.baseURL}/users/${userId}/unfollow`,
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        optimistic: optimistic || {},
+        requiresAuth: true,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = formatApiError(errorData, response.status);
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
+      return result;
     } catch (error) {
+      if (!isNetworkError(error)) {
+        try {
+          const msg = formatApiError({ detail: error.message }, error.status || 500);
+          throw new Error(msg);
+        } catch (e) { throw e; }
+      }
       console.error('Error unfollowing user:', error);
       throw error;
     }
