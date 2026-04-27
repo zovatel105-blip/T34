@@ -31,12 +31,17 @@ const DefaultAvatarSvg = ({ className = '', bg = '#BDBDBD', fg = '#EFEFEF' }) =>
         contenedor redondo se encarga de recortar cualquier píxel fuera). */}
     <rect width="100" height="100" fill={bg} />
 
-    {/* Cabeza: círculo en el tercio superior */}
-    <circle cx="50" cy="40" r="16" fill={fg} />
+    {/* Cabeza: círculo algo más abajo del centro. Esto deja más aire
+        arriba y permite que los hombros queden "metidos" en el borde
+        inferior del círculo sin una curva intermedia visible. */}
+    <circle cx="50" cy="54" r="19" fill={fg} />
 
-    {/* Hombros: elipse cuya mitad inferior queda fuera del círculo →
-        el overflow-hidden del Avatar hace el recorte curvo natural. */}
-    <ellipse cx="50" cy="100" rx="28" ry="22" fill={fg} />
+    {/* Hombros: elipse grande y muy desplazada hacia abajo. Su mitad
+        inferior queda fuera del viewBox y la mitad superior es más
+        ancha que el círculo contenedor → el overflow-hidden recorta
+        ambos flancos y el resultado es una curva limpia que baña todo
+        el tercio inferior, idéntico al avatar por defecto de Google. */}
+    <ellipse cx="50" cy="125" rx="42" ry="40" fill={fg} />
   </svg>
 );
 
