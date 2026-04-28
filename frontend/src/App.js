@@ -31,6 +31,9 @@ import CompletedBattlesPage from './pages/CompletedBattlesPage';
 import ActiveChallengesPage from './pages/ActiveChallengesPage';
 import ChallengeCreationPage from './pages/ChallengeCreationPage';
 import PostViewerPage from './pages/PostViewerPage';
+import LivePage from './pages/LivePage';
+import LiveViewerPage from './pages/LiveViewerPage';
+import LiveBroadcastPage from './pages/LiveBroadcastPage';
 import { Toaster } from './components/ui/toaster';
 // Mock data imports removed - using real backend services
 import { useToast } from './hooks/use-toast';
@@ -41,6 +44,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AddictionProvider } from './contexts/AddictionContext';
 import { FollowProvider } from './contexts/FollowContext';
 import { UploadProvider } from './contexts/UploadContext';
+import { CoinsProvider } from './contexts/CoinsContext';
 
 // ✅ Configuración automática de entorno
 import AppConfig from './config/config';
@@ -274,6 +278,11 @@ function AppContent() {
         <Route path="/challenges/create" element={<ChallengeCreationPage />} />
         <Route path="/post/:postId" element={<PostViewerPage />} />
         <Route path="/poll/:postId" element={<PostViewerPage />} />
+
+        {/* 🔴 LIVE Streaming */}
+        <Route path="/live" element={<LivePage />} />
+        <Route path="/live/broadcast/:roomId" element={<LiveBroadcastPage />} />
+        <Route path="/live/:roomId" element={<LiveViewerPage />} />
       </Routes>
     </ResponsiveLayout>
   );
@@ -294,10 +303,12 @@ function App() {
           <AddictionProvider>
             <FollowProvider>
               <UploadProvider>
-                <AppContent />
-                <OfflineBanner />
-                <OfflineQueueFlusher />
-                <Toaster />
+                <CoinsProvider>
+                  <AppContent />
+                  <OfflineBanner />
+                  <OfflineQueueFlusher />
+                  <Toaster />
+                </CoinsProvider>
               </UploadProvider>
             </FollowProvider>
           </AddictionProvider>

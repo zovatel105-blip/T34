@@ -13258,6 +13258,39 @@ try:
 except Exception as e:
     logger.warning(f"⚠️  Push notification routes not loaded: {e}")
 
+# ──────────────────────────────────────────────────────────────────────────
+# 🔴 LIVE Streaming routes (REST + WebSocket)
+# ──────────────────────────────────────────────────────────────────────────
+try:
+    from live_routes import build_live_router, register_live_websocket
+
+    async def _get_user_from_token_optional(token: Optional[str]) -> Optional[UserResponse]:
+        """Resolve a JWT (passed via WS query string) to a UserResponse or None."""
+        if not token:
+            return None
+        try:
+            payload = verify_token(token)
+            if not payload:
+                return None
+            user_data = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+            if not user_data:
+                return None
+            return UserResponse(**user_data)
+        except Exception:
+            return None
+
+    _live_router = build_live_router(
+        db=db,
+        get_current_user=get_current_user,
+        get_current_user_optional=get_current_user_optional,
+    )
+    # Mount under /api/live to satisfy the kubernetes ingress prefix rule
+    app.include_router(_live_router, prefix="/api")
+    register_live_websocket(app, db=db, get_user_from_token_optional=_get_user_from_token_optional)
+    logger.info("✅ LIVE routes loaded (REST /api/live/* + WS /api/ws/live/{room_id})")
+except Exception as e:
+    logger.warning(f"⚠️  LIVE routes not loaded: {e}")
+
 
 # ──────────────────────────────────────────────────────────────────────────
 # 🧹 Reaper startup hook: polls que se quedan en "processing" más de 10 min

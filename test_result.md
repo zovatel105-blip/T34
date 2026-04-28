@@ -252,6 +252,18 @@ Feed Post Layout (Posts PROPIOS):
 #====================================================================================================
 
 frontend:
+  - task: "🔴 LIVE Interactivo - Página de directos con WebSockets, monedas mock y diseño según referencia"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/LivePage.jsx, LiveViewerPage.jsx, LiveBroadcastPage.jsx; backend/live_routes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implementación completa del feature LIVE solicitado. BACKEND: nuevo módulo live_routes.py con (1) endpoints REST bajo /api/live/* — coins/balance, coins/topup-mock, rooms (POST/GET/GET por id/end), polls (POST/end), proposals (POST/GET/launch), (2) WebSocket en /api/ws/live/{room_id} con eventos chat/like/vote/poll_started/poll_update/poll_ended/challenge_proposed, ConnectionManager en memoria + persistencia MongoDB (live_rooms, live_polls, live_proposals, user_coins). Cada usuario empieza con 500 monedas virtuales (mock). Las propuestas con donación deducen monedas atómicamente. FRONTEND: liveService.js (REST), useLiveSocket.js (hook WS con auto-reconnect), CoinsContext (provider de saldo), 3 páginas: LivePage (lista de lives + CTA Empezar mi LIVE), LiveViewerPage (espectador: video placeholder en loop, chat con avatares, hearts voladores, votación con countdown ring, banner de ganador, modal proponer reto con 1/2/5 monedas, action bar inferior), LiveBroadcastPage (creador: cámara local con getUserMedia, stats viewers/likes/chat/propuestas, modal nueva votación 2-4 opciones y duración 5/10/30/60s, modal propuestas ordenadas por donaciones/votos/recientes con botón Lanzar que convierte propuesta en votación yes/no, controles cámara/mic/finalizar). Botón LIVE del QuickActionsMenu ahora navega a /live (antes solo mostraba toast). Rutas /live, /live/:roomId, /live/broadcast/:roomId añadidas. CoinsProvider envuelve a AppContent. Si el usuario abre un live propio se redirige automáticamente al modo broadcast. Frontend compila sin errores (solo warnings de imports no usados)."
+
   - task: "Edge-to-edge fullscreen al abrir publicación desde Explore/AudioDetail/Search/Profile"
     implemented: true
     working: "NA"
@@ -265,6 +277,8 @@ frontend:
         comment: "Cambio aplicado en ResponsiveLayout.jsx (línea 64-66): shouldUseTikTokLayout ahora se activa con cualquier página que entre en modo TikTok (antes solo Feed/Following/Explore/Create/Story). Así, al hacer click en una publicación desde Explore, AudioDetail, Search o Profile, el wrapper pasa a fondo negro edge-to-edge y el TikTokScrollView se ve completo detrás de la barra de notificaciones del sistema, igual que en el feed. Verificación final requiere rebuild del APK desde Android Studio."
 
 agent_communication:
+  - agent: "main"
+    message: "🔴 NUEVA FEATURE LIVE INTERACTIVO IMPLEMENTADA (2025-07): Construido el sistema de directos completo solicitado por el usuario. Stack: FastAPI + WebSockets + MongoDB en backend; React + hook WS con auto-reconnect en frontend. Diseño basado en la imagen de referencia (LIVE INTERACTIVO - TÚ DECIDES LO QUE PASA). Cubre los 4 flujos del diseño: 1) Espectador entra al live → ve video placeholder, chat en tiempo real, hearts voladores; 2) Votación activa con countdown anular, hasta 4 opciones, una sola vota por usuario; 3) Resultado en tiempo real con banner ¡GANADOR! que aparece al expirar el timer (calculado server-side con asyncio.create_task); 4) Acción del creador (cámara local mostrada en LiveBroadcastPage). Adicionalmente: panel del creador con nueva votación, ver propuestas, finalizar votación; modal proponer reto con donación 1/2/5 monedas que descuenta del saldo virtual; sistema de monedas con saldo inicial 500 (mock, persistido en MongoDB user_coins); endpoint topup mock para testing. NECESITA TESTING BACKEND para validar todos los endpoints REST + el WebSocket /api/ws/live/{room_id}. Credenciales: usar demo@example.com/demo123 (según test_credentials.md anterior). RUTAS NUEVAS A PROBAR: GET /api/live/coins/balance, POST /api/live/coins/topup-mock, POST /api/live/rooms, GET /api/live/rooms, GET /api/live/rooms/{id}, POST /api/live/rooms/{id}/polls, POST /api/live/rooms/{id}/polls/{pid}/end, POST /api/live/rooms/{id}/proposals, GET /api/live/rooms/{id}/proposals, POST /api/live/rooms/{id}/proposals/{pid}/launch, POST /api/live/rooms/{id}/end, WS /api/ws/live/{room_id}?token=<jwt> con eventos chat/like/vote."
   - agent: "main"
     message: "Se modificó ResponsiveLayout.jsx para extender el layout edge-to-edge a cualquier página en modo TikTok. El cambio es mínimo (1 línea efectiva). Frontend compila sin errores. El usuario debe regenerar el APK (yarn build + npx cap sync android + Android Studio) para ver el efecto en el dispositivo nativo."
   - agent: "main"
