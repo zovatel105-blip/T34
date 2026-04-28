@@ -113,27 +113,32 @@ const NewPollModal = ({ open, onClose, onSubmit }) => {
         <div className="mt-2">
           <label className="block text-[11px] text-white/70 mb-1">Opciones (2-4)</label>
           <div className="space-y-2">
-            {options.map((opt, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-purple-600 text-white text-[11px] font-bold flex items-center justify-center">
-                  {idx + 1}
-                </div>
-                <input
-                  value={opt}
-                  onChange={(e) => updateOption(idx, e.target.value.slice(0, 30))}
-                  className="flex-1 bg-zinc-900 ring-1 ring-white/10 rounded-xl px-3 h-9 text-sm text-white placeholder:text-white/40 outline-none focus:ring-purple-400/50"
-                  placeholder={`Opción ${idx + 1}`}
-                />
-                {options.length > 2 && (
-                  <button
-                    onClick={() => removeOption(idx)}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 flex items-center justify-center"
+            {options.map((opt, idx) => {
+              const numColors = ['bg-purple-600', 'bg-pink-500', 'bg-amber-500', 'bg-emerald-500'];
+              return (
+                <div key={idx} className="flex items-center gap-2">
+                  <div
+                    className={`w-7 h-7 rounded-full ${numColors[idx] || 'bg-purple-600'} text-white text-[12px] font-bold flex items-center justify-center shadow-lg`}
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
+                    {idx + 1}
+                  </div>
+                  <input
+                    value={opt}
+                    onChange={(e) => updateOption(idx, e.target.value.slice(0, 30))}
+                    className="flex-1 bg-zinc-900 ring-1 ring-white/10 rounded-xl px-3 h-10 text-sm text-white placeholder:text-white/40 outline-none focus:ring-purple-400/50"
+                    placeholder={`Opción ${idx + 1}`}
+                  />
+                  {options.length > 2 && (
+                    <button
+                      onClick={() => removeOption(idx)}
+                      className="w-9 h-9 rounded-full bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {options.length < 4 && (
             <button
@@ -537,16 +542,31 @@ export default function LiveBroadcastPage() {
 
       {/* Top bar */}
       <div className="absolute top-0 inset-x-0 z-30 flex items-start justify-between p-3 pt-[calc(env(safe-area-inset-top)+10px)]">
-        <button
-          onClick={() => navigate('/feed')}
-          className="w-9 h-9 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
-          aria-label="Atrás"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-2 bg-red-600/90 backdrop-blur rounded-full px-3 h-9">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-          <span className="text-[12px] font-bold tracking-wider">EN DIRECTO</span>
+        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full pl-1.5 pr-3 h-10">
+          {user?.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={user.username}
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-white/20"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 ring-1 ring-white/20 flex items-center justify-center text-[11px] font-bold">
+              {(user?.username || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold leading-tight truncate flex items-center gap-1">
+              {user?.display_name || user?.username || 'Tú'}
+              <span className="text-blue-400" title="Verificado">✓</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="px-1.5 h-4 rounded bg-red-600 text-[9px] font-bold tracking-wider flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
+                LIVE
+              </span>
+              <span className="text-[10px] font-mono text-white/80 tabular-nums">{useElapsed(room?.started_at)}</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={handleEndLive}
@@ -557,14 +577,12 @@ export default function LiveBroadcastPage() {
         </button>
       </div>
 
-      {/* Stats row */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+58px)] inset-x-0 z-30 px-3">
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <Stat icon={<Eye className="w-3.5 h-3.5" />} label="Espectadores" value={formatNumber(viewerCount)} />
-          <Stat icon={<Heart className="w-3.5 h-3.5 text-pink-400" />} label="Likes" value={formatNumber(totalLikes)} />
-          <Stat icon={<MessageCircle className="w-3.5 h-3.5 text-purple-300" />} label="Chat" value={formatNumber(chat.length)} />
-          <Stat icon={<Trophy className="w-3.5 h-3.5 text-amber-300" />} label="Propuestas" value={proposalCount} />
-        </div>
+      {/* Vertical stats column on the right (matches reference Panel A) */}
+      <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+72px)] z-30 w-[88px] flex flex-col gap-2">
+        <StatBox label="Espectadores" value={formatNumber(viewerCount)} accent="text-purple-300" />
+        <StatBox label="Likes" value={formatNumber(totalLikes)} accent="text-pink-400" />
+        <StatBox label="Chat" value={formatNumber(chat.length)} accent="text-blue-300" />
+        <StatBox label="Propuestas" value={proposalCount} accent="text-amber-300" />
       </div>
 
       {/* Active poll progress (creator view) */}
@@ -595,9 +613,14 @@ export default function LiveBroadcastPage() {
                         }cc)`,
                       }}
                     />
-                    <div className="relative flex items-center justify-between px-3 h-9 text-sm font-semibold text-white">
-                      <span className="truncate">{opt.text}</span>
-                      <span className="text-xs font-bold tabular-nums">{pct}%</span>
+                    <div className="relative flex items-center justify-between px-3 py-1.5 text-white">
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold truncate">{opt.text}</div>
+                        <div className="text-[10px] text-white/85 leading-tight tabular-nums">
+                          {formatNumber(opt.votes || 0)} votos
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold tabular-nums">{pct}%</span>
                     </div>
                   </div>
                 );
@@ -748,6 +771,30 @@ const Stat = ({ icon, label, value }) => (
     <span className="text-white font-bold tabular-nums">{value}</span>
   </div>
 );
+
+/** Vertical stat box used on the right column of the creator panel (mirrors reference design A). */
+const StatBox = ({ label, value, accent = 'text-white' }) => (
+  <div className="rounded-xl bg-black/55 backdrop-blur ring-1 ring-white/10 px-2 py-1.5 text-center">
+    <div className="text-[9px] uppercase tracking-wider text-white/55 leading-none mb-1">{label}</div>
+    <div className={`text-base font-extrabold tabular-nums leading-none ${accent}`}>{value}</div>
+  </div>
+);
+
+/** Format elapsed time from a started_at ISO string in HH:MM:SS. */
+const useElapsed = (startedAt) => {
+  const [now, setNow] = React.useState(Date.now());
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!startedAt) return '00:00:00';
+  const start = new Date(startedAt).getTime();
+  const diff = Math.max(0, Math.floor((now - start) / 1000));
+  const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+  const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+  const s = String(diff % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+};
 
 const CtrlButton = ({ icon, label, onClick }) => (
   <button onClick={onClick} className="flex flex-col items-center gap-0.5 active:scale-95">

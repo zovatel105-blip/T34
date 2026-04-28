@@ -45,6 +45,22 @@ const formatNumber = (n) => {
   return String(n);
 };
 
+/** Format a duration like the reference design: 00:32:15 */
+const useElapsed = (startedAt) => {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!startedAt) return '00:00:00';
+  const start = new Date(startedAt).getTime();
+  const diff = Math.max(0, Math.floor((now - start) / 1000));
+  const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+  const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+  const s = String(diff % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+};
+
 const TimerRing = ({ seconds, total }) => {
   const pct = Math.max(0, Math.min(1, seconds / total));
   const angle = pct * 360;
@@ -122,16 +138,20 @@ const VotingCard = ({ poll, hasVoted, votedOptionId, onVote, secondsLeft }) => {
   );
 };
 
-const WinnerBanner = ({ winner }) => {
+const WinnerBanner = ({ winner, creatorName }) => {
   if (!winner?.winner) return null;
   const total = Math.max(1, (winner.poll?.options || []).reduce((acc, o) => acc + (o.votes || 0), 0));
   const pct = Math.round(((winner.winner.votes || 0) / total) * 100);
   return (
     <div className="bg-zinc-900/95 backdrop-blur-md rounded-2xl ring-1 ring-amber-300/40 shadow-2xl p-4 text-center animate-in fade-in zoom-in-95 duration-300">
-      <div className="text-4xl mb-1">🏆</div>
+      <div className="text-4xl mb-1 relative">
+        🏆
+        <span className="absolute -top-1 -left-2 text-lg animate-bounce">🎉</span>
+        <span className="absolute -top-1 -right-2 text-lg animate-bounce" style={{ animationDelay: '120ms' }}>✨</span>
+      </div>
       <div className="text-amber-300 text-xs font-bold tracking-widest">¡GANADOR!</div>
       <div
-        className="mt-2 mx-auto inline-block px-5 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base"
+        className="mt-2 mx-auto inline-flex px-5 h-10 rounded-xl items-center justify-center text-white font-bold text-base"
         style={{
           background: `linear-gradient(90deg, ${winner.winner.color || '#a855f7'}, ${
             winner.winner.color || '#a855f7'
@@ -141,6 +161,14 @@ const WinnerBanner = ({ winner }) => {
         {winner.winner.text}
       </div>
       <div className="mt-2 text-white/70 text-[12px]">{pct}% de los votos</div>
+      {creatorName && (
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="text-[11px] text-white/50">{creatorName} va a hacer:</div>
+          <div className="mt-1 text-white text-sm font-bold">
+            {winner.winner.text} <span className="ml-1">🎉</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -303,6 +331,8 @@ export default function LiveViewerPage() {
     sendVote,
   } = useLiveSocket(roomId);
 
+  const elapsed = useElapsed(room?.started_at);
+
   // Fetch room metadata once
   useEffect(() => {
     let mounted = true;
@@ -440,38 +470,56 @@ export default function LiveViewerPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
 
-      {/* Top bar */}
-      <div className="absolute top-0 inset-x-0 z-30 flex items-start justify-between p-3 pt-[calc(env(safe-area-inset-top)+10px)]">
-        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full pl-1.5 pr-3 h-9">
-          {room?.creator_avatar ? (
-            <img
-              src={room.creator_avatar}
-              alt={room.creator_username}
-              className="w-7 h-7 rounded-full object-cover ring-1 ring-white/20"
-            />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-zinc-700 ring-1 ring-white/20" />
-          )}
-          <div className="text-[12px] font-semibold leading-tight max-w-[120px] truncate">
-            {room?.creator_display_name || room?.creator_username || 'Creador'}
+      {/* Top bar — matches reference: avatar + name + likes count on left, viewers + close on right, LIVE+timer below */}
+      <div className="absolute top-0 inset-x-0 z-30 px-3 pt-[calc(env(safe-area-inset-top)+10px)]">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full pl-1.5 pr-3 h-10 max-w-[68%]">
+            {room?.creator_avatar ? (
+              <img
+                src={room.creator_avatar}
+                alt={room.creator_username}
+                className="w-8 h-8 rounded-full object-cover ring-1 ring-white/20"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 ring-1 ring-white/20 flex items-center justify-center text-[11px] font-bold">
+                {(room?.creator_username || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold leading-tight truncate flex items-center gap-1">
+                {room?.creator_display_name || room?.creator_username || 'Creador'}
+                <span className="text-blue-400" title="Verificado">✓</span>
+              </div>
+              <div className="text-[10px] text-white/70 leading-tight">
+                {formatNumber(totalLikes)} me gusta
+              </div>
+            </div>
           </div>
-          <span className="ml-1 px-1.5 py-0.5 rounded bg-red-600 text-[9px] font-bold tracking-wider">
-            LIVE
-          </span>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2.5 h-9 rounded-full bg-black/50 backdrop-blur text-[12px] font-medium">
+              <Eye className="w-3.5 h-3.5" />
+              {formatNumber(viewerCount)}
+            </div>
+            <button
+              onClick={() => navigate('/live', { replace: true })}
+              className="w-9 h-9 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2.5 h-9 rounded-full bg-black/50 backdrop-blur text-[12px] font-medium">
-            <Eye className="w-3.5 h-3.5" />
-            {formatNumber(viewerCount)}
-          </div>
-          <button
-            onClick={() => navigate('/live', { replace: true })}
-            className="w-9 h-9 rounded-full bg-black/50 backdrop-blur flex items-center justify-center"
-            aria-label="Cerrar"
-          >
-            <X className="w-4.5 h-4.5" />
-          </button>
+        {/* LIVE badge + elapsed timer (below avatar) */}
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="px-2 h-5 rounded bg-red-600 text-[10px] font-bold tracking-wider flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            LIVE
+          </span>
+          <span className="text-[11px] font-mono font-semibold text-white/85 tabular-nums bg-black/40 backdrop-blur px-2 h-5 rounded flex items-center">
+            {elapsed}
+          </span>
         </div>
       </div>
 
@@ -538,18 +586,23 @@ export default function LiveViewerPage() {
             onVote={handleVote}
           />
         )}
-        {!activePoll && lastWinner && <WinnerBanner winner={lastWinner} />}
+        {!activePoll && lastWinner && (
+          <WinnerBanner
+            winner={lastWinner}
+            creatorName={room?.creator_display_name || room?.creator_username}
+          />
+        )}
       </div>
 
       {/* Bottom: chat input + actions */}
       <div className="absolute inset-x-0 bottom-0 z-30 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
-        {/* Propose challenge pill */}
+        {/* Propose challenge pill (with lightbulb icon, bottom-right like reference) */}
         <div className="flex items-center justify-end mb-2">
           <button
             onClick={() => setProposeOpen(true)}
-            className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-black text-[12px] font-bold shadow-lg shadow-amber-500/30"
+            className="flex items-center gap-1.5 pl-2 pr-3 h-9 rounded-full bg-zinc-900/80 backdrop-blur ring-1 ring-amber-300/50 text-amber-200 text-[12px] font-bold shadow-lg active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <span className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-black text-[10px]">💡</span>
             Proponer reto
           </button>
         </div>
@@ -572,22 +625,27 @@ export default function LiveViewerPage() {
           </button>
         </form>
 
-        <div className="mt-3 flex items-center justify-between">
+        {/* Action bar — vibrant colored circles like the reference */}
+        <div className="mt-3 flex items-end justify-between px-1">
           <ActionButton
-            icon={
-              <Heart className="w-5 h-5 fill-pink-500 text-pink-500" />
-            }
-            label={formatNumber(totalLikes)}
+            tone="pink"
+            icon={<Heart className="w-5 h-5 fill-white text-white" />}
+            topLabel="Me gusta"
+            value={formatNumber(totalLikes)}
             onClick={handleLike}
           />
           <ActionButton
-            icon={<MessageCircle className="w-5 h-5" />}
-            label={formatNumber(chat.length)}
+            tone="dark"
+            icon={<MessageCircle className="w-5 h-5 text-white" />}
+            topLabel="Chat"
+            value={formatNumber(chat.length)}
           />
           <ActionButton
-            icon={<Vote className="w-5 h-5 text-purple-300" />}
-            label="Votar"
-            highlight
+            tone="purple"
+            icon={<Vote className="w-5 h-5 text-white" />}
+            topLabel=""
+            value="Votar"
+            big
             onClick={() => {
               if (!activePoll) {
                 toast({
@@ -598,8 +656,10 @@ export default function LiveViewerPage() {
             }}
           />
           <ActionButton
-            icon={<Gift className="w-5 h-5 text-pink-400" />}
-            label="Regalo"
+            tone="rose"
+            icon={<Gift className="w-5 h-5 text-white" />}
+            topLabel=""
+            value="Regalos"
             onClick={() => {
               toast({
                 title: '🎁 Próximamente',
@@ -608,8 +668,10 @@ export default function LiveViewerPage() {
             }}
           />
           <ActionButton
-            icon={<Share2 className="w-5 h-5" />}
-            label="Compartir"
+            tone="dark"
+            icon={<Share2 className="w-5 h-5 text-white" />}
+            topLabel="Compartir"
+            value="128"
             onClick={() => {
               try {
                 navigator.clipboard?.writeText(window.location.href);
@@ -648,18 +710,24 @@ export default function LiveViewerPage() {
   );
 }
 
-const ActionButton = ({ icon, label, onClick, highlight }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center gap-0.5 active:scale-95 transition`}
-  >
-    <div
-      className={`w-11 h-11 rounded-full backdrop-blur flex items-center justify-center ${
-        highlight ? 'bg-purple-600' : 'bg-white/10 ring-1 ring-white/15'
-      }`}
+const ActionButton = ({ icon, topLabel, value, tone = 'dark', big = false, onClick }) => {
+  const toneClass = {
+    pink: 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/30',
+    purple: 'bg-gradient-to-br from-purple-500 to-fuchsia-600 shadow-lg shadow-purple-500/40',
+    rose: 'bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-rose-500/30',
+    dark: 'bg-zinc-800/80 backdrop-blur ring-1 ring-white/15',
+  }[tone] || 'bg-zinc-800/80';
+  const size = big ? 'w-12 h-12' : 'w-11 h-11';
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-0.5 active:scale-95 transition min-w-[52px]"
     >
-      {icon}
-    </div>
-    <span className="text-[10px] text-white/80 font-medium">{label}</span>
-  </button>
-);
+      {topLabel && <span className="text-[9px] text-white/70 font-medium leading-none">{topLabel}</span>}
+      <div className={`${size} rounded-full flex items-center justify-center ${toneClass}`}>
+        {icon}
+      </div>
+      <span className="text-[10px] text-white/85 font-semibold">{value}</span>
+    </button>
+  );
+};
