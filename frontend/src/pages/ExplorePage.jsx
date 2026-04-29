@@ -10,6 +10,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import challengeService from '../services/challengeService';
 import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
+import feedCache from '../services/feedCacheService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -42,9 +44,24 @@ const ExplorePage = () => {
   }, []);
 
   // Cargar challenges completados del backend
+  // 💾 OFFLINE-FIRST: si hay caché en disco, lo mostramos al instante;
+  // luego refrescamos desde la red. Si la red falla → mantenemos cache + banner.
   const loadCompletedChallenges = useCallback(async ({ showLoader = true } = {}) => {
+    let usedCache = false;
     try {
-      if (showLoader) setLoading(true);
+      // 1) Intentar leer caché de disco primero (renderizado instantáneo)
+      if (showLoader) {
+        const diskCache = await feedCache.getCachedFeed('explore').catch(() => null);
+        if (diskCache && diskCache.polls.length > 0) {
+          console.log(`💾 [ExplorePage] hidratado desde disco (${diskCache.polls.length} battles, age=${Math.round(diskCache.age / 1000)}s)`);
+          setBattles(diskCache.polls);
+          setLoading(false);
+          usedCache = true;
+        } else {
+          setLoading(true);
+        }
+      }
+
       const challenges = await challengeService.getCompletedChallenges(20, 0, token);
       console.log('✅ Challenges completados cargados:', challenges);
       
@@ -114,7 +131,17 @@ const ExplorePage = () => {
       
       console.log('🔄 Challenges transformados:', transformedChallenges);
       setBattles(transformedChallenges);
-      
+
+      // 💾 Persistir en disco para offline-first del siguiente arranque
+      feedCache.setCachedFeed(transformedChallenges, 'explore').catch(() => {});
+
+      // 🚀 Prefetch de thumbnails y vídeos cercanos (TikTok-style)
+      try {
+        feedMediaPrefetcher.prefetchVideosAroundIndex?.(transformedChallenges, 0, 3);
+      } catch (e) {
+        // silent
+      }
+
       // Initialize savedPolls from backend data
       const initialSaved = new Set(
         transformedChallenges.filter(c => c.isSaved).map(c => c.id)
@@ -122,7 +149,9 @@ const ExplorePage = () => {
       setSavedPolls(initialSaved);
     } catch (error) {
       console.error('Error loading completed challenges:', error);
-      if (showLoader) setBattles([]);
+      // 💾 Si la red falló pero ya teníamos cache hidratado, mantener UI.
+      // Solo limpiar si NO había caché.
+      if (showLoader && !usedCache) setBattles([]);
     } finally {
       if (showLoader) setLoading(false);
     }

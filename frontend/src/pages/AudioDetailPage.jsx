@@ -6,6 +6,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 import audioManager from '../services/AudioManager';
 import pollService from '../services/pollService';
+import feedCache from '../services/feedCacheService';
 import { Button } from '../components/ui/button';
 import TikTokScrollView from '../components/TikTokScrollView';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
@@ -188,8 +189,19 @@ const AudioDetailPage = () => {
   };
 
   const fetchPostsUsingAudio = async () => {
+    // 💾 OFFLINE-FIRST: hidratar desde disco antes de la red.
+    const cacheKey = `audio:${audioId}`;
+    let usedCache = false;
     try {
-      setPostsLoading(true);
+      const diskCache = await feedCache.getCachedFeed(cacheKey).catch(() => null);
+      if (diskCache && diskCache.polls.length > 0) {
+        console.log(`💾 [AudioDetail] hidratado desde disco (${diskCache.polls.length} posts, age=${Math.round(diskCache.age / 1000)}s)`);
+        setPosts(diskCache.polls);
+        setPostsLoading(false);
+        usedCache = true;
+      } else {
+        setPostsLoading(true);
+      }
       const token = localStorage.getItem('token');
       
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/audio/${audioId}/posts?limit=50`, {
@@ -224,12 +236,16 @@ const AudioDetailPage = () => {
           };
         });
         setPosts(transformedPosts);
-      } else {
+        // 💾 Persistir en disco para offline
+        feedCache.setCachedFeed(transformedPosts, cacheKey).catch(() => {});
+      } else if (!usedCache) {
+        // Solo limpiar si NO había cache hidratado
         setPosts([]);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
-      setPosts([]);
+      // 💾 Si la red falló pero teníamos cache, mantener UI con disco.
+      if (!usedCache) setPosts([]);
     } finally {
       setPostsLoading(false);
     }

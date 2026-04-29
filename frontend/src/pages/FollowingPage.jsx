@@ -11,6 +11,8 @@ import pollService from '../services/pollService';
 import savedPollsService from '../services/savedPollsService';
 import storyService from '../services/storyService';
 import audioManager from '../services/AudioManager';
+import feedCache from '../services/feedCacheService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -51,7 +53,9 @@ const FollowingPage = () => {
   const [showOwnStoryModal, setShowOwnStoryModal] = useState(false);
 
   // Load following users' polls from backend
+  // 💾 OFFLINE-FIRST: cargar caché de disco antes de tocar la red.
   useEffect(() => {
+    let cancelled = false;
     const loadFollowingPolls = async () => {
       if (!isAuthenticated) {
         setIsLoading(false);
@@ -59,27 +63,52 @@ const FollowingPage = () => {
       }
 
       try {
-        setIsLoading(true);
+        // 1) Hidratar UI desde disco si hay caché → render instantáneo
+        let usedCache = false;
+        const diskCache = await feedCache.getCachedFeed('following').catch(() => null);
+        if (!cancelled && diskCache && diskCache.polls.length > 0) {
+          console.log(`💾 [FollowingPage] hidratado desde disco (${diskCache.polls.length} polls, age=${Math.round(diskCache.age / 1000)}s)`);
+          setPolls(diskCache.polls);
+          setIsLoading(false);
+          usedCache = true;
+        } else {
+          setIsLoading(true);
+        }
         setError(null);
-        
-        // Use the new getFollowingPolls method to get only polls from followed users
-        const followingPolls = await pollService.getFollowingPolls({ limit: 30 });
-        
-        setPolls(followingPolls);
-      } catch (err) {
-        console.error('Error loading following polls:', err);
-        setError(err.message);
-        toast({
-          title: "Error al cargar Following",
-          description: "No se pudieron cargar las publicaciones de usuarios seguidos. Intenta recargar la página.",
-          variant: "destructive",
-        });
+
+        // 2) Refrescar desde red (puede fallar si offline → mantenemos cache)
+        try {
+          const followingPolls = await pollService.getFollowingPolls({ limit: 30 });
+          if (cancelled) return;
+          setPolls(followingPolls);
+          // Persistir snapshot fresco
+          feedCache.setCachedFeed(followingPolls, 'following').catch(() => {});
+          // Prefetch de medios cercanos
+          try {
+            feedMediaPrefetcher.prefetchVideosAroundIndex?.(followingPolls, 0, 3);
+          } catch (e) { /* silent */ }
+        } catch (err) {
+          // Si NO había cache previa, propagar error visualmente.
+          // Si SI había cache, ignorar el fallo y mantener UI con disco.
+          if (!usedCache) {
+            console.error('Error loading following polls:', err);
+            setError(err.message);
+            toast({
+              title: "Error al cargar Following",
+              description: "No se pudieron cargar las publicaciones de usuarios seguidos. Intenta recargar la página.",
+              variant: "destructive",
+            });
+          } else {
+            console.warn('[FollowingPage] refresh background falló (probablemente offline):', err?.message);
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     loadFollowingPolls();
+    return () => { cancelled = true; };
   }, [isAuthenticated, toast]);
 
   // 🔄 Pull-to-refresh handler para Following feed
@@ -88,6 +117,8 @@ const FollowingPage = () => {
       console.log('🔄 [FollowingPage] Pull-to-refresh triggered');
       const freshData = await pollService.getFollowingPolls({ limit: 30 });
       setPolls(freshData);
+      // 💾 Actualizar cache de disco
+      feedCache.setCachedFeed(freshData, 'following').catch(() => {});
       console.log(`✅ [FollowingPage] Refresh complete: ${freshData.length} polls`);
     } catch (err) {
       console.error('[FollowingPage] Refresh error:', err);

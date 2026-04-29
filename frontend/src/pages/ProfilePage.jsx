@@ -24,6 +24,7 @@ import {
 import pollService from '../services/pollService';
 import userService from '../services/userService';
 import storyService from '../services/storyService';
+import feedCache from '../services/feedCacheService';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useFollow } from '../contexts/FollowContext';
@@ -244,47 +245,68 @@ const ProfilePage = () => {
   }, [authUser?.id, entryRefreshKey]);
 
   // Load user's polls using dedicated endpoint
+  // 💾 OFFLINE-FIRST: cache por usuario en disco. Render instantáneo + refresh.
   useEffect(() => {
+    let cancelled = false;
     const loadUserPolls = async () => {
       if (!authUser?.id && !userId) return;
-      
-      setPollsLoading(true);
-      try {
-        // Determine target user identifier
-        let targetUserParam;
-        
-        if (userId && viewedUser) {
-          // Viewing another user's profile - use viewedUser.id (UUID) for reliable API query
-          targetUserParam = viewedUser.id;
-        } else if (!userId && authUser) {
-          // Viewing own profile - use authUser.id
-          targetUserParam = authUser.id;
-        } else if (userId && !viewedUser) {
-          // Still loading viewedUser data, return early
-          setPollsLoading(false);
-          return;
-        }
-        
-        console.log('📋 Loading polls for user:', targetUserParam);
-        
-        // Use dedicated user polls endpoint (queries DB directly by author_id)
-        const userPollsData = await pollService.getUserPolls(targetUserParam, { limit: 100 });
-        
-        console.log('📋 User polls loaded:', userPollsData.length);
-        setPolls(userPollsData);
-      } catch (error) {
-        console.error('Error loading user polls:', error);
-        toast({
-          title: "Error al cargar votaciones",
-          description: "No se pudieron cargar las votaciones del usuario",
-          variant: "destructive",
-        });
-      } finally {
+
+      // Determine target user identifier
+      let targetUserParam;
+
+      if (userId && viewedUser) {
+        targetUserParam = viewedUser.id;
+      } else if (!userId && authUser) {
+        targetUserParam = authUser.id;
+      } else if (userId && !viewedUser) {
         setPollsLoading(false);
+        return;
+      }
+
+      const cacheKey = `profile:${targetUserParam}`;
+      let usedCache = false;
+
+      try {
+        // 1) Hidratar desde disco (instantáneo, también funciona offline)
+        const diskCache = await feedCache.getCachedFeed(cacheKey).catch(() => null);
+        if (!cancelled && diskCache && diskCache.polls.length > 0) {
+          console.log(`💾 [ProfilePage] hidratado desde disco (${diskCache.polls.length} polls, age=${Math.round(diskCache.age / 1000)}s)`);
+          setPolls(diskCache.polls);
+          setPollsLoading(false);
+          usedCache = true;
+        } else {
+          setPollsLoading(true);
+        }
+
+        console.log('📋 Loading polls for user:', targetUserParam);
+
+        // 2) Refrescar desde red
+        try {
+          const userPollsData = await pollService.getUserPolls(targetUserParam, { limit: 100 });
+          if (cancelled) return;
+          console.log('📋 User polls loaded:', userPollsData.length);
+          setPolls(userPollsData);
+          // Persistir en disco
+          feedCache.setCachedFeed(userPollsData, cacheKey).catch(() => {});
+        } catch (error) {
+          if (!usedCache) {
+            console.error('Error loading user polls:', error);
+            toast({
+              title: "Error al cargar votaciones",
+              description: "No se pudieron cargar las votaciones del usuario",
+              variant: "destructive",
+            });
+          } else {
+            console.warn('[ProfilePage] refresh background falló (probablemente offline):', error?.message);
+          }
+        }
+      } finally {
+        if (!cancelled) setPollsLoading(false);
       }
     };
 
     loadUserPolls();
+    return () => { cancelled = true; };
   }, [authUser?.id, authUser?.username, userId, viewedUser, toast, entryRefreshKey]);
 
   // Load follow statistics
