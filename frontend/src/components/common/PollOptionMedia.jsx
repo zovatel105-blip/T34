@@ -54,6 +54,21 @@ const PollOptionMedia = ({
   /** Callback ref que se aplica al <video> interno (útil para que el padre
    *  pueda controlar play/pause/currentTime). */
   videoRef = null,
+  /**
+   * Distancia al post activo en el feed (0 = visible, 1 = siguiente, etc.).
+   * Controla la estrategia de preload y prioridad de red, al estilo TikTok:
+   *   0  → preload="auto"      (bufferea ~1s antes de reproducir)
+   *   1  → preload="auto"      (siguiente video ya listo al swipear)
+   *   2  → preload="metadata"  (solo cabeceras + poster)
+   *   >2 → preload="none"      (nada, liberamos RAM/red)
+   */
+  distanceFromActive = 0,
+  /**
+   * Si true, el componente considera que el usuario está en WiFi y puede
+   * ser más agresivo con el preload. En cellular debería ser false para
+   * ahorrar datos y no saturar la red móvil.
+   */
+  isHighBandwidth = true,
 }) => {
   const isVideo = isVideoOption(option);
 
@@ -102,8 +117,14 @@ const PollOptionMedia = ({
 
   // ─── Modo VIDEO ─────────────────────────────────────────────────────────
   if (isVideo) {
+    // 🧹 Si el post está MUY lejos del activo (>3), no montamos el <video>
+    // para que el navegador libere el buffer de decodificación → ahorro de RAM.
+    // Mostramos solo el poster como placeholder. Cuando el usuario se acerque
+    // al post (distance <= 3), React montará el <video> y empezará a cargar.
+    const shouldRenderVideoTag = distanceFromActive <= 3;
+
     // Si no tenemos URL de vídeo → mostrar el poster como imagen estática
-    if (!videoSrc) {
+    if (!videoSrc || !shouldRenderVideoTag) {
       return (
         <div
           className={cn(
@@ -142,6 +163,27 @@ const PollOptionMedia = ({
             'w-full h-full object-cover',
             videoStatus === 'error' && showPlaceholderOnError && 'opacity-0'
           )}
+          // 🚀 Estrategia de preload basada en distancia al post activo
+          //    (TikTok-style: próximos auto, el resto metadata/none para no saturar).
+          preload={(() => {
+            // Override explícito desde el padre (videoProps) tiene prioridad
+            if (videoProps.preload) return videoProps.preload;
+            if (distanceFromActive <= 1) return 'auto';
+            if (distanceFromActive === 2 && isHighBandwidth) return 'metadata';
+            if (distanceFromActive === 2) return 'none';
+            return 'none';
+          })()}
+          // 🎬 Hardware acceleration: fuerza al compositor del navegador a
+          //    usar la GPU para pintar el vídeo → scrolling más suave y
+          //    menos drop frames en dispositivos mid-range.
+          style={{
+            // translateZ para crear una capa separada en GPU
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: distanceFromActive <= 1 ? 'transform, opacity' : 'auto',
+            ...(videoProps.style || {}),
+          }}
           {...videoProps}
         />
 

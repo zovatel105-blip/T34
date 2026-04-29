@@ -13298,10 +13298,11 @@ except Exception as e:
 # para que el estado nunca se bloquee y el usuario pueda reintentar.
 # ──────────────────────────────────────────────────────────────────────────
 _reaper_task = None
+_backfill_task = None
 
 @app.on_event("startup")
 async def _start_video_pipeline_reaper():
-    global _reaper_task
+    global _reaper_task, _backfill_task
     try:
         _reaper_task = asyncio.create_task(
             video_pipeline.reaper_loop(db, interval_seconds=300, max_age_minutes=10)
@@ -13310,9 +13311,20 @@ async def _start_video_pipeline_reaper():
     except Exception as e:
         logger.error(f"Failed to start reaper: {e}")
 
+    # 🎬 Backfill: regenera thumbnails + vídeos optimizados para polls antiguos
+    #    que se subieron sin ffmpeg disponible. Corre en background con pausas
+    #    para no saturar el CPU.
+    try:
+        _backfill_task = asyncio.create_task(
+            video_pipeline.backfill_loop(db, interval_seconds=30, batch_size=5)
+        )
+        logger.info("🎬 Video pipeline backfill started")
+    except Exception as e:
+        logger.error(f"Failed to start backfill: {e}")
+
 @app.on_event("shutdown")
 async def _stop_video_pipeline_reaper():
-    global _reaper_task
+    global _reaper_task, _backfill_task
     if _reaper_task and not _reaper_task.done():
         _reaper_task.cancel()
         try:
@@ -13320,6 +13332,13 @@ async def _stop_video_pipeline_reaper():
         except (asyncio.CancelledError, Exception):
             pass
         logger.info("🧹 Video pipeline reaper stopped")
+    if _backfill_task and not _backfill_task.done():
+        _backfill_task.cancel()
+        try:
+            await _backfill_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        logger.info("🎬 Video pipeline backfill stopped")
 
 
 if __name__ == "__main__":

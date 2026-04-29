@@ -19,6 +19,9 @@ const GridLayout = ({
   shouldPreload = true,
   isVisible = true,
   shouldUnload = false,
+  // 🚀 NUEVO: Distancia al post activo para preload inteligente
+  distanceFromActive = 0,
+  isHighBandwidth = true,
   layout = null,
   index = 0
 }) => {
@@ -116,7 +119,34 @@ const GridLayout = ({
     */
   }, [poll.id, gridType, isActive]);
 
+  // 🧹 LIBERACIÓN DE RAM: Destrucción agresiva de vídeos muy lejanos
+  // Cuando un post está a >3 de distancia del activo, liberamos su buffer:
+  //   1. pause
+  //   2. currentTime = 0
+  //   3. src = '' + load()  → fuerza al navegador a soltar el buffer de decodificación
+  // Esto evita el "lag tras 20-30 vídeos" que mencionaba el usuario.
+  useEffect(() => {
+    if (!poll.options) return;
+    if (distanceFromActive <= 3) return; // Solo para lejanos
+    
+    poll.options.forEach((option) => {
+      if (option.media?.type === 'video') {
+        const videoElement = videoRefs.current.get(option.id);
+        if (videoElement && videoElement.src) {
+          try {
+            videoElement.pause();
+            videoElement.removeAttribute('src');
+            videoElement.load(); // suelta el buffer decodificado
+          } catch (e) {
+            // silent
+          }
+        }
+      }
+    });
+  }, [distanceFromActive, poll.options]);
+
   // 🎥 CRÍTICO: Controlar reproducción de videos cuando isActive cambia
+  // 🚀 Con buffer inicial de ~0.5-1s para eliminar microcortes (canplaythrough)
   useEffect(() => {
     if (!poll.options) return;
     
@@ -132,9 +162,26 @@ const GridLayout = ({
               videoElement.load();
             }
             
-            // Esperar un momento para que el video cargue si es necesario
+            // 🚀 Buffer inicial: esperar a tener suficiente bufferizado antes
+            // de reproducir para evitar microcortes (TikTok/IG-style).
+            // readyState >= 3 (HAVE_FUTURE_DATA) asegura ~1s de vídeo listo.
+            const hasEnoughBuffer = () => {
+              try {
+                if (videoElement.readyState < 3) return false;
+                if (videoElement.buffered && videoElement.buffered.length > 0) {
+                  const bufferedEnd = videoElement.buffered.end(videoElement.buffered.length - 1);
+                  const currentTime = videoElement.currentTime || 0;
+                  // Tenemos al menos 0.5s bufferados desde la posición actual
+                  return (bufferedEnd - currentTime) >= 0.5;
+                }
+                return videoElement.readyState >= 4; // HAVE_ENOUGH_DATA fallback
+              } catch {
+                return videoElement.readyState >= 3;
+              }
+            };
+
             const tryPlay = () => {
-              if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA o superior
+              if (hasEnoughBuffer()) {
                 videoElement.play().catch(err => {
                   console.warn(`⚠️ No se pudo reproducir video automáticamente:`, err);
                   // Intentar con muted como fallback
@@ -143,12 +190,27 @@ const GridLayout = ({
                     console.error(`❌ Falló reproducción con muted:`, err2);
                   });
                 });
-              } else {
-                // Si no está listo, esperar el evento canplay
-                videoElement.addEventListener('canplay', function onCanPlay() {
+              } else if (videoElement.readyState >= 2) {
+                // Tenemos algo de data pero no suficiente buffer → esperar canplaythrough
+                videoElement.addEventListener('canplaythrough', function onCanPlayThrough() {
                   videoElement.play().catch(err => {
-                    console.warn(`⚠️ No se pudo reproducir después de canplay:`, err);
+                    console.warn(`⚠️ No se pudo reproducir después de canplaythrough:`, err);
+                    // Fallback: intentar sin esperar más buffer
+                    videoElement.play().catch(() => {});
                   });
+                  videoElement.removeEventListener('canplaythrough', onCanPlayThrough);
+                }, { once: true });
+                // Safety net: si canplaythrough no llega en 2s (red lenta),
+                // intentar reproducir igual para no dejar al usuario esperando
+                setTimeout(() => {
+                  if (videoElement.paused && isActive) {
+                    videoElement.play().catch(() => {});
+                  }
+                }, 2000);
+              } else {
+                // Sin data todavía → esperar canplay (tiene algo para empezar)
+                videoElement.addEventListener('canplay', function onCanPlay() {
+                  tryPlay(); // reintentar ahora que hay data
                   videoElement.removeEventListener('canplay', onCanPlay);
                 }, { once: true });
               }
@@ -215,12 +277,16 @@ const GridLayout = ({
                   videoRef={(el) => {
                     if (el) videoRefs.current.set(option.id, el);
                   }}
+                  // 🚀 Preload inteligente TikTok-style: el padre decide la
+                  //    distancia al post activo, PollOptionMedia decide "auto|metadata|none"
+                  distanceFromActive={distanceFromActive}
+                  isHighBandwidth={isHighBandwidth}
                   videoProps={{
                     autoPlay: isActive,
                     muted: true,
                     loop: true,
                     playsInline: true,
-                    preload: 'metadata',
+                    // NO pasamos preload aquí → PollOptionMedia lo calcula por distancia
                     loading: isActive ? 'eager' : 'lazy',
                     style: { display: 'block' },
                     onLoadStart: () => {

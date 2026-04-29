@@ -183,15 +183,17 @@ async def transcode_video_720p(video_path: Path, option_id: str) -> Optional[str
         # Video: escalar a máx 720 de alto, manteniendo aspect ratio, alineado par
         "-vf", "scale='min(iw,trunc(iw*720/ih/2)*2)':'min(720,ih)':force_original_aspect_ratio=decrease",
         "-c:v", "libx264",
-        "-preset", "veryfast",  # buen balance calidad/velocidad
-        "-crf", "23",
+        "-preset", "fast",       # mejor calidad/tamaño que veryfast, sigue siendo rápido
+        "-crf", "23",             # calidad visual objetivo
         "-maxrate", "2000k",
         "-bufsize", "4000k",
-        "-profile:v", "main",
-        "-pix_fmt", "yuv420p",  # compatibilidad universal
+        "-profile:v", "main",    # compatible con todos los Android desde 4.1
+        "-level", "3.1",          # soportado por todos los móviles desde hace años
+        "-pix_fmt", "yuv420p",   # compatibilidad universal (WebView, Safari, Chrome…)
         "-c:a", "aac",
         "-b:a", "128k",
-        "-movflags", "+faststart",
+        "-ar", "44100",           # sample rate estándar, evita incompatibilidades
+        "-movflags", "+faststart", # mueve MOOV atom al principio → empieza a reproducir sin bajar todo
         "-max_muxing_queue_size", "1024",
         str(out_path),
     ]
@@ -397,3 +399,128 @@ async def reaper_loop(db, interval_seconds: int = 300, max_age_minutes: int = 10
             logger.error(f"[reaper] iteration failed: {e}")
             # Pausa defensiva para no entrar en busy loop si algo falla
             await asyncio.sleep(interval_seconds)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Backfill: regenera thumbnails y genera versiones optimizadas (720p H.264)
+# para polls ya READY que fueron subidos antes de tener ffmpeg o la pipeline.
+# Corre en background, no bloquea requests y procesa uno por uno con pausas
+# para no saturar el CPU del servidor en picos de tráfico.
+# ──────────────────────────────────────────────────────────────────────────
+
+async def backfill_missing_video_assets(
+    db,
+    batch_size: int = 5,
+    sleep_between_batches: float = 10.0,
+    sleep_between_items: float = 2.0,
+) -> int:
+    """Procesa polls READY con opciones de vídeo que les faltan thumbnail
+    o `optimized_media_url`. Devuelve el número total de opciones procesadas.
+
+    Es idempotente: skippea opciones que ya tienen ambos campos.
+    """
+    processed = 0
+    try:
+        # Buscar polls ready con opciones de vídeo que les falte algo
+        cursor = db.polls.find(
+            {
+                "status": "ready",
+                "options": {
+                    "$elemMatch": {
+                        "media_type": "video",
+                        "$or": [
+                            {"thumbnail_url": {"$in": [None, ""]}},
+                            {"thumbnail_url": {"$exists": False}},
+                            {"optimized_media_url": {"$in": [None, ""]}},
+                            {"optimized_media_url": {"$exists": False}},
+                        ],
+                    }
+                },
+            },
+            {"id": 1, "options": 1},
+        ).limit(batch_size)
+
+        polls_to_fix = await cursor.to_list(length=batch_size)
+        if not polls_to_fix:
+            return 0
+
+        logger.info(f"[backfill] processing {len(polls_to_fix)} polls with missing video assets")
+
+        for poll in polls_to_fix:
+            poll_id = poll["id"]
+            options = poll.get("options") or []
+            for opt in options:
+                if opt.get("media_type") != "video":
+                    continue
+
+                local_path = _local_path_from_url(opt.get("media_url"))
+                if local_path is None or not local_path.exists():
+                    # Archivo no está en disco (puede ser externo o ya borrado)
+                    continue
+
+                # 1) Thumbnail si falta
+                if not opt.get("thumbnail_url"):
+                    try:
+                        new_thumb = await generate_thumbnail(local_path, opt["id"])
+                        if new_thumb:
+                            await db.polls.update_one(
+                                {"id": poll_id, "options.id": opt["id"]},
+                                {"$set": {"options.$.thumbnail_url": new_thumb}},
+                            )
+                            logger.info(
+                                f"[backfill] thumbnail for {poll_id}/{opt['id']} -> {new_thumb}"
+                            )
+                    except Exception as e:
+                        logger.warning(f"[backfill] thumb failed for {opt['id']}: {e}")
+
+                # 2) Optimized video si falta
+                if not opt.get("optimized_media_url"):
+                    try:
+                        optimized_url = await transcode_video_720p(local_path, opt["id"])
+                        if optimized_url:
+                            await db.polls.update_one(
+                                {"id": poll_id, "options.id": opt["id"]},
+                                {"$set": {"options.$.optimized_media_url": optimized_url}},
+                            )
+                            logger.info(
+                                f"[backfill] optimized {poll_id}/{opt['id']} -> {optimized_url}"
+                            )
+                            processed += 1
+                    except Exception as e:
+                        logger.warning(f"[backfill] transcode failed for {opt['id']}: {e}")
+
+                # Pausa entre opciones para no saturar CPU
+                await asyncio.sleep(sleep_between_items)
+
+        return processed
+    except Exception as e:
+        logger.error(f"[backfill] batch failed: {e}", exc_info=True)
+        return processed
+
+
+async def backfill_loop(
+    db,
+    interval_seconds: int = 30,
+    batch_size: int = 5,
+) -> None:
+    """Loop infinito: cada `interval_seconds` procesa un batch de polls con
+    assets de vídeo faltantes. Pensado para correr tras startup y recuperar
+    vídeos históricos sin bloquear el servicio.
+    """
+    logger.info(f"[backfill] loop started (every {interval_seconds}s, batch={batch_size})")
+    # Esperar un poco al arranque para dejar que el servidor se estabilice
+    await asyncio.sleep(20)
+    while True:
+        try:
+            processed = await backfill_missing_video_assets(db, batch_size=batch_size)
+            if processed == 0:
+                # Nada que hacer: esperar más antes de la siguiente pasada
+                await asyncio.sleep(interval_seconds * 4)
+            else:
+                await asyncio.sleep(interval_seconds)
+        except asyncio.CancelledError:
+            logger.info("[backfill] loop cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"[backfill] iteration failed: {e}")
+            await asyncio.sleep(interval_seconds * 2)

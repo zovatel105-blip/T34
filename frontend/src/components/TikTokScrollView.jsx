@@ -36,6 +36,7 @@ import feedMenuService from '../services/feedMenuService';
 import storyService from '../services/storyService';
 import { useNavPreference } from '../hooks/useNavPreference';
 import { useTikTok } from '../contexts/TikTokContext';
+import useNetworkStatus from '../hooks/useNetworkStatus';
 
 // Swiper imports for improved scrolling
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -143,6 +144,9 @@ const TikTokPollCard = ({
   renderPriority = 'medium',
   shouldUnload = false,
   layout = null,
+  // 🚀 NUEVO: Distancia al post activo y ancho de banda para preload TikTok-style
+  distanceFromActive = 0,
+  isHighBandwidth = true,
   // 🔒 NEW: Callback para notificar cuando un modal se abre/cierra
   onModalStateChange = null,
   // 📜 NEW: Mostrar hint de scroll solo para usuarios nuevos
@@ -1063,6 +1067,8 @@ const TikTokPollCard = ({
             shouldPreload={shouldPreload}
             isVisible={isVisible}
             shouldUnload={shouldUnload}
+            distanceFromActive={distanceFromActive}
+            isHighBandwidth={isHighBandwidth}
             layout={layout}
           />
         )}
@@ -1532,6 +1538,11 @@ const TikTokScrollView = ({
   const [commentedPolls, setCommentedPolls] = useState(new Set());
   const [sharedPolls, setSharedPolls] = useState(new Set());
   const { user: currentUser } = useAuth();
+  // 🚀 Ancho de banda: se usa para decidir qué tan agresivo es el preload
+  //    WiFi/4G/5G → isHighBandwidth=true (preload auto para próximos 2 vídeos)
+  //    2G/3G/cellular → isHighBandwidth=false (solo metadata, sin preload agresivo)
+  const { isMetered } = useNetworkStatus();
+  const isHighBandwidth = !isMetered;
 
   // Initialize saved/commented/shared from backend data
   useEffect(() => {
@@ -1943,7 +1954,9 @@ const TikTokScrollView = ({
         isActive,
         shouldUnload: false, // Never unload, just manage playback
         optimizeVideo: poll.options?.some(opt => opt.media_type === 'video'),
-        renderPriority: isActive ? 'high' : 'medium' // Less restrictive priorities
+        renderPriority: isActive ? 'high' : 'medium', // Less restrictive priorities
+        // 🚀 Distancia explícita al post activo → preload TikTok-style en <video>
+        distanceFromActive
       };
     });
   }, [polls, activeIndex]);
@@ -2357,6 +2370,9 @@ const TikTokScrollView = ({
             renderPriority={poll.renderPriority || 'medium'}
             shouldUnload={false}  // Never unload, just optimize
             layout={poll.layout}
+            // 🚀 Preload TikTok-style
+            distanceFromActive={poll.distanceFromActive ?? 0}
+            isHighBandwidth={isHighBandwidth}
             // 🔒 NEW: Callback para bloquear scroll cuando modal está abierto
             onModalStateChange={setIsModalOpen}
             // 📜 Mostrar hint de scroll solo para usuarios nuevos

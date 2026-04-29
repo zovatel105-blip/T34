@@ -45,6 +45,11 @@ const LayoutRenderer = ({
   isVisible = true,
   shouldUnload = false,
   layout = null,
+  // 🚀 NUEVO: Distancia al post activo (0 = activo, 1 = siguiente, etc.)
+  // Propaga hasta <video preload> para la estrategia TikTok-style
+  distanceFromActive = 0,
+  // 🚀 NUEVO: Si es true, conexión rápida/WiFi → permite preload más agresivo
+  isHighBandwidth = true,
   // 🖼️ NUEVO: Para ocultar UI en miniaturas del perfil
   isThumbnail = false
 }) => {
@@ -82,6 +87,8 @@ const LayoutRenderer = ({
         shouldPreload={shouldPreload}
         isVisible={isVisible}
         shouldUnload={shouldUnload}
+        distanceFromActive={distanceFromActive}
+        isHighBandwidth={isHighBandwidth}
         // 🖼️ Ocultar UI en miniaturas
         isThumbnail={isThumbnail}
         // 📸 Momento: Una sola imagen sin indicadores de carrusel
@@ -112,6 +119,8 @@ const LayoutRenderer = ({
       shouldPreload={shouldPreload}
       isVisible={isVisible}
       shouldUnload={shouldUnload}
+      distanceFromActive={distanceFromActive}
+      isHighBandwidth={isHighBandwidth}
       layout={layout}
       index={index}
     />

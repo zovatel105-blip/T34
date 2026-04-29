@@ -32,6 +32,9 @@ const CarouselLayout = ({
   optimizeVideo = false,
   renderPriority = 'medium',
   shouldUnload = false,
+  // 🚀 NUEVO: Distancia al post activo en el feed (para preload combinado)
+  distanceFromActive = 0,
+  isHighBandwidth = true,
   isThumbnail = false, // Nuevo prop para ocultar UI en miniaturas
   isMoment = false // Prop para momentos (imagen única sin indicadores)
 }) => {
@@ -360,20 +363,24 @@ const CarouselLayout = ({
                     playsInline: true,
                     loop: true,
                     preload:
-                      // Precarga agresiva para carrusel con audio original
-                      option.extracted_audio_id
-                        ? (idx === currentSlide
-                            ? 'auto'
-                            : Math.abs(currentSlide - idx) <= 1
-                            ? 'auto'
-                            : Math.abs(currentSlide - idx) <= 2
-                            ? 'metadata'
-                            : 'none')
-                        : (idx === currentSlide
-                            ? 'auto'
-                            : Math.abs(currentSlide - idx) <= 1
-                            ? 'metadata'
-                            : 'none'),
+                      // Combinar distancia al post activo y distancia al slide:
+                      //   - Si el post NO está activo y está a >1 de distancia, NO preloads nada
+                      //   - Si el post está activo o muy cerca, aplicar la política por slide
+                      (!isActive && distanceFromActive > 1)
+                        ? 'none'
+                        : option.extracted_audio_id
+                          ? (idx === currentSlide
+                              ? 'auto'
+                              : Math.abs(currentSlide - idx) <= 1
+                              ? 'auto'
+                              : Math.abs(currentSlide - idx) <= 2
+                              ? 'metadata'
+                              : 'none')
+                          : (idx === currentSlide
+                              ? 'auto'
+                              : Math.abs(currentSlide - idx) <= 1
+                              ? 'metadata'
+                              : 'none'),
                   }}
                 />
               </div>
