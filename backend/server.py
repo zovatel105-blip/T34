@@ -7801,6 +7801,146 @@ async def get_user_mentioned_polls(
         print(f"❌ Error getting mentioned polls: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+async def _extract_carousel_audio_background(
+    poll_id: str,
+    video_options: list,
+    user_info: dict,
+):
+    """
+    🎵 Extrae audio de los videos de un carrusel en background.
+
+    Se ejecuta DESPUÉS de que el endpoint POST /api/polls devuelve la
+    respuesta al cliente, para evitar timeouts en el cliente nativo
+    cuando el carrusel tiene varios videos (ffmpeg puede tardar 30-60s
+    por video y los proxies/WebViews suelen cortar a los 60s).
+
+    Por cada video válido:
+      1. Verifica que tenga pista de audio.
+      2. Extrae los primeros `max_duration` segundos a mp3.
+      3. Crea un registro en `user_audio`.
+      4. Actualiza la opción del poll con su `extracted_audio_id`.
+      5. Asigna el primer audio extraído como `music_id` del poll.
+    """
+    try:
+        from audio_utils import extract_audio_from_video, check_video_has_audio
+    except Exception as import_err:
+        logger.error(
+            f"[audio-bg poll={poll_id}] audio_utils not available: {import_err}"
+        )
+        return
+
+    user_id = user_info.get("id")
+    username = user_info.get("username") or "user"
+    display_name = user_info.get("display_name") or username
+
+    extracted_count = 0
+    primary_audio_id = None
+
+    for vopt in video_options:
+        i = vopt["option_index"]
+        option_id = vopt["option_id"]
+        media_url = vopt["media_url"]
+        thumbnail_url = vopt.get("thumbnail_url")
+
+        try:
+            if "/api/uploads/" not in (media_url or ""):
+                logger.info(
+                    f"[audio-bg poll={poll_id}] option {i} not a local upload, skipping"
+                )
+                continue
+
+            video_filename = media_url.split("/api/uploads/")[-1]
+            video_path = UPLOAD_DIR / video_filename
+
+            if not video_path.exists():
+                logger.warning(
+                    f"[audio-bg poll={poll_id}] option {i} video file missing: {video_path}"
+                )
+                continue
+
+            if not check_video_has_audio(str(video_path)):
+                logger.info(
+                    f"[audio-bg poll={poll_id}] option {i} has no audio track, skipping"
+                )
+                continue
+
+            timestamp = int(datetime.utcnow().timestamp())
+            unique_filename = f"carousel_audio_{user_id}_{timestamp}_opt{i}"
+
+            extraction_result = extract_audio_from_video(
+                video_path=video_path,
+                output_dir=str(AUDIO_UPLOAD_DIR),
+                target_filename=unique_filename,
+                max_duration=60,
+            )
+
+            audio_title = f"original sound-@{username}"
+            audio_public_url = f"/api/uploads/audio/{extraction_result['filename']}"
+
+            user_audio_data = {
+                "id": str(uuid.uuid4()),
+                "title": audio_title,
+                "artist": display_name,
+                "original_filename": extraction_result["filename"],
+                "filename": extraction_result["filename"],
+                "file_format": "mp3",
+                "file_size": extraction_result["file_size"],
+                "duration": int(extraction_result["duration"]),
+                "uploader_id": user_id,
+                "file_path": extraction_result["processed_path"],
+                "public_url": audio_public_url,
+                "waveform": extraction_result.get("waveform", []),
+                "cover_url": thumbnail_url,
+                "privacy": "public",
+                "uses_count": 1,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+
+            await db.user_audio.insert_one(user_audio_data)
+
+            audio_id = f"user_audio_{user_audio_data['id']}"
+
+            # Actualizar la opción específica dentro del array `options`
+            await db.polls.update_one(
+                {"id": poll_id, "options.id": option_id},
+                {"$set": {"options.$.extracted_audio_id": audio_id}},
+            )
+
+            extracted_count += 1
+            if primary_audio_id is None:
+                primary_audio_id = audio_id
+
+            logger.info(
+                f"[audio-bg poll={poll_id}] option {i} extracted: {audio_id} "
+                f"({extraction_result['duration']:.1f}s)"
+            )
+        except Exception as opt_err:
+            logger.error(
+                f"[audio-bg poll={poll_id}] option {i} extraction failed: {opt_err}"
+            )
+            continue
+
+    # Si extrajimos al menos un audio y el poll todavía no tiene music_id,
+    # lo asignamos como música principal.
+    if primary_audio_id:
+        try:
+            await db.polls.update_one(
+                {"id": poll_id, "$or": [{"music_id": None}, {"music_id": ""}, {"music_id": {"$exists": False}}]},
+                {"$set": {"music_id": primary_audio_id}},
+            )
+            logger.info(
+                f"[audio-bg poll={poll_id}] done: {extracted_count} audio(s) extracted, "
+                f"primary={primary_audio_id}"
+            )
+        except Exception as music_err:
+            logger.error(
+                f"[audio-bg poll={poll_id}] failed to set primary music_id: {music_err}"
+            )
+    else:
+        logger.info(f"[audio-bg poll={poll_id}] done: no audio extracted")
+
+
 @api_router.post("/polls", response_model=PollResponse)
 async def create_poll(
     poll_data: PollCreate,
@@ -7844,105 +7984,18 @@ async def create_poll(
             valid_mentioned_users = []
 
     # 🎵 CAROUSEL VIDEO AUDIO EXTRACTION
-    # Si es layout carrusel y no tiene música asignada, extraer audio de TODOS los videos
-    extracted_audio_id = None
-    if poll_data.layout == 'off' and not poll_data.music_id:
-        try:
-            from audio_utils import extract_audio_from_video, check_video_has_audio
-            
-            print(f"🎠 Carousel post detected, extracting audio from ALL videos...")
-            
-            # Extraer audio de TODOS los videos con audio
-            extracted_audios = []
-            for i, option in enumerate(options):
-                if option.media_type == 'video' and option.media_url:
-                    # Convertir URL a ruta de archivo local
-                    if '/api/uploads/' in option.media_url:
-                        video_filename = option.media_url.split('/api/uploads/')[-1]
-                        video_path = UPLOAD_DIR / video_filename
-                        
-                        if video_path.exists():
-                            print(f"🔍 Checking video {i}: {video_path}")
-                            
-                            # Verificar si tiene audio
-                            if not check_video_has_audio(str(video_path)):
-                                print(f"⏭️ Video {i} has no audio, skipping")
-                                continue
-                            
-                            print(f"✅ Video {i} has audio, extracting...")
-                            
-                            try:
-                                # Generar nombre único para cada audio
-                                timestamp = int(datetime.utcnow().timestamp())
-                                unique_filename = f"carousel_audio_{current_user.id}_{timestamp}_opt{i}"
-                                
-                                # Extraer audio del video
-                                extraction_result = extract_audio_from_video(
-                                    video_path=video_path,
-                                    output_dir=str(AUDIO_UPLOAD_DIR),
-                                    target_filename=unique_filename,
-                                    max_duration=60
-                                )
-                                
-                                # Crear título para este audio específico
-                                # Usar formato "(original sound-@username)" en lugar del título de la publicación
-                                audio_title = f"original sound-@{current_user.username}"
-                                audio_public_url = f"/api/uploads/audio/{extraction_result['filename']}"
-                                
-                                user_audio_data = {
-                                    "id": str(uuid.uuid4()),
-                                    "title": audio_title,
-                                    "artist": current_user.display_name or current_user.username,
-                                    "original_filename": extraction_result['filename'],
-                                    "filename": extraction_result['filename'],
-                                    "file_format": "mp3",
-                                    "file_size": extraction_result['file_size'],
-                                    "duration": int(extraction_result['duration']),
-                                    "uploader_id": current_user.id,
-                                    "file_path": extraction_result['processed_path'],
-                                    "public_url": audio_public_url,
-                                    "waveform": extraction_result.get('waveform', []),
-                                    "cover_url": option.thumbnail_url,
-                                    "privacy": "public",  # Público para que otros lo puedan usar
-                                    "uses_count": 1,
-                                    "created_at": datetime.utcnow(),
-                                    "updated_at": datetime.utcnow()
-                                }
-                                
-                                # Insertar en base de datos
-                                await db.user_audio.insert_one(user_audio_data)
-                                
-                                audio_id = f"user_audio_{user_audio_data['id']}"
-                                
-                                # Guardar el audio_id en la opción
-                                option.extracted_audio_id = audio_id
-                                
-                                extracted_audios.append({
-                                    'option_index': i,
-                                    'audio_id': audio_id,
-                                    'title': audio_title,
-                                    'duration': extraction_result['duration']
-                                })
-                                
-                                print(f"   ✅ Audio {i} extracted: {audio_id}")
-                                print(f"      Title: {audio_title}")
-                                print(f"      Duration: {extraction_result['duration']:.1f}s")
-                                
-                            except Exception as e:
-                                print(f"   ⚠️ Failed to extract audio from video {i}: {str(e)}")
-                                continue
-            
-            # El primer audio extraído será el music_id principal del poll
-            if extracted_audios:
-                extracted_audio_id = extracted_audios[0]['audio_id']
-                print(f"\n✅ Total audios extracted: {len(extracted_audios)}")
-                print(f"   Primary music_id: {extracted_audio_id}")
-                
-        except Exception as e:
-            print(f"⚠️ Failed to extract audio from carousel videos: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            # Continuar sin audio si falla la extracción
+    # ⚡ BACKGROUND-EXTRACTION: Si es layout carrusel y no tiene música asignada,
+    # programamos la extracción para que se ejecute DESPUÉS de devolver la
+    # respuesta. Antes era síncrono y bloqueaba el request hasta varios minutos
+    # con múltiples videos, lo que provocaba timeout en la app nativa
+    # (Capacitor WebView / proxy ingress) y la publicación parecía fallar.
+    needs_carousel_audio_extraction = (
+        poll_data.layout == 'off' and not poll_data.music_id
+        and any(
+            getattr(opt, "media_type", None) == "video" and getattr(opt, "media_url", None)
+            for opt in options
+        )
+    )
 
     # Create poll
     poll = Poll(
@@ -7950,7 +8003,7 @@ async def create_poll(
         author_id=current_user.id,
         description=poll_data.description,
         options=[opt.model_dump() for opt in options],  # Store as dict in MongoDB - Pydantic v2
-        music_id=extracted_audio_id or poll_data.music_id,  # Usar audio extraído si existe
+        music_id=poll_data.music_id,  # Audio extraído se asignará en background
         tags=poll_data.tags,
         category=poll_data.category,
         mentioned_users=valid_mentioned_users,  # Only save validated user IDs
@@ -8023,6 +8076,41 @@ async def create_poll(
     except Exception as pipeline_err:
         # Si el hook falla, no rompemos la creación del poll.
         logger.error(f"Error queuing video pipeline for poll {poll.id}: {pipeline_err}")
+
+    # 🎵 CAROUSEL AUDIO EXTRACTION (BACKGROUND)
+    # Programamos la extracción de audio para que se ejecute después de
+    # devolver la respuesta. Esto evita que el cliente nativo (Capacitor)
+    # haga timeout al subir carruseles con varios videos.
+    if needs_carousel_audio_extraction:
+        try:
+            video_options_payload = [
+                {
+                    "option_index": i,
+                    "option_id": opt.id,
+                    "media_url": opt.media_url,
+                    "thumbnail_url": opt.thumbnail_url,
+                }
+                for i, opt in enumerate(options)
+                if opt.media_type == "video" and opt.media_url
+            ]
+            background_tasks.add_task(
+                _extract_carousel_audio_background,
+                poll.id,
+                video_options_payload,
+                {
+                    "id": current_user.id,
+                    "username": current_user.username,
+                    "display_name": current_user.display_name,
+                },
+            )
+            logger.info(
+                f"🎵 Poll {poll.id} queued for background audio extraction "
+                f"({len(video_options_payload)} video(s))"
+            )
+        except Exception as audio_queue_err:
+            logger.error(
+                f"Error queuing carousel audio extraction for poll {poll.id}: {audio_queue_err}"
+            )
 
     # Send notifications to mentioned users (both general and option-specific)
     all_mentioned_users = set(poll_data.mentioned_users)
