@@ -38,11 +38,6 @@ import { useNavPreference } from '../hooks/useNavPreference';
 import { useTikTok } from '../contexts/TikTokContext';
 import useNetworkStatus from '../hooks/useNetworkStatus';
 
-// Swiper imports for improved scrolling
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Mousewheel, Keyboard } from 'swiper/modules';
-import 'swiper/css';
-
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
   if (!text) return null;
