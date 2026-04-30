@@ -2129,15 +2129,7 @@ const TikTokScrollView = ({
         </div>
       )}
 
-      {/* End of feed */}
-      {!hasMoreContent && polls.length > 0 && activeIndex === polls.length - 1 && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2 text-center px-6 bg-black/60 rounded-2xl py-4 mx-6 backdrop-blur-sm">
-            <CheckCircle className="w-6 h-6 text-white/60" />
-            <p className="text-white/70 text-sm">¡Ya viste todo!</p>
-          </div>
-        </div>
-      )}
+      {/* End of feed indicator removed per user request */}
 
       <style>{`
         @supports (height: 100dvh) {
