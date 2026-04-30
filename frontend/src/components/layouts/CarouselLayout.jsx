@@ -169,6 +169,8 @@ const CarouselLayout = ({
   };
 
   // ========== AUDIO HANDLING - SINGLE ELEMENT (no pool) ==========
+  // Audio = master clock. Video is slaved to audio.currentTime on every
+  // tick to keep both in sync (avoid drift on loops + cold-start lag).
   useEffect(() => {
     const audio = carouselAudioRef.current;
     if (!audio) return;
@@ -209,12 +211,51 @@ const CarouselLayout = ({
 
     // We have extracted audio for this slide - fetch metadata and play
     let cancelled = false;
+    let driftIntervalId = null;
+    const SYNC_THRESHOLD = 0.15; // 150 ms
+
+    const getActiveVideo = () => {
+      if (!option) return null;
+      return videoRefs.current.get(option.id) || null;
+    };
+
+    const stopDriftLoop = () => {
+      if (driftIntervalId !== null) {
+        clearInterval(driftIntervalId);
+        driftIntervalId = null;
+      }
+    };
+
+    const startDriftLoop = () => {
+      stopDriftLoop();
+      driftIntervalId = setInterval(() => {
+        if (cancelled) return;
+        const video = getActiveVideo();
+        if (!video || video.paused || audio.paused) return;
+        const drift = Math.abs(video.currentTime - audio.currentTime);
+        if (drift > SYNC_THRESHOLD) {
+          // Snap video to audio (audio is master clock)
+          try { video.currentTime = audio.currentTime; } catch (_) {}
+        }
+      }, 400);
+    };
 
     const playSlideAudio = async () => {
       try {
         // Immediately stop whatever is currently playing
         audio.pause();
         audio.currentTime = 0;
+
+        // Pause active video too while we wait for audio metadata,
+        // so they don't drift apart on cold start.
+        const initialVideo = getActiveVideo();
+        if (initialVideo) {
+          try {
+            initialVideo.pause();
+            initialVideo.currentTime = 0;
+            initialVideo.muted = true;
+          } catch (_) {}
+        }
 
         // Fetch metadata (cached)
         const audioData = await fetchAudioMetadata(extractedAudioId);
@@ -251,7 +292,24 @@ const CarouselLayout = ({
 
         try {
           await audio.play();
+          if (cancelled) return;
           console.log(`▶️ Audio del slide ${currentSlide} reproduciendo`);
+
+          // Audio is now the master. Sync the active video to audio.currentTime
+          // and start it. This eliminates the cold-start lag (video was running
+          // ahead while audio was still fetching).
+          const activeVideo = getActiveVideo();
+          if (activeVideo) {
+            try {
+              activeVideo.muted = true;
+              activeVideo.currentTime = audio.currentTime || 0;
+              const vp = activeVideo.play();
+              if (vp && typeof vp.catch === 'function') vp.catch(() => {});
+            } catch (_) {}
+          }
+
+          // Start periodic drift correction
+          startDriftLoop();
         } catch (playError) {
           if (playError.name !== 'AbortError') {
             console.error('Error al reproducir audio:', playError);
@@ -267,6 +325,7 @@ const CarouselLayout = ({
     // Cleanup: cancel pending operations and stop audio
     return () => {
       cancelled = true;
+      stopDriftLoop();
       audio.pause();
       audio.currentTime = 0;
     };
@@ -278,9 +337,15 @@ const CarouselLayout = ({
   //   • Only the current slide's video can play (and always muted)
   //   • All other videos are FORCED to pause + reset
   //   • No ghost autoplay occurs
+  //   • If the active slide has extracted_audio_id, we DO NOT auto-play
+  //     the video here. The audio effect is the master clock and will
+  //     start the video synced to audio.currentTime once audio is ready.
   //
   useEffect(() => {
     if (!poll.options) return;
+
+    const activeOption = poll.options[currentSlide];
+    const activeHasExtractedAudio = !!activeOption?.extracted_audio_id;
 
     videoRefs.current.forEach((video, id) => {
       if (!video) return;
@@ -293,7 +358,11 @@ const CarouselLayout = ({
         video.currentTime = 0;
         video.muted = true;
 
-        video.play().catch(() => {});
+        // Only autoplay video here if there's NO extracted audio.
+        // Otherwise the audio effect will start the video in sync.
+        if (!activeHasExtractedAudio) {
+          video.play().catch(() => {});
+        }
       } else {
         video.pause();
         video.currentTime = 0;
