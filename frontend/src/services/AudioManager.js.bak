@@ -3,9 +3,6 @@
  * Maneja reproducción HTML5 con previews reales de iTunes API
  */
 
-const DEV = process.env.NODE_ENV === 'development';
-const log = DEV ? console.log.bind(console) : () => {};
-
 class AudioManager {
   constructor() {
     this.currentAudio = null;
@@ -13,43 +10,13 @@ class AudioManager {
     this.volume = 0.7;
     this.fadeInterval = null;
     this.playPromise = null;
-    this.currentPostId = null;
-    this.currentAudioUrl = null;
-
-    // Pre-connect: audio pre-cargado para el siguiente slide (~0ms switch)
-    this._preconnectAudio = null;
-    this._preconnectUrl = null;
-
+    this.currentPostId = null; // Rastrear qué post específico está reproduciendo
+    this.currentAudioUrl = null; // Rastrear URL actual explícitamente
+    
     // Bind methods para usar en callbacks
     this.play = this.play.bind(this);
     this.pause = this.pause.bind(this);
     this.stop = this.stop.bind(this);
-  }
-
-  /**
-   * Pre-carga el audio del siguiente post en memoria sin reproducirlo.
-   * Cuando play() se llame con esa misma URL, reutiliza el elemento
-   * ya cargado → latencia de switch ~0ms en lugar de ~150ms.
-   */
-  preconnect(url) {
-    if (!url || this._preconnectUrl === url) return;
-
-    // Limpiar preconexión anterior
-    if (this._preconnectAudio) {
-      this._preconnectAudio.src = '';
-      this._preconnectAudio.load();
-      this._preconnectAudio = null;
-    }
-
-    this._preconnectUrl = url;
-    const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
-    audio.preload = 'auto';
-    audio.volume = 0;
-    audio.src = url;
-    audio.load(); // descarga sin reproducir
-    this._preconnectAudio = audio;
-    log('🔗 AudioManager: preconnected', url);
   }
 
   /**
@@ -60,53 +27,76 @@ class AudioManager {
   async play(audioUrl, options = {}) {
     try {
       const { postId = null } = options;
-
-      // Detener completamente cualquier audio anterior
+      
+      // SINCRONIZACIÓN COMPLETA: Detener completamente cualquier audio anterior
       if (this.currentAudio) {
+        console.log('🔄 Stopping previous audio for complete sync');
         await this.stop();
       }
 
-      // ✅ Reutilizar audio pre-conectado si la URL coincide → ~0ms latencia
-      let audio;
-      if (this._preconnectAudio && this._preconnectUrl === audioUrl) {
-        log('⚡ AudioManager: reusing preconnected audio for', audioUrl);
-        audio = this._preconnectAudio;
-        this._preconnectAudio = null;
-        this._preconnectUrl = null;
-        audio.volume = 0;
-      } else {
-        audio = new Audio();
-        audio.crossOrigin = 'anonymous';
-        audio.preload = 'auto';
-        audio.volume = 0;
-        audio.src = audioUrl;
+      // Crear nuevo elemento de audio
+      const audio = new Audio();
+      audio.crossOrigin = "anonymous";
+      audio.preload = "metadata";
+      audio.volume = 0; // Empezar en silencio para fade in
+      
+      // Configurar propiedades según opciones
+      if (options.loop !== undefined) {
+        audio.loop = options.loop;
+        console.log('🔄 Audio loop configured:', options.loop);
+      }
+      
+      if (options.startTime) {
+        audio.currentTime = options.startTime;
       }
 
-      if (options.loop !== undefined) audio.loop = options.loop;
-      if (options.startTime) audio.currentTime = options.startTime;
+      // Set up event listeners
+      audio.addEventListener('loadstart', () => {
+        console.log('🎵 Audio loading started:', audioUrl);
+      });
+
+      audio.addEventListener('canplaythrough', () => {
+        console.log('🎵 Audio ready to play');
+      });
 
       audio.addEventListener('error', (e) => {
         console.error('🚨 Audio error:', e.target.error);
       });
 
+      // Event listener para cuando la canción termine (si no está en loop)
       audio.addEventListener('ended', () => {
-        if (!audio.loop) this.isPlaying = false;
+        if (!audio.loop) {
+          console.log('🎵 Audio ended, not looping');
+          this.isPlaying = false;
+        } else {
+          console.log('🔄 Audio ended, restarting due to loop');
+        }
       });
 
+      // Load audio source
+      audio.src = audioUrl;
       this.currentAudio = audio;
       this.currentPostId = postId;
       this.currentAudioUrl = audioUrl;
 
+      // Start playback with fade in
       this.playPromise = audio.play();
       await this.playPromise;
-
+      
       this.isPlaying = true;
       await this.fadeIn();
 
-      log(`✅ AudioManager: playing post ${postId}`);
+      console.log(`✅ Audio playing for post: ${postId}, URL: ${audioUrl}`);
 
+      // Solo auto-pausar después de 30 segundos si NO está en loop
+      // En modo loop, la música debe continuar reproduciéndose indefinidamente
       if (!options.loop) {
-        setTimeout(() => this.fadeOutAndPause(), 30000);
+        setTimeout(() => {
+          console.log('🔄 Auto-pausing after 30s (no loop mode)');
+          this.fadeOutAndPause();
+        }, 30000);
+      } else {
+        console.log('🔄 Loop mode enabled - music will repeat automatically');
       }
 
       return true;
@@ -120,6 +110,9 @@ class AudioManager {
     }
   }
 
+  /**
+   * Pausa el audio actual con fadeOut
+   */
   async pause() {
     if (this.currentAudio && !this.currentAudio.paused) {
       await this.fadeOut();
@@ -128,44 +121,64 @@ class AudioManager {
     }
   }
 
+  /**
+   * Reanuda el audio pausado con fadeIn
+   */
   async resume() {
     if (this.currentAudio && this.currentAudio.paused && this.currentAudio.src) {
       try {
         await this.currentAudio.play();
         this.isPlaying = true;
         await this.fadeIn();
-        log('▶️ AudioManager: Audio resumed');
+        console.log('▶️ AudioManager: Audio resumed');
       } catch (error) {
         console.error('❌ AudioManager: Error resuming audio:', error);
       }
     }
   }
 
+  /**
+   * Detiene completamente el audio - MEJORADO para sincronización
+   */
   async stop() {
+    console.log('🛑 AudioManager: Stopping audio');
+    
     if (this.currentAudio) {
       try {
+        // Limpiar cualquier fade activo
         this.clearFadeInterval();
+        
+        // Cancelar cualquier promise de reproducción pendiente
         if (this.playPromise) {
-          await this.playPromise.catch(() => {});
+          await this.playPromise.catch(() => {}); // Ignore errors from cancelled playback
         }
+        
+        // Pausar si está reproduciéndose
         if (!this.currentAudio.paused) {
           this.currentAudio.pause();
         }
+        
+        // Resetear tiempo y limpiar referencia
         this.currentAudio.currentTime = 0;
-        this.currentAudio.src = '';
+        this.currentAudio.src = ''; // Limpiar fuente para liberar memoria
         this.currentAudio = null;
         this.isPlaying = false;
         this.playPromise = null;
         this.currentPostId = null;
         this.currentAudioUrl = null;
+        
+        console.log('✅ AudioManager: Audio stopped successfully');
       } catch (error) {
         console.error('❌ AudioManager: Error stopping audio:', error);
+        // Asegurar cleanup incluso si hay error
         this.currentAudio = null;
         this.isPlaying = false;
         this.playPromise = null;
         this.currentPostId = null;
         this.currentAudioUrl = null;
       }
+    } else {
+      console.log('ℹ️ AudioManager: No audio to stop');
     }
   }
 
@@ -186,6 +199,7 @@ class AudioManager {
   setLoop(enabled) {
     if (this.currentAudio) {
       this.currentAudio.loop = enabled;
+      console.log('🔄 Loop', enabled ? 'enabled' : 'disabled', 'for current audio');
       return true;
     }
     return false;
@@ -355,7 +369,7 @@ class AudioManager {
         return true;
       }
     } catch (error) {
-      log('Autoplay not supported:', error);
+      console.log('Autoplay not supported:', error);
     }
     return false;
   }
@@ -365,14 +379,18 @@ class AudioManager {
    */
   async activateAudioContext() {
     try {
+      // Crear un audio silencioso para activar el contexto
       const audio = new Audio();
       audio.volume = 0;
       audio.muted = true;
+      
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         await playPromise;
         audio.pause();
       }
+      
+      console.log('✅ Audio context activated');
       return true;
     } catch (error) {
       console.error('Failed to activate audio context:', error);
