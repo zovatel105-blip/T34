@@ -1531,6 +1531,9 @@ const TikTokScrollView = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(() => !localStorage.getItem('hasScrolledFeed'));
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // Tape offset in dvh (negative = tape moves up = next, positive = prev).
+  // Used to animate the visual swipe before swapping slot contents.
+  const [translateOffset, setTranslateOffset] = useState(0);
 
   // Pull-to-refresh
   const [pullDistance, setPullDistance] = useState(0);
@@ -1667,8 +1670,15 @@ const TikTokScrollView = ({
     return () => { cancelled = true; clearTimeout(id); };
   }, [activeIndex, polls]);
 
-  // ─── SWIPE NAVIGATION (CSS snap + touch) ─────────────────────────────────
-  const goToIndex = useCallback(async (newIndex) => {
+  // ─── SWIPE NAVIGATION (2-phase animation, TikTok-style) ──────────────────
+  // Phase 1 (0 → 320ms): animate tape to ±100dvh so the next/prev slot slides
+  //                       into view with a real CSS transition.
+  // Phase 2 (after 320ms): instantly swap activeIndex (slot contents shift),
+  //                        reset translateOffset to 0 with transition disabled.
+  //                        Visually seamless because slot 1 now contains the
+  //                        same poll that slot 2/0 was just showing.
+  const TRANSITION_MS = 320;
+  const goToIndex = useCallback((newIndex) => {
     if (isAnimatingRef.current) return;
     if (newIndex < 0 || newIndex >= polls.length) return;
     if (newIndex === activeIndex) return;
@@ -1676,29 +1686,41 @@ const TikTokScrollView = ({
     isAnimatingRef.current = true;
     if (onSwipeStart) onSwipeStart();
 
-    setIsTransitioning(true);
-    setActiveIndex(newIndex);
-    setLastActiveIndex(newIndex);
+    // Direction: 'next' means tape slides up, 'prev' means tape slides down.
+    const direction = newIndex > activeIndex ? 'next' : 'prev';
+    const targetOffset = direction === 'next' ? -100 : 100; // dvh
 
-    if (typeof onActiveIndexChange === 'function') {
-      try { onActiveIndexChange(newIndex); } catch (_) {}
-    }
+    // Side effects we can fire immediately (don't affect the visible slot)
     if (showScrollHint && newIndex > 0) {
       setShowScrollHint(false);
       localStorage.setItem('hasScrolledFeed', 'true');
     }
-
-    // Preload more content when approaching end
     if (onLoadMore && hasMoreContent && !isLoadingMore) {
       const remaining = polls.length - newIndex;
       if (remaining <= 8) onLoadMore();
     }
 
+    // ── Phase 1: animate the tape ──
+    setIsTransitioning(true);
+    setTranslateOffset(targetOffset);
+
+    // ── Phase 2 (after the animation finishes) ──
     setTimeout(() => {
-      isAnimatingRef.current = false;
+      // Disable transition for the instant reset, swap activeIndex, and
+      // recenter the tape on slot 1 (which now contains the new active poll).
+      // All three updates batch into one render → seamless teleport.
       setIsTransitioning(false);
-    }, 350);
-  }, [activeIndex, polls.length, isAnimatingRef, onSwipeStart, onActiveIndexChange, showScrollHint, onLoadMore, hasMoreContent, isLoadingMore]);
+      setTranslateOffset(0);
+      setActiveIndex(newIndex);
+      setLastActiveIndex(newIndex);
+
+      if (typeof onActiveIndexChange === 'function') {
+        try { onActiveIndexChange(newIndex); } catch (_) {}
+      }
+
+      isAnimatingRef.current = false;
+    }, TRANSITION_MS);
+  }, [activeIndex, polls.length, onSwipeStart, onActiveIndexChange, showScrollHint, onLoadMore, hasMoreContent, isLoadingMore]);
 
   // Swipe gesture on the 3-slot tape
   const handleTapePointerDown = useCallback((e) => {
@@ -2006,7 +2028,10 @@ const TikTokScrollView = ({
           height: '300dvh',
           // The tape is offset so slot 1 (current) is in view:
           // slot 0 = -100dvh, slot 1 = 0dvh (visible), slot 2 = +100dvh
-          transform: `translateY(-100dvh) translateY(${pullDistance > 0 ? pullDistance : 0}px)`,
+          // translateOffset animates ±100dvh during a swipe so slot 0 / slot 2
+          // slides into view; after the animation we reset it to 0 and swap
+          // activeIndex (slot contents shift) → seamless teleport, no flicker.
+          transform: `translateY(calc(-100dvh + ${translateOffset}dvh)) translateY(${pullDistance > 0 ? pullDistance : 0}px)`,
           transition: isTransitioning ? 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
           willChange: 'transform',
         }}
