@@ -1,6 +1,7 @@
 // ==========================
 //  FULL FIXED CAROUSEL LAYOUT
-//  Audio = reloj maestro. Video arranca después del audio. Deriva corregida cada 400ms.
+//  by ChatGPT – optimized playback, fixed audio, fixed video ghost playback
+//  Updated with Swiper for improved scrolling experience
 // ==========================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -31,10 +32,11 @@ const CarouselLayout = ({
   optimizeVideo = false,
   renderPriority = 'medium',
   shouldUnload = false,
+  // 🚀 NUEVO: Distancia al post activo en el feed (para preload combinado)
   distanceFromActive = 0,
   isHighBandwidth = true,
-  isThumbnail = false,
-  isMoment = false
+  isThumbnail = false, // Nuevo prop para ocultar UI en miniaturas
+  isMoment = false // Prop para momentos (imagen única sin indicadores)
 }) => {
 
   const navigate = useNavigate();
@@ -43,8 +45,8 @@ const CarouselLayout = ({
   const videoRefs = useRef(new Map());
 
   // === SINGLE AUDIO ELEMENT for carousel extracted audio ===
-  const carouselAudioRef = useRef(null);
-  const audioMetadataCache = useRef(new Map());
+  const carouselAudioRef = useRef(null); // Single Audio element - no pool needed
+  const audioMetadataCache = useRef(new Map()); // Cache de metadata del audio
   const currentSlideSafe = useRef(0);
 
   // === Slide state ===
@@ -59,6 +61,8 @@ const CarouselLayout = ({
 
   const mobile = window.innerWidth <= 768;
 
+  // Detectar si hay música global asignada al post
+  // Si las opciones tienen extracted_audio_id, NO es música global - es audio por slide
   const hasExtractedAudio = poll.options?.some(opt => opt.extracted_audio_id);
   const hasGlobalMusic = !!(poll.music && poll.music.preview_url) && !hasExtractedAudio;
 
@@ -83,15 +87,17 @@ const CarouselLayout = ({
 
   // On poll change → reset slide and stop audio
   useEffect(() => {
+    // Only reset to 0 if parent isn't controlling the slide (no external slide provided)
     if (externalCurrentSlide === undefined) {
       setCurrentSlide(0);
       currentSlideSafe.current = 0;
     }
-
+    
     if (!hasGlobalMusic) {
       audioManager.stop();
     }
-
+    
+    // Stop carousel audio
     if (carouselAudioRef.current) {
       carouselAudioRef.current.pause();
       carouselAudioRef.current.src = '';
@@ -162,7 +168,9 @@ const CarouselLayout = ({
     setCurrentSlide(newIndex);
   };
 
-  // ========== AUDIO HANDLING - SINGLE ELEMENT (Audio = reloj maestro) ==========
+  // ========== AUDIO HANDLING - SINGLE ELEMENT (no pool) ==========
+  // Audio = master clock. Video is slaved to audio.currentTime on every
+  // tick to keep both in sync (avoid drift on loops + cold-start lag).
   useEffect(() => {
     const audio = carouselAudioRef.current;
     if (!audio) return;
@@ -179,6 +187,7 @@ const CarouselLayout = ({
     }
 
     if (!isActive) {
+      // Stop audio immediately when not active
       audio.pause();
       audio.currentTime = 0;
       return;
@@ -190,6 +199,7 @@ const CarouselLayout = ({
     const extractedAudioId = option.extracted_audio_id;
 
     if (!extractedAudioId) {
+      // No extracted audio for this slide - stop playing
       audio.pause();
       audio.currentTime = 0;
       onAudioChange?.(null);
@@ -199,22 +209,52 @@ const CarouselLayout = ({
       return;
     }
 
-    // Tenemos audio extraído → el audio es el reloj maestro
+    // We have extracted audio for this slide - fetch metadata and play
     let cancelled = false;
-    let driftInterval = null;
+    let driftIntervalId = null;
+    const SYNC_THRESHOLD = 0.15; // 150 ms
+
+    const getActiveVideo = () => {
+      if (!option) return null;
+      return videoRefs.current.get(option.id) || null;
+    };
+
+    const stopDriftLoop = () => {
+      if (driftIntervalId !== null) {
+        clearInterval(driftIntervalId);
+        driftIntervalId = null;
+      }
+    };
+
+    const startDriftLoop = () => {
+      stopDriftLoop();
+      driftIntervalId = setInterval(() => {
+        if (cancelled) return;
+        const video = getActiveVideo();
+        if (!video || video.paused || audio.paused) return;
+        const drift = Math.abs(video.currentTime - audio.currentTime);
+        if (drift > SYNC_THRESHOLD) {
+          // Snap video to audio (audio is master clock)
+          try { video.currentTime = audio.currentTime; } catch (_) {}
+        }
+      }, 400);
+    };
 
     const playSlideAudio = async () => {
       try {
-        // Parar todo lo que estaba sonando
+        // Immediately stop whatever is currently playing
         audio.pause();
         audio.currentTime = 0;
 
-        // Pausar y resetear el video ANTES de arrancar el audio
-        const currentOption = poll.options[currentSlideSafe.current];
-        const video = currentOption ? videoRefs.current.get(currentOption.id) : null;
-        if (video) {
-          video.pause();
-          video.currentTime = 0;
+        // Pause active video too while we wait for audio metadata,
+        // so they don't drift apart on cold start.
+        const initialVideo = getActiveVideo();
+        if (initialVideo) {
+          try {
+            initialVideo.pause();
+            initialVideo.currentTime = 0;
+            initialVideo.muted = true;
+          } catch (_) {}
         }
 
         // Fetch metadata (cached)
@@ -226,10 +266,12 @@ const CarouselLayout = ({
 
         const coverImage = audioData.cover_url || option.thumbnail_url;
 
+        // Update thumbnail
         if (onThumbnailChange && coverImage) {
           onThumbnailChange(coverImage);
         }
 
+        // Update UI music info
         onAudioChange?.({
           id: audioData.id,
           title: audioData.title || 'Original Sound',
@@ -242,74 +284,83 @@ const CarouselLayout = ({
 
         if (cancelled) return;
 
+        // Set src and play - changing src on the SAME element automatically stops previous audio
         audio.src = audioUrl;
         audio.currentTime = 0;
         audio.volume = 0.7;
         audio.loop = true;
 
-        // ▶️ Arrancar audio primero
-        await audio.play();
+        try {
+          await audio.play();
+          if (cancelled) return;
+          console.log(`▶️ Audio del slide ${currentSlide} reproduciendo`);
 
-        if (cancelled) return;
-
-        // ▶️ Ahora que el audio está corriendo, sincronizar y arrancar el video
-        const syncOption = poll.options[currentSlideSafe.current];
-        const syncVideo = syncOption ? videoRefs.current.get(syncOption.id) : null;
-        if (syncVideo) {
-          syncVideo.currentTime = audio.currentTime;
-          syncVideo.play().catch(() => {});
-        }
-
-        console.log(`▶️ Audio+Video slide ${currentSlideSafe.current} sincronizados`);
-
-        // ⏱️ Corrección de deriva cada 400ms
-        driftInterval = setInterval(() => {
-          if (!audio || audio.paused) return;
-          const driftOption = poll.options[currentSlideSafe.current];
-          const driftVideo = driftOption ? videoRefs.current.get(driftOption.id) : null;
-          if (driftVideo && Math.abs(driftVideo.currentTime - audio.currentTime) > 0.15) {
-            driftVideo.currentTime = audio.currentTime;
+          // Audio is now the master. Sync the active video to audio.currentTime
+          // and start it. This eliminates the cold-start lag (video was running
+          // ahead while audio was still fetching).
+          const activeVideo = getActiveVideo();
+          if (activeVideo) {
+            try {
+              activeVideo.muted = true;
+              activeVideo.currentTime = audio.currentTime || 0;
+              const vp = activeVideo.play();
+              if (vp && typeof vp.catch === 'function') vp.catch(() => {});
+            } catch (_) {}
           }
-        }, 400);
 
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('❌ Error en playSlideAudio:', err);
+          // Start periodic drift correction
+          startDriftLoop();
+        } catch (playError) {
+          if (playError.name !== 'AbortError') {
+            console.error('Error al reproducir audio:', playError);
+          }
         }
+      } catch (err) {
+        console.error('❌ Error en playSlideAudio:', err);
       }
     };
 
     playSlideAudio();
 
+    // Cleanup: cancel pending operations and stop audio
     return () => {
       cancelled = true;
-      if (driftInterval) clearInterval(driftInterval);
+      stopDriftLoop();
       audio.pause();
       audio.currentTime = 0;
     };
   }, [currentSlide, isActive, poll.options, poll.author, hasGlobalMusic]);
 
-  // ========== VIDEO EFFECT ==========
-  // Para slides CON audio extraído: el audio es el maestro, este efecto NO arranca el video.
-  // Para slides SIN audio extraído: este efecto gobierna la reproducción del video.
+  // ========== VIDEO SUPPRESSION FIX (THE IMPORTANT PART) ==========
+  //
+  // This ensures that:
+  //   • Only the current slide's video can play (and always muted)
+  //   • All other videos are FORCED to pause + reset
+  //   • No ghost autoplay occurs
+  //   • If the active slide has extracted_audio_id, we DO NOT auto-play
+  //     the video here. The audio effect is the master clock and will
+  //     start the video synced to audio.currentTime once audio is ready.
+  //
   useEffect(() => {
     if (!poll.options) return;
+
+    const activeOption = poll.options[currentSlide];
+    const activeHasExtractedAudio = !!activeOption?.extracted_audio_id;
 
     videoRefs.current.forEach((video, id) => {
       if (!video) return;
 
       const index = poll.options.findIndex((o) => o.id === id);
       const shouldPlay = isActive && index === currentSlide;
-      const opt = poll.options[index];
-      const hasExtractedAudioForSlide = !!opt?.extracted_audio_id;
 
       if (shouldPlay) {
         video.pause();
         video.currentTime = 0;
         video.muted = true;
 
-        // Si tiene audio extraído, el efecto de audio se encarga de arrancar el video
-        if (!hasExtractedAudioForSlide) {
+        // Only autoplay video here if there's NO extracted audio.
+        // Otherwise the audio effect will start the video in sync.
+        if (!activeHasExtractedAudio) {
           video.play().catch(() => {});
         }
       } else {
@@ -381,6 +432,9 @@ const CarouselLayout = ({
                     playsInline: true,
                     loop: true,
                     preload:
+                      // Combinar distancia al post activo y distancia al slide:
+                      //   - Si el post NO está activo y está a >1 de distancia, NO preloads nada
+                      //   - Si el post está activo o muy cerca, aplicar la política por slide
                       (!isActive && distanceFromActive > 1)
                         ? 'none'
                         : option.extracted_audio_id
@@ -400,12 +454,12 @@ const CarouselLayout = ({
                 />
               </div>
 
-              {/* TEXT OVERLAY */}
+              {/* TEXT OVERLAY - Descripción del slide */}
               {!isThumbnail && option.text && (
                 <div className={cn(
                   "absolute left-0 right-0 z-10 px-4",
-                  option.text_position === 'top' ? 'top-4' :
-                  option.text_position === 'center' ? 'top-1/2 -translate-y-1/2' :
+                  option.text_position === 'top' ? 'top-4' : 
+                  option.text_position === 'center' ? 'top-1/2 -translate-y-1/2' : 
                   'bottom-24'
                 )}>
                   <p className="text-white text-center text-sm sm:text-base font-medium bg-black/60 backdrop-blur-sm px-4 py-2 rounded-lg break-words">
@@ -414,7 +468,7 @@ const CarouselLayout = ({
                 </div>
               )}
 
-              {/* WINNER/SELECTED UI */}
+              {/* WINNER/SELECTED SIMILAR UI - Solo visible cuando NO es thumbnail ni momento */}
               {!isThumbnail && !isMoment && mobile && poll.userVote && (
                 <div>
                   {percentage > 0 && (
@@ -443,8 +497,7 @@ const CarouselLayout = ({
 
               </div>
               </DoubleTapVoteAnimation>
-
-              {/* Mentioned Users */}
+              {/* Mentioned Users - inside SwiperSlide but outside DoubleTap */}
               {(() => {
                 const optionMentions = option.mentioned_users || [];
                 if (isThumbnail || optionMentions.length === 0) return null;
@@ -489,7 +542,7 @@ const CarouselLayout = ({
         })}
       </Swiper>
 
-      {/* INDICADORES PERSONALIZADOS */}
+      {/* INDICADORES PERSONALIZADOS - Sin marco - No mostrar para momentos (una sola imagen) */}
       {!isThumbnail && !isMoment && poll.options.length > 1 && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {poll.options.map((_, i) => (
@@ -501,8 +554,8 @@ const CarouselLayout = ({
               }}
               className={cn(
                 'transition-all duration-300 rounded-full',
-                i === currentSlide
-                  ? 'w-6 h-1.5 bg-white shadow-lg shadow-white/50'
+                i === currentSlide 
+                  ? 'w-6 h-1.5 bg-white shadow-lg shadow-white/50' 
                   : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/70 hover:scale-110'
               )}
             />
