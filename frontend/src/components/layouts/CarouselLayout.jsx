@@ -47,9 +47,6 @@ const CarouselLayout = ({
   const audioMetadataCache = useRef(new Map());
   const currentSlideSafe = useRef(0);
 
-  // === Refs for cleanup of dynamic listeners (audio loop detection, etc.) ===
-  const cleanupRefs = useRef({ audioTimeUpdateListener: null });
-
   // === Slide state ===
   const [internalCurrentSlide, setInternalCurrentSlide] = useState(0);
   const currentSlide =
@@ -204,7 +201,6 @@ const CarouselLayout = ({
 
     // Tenemos audio extraído → el audio es el reloj maestro
     let cancelled = false;
-    let driftInterval = null;
 
     const playSlideAudio = async () => {
       try {
@@ -255,74 +251,21 @@ const CarouselLayout = ({
 
         if (cancelled) return;
 
-        // ▶️ Ahora que el audio está corriendo, sincronizar y arrancar el video
+        // ▶️ Ahora que el audio está corriendo, sincronizar UNA SOLA VEZ y
+        // arrancar el video. A partir de aquí el video corre libre en loop;
+        // no se vuelve a tocar hasta el próximo cambio de slide.
         const syncOption = poll.options[currentSlideSafe.current];
         const syncVideo = syncOption ? videoRefs.current.get(syncOption.id) : null;
         if (syncVideo) {
           try {
             syncVideo.currentTime = audio.currentTime;
             syncVideo.playbackRate = 1.0;
-            // El video tiene su propio loop independiente; lo re-sincronizamos
-            // cuando el audio loopea (ver listener 'timeupdate' más abajo).
             syncVideo.loop = true;
             syncVideo.play().catch(() => {});
           } catch (_) {}
         }
 
-        console.log(`▶️ Audio+Video slide ${currentSlideSafe.current} sincronizados`);
-
-        // ⏱️ Corrección de deriva SIN seeks (sin "disco rallado").
-        //   - Drift pequeño (<1s): ajustamos playbackRate para deslizarnos
-        //     suavemente al sync. Sin saltos, sin stutter.
-        //   - Drift grande (>1.5s): asumimos desalineamiento por longitudes
-        //     distintas; lo manejará el listener de loop del audio (abajo).
-        driftInterval = setInterval(() => {
-          if (!audio || audio.paused) return;
-          const driftOption = poll.options[currentSlideSafe.current];
-          const driftVideo = driftOption ? videoRefs.current.get(driftOption.id) : null;
-          if (!driftVideo || driftVideo.paused) return;
-
-          const drift = driftVideo.currentTime - audio.currentTime;
-          const absDrift = Math.abs(drift);
-
-          if (absDrift < 0.05) {
-            // En sync — playbackRate normal
-            if (driftVideo.playbackRate !== 1.0) driftVideo.playbackRate = 1.0;
-          } else if (absDrift < 1.0) {
-            // Drift pequeño: ajustar velocidad para alcanzar al audio gradualmente
-            // drift > 0  → video adelantado → frenar (rate < 1)
-            // drift < 0  → video atrasado   → acelerar (rate > 1)
-            const targetRate = drift > 0 ? 0.97 : 1.03;
-            if (Math.abs(driftVideo.playbackRate - targetRate) > 0.005) {
-              driftVideo.playbackRate = targetRate;
-            }
-          }
-          // Drift >= 1.0s: NO corregir aquí (probablemente boundary de loop);
-          // el listener 'timeupdate' lo resincroniza limpiamente.
-        }, 600);
-
-        // 🔁 Detección de loop del audio: si audio.currentTime baja bruscamente
-        // (audio acaba de hacer loop), resincronizamos el video DE GOLPE una
-        // sola vez, en vez de hacerlo cada 400ms.
-        let lastAudioTime = audio.currentTime || 0;
-        const onAudioTimeUpdate = () => {
-          const now = audio.currentTime;
-          if (now + 0.5 < lastAudioTime) {
-            // Audio loopeó. Resincronizar video en este instante.
-            const loopOption = poll.options[currentSlideSafe.current];
-            const loopVideo = loopOption ? videoRefs.current.get(loopOption.id) : null;
-            if (loopVideo) {
-              try {
-                loopVideo.currentTime = now;
-                loopVideo.playbackRate = 1.0;
-              } catch (_) {}
-            }
-          }
-          lastAudioTime = now;
-        };
-        audio.addEventListener('timeupdate', onAudioTimeUpdate);
-        // Guardar el listener para limpiarlo en cleanup
-        cleanupRefs.current.audioTimeUpdateListener = onAudioTimeUpdate;
+        console.log(`▶️ Audio+Video slide ${currentSlideSafe.current} sincronizados (sin re-sync continuo)`);
 
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -335,20 +278,6 @@ const CarouselLayout = ({
 
     return () => {
       cancelled = true;
-      if (driftInterval) clearInterval(driftInterval);
-      // Limpiar listener de detección de loop del audio
-      if (cleanupRefs.current.audioTimeUpdateListener) {
-        try {
-          audio.removeEventListener('timeupdate', cleanupRefs.current.audioTimeUpdateListener);
-        } catch (_) {}
-        cleanupRefs.current.audioTimeUpdateListener = null;
-      }
-      // Reset playbackRate del video activo
-      const cleanupOption = poll.options[currentSlideSafe.current];
-      const cleanupVideo = cleanupOption ? videoRefs.current.get(cleanupOption.id) : null;
-      if (cleanupVideo) {
-        try { cleanupVideo.playbackRate = 1.0; } catch (_) {}
-      }
       audio.pause();
       audio.currentTime = 0;
     };
