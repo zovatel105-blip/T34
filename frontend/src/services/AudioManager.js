@@ -3,6 +3,8 @@
  * Maneja reproducción HTML5 con previews reales de iTunes API
  */
 
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+
 const DEV = process.env.NODE_ENV === 'development';
 const log = DEV ? console.log.bind(console) : () => {};
 
@@ -32,7 +34,11 @@ class AudioManager {
    * ya cargado → latencia de switch ~0ms en lugar de ~150ms.
    */
   preconnect(url) {
-    if (!url || this._preconnectUrl === url) return;
+    if (!url) return;
+    // 🔧 NATIVE-FIX: resolver URLs relativas (/api/uploads/...) contra el
+    // BACKEND_URL real. En APK Capacitor `https://localhost/api/...` no existe.
+    const resolvedUrl = resolveAssetUrl(url) || url;
+    if (this._preconnectUrl === resolvedUrl) return;
 
     // Limpiar preconexión anterior
     if (this._preconnectAudio) {
@@ -41,15 +47,16 @@ class AudioManager {
       this._preconnectAudio = null;
     }
 
-    this._preconnectUrl = url;
+    this._preconnectUrl = resolvedUrl;
     const audio = new Audio();
-    audio.crossOrigin = 'anonymous';
+    // ⚠️ NO usar crossOrigin para audio HTML5 simple: causa fallos CORS
+    // en APK nativo si el servidor no devuelve los headers correctos.
     audio.preload = 'auto';
     audio.volume = 0;
-    audio.src = url;
+    audio.src = resolvedUrl;
     audio.load(); // descarga sin reproducir
     this._preconnectAudio = audio;
-    log('🔗 AudioManager: preconnected', url);
+    log('🔗 AudioManager: preconnected', resolvedUrl);
   }
 
   /**
@@ -61,6 +68,11 @@ class AudioManager {
     try {
       const { postId = null } = options;
 
+      // 🔧 NATIVE-FIX: resolver URLs relativas (/api/uploads/...) contra el
+      // BACKEND_URL real. En APK Capacitor `https://localhost/api/...` no existe
+      // y el audio falla silenciosamente con el reproductor "roto".
+      const resolvedUrl = resolveAssetUrl(audioUrl) || audioUrl;
+
       // Detener completamente cualquier audio anterior
       if (this.currentAudio) {
         await this.stop();
@@ -68,18 +80,19 @@ class AudioManager {
 
       // ✅ Reutilizar audio pre-conectado si la URL coincide → ~0ms latencia
       let audio;
-      if (this._preconnectAudio && this._preconnectUrl === audioUrl) {
-        log('⚡ AudioManager: reusing preconnected audio for', audioUrl);
+      if (this._preconnectAudio && this._preconnectUrl === resolvedUrl) {
+        log('⚡ AudioManager: reusing preconnected audio for', resolvedUrl);
         audio = this._preconnectAudio;
         this._preconnectAudio = null;
         this._preconnectUrl = null;
         audio.volume = 0;
       } else {
         audio = new Audio();
-        audio.crossOrigin = 'anonymous';
+        // ⚠️ NO usar crossOrigin para audio HTML5 simple: causa fallos CORS
+        // en APK nativo si el servidor no devuelve los headers correctos.
         audio.preload = 'auto';
         audio.volume = 0;
-        audio.src = audioUrl;
+        audio.src = resolvedUrl;
       }
 
       if (options.loop !== undefined) audio.loop = options.loop;
@@ -95,7 +108,7 @@ class AudioManager {
 
       this.currentAudio = audio;
       this.currentPostId = postId;
-      this.currentAudioUrl = audioUrl;
+      this.currentAudioUrl = resolvedUrl;
 
       this.playPromise = audio.play();
       await this.playPromise;

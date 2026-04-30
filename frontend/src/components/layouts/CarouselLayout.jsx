@@ -220,10 +220,15 @@ const CarouselLayout = ({
         const audioData = await fetchAudioMetadata(extractedAudioId);
         if (cancelled || !audioData) return;
 
-        const audioUrl = audioData.public_url || audioData.url || audioData.preview_url;
-        if (!audioUrl) return;
+        const audioUrlRaw = audioData.public_url || audioData.url || audioData.preview_url;
+        if (!audioUrlRaw) return;
+        // 🔧 NATIVE-FIX: resolver URL relativa contra BACKEND_URL.
+        // En APK Capacitor "/api/uploads/audio/xxx.mp3" resolvería a
+        // https://localhost/api/... que no existe → audio no reproduce.
+        const audioUrl = resolveAssetUrl(audioUrlRaw) || audioUrlRaw;
 
-        const coverImage = audioData.cover_url || option.thumbnail_url;
+        const coverRaw = audioData.cover_url || option.thumbnail_url;
+        const coverImage = resolveAssetUrl(coverRaw) || coverRaw;
 
         if (onThumbnailChange && coverImage) {
           onThumbnailChange(coverImage);

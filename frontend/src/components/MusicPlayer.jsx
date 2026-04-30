@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, Pause, Music, Loader2 } from 'lucide-react';
 import audioManager from '../services/AudioManager';
 import realMusicService from '../services/realMusicService';
+import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 
 const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', autoPlay = false, loop = false, authorAvatar = null, authorUsername = null, overrideAudioId = null, forceUseAvatar = false }) => {
   const navigate = useNavigate();
@@ -157,7 +158,9 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
   const isOriginalSound = music.isOriginal || music.source === 'User Upload' || !music.cover;
   // Si forceUseAvatar es true (audio de carrusel), siempre usar authorAvatar si existe
   // Prioridad: 1) forceUseAvatar con authorAvatar, 2) isOriginalSound con authorAvatar, 3) music.cover
-  const displayImage = (forceUseAvatar || isOriginalSound) && authorAvatar ? authorAvatar : music.cover;
+  const rawDisplayImage = (forceUseAvatar || isOriginalSound) && authorAvatar ? authorAvatar : music.cover;
+  // 🔧 NATIVE-FIX: resolver URL relativa para que funcione en APK Capacitor
+  const displayImage = resolveAssetUrl(rawDisplayImage) || rawDisplayImage;
   
   return (
     <div className={`flex-shrink-0 ${className}`}>
