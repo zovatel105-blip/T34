@@ -204,17 +204,11 @@ const CarouselLayout = ({
 
     const playSlideAudio = async () => {
       try {
-        // Parar todo lo que estaba sonando
+        // ⚠️ NO pausamos el video aquí: el VIDEO EFFECT ya lo arrancó
+        // inmediatamente al cambiar de slide. Sólo cargamos el audio en
+        // paralelo y, cuando esté listo, hacemos UNA sincronización ligera.
         audio.pause();
         audio.currentTime = 0;
-
-        // Pausar y resetear el video ANTES de arrancar el audio
-        const currentOption = poll.options[currentSlideSafe.current];
-        const video = currentOption ? videoRefs.current.get(currentOption.id) : null;
-        if (video) {
-          video.pause();
-          video.currentTime = 0;
-        }
 
         // Fetch metadata (cached)
         const audioData = await fetchAudioMetadata(extractedAudioId);
@@ -251,26 +245,31 @@ const CarouselLayout = ({
         audio.volume = 0.7;
         audio.loop = true;
 
-        // ▶️ Arrancar audio primero
+        // ▶️ Cargar/arrancar audio (puede tardar en nativo si el archivo
+        //   todavía no está cacheado). El video YA está reproduciendo.
         await audio.play();
 
         if (cancelled) return;
 
-        // ▶️ Ahora que el audio está corriendo, sincronizar UNA SOLA VEZ y
-        // arrancar el video. A partir de aquí el video corre libre en loop;
-        // no se vuelve a tocar hasta el próximo cambio de slide.
+        // 🔄 Sincronización ligera: ajustar video al tiempo del audio sólo
+        //   si hay deriva significativa. Si el video estaba pausado por
+        //   algún motivo (autoplay bloqueado), lo arrancamos.
         const syncOption = poll.options[currentSlideSafe.current];
         const syncVideo = syncOption ? videoRefs.current.get(syncOption.id) : null;
         if (syncVideo) {
           try {
-            syncVideo.currentTime = audio.currentTime;
-            syncVideo.playbackRate = 1.0;
             syncVideo.loop = true;
-            syncVideo.play().catch(() => {});
+            const drift = Math.abs((syncVideo.currentTime || 0) - (audio.currentTime || 0));
+            if (drift > 0.5) {
+              syncVideo.currentTime = audio.currentTime;
+            }
+            if (syncVideo.paused) {
+              syncVideo.play().catch(() => {});
+            }
           } catch (_) {}
         }
 
-        console.log(`▶️ Audio+Video slide ${currentSlideSafe.current} sincronizados (sin re-sync continuo)`);
+        console.log(`▶️ Audio listo y sincronizado con video slide ${currentSlideSafe.current}`);
 
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -289,8 +288,11 @@ const CarouselLayout = ({
   }, [currentSlide, isActive, poll.options, poll.author, hasGlobalMusic]);
 
   // ========== VIDEO EFFECT ==========
-  // Para slides CON audio extraído: el audio es el maestro, este efecto NO arranca el video.
-  // Para slides SIN audio extraído: este efecto gobierna la reproducción del video.
+  // El video del slide activo arranca SIEMPRE de inmediato (muteado).
+  // Si la opción tiene `extracted_audio_id`, el AUDIO EFFECT cargará el
+  // audio en paralelo y, cuando esté listo, hará una sincronización ligera.
+  // Esto evita que el video quede pausado esperando al audio en redes lentas
+  // (típico en APK nativo la primera vez que se ve la publicación).
   useEffect(() => {
     if (!poll.options) return;
 
@@ -299,16 +301,13 @@ const CarouselLayout = ({
 
       const index = poll.options.findIndex((o) => o.id === id);
       const shouldPlay = isActive && index === currentSlide;
-      const opt = poll.options[index];
-      const hasExtractedAudioForSlide = !!opt?.extracted_audio_id;
 
       if (shouldPlay) {
-        video.pause();
-        video.currentTime = 0;
         video.muted = true;
-
-        // Si tiene audio extraído, el efecto de audio se encarga de arrancar el video
-        if (!hasExtractedAudioForSlide) {
+        video.loop = true;
+        // Arrancar video INMEDIATAMENTE; no esperamos al audio.
+        // (Si ya estaba reproduciendo desde un slide anterior, .play() es no-op).
+        if (video.paused) {
           video.play().catch(() => {});
         }
       } else {
