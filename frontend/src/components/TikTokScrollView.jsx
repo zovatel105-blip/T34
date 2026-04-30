@@ -1722,9 +1722,19 @@ const TikTokScrollView = ({
     }, TRANSITION_MS);
   }, [activeIndex, polls.length, onSwipeStart, onActiveIndexChange, showScrollHint, onLoadMore, hasMoreContent, isLoadingMore]);
 
+  // ─── DRAG / SWIPE GESTURE (TikTok-style live tracking) ───────────────────
+  // While dragging: the tape follows the finger 1:1 with no transition.
+  // On release: if dragged > 20% of viewport → complete the swipe;
+  //             otherwise → spring back to center.
+  // Edge resistance: at the first/last post, dragging beyond the boundary
+  //                  is dampened to 20% of finger movement (rubber-band).
+  const SWIPE_FRACTION_THRESHOLD = 0.20; // 20% of viewport
+  const EDGE_RESISTANCE = 0.20;          // 20% follow at the edges
+
   // Swipe gesture on the 3-slot tape
   const handleTapePointerDown = useCallback((e) => {
     if (isModalOpen || storiesOverlayOpen) return;
+    if (isAnimatingRef.current) return; // ignore while a transition is running
     touchStartYRef.current = e.touches ? e.touches[0].clientY : e.clientY;
     touchCurrentYRef.current = touchStartYRef.current;
 
@@ -1740,26 +1750,43 @@ const TikTokScrollView = ({
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     touchCurrentYRef.current = clientY;
 
-    // Pull-to-refresh
-    if (onRefresh && !isRefreshing && activeIndex === 0 && pullStartYRef.current !== null) {
-      const diff = clientY - pullStartYRef.current;
-      if (diff > 0) {
-        isPullingRef.current = true;
-        setPullDistance(Math.min(diff * 0.5, PTR_MAX));
-      }
+    const deltaPx = clientY - touchStartYRef.current; // +down / -up
+
+    // Pull-to-refresh has priority when at the very top and dragging down
+    if (onRefresh && !isRefreshing && activeIndex === 0 && deltaPx > 0) {
+      isPullingRef.current = true;
+      setPullDistance(Math.min(deltaPx * 0.5, PTR_MAX));
+      return;
     }
-  }, [onRefresh, isRefreshing, activeIndex]);
+
+    // Live tape drag: convert px → dvh (relative to viewport height)
+    const vh = window.innerHeight || 1;
+    let offsetDvh = (deltaPx / vh) * 100;
+
+    // Rubber-band resistance at the boundaries.
+    // - At first post: dragging DOWN (deltaPx > 0) is at boundary.
+    // - At last post:  dragging UP   (deltaPx < 0) is at boundary.
+    const atStart = activeIndex === 0;
+    const atEnd = activeIndex >= polls.length - 1;
+    if ((atStart && deltaPx > 0) || (atEnd && deltaPx < 0)) {
+      offsetDvh *= EDGE_RESISTANCE;
+    }
+
+    // No transition while dragging — tape follows the finger 1:1
+    setIsTransitioning(false);
+    setTranslateOffset(offsetDvh);
+  }, [onRefresh, isRefreshing, activeIndex, polls.length]);
 
   const handleTapePointerUp = useCallback(async (e) => {
     if (touchStartYRef.current === null) return;
 
     const startY = touchStartYRef.current;
     const endY = touchCurrentYRef.current ?? startY;
-    const diff = startY - endY; // positive = swipe up (next)
+    const deltaPx = endY - startY; // +down / -up
     touchStartYRef.current = null;
     touchCurrentYRef.current = null;
 
-    // Handle pull-to-refresh
+    // Handle pull-to-refresh release
     if (isPullingRef.current) {
       isPullingRef.current = false;
       pullStartYRef.current = null;
@@ -1775,16 +1802,29 @@ const TikTokScrollView = ({
       return;
     }
 
-    if (Math.abs(diff) < 50) return; // below threshold
+    const vh = window.innerHeight || 1;
+    const draggedFraction = Math.abs(deltaPx) / vh;
+    const wantsNext = deltaPx < 0; // dragged up
+    const wantsPrev = deltaPx > 0; // dragged down
 
-    if (diff > 0) {
-      // Swipe up → next
-      goToIndex(activeIndex + 1);
+    const atStart = activeIndex === 0;
+    const atEnd = activeIndex >= polls.length - 1;
+    const cannotMove = (atStart && wantsPrev) || (atEnd && wantsNext);
+
+    if (draggedFraction >= SWIPE_FRACTION_THRESHOLD && !cannotMove) {
+      // Past the threshold → complete the swipe.
+      // goToIndex sets translateOffset to ±100dvh with transition; since the
+      // current offset is somewhere between 0 and ±100dvh, the spring just
+      // covers the remaining distance.
+      if (wantsNext) goToIndex(activeIndex + 1);
+      else goToIndex(activeIndex - 1);
     } else {
-      // Swipe down → previous
-      goToIndex(activeIndex - 1);
+      // Snap back to center with a spring.
+      setIsTransitioning(true);
+      setTranslateOffset(0);
+      setTimeout(() => setIsTransitioning(false), TRANSITION_MS);
     }
-  }, [pullDistance, isRefreshing, onRefresh, goToIndex, activeIndex]);
+  }, [pullDistance, isRefreshing, onRefresh, goToIndex, activeIndex, polls.length]);
 
   // Keyboard navigation
   useEffect(() => {
