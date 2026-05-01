@@ -715,28 +715,33 @@ export default function LiveViewerPage() {
             <Music2 className="w-5 h-5 text-white" />
           </ActionCircle>
 
-          {/* Regalo / Proponer reto */}
+          {/* Regalo (gifts de TikTok) */}
           <ActionCircle
             tone="gift"
             ariaLabel="Enviar regalo"
-            onClick={() => setProposeOpen(true)}
+            onClick={() => {
+              toast({
+                title: '🎁 Próximamente',
+                description: 'Los regalos llegarán muy pronto',
+              });
+            }}
           >
             <Gift className="w-5 h-5 text-white" />
           </ActionCircle>
 
-          {/* Contador de likes (visual; el like se da con doble-tap) */}
-          <div
-            className="shrink-0 relative w-11 h-11 rounded-full bg-black/55 backdrop-blur ring-1 ring-white/15 flex items-center justify-center"
-            aria-label={`${formatNumber(totalLikes)} me gusta`}
-            title="Doble-tap en el live para dar me gusta"
+          {/* Pill: Proponer reto (donación de monedas) — sustituye al
+              contador del corazón. Los me-gusta se dan con doble-tap. */}
+          <button
+            type="button"
+            onClick={() => setProposeOpen(true)}
+            aria-label="Proponer reto"
+            className="shrink-0 flex items-center gap-1.5 pl-1 pr-3 h-11 rounded-full bg-zinc-900/80 backdrop-blur ring-1 ring-amber-300/50 text-amber-200 text-[12px] font-bold shadow-lg active:scale-95 transition"
           >
-            <Heart className="w-5 h-5 text-white" />
-            <span
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-[1px] rounded-full bg-black/70 text-[9px] font-bold text-white tabular-nums whitespace-nowrap"
-            >
-              {formatNumber(totalLikes)}
+            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-black text-base shrink-0">
+              💡
             </span>
-          </div>
+            <span className="whitespace-nowrap">Proponer reto</span>
+          </button>
         </form>
       </div>
 
