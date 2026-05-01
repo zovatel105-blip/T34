@@ -7930,6 +7930,11 @@ async def _extract_carousel_audio_background(
                 "cover_url": thumbnail_url,
                 "privacy": "public",
                 "uses_count": 1,
+                # 🔧 FIX: sin is_active=True, el endpoint GET /api/audio/{id}
+                # devuelve 404 (filtra por is_active:True), el player no
+                # resuelve la URL del mp3 y aparece roto. Antes faltaba y
+                # todos los audios extraídos de video eran "invisibles".
+                "is_active": True,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
             }
