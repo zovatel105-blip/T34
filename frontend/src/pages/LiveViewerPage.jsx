@@ -5,28 +5,25 @@
  *  1) "Enter live" — fullscreen video placeholder + chat overlay + hearts
  *  2) "Active voting" — center card with options + countdown
  *  3) "Real-time result" — winner banner ("¡GANADOR!")
- *  4) Live chat input + action bar (like, chat, vote, gifts, share)
- *  5) "Propose challenge" with virtual coin donation
+ *  4) Bottom bar (TikTok-style): chat input + 4 circular actions:
+ *       multi-guest, monedas, regalos, contador de likes (visual, sin botón)
+ *  5) Doble-tap en el video para dar like (con corazón animado en el punto del tap)
+ *  6) "Propose challenge" with virtual coin donation (acceso desde icono regalo)
  *
  * Real-time via WebSocket (useLiveSocket).
  */
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ChevronLeft,
   Heart,
-  MessageCircle,
-  Vote,
   Gift,
-  Share2,
   Send,
   X,
-  Coins,
   Sparkles,
   Trophy,
   Users,
-  Rocket,
   Eye,
+  Music2,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import liveService from '../services/liveService';
@@ -173,16 +170,24 @@ const WinnerBanner = ({ winner, creatorName }) => {
   );
 };
 
-const FlyingHeart = ({ delay = 0 }) => (
-  <span
-    className="absolute bottom-0 right-2 text-pink-500"
-    style={{
-      animation: `liveHeartFly 2.1s ease-out ${delay}ms forwards`,
-    }}
-  >
-    <Heart className="w-6 h-6 fill-current drop-shadow" />
-  </span>
-);
+const FlyingHeart = ({ delay = 0, x = null, y = null, color = 'text-pink-500' }) => {
+  // Si nos dan coordenadas absolutas (doble-tap), las usamos como punto de
+  // partida. Si no, partimos desde la esquina inferior derecha (likes globales).
+  const usePosition = x != null && y != null;
+  return (
+    <span
+      className={`pointer-events-none ${color} ${usePosition ? 'fixed' : 'absolute bottom-0 right-2'} z-[60]`}
+      style={{
+        ...(usePosition
+          ? { left: `${x}px`, top: `${y}px`, transform: 'translate(-50%, -50%)' }
+          : {}),
+        animation: `liveHeartFly 2.1s ease-out ${delay}ms forwards`,
+      }}
+    >
+      <Heart className="w-7 h-7 fill-current drop-shadow-lg" />
+    </span>
+  );
+};
 
 const ProposeChallengeModal = ({ open, onClose, onSubmit, balance }) => {
   const [text, setText] = useState('');
@@ -314,6 +319,9 @@ export default function LiveViewerPage() {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [votedOptionId, setVotedOptionId] = useState(null);
   const [votedPollId, setVotedPollId] = useState(null);
+  // 💖 Corazones nacidos por doble-tap (con coordenadas absolutas)
+  const [tapHearts, setTapHearts] = useState([]);
+  const lastTapRef = useRef({ time: 0, x: 0, y: 0 });
   const chatScrollRef = useRef(null);
 
   const {
@@ -397,9 +405,40 @@ export default function LiveViewerPage() {
     if (sendChat(text)) setChatInput('');
   };
 
-  const handleLike = () => {
-    sendLike();
-  };
+  // 💖 Doble-tap en el video para dar like.
+  // - 2 taps a < 350ms y < 30px de distancia ⇒ dispara like + animación de
+  //   corazón en el punto exacto del segundo tap.
+  // - Un solo tap NO hace nada (no cierra modales ni nada): el primer tap
+  //   sólo prepara el segundo. Los chats/poll/inputs siguen siendo
+  //   pinchables porque su `pointer-events` los mantiene por encima.
+  const handleStageTap = useCallback(
+    (e) => {
+      const t = e.changedTouches?.[0] || e;
+      const x = t.clientX;
+      const y = t.clientY;
+      const now = Date.now();
+      const last = lastTapRef.current;
+      const dt = now - last.time;
+      const dx = x - last.x;
+      const dy = y - last.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dt < 350 && dist < 30) {
+        // ✔️ Doble-tap detectado
+        sendLike();
+        const id = `${now}-${Math.random().toString(36).slice(2, 7)}`;
+        setTapHearts((prev) => [...prev.slice(-12), { id, x, y }]);
+        setTimeout(() => {
+          setTapHearts((prev) => prev.filter((h) => h.id !== id));
+        }, 2200);
+        // resetear para evitar triple-tap como dos dobles
+        lastTapRef.current = { time: 0, x: 0, y: 0 };
+      } else {
+        lastTapRef.current = { time: now, x, y };
+      }
+    },
+    [sendLike]
+  );
 
   const handleVote = (option) => {
     if (!activePoll || votedPollId === activePoll.id) return;
@@ -469,6 +508,28 @@ export default function LiveViewerPage() {
       {/* Vignette */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+
+      {/* 💖 Capa transparente para detectar doble-tap (z bajo: queda por DEBAJO
+          de la cabecera, chat, votación e input. Cubre todo el lienzo del live). */}
+      <div
+        className="absolute inset-0 z-10"
+        style={{ touchAction: 'manipulation' }}
+        onTouchEnd={handleStageTap}
+        onClick={handleStageTap}
+        aria-hidden="true"
+      />
+
+      {/* 💖 Corazones por doble-tap (renderizados en portal para que escapen
+          de cualquier overflow:hidden de elementos padres) */}
+      {tapHearts.length > 0 &&
+        createPortal(
+          <>
+            {tapHearts.map((h) => (
+              <FlyingHeart key={h.id} x={h.x} y={h.y} color="text-rose-500" />
+            ))}
+          </>,
+          document.body
+        )}
 
       {/* Top bar — matches reference: avatar + name + likes count on left, viewers + close on right, LIVE+timer below */}
       <div className="absolute top-0 inset-x-0 z-30 px-3 pt-[calc(env(safe-area-inset-top)+10px)]">
@@ -594,100 +655,89 @@ export default function LiveViewerPage() {
         )}
       </div>
 
-      {/* Bottom: chat input + actions */}
-      <div className="absolute inset-x-0 bottom-0 z-30 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
-        {/* Propose challenge pill (with lightbulb icon, bottom-right like reference) */}
-        <div className="flex items-center justify-end mb-2">
-          <button
-            onClick={() => setProposeOpen(true)}
-            className="flex items-center gap-1.5 pl-2 pr-3 h-9 rounded-full bg-zinc-900/80 backdrop-blur ring-1 ring-amber-300/50 text-amber-200 text-[12px] font-bold shadow-lg active:scale-95"
-          >
-            <span className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-black text-[10px]">💡</span>
-            Proponer reto
-          </button>
-        </div>
+      {/* ========================================================
+          BARRA INFERIOR — diseño según la referencia del usuario
+          ========================================================
+          Una sola fila con:
+            [ Type… input ]  [👥]  [🪙]  [🎁]  [❤ 544]
+          • El icono ❤ es SÓLO contador visual: el like se da con doble-tap
+          • El icono 🎁 abre el modal "Proponer reto" (donación de monedas) */}
+      <div className="absolute inset-x-0 bottom-0 z-30 pb-[calc(env(safe-area-inset-bottom)+10px)] px-3 pt-6 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none">
+        <form
+          onSubmit={handleSendChat}
+          className="pointer-events-auto flex items-center gap-2"
+        >
+          {/* Chat input pill */}
+          <div className="flex-1 min-w-0 flex items-center bg-white/10 backdrop-blur-md rounded-full ring-1 ring-white/15 h-11 px-4">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value.slice(0, 200))}
+              placeholder={status === 'open' ? 'Type…' : 'Conectando…'}
+              disabled={status !== 'open'}
+              className="flex-1 min-w-0 bg-transparent text-white placeholder:text-white/55 text-sm outline-none"
+            />
+            {chatInput.trim() && (
+              <button
+                type="submit"
+                className="ml-2 w-7 h-7 rounded-full bg-purple-500 flex items-center justify-center shrink-0"
+                aria-label="Enviar"
+              >
+                <Send className="w-3.5 h-3.5 text-white" />
+              </button>
+            )}
+          </div>
 
-        <form onSubmit={handleSendChat} className="flex items-center gap-2">
-          <input
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value.slice(0, 200))}
-            placeholder={status === 'open' ? 'Escribe un mensaje…' : 'Conectando…'}
-            disabled={status !== 'open'}
-            className="flex-1 h-10 px-4 rounded-full bg-black/50 backdrop-blur ring-1 ring-white/15 text-white placeholder:text-white/40 text-sm outline-none focus:ring-purple-400/60"
-          />
-          <button
-            type="submit"
-            disabled={!chatInput.trim()}
-            className="w-10 h-10 rounded-full bg-purple-600 disabled:bg-purple-600/40 flex items-center justify-center"
-            aria-label="Enviar"
-          >
-            <Send className="w-4 h-4 text-white" />
-          </button>
-        </form>
-
-        {/* Action bar — vibrant colored circles like the reference */}
-        <div className="mt-3 flex items-end justify-between px-1">
-          <ActionButton
-            tone="pink"
-            icon={<Heart className="w-5 h-5 fill-white text-white" />}
-            topLabel="Me gusta"
-            value={formatNumber(totalLikes)}
-            onClick={handleLike}
-          />
-          <ActionButton
-            tone="dark"
-            icon={<MessageCircle className="w-5 h-5 text-white" />}
-            topLabel="Chat"
-            value={formatNumber(chat.length)}
-          />
-          <ActionButton
-            tone="purple"
-            icon={<Vote className="w-5 h-5 text-white" />}
-            topLabel=""
-            value="Votar"
-            big
-            onClick={() => {
-              if (!activePoll) {
-                toast({
-                  title: 'Sin votación activa',
-                  description: 'Espera a que el creador lance una nueva votación',
-                });
-              }
-            }}
-          />
-          <ActionButton
-            tone="rose"
-            icon={<Gift className="w-5 h-5 text-white" />}
-            topLabel=""
-            value="Regalos"
+          {/* Multi-guest / co-anfitrión */}
+          <ActionCircle
+            tone="cohost"
+            ariaLabel="Multi-guest"
             onClick={() => {
               toast({
-                title: '🎁 Próximamente',
-                description: 'Los regalos llegarán muy pronto',
+                title: '👥 Multi-guest',
+                description: 'Próximamente podrás unirte como invitado',
               });
             }}
-          />
-          <ActionButton
-            tone="dark"
-            icon={<Share2 className="w-5 h-5 text-white" />}
-            topLabel="Compartir"
-            value="128"
-            onClick={() => {
-              try {
-                navigator.clipboard?.writeText(window.location.href);
-                toast({ title: '🔗 Enlace copiado' });
-              } catch (_) {}
-            }}
-          />
-        </div>
+          >
+            <Users className="w-5 h-5 text-white" />
+          </ActionCircle>
 
-        {/* Coins HUD */}
-        <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-white/60">
-          <Coins className="w-3.5 h-3.5 text-amber-300" />
-          <span>
-            Saldo: <span className="text-amber-300 font-semibold">{balance}</span> monedas
-          </span>
-        </div>
+          {/* Monedas / promo */}
+          <ActionCircle
+            tone="coin"
+            ariaLabel="Monedas"
+            onClick={() => {
+              toast({
+                title: '🪙 Saldo',
+                description: `Tienes ${balance} monedas`,
+              });
+            }}
+          >
+            <Music2 className="w-5 h-5 text-white" />
+          </ActionCircle>
+
+          {/* Regalo / Proponer reto */}
+          <ActionCircle
+            tone="gift"
+            ariaLabel="Enviar regalo"
+            onClick={() => setProposeOpen(true)}
+          >
+            <Gift className="w-5 h-5 text-white" />
+          </ActionCircle>
+
+          {/* Contador de likes (visual; el like se da con doble-tap) */}
+          <div
+            className="shrink-0 relative w-11 h-11 rounded-full bg-black/55 backdrop-blur ring-1 ring-white/15 flex items-center justify-center"
+            aria-label={`${formatNumber(totalLikes)} me gusta`}
+            title="Doble-tap en el live para dar me gusta"
+          >
+            <Heart className="w-5 h-5 text-white" />
+            <span
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-[1px] rounded-full bg-black/70 text-[9px] font-bold text-white tabular-nums whitespace-nowrap"
+            >
+              {formatNumber(totalLikes)}
+            </span>
+          </div>
+        </form>
       </div>
 
       <ProposeChallengeModal
@@ -710,24 +760,32 @@ export default function LiveViewerPage() {
   );
 }
 
-const ActionButton = ({ icon, topLabel, value, tone = 'dark', big = false, onClick }) => {
-  const toneClass = {
-    pink: 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/30',
-    purple: 'bg-gradient-to-br from-purple-500 to-fuchsia-600 shadow-lg shadow-purple-500/40',
-    rose: 'bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-rose-500/30',
-    dark: 'bg-zinc-800/80 backdrop-blur ring-1 ring-white/15',
-  }[tone] || 'bg-zinc-800/80';
-  const size = big ? 'w-12 h-12' : 'w-11 h-11';
+/**
+ * Botón circular compacto para la barra de acciones inferior.
+ * Recrea las tonalidades vibrantes de la imagen de referencia:
+ *  - cohost  → degradado magenta/cian (avatares en split)
+ *  - coin    → degradado naranja/rosa con borde dorado
+ *  - gift    → rosa intenso (regalo de TikTok)
+ */
+const ActionCircle = ({ children, tone, onClick, ariaLabel }) => {
+  const toneClass =
+    {
+      cohost:
+        'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-cyan-400 shadow-lg shadow-fuchsia-500/30',
+      coin:
+        'bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 shadow-lg shadow-orange-500/30 ring-1 ring-yellow-300/60',
+      gift:
+        'bg-gradient-to-br from-pink-500 to-rose-600 shadow-lg shadow-rose-500/40',
+    }[tone] || 'bg-zinc-800/80 ring-1 ring-white/15';
+
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-0.5 active:scale-95 transition min-w-[52px]"
+      aria-label={ariaLabel}
+      className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center active:scale-95 transition ${toneClass}`}
     >
-      {topLabel && <span className="text-[9px] text-white/70 font-medium leading-none">{topLabel}</span>}
-      <div className={`${size} rounded-full flex items-center justify-center ${toneClass}`}>
-        {icon}
-      </div>
-      <span className="text-[10px] text-white/85 font-semibold">{value}</span>
+      {children}
     </button>
   );
 };

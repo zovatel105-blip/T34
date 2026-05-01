@@ -346,6 +346,9 @@ def build_live_router(*, db, get_current_user, get_current_user_optional):
             state = manager.get_room(r["id"])
             r["viewer_count"] = state.viewer_count if state else 0
             r["total_likes"] = state.total_likes if state else r.get("total_likes", 0)
+            # Incluir el poll activo para que la lista pueda mostrar la
+            # pregunta y barras de votación en cada tarjeta.
+            r["active_poll"] = state.active_poll if state else None
         return {"rooms": rooms, "total": len(rooms)}
 
     @router.get("/rooms/{room_id}")
