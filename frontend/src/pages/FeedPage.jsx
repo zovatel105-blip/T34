@@ -235,6 +235,21 @@ const FeedPage = () => {
         }
       } catch (err) {
         console.error('Error loading polls:', err);
+        // 🛡️ ÚLTIMA RED DE SEGURIDAD: si la red falló (típico offline) pero
+        // tenemos algo en disco (incluso poco fresco o de otra clave),
+        // hidratamos con eso ANTES de mostrar el error. Esto evita ver la
+        // pantalla "Sin conexión" en falso cuando hay caché disponible.
+        try {
+          const fallbackCache = await feedCache.getCachedFeed('main');
+          if (fallbackCache && fallbackCache.polls.length > 0) {
+            console.warn(`🛟 [FeedPage] Recovered ${fallbackCache.polls.length} cached polls from fallback (offline)`);
+            setPolls(fallbackCache.polls);
+            setIsLoading(false);
+            return;
+          }
+        } catch (cacheErr) {
+          console.warn('[FeedPage] fallback cache read failed:', cacheErr);
+        }
         setError(err.message);
         toast({
           title: "Error al cargar votaciones",
