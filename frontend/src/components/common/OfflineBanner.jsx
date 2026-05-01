@@ -16,16 +16,27 @@
 import React, { useEffect, useState } from 'react';
 import useNetworkStatus from '../../hooks/useNetworkStatus';
 import { WifiOff, Wifi } from 'lucide-react';
+import feedCache from '../../services/feedCacheService';
 
 const OfflineBanner = () => {
   const { isOnline } = useNetworkStatus();
   const [visible, setVisible] = useState(false);
   const [mode, setMode] = useState('offline'); // 'offline' | 'reconnected'
+  const [hasCache, setHasCache] = useState(null); // null = unknown, true/false
 
   useEffect(() => {
     if (!isOnline) {
       setMode('offline');
       setVisible(true);
+      // Verificamos si hay caché en disco para no mentir en el banner.
+      (async () => {
+        try {
+          const c = await feedCache.getCachedFeed('main');
+          setHasCache(Boolean(c && c.polls && c.polls.length > 0));
+        } catch {
+          setHasCache(false);
+        }
+      })();
       return undefined;
     }
     // Si estaba visible (offline), pasamos a "reconnected" y ocultamos tras 2s
@@ -41,6 +52,18 @@ const OfflineBanner = () => {
   if (!visible) return null;
 
   const isOffline = mode === 'offline';
+
+  // 🔧 Mensaje honesto: si no hay caché, no decimos "mostrando contenido guardado"
+  let label;
+  if (!isOffline) {
+    label = 'Conectado';
+  } else if (hasCache === true) {
+    label = 'Sin conexión · mostrando contenido guardado';
+  } else if (hasCache === false) {
+    label = 'Sin conexión';
+  } else {
+    label = 'Sin conexión';
+  }
 
   return (
     <div
@@ -68,9 +91,7 @@ const OfflineBanner = () => {
           <Wifi className="w-4 h-4 flex-shrink-0" />
         )}
         <span className="text-sm font-medium whitespace-nowrap">
-          {isOffline
-            ? 'Sin conexión · mostrando contenido guardado'
-            : 'Conectado'}
+          {label}
         </span>
       </div>
 
