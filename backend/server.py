@@ -13389,6 +13389,57 @@ _reaper_task = None
 _backfill_task = None
 
 @app.on_event("startup")
+async def _ensure_ffmpeg_available():
+    """
+    🛠️ Garantiza que ffmpeg/ffprobe estén disponibles al arrancar el backend.
+
+    En entornos de contenedor donde el FS no es persistente entre reinicios
+    (Kubernetes pods sin volúmenes persistentes para /usr/bin), ffmpeg
+    puede desaparecer tras un rebuild. Sin él, la pipeline de video y la
+    extracción de audio fallan silenciosamente y los posts quedan en
+    estado "failed", impidiendo su publicación.
+
+    Idempotente: si ya está instalado, no hace nada.
+    """
+    import shutil
+    import subprocess
+
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
+        logger.info("🛠️ ffmpeg/ffprobe already available")
+        return
+
+    logger.warning("🛠️ ffmpeg/ffprobe NOT found — attempting auto-install")
+    try:
+        # Ejecutar el script helper si existe; si no, apt-get directo.
+        script_path = "/app/scripts/install_ffmpeg.sh"
+        if os.path.exists(script_path):
+            proc = await asyncio.to_thread(
+                subprocess.run,
+                ["bash", script_path],
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+        else:
+            proc = await asyncio.to_thread(
+                subprocess.run,
+                ["bash", "-c", "apt-get update -y && apt-get install -y --no-install-recommends ffmpeg"],
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+        if proc.returncode == 0 and shutil.which("ffmpeg"):
+            logger.info("🛠️ ffmpeg auto-installed successfully")
+        else:
+            logger.error(
+                f"🛠️ ffmpeg auto-install failed (rc={proc.returncode}): "
+                f"{proc.stderr[-300:] if proc.stderr else proc.stdout[-300:]}"
+            )
+    except Exception as e:
+        logger.error(f"🛠️ ffmpeg auto-install crashed: {e}")
+
+
+@app.on_event("startup")
 async def _start_video_pipeline_reaper():
     global _reaper_task, _backfill_task
     try:
