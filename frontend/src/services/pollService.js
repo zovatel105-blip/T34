@@ -340,8 +340,11 @@ class PollService {
       return backendPolls.map(poll => this.transformPollData(poll));
     } catch (error) {
       console.error('Error fetching polls for frontend:', error);
-      // Return empty array on error to prevent app crashes
-      return [];
+      // 🔧 OFFLINE FIX: Re-lanzamos el error para que el caller (FeedPage)
+      // pueda distinguir entre "no hay posts" (array vacío) y "fallo de red".
+      // Antes devolvíamos [] silenciosamente, lo cual provocaba que el feed
+      // cacheado se sobrescribiera con un array vacío al estar offline.
+      throw error;
     }
   }
 

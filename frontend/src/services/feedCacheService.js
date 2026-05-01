@@ -52,6 +52,14 @@ class FeedCacheService {
   async setCachedFeed(polls, cacheKey = 'default') {
     try {
       if (!Array.isArray(polls)) return;
+      // 🔧 OFFLINE FIX: nunca sobrescribir el cache con un array vacío.
+      // Si la última respuesta del servidor falló (offline) y devolvió [],
+      // queremos preservar los posts que el usuario YA tenía cacheados,
+      // para que al abrir la APK sin red se sigan mostrando.
+      if (polls.length === 0) {
+        console.log('[feedCache] setCachedFeed: skip — array vacío, no sobrescribir cache existente');
+        return;
+      }
       const sliced = polls.slice(0, MAX_CACHED_POLLS).map(slimPollForCache);
       const payload = {
         version: 1,

@@ -130,6 +130,13 @@ const FeedPage = () => {
           
           // Load fresh data in background
           pollService.getPollsForFrontend({ limit: 30 }).then(freshData => {
+            // 🔧 OFFLINE FIX: solo reemplazamos el feed actual si el refresh
+            // trajo datos. Si vino vacío (raro online; típico offline) o si
+            // pollService lanzó error → mantenemos lo que ya teníamos.
+            if (!Array.isArray(freshData) || freshData.length === 0) {
+              console.warn('⚠️ Background refresh returned empty — keeping cached polls');
+              return;
+            }
             setPollsCache(prev => new Map(prev.set(cacheKey, {
               data: freshData,
               timestamp: Date.now()
@@ -137,7 +144,10 @@ const FeedPage = () => {
             setPolls(freshData);
             // 💾 Persistir en disco para el proximo arranque / offline
             feedCache.setCachedFeed(freshData, 'main').catch(() => {});
-          }).catch(console.warn);
+          }).catch((err) => {
+            // No tocar polls si el refresh falló (probablemente offline)
+            console.warn('[FeedPage] background refresh failed (offline?):', err?.message);
+          });
           
           return;
         }
@@ -153,6 +163,12 @@ const FeedPage = () => {
           // Si el cache es suficientemente reciente y ya estamos online,
           // aun asi pedimos los nuevos en background para mantenerlo al dia.
           pollService.getPollsForFrontend({ limit: 30 }).then(freshData => {
+            // 🔧 OFFLINE FIX: nunca sobrescribir el feed cacheado con []
+            // (caso típico cuando el refresh corre offline).
+            if (!Array.isArray(freshData) || freshData.length === 0) {
+              console.warn('⚠️ Background refresh returned empty — keeping cached polls');
+              return;
+            }
             setPollsCache(prev => new Map(prev.set(cacheKey, {
               data: freshData,
               timestamp: Date.now()
@@ -242,6 +258,16 @@ const FeedPage = () => {
       setCurrentPage(0);
       setHasMoreContent(true);
       const freshData = await pollService.getPollsForFrontend({ limit: 30 });
+      // 🔧 OFFLINE FIX: si el refresh devuelve [] no sobrescribimos el feed
+      // (mantenemos los posts cacheados visibles para el usuario).
+      if (!Array.isArray(freshData) || freshData.length === 0) {
+        console.warn('⚠️ [FeedPage] Pull-to-refresh devolvió 0 posts — manteniendo feed actual');
+        toast({
+          title: 'No hay nuevas votaciones',
+          description: 'Revisa tu conexión o vuelve más tarde.',
+        });
+        return;
+      }
       const cacheKey = 'feed_initial_30';
       setPollsCache(prev => new Map(prev.set(cacheKey, {
         data: freshData,
