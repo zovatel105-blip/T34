@@ -2,6 +2,17 @@ import React from 'react';
 import CarouselLayout from './CarouselLayout';
 import GridLayout from './GridLayout';
 import VSLayout from './VSLayout';
+import ErrorBoundary from '../common/ErrorBoundary';
+
+// Fallback visual para cuando un layout falla al renderizar
+const LayoutErrorFallback = () => (
+  <div className="w-full h-full flex items-center justify-center bg-black text-white/80 text-sm p-6 text-center">
+    <div>
+      <div className="text-3xl mb-2">⚠️</div>
+      <div>No se pudo mostrar esta publicación</div>
+    </div>
+  </div>
+);
 
 // Mapeo dinámico de layoutType → componente para los 8 layouts soportados
 const layoutComponents = {
@@ -59,12 +70,17 @@ const LayoutRenderer = ({
   // Layout VS tiene su propio componente
   if (layoutType === 'vs') {
     return (
-      <VSLayout 
-        poll={poll} 
-        onVote={onVote} 
-        isActive={isActive}
-        isThumbnail={isThumbnail}
-      />
+      <ErrorBoundary
+        fallback={<LayoutErrorFallback />}
+        resetKeys={[poll?.id]}
+      >
+        <VSLayout 
+          poll={poll} 
+          onVote={onVote} 
+          isActive={isActive}
+          isThumbnail={isThumbnail}
+        />
+      </ErrorBoundary>
     );
   }
   

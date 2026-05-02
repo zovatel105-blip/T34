@@ -580,10 +580,35 @@ const detectVoiceGender = (voice) => {
 };
 
 /**
+ * Verifica si la Web Speech API (SpeechSynthesis) está disponible.
+ * En muchos Android WebViews (Capacitor/Cordova) NO existe, por lo que debemos
+ * hacer fallback silencioso para no crashear la UI.
+ * @returns {boolean}
+ */
+const isSpeechSynthesisAvailable = () => {
+  try {
+    return (
+      typeof window !== 'undefined' &&
+      typeof window.speechSynthesis !== 'undefined' &&
+      window.speechSynthesis !== null &&
+      typeof window.SpeechSynthesisUtterance !== 'undefined'
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Obtiene las voces disponibles en el dispositivo
  * @returns {Promise<SpeechSynthesisVoice[]>}
  */
 const getVoices = () => {
+  // Guard: si no hay speechSynthesis (Android WebView), devolver array vacío
+  if (!isSpeechSynthesisAvailable()) {
+    cachedVoices = [];
+    return Promise.resolve([]);
+  }
+
   if (cachedVoices) {
     return Promise.resolve(cachedVoices);
   }
@@ -593,29 +618,48 @@ const getVoices = () => {
   }
 
   voicesLoadedPromise = new Promise((resolve) => {
-    const voices = window.speechSynthesis.getVoices();
-    
-    if (voices.length > 0) {
-      cachedVoices = voices;
-      resolve(voices);
-      return;
-    }
+    try {
+      const voices = window.speechSynthesis.getVoices();
 
-    const checkVoices = () => {
-      const loadedVoices = window.speechSynthesis.getVoices();
-      if (loadedVoices.length > 0) {
-        cachedVoices = loadedVoices;
-        resolve(loadedVoices);
+      if (voices.length > 0) {
+        cachedVoices = voices;
+        resolve(voices);
+        return;
       }
-    };
 
-    window.speechSynthesis.onvoiceschanged = checkVoices;
-    
-    setTimeout(() => {
-      const fallbackVoices = window.speechSynthesis.getVoices();
-      cachedVoices = fallbackVoices;
-      resolve(fallbackVoices);
-    }, 1000);
+      const checkVoices = () => {
+        try {
+          const loadedVoices = window.speechSynthesis.getVoices();
+          if (loadedVoices.length > 0) {
+            cachedVoices = loadedVoices;
+            resolve(loadedVoices);
+          }
+        } catch {
+          cachedVoices = [];
+          resolve([]);
+        }
+      };
+
+      try {
+        window.speechSynthesis.onvoiceschanged = checkVoices;
+      } catch {
+        // ignore
+      }
+
+      setTimeout(() => {
+        try {
+          const fallbackVoices = window.speechSynthesis.getVoices();
+          cachedVoices = fallbackVoices || [];
+          resolve(cachedVoices);
+        } catch {
+          cachedVoices = [];
+          resolve([]);
+        }
+      }, 1000);
+    } catch {
+      cachedVoices = [];
+      resolve([]);
+    }
   });
 
   return voicesLoadedPromise;
@@ -765,9 +809,23 @@ const speak = async (text, options = {}) => {
     onError = () => {},
   } = options;
 
+  // Guard: si no hay speechSynthesis (Android WebView), silencioso y no crashear
+  if (!isSpeechSynthesisAvailable()) {
+    if (!window.__voiceServiceWarned) {
+      window.__voiceServiceWarned = true;
+      console.warn('⚠️ speechSynthesis no disponible en este entorno — TTS deshabilitado');
+    }
+    onEnd();
+    return null;
+  }
+
   // Solo cancelar si se solicita explícitamente
   if (cancelPrevious) {
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
   }
 
   if (!text || text.trim().length === 0) {
@@ -799,54 +857,75 @@ const speak = async (text, options = {}) => {
   
   // Obtener la mejor voz para el idioma Y el tipo preferido
   const voice = await getBestVoice(detectedLang, voiceType);
-  
-  // Crear utterance
-  const utterance = new SpeechSynthesisUtterance(text);
-  
-  if (voice) {
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-  } else {
-    const langConfig = LANGUAGE_CODES[detectedLang] || LANGUAGE_CODES.es;
-    utterance.lang = langConfig.variants[0] || 'es-ES';
+
+  try {
+    // Crear utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      const langConfig = LANGUAGE_CODES[detectedLang] || LANGUAGE_CODES.es;
+      utterance.lang = langConfig.variants[0] || 'es-ES';
+    }
+
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.volume = volume;
+
+    utterance.onstart = onStart;
+    utterance.onend = onEnd;
+    utterance.onerror = (event) => {
+      console.error('❌ Error en speech:', event.error);
+      onError(event);
+    };
+
+    console.log(`🔊 Hablando (${voiceType}) en ${utterance.lang}: "${text.substring(0, 50)}..."`);
+    window.speechSynthesis.speak(utterance);
+
+    return utterance;
+  } catch (err) {
+    console.warn('⚠️ No se pudo reproducir TTS:', err);
+    onEnd();
+    return null;
   }
-  
-  utterance.rate = rate;
-  utterance.pitch = pitch;
-  utterance.volume = volume;
-
-  utterance.onstart = onStart;
-  utterance.onend = onEnd;
-  utterance.onerror = (event) => {
-    console.error('❌ Error en speech:', event.error);
-    onError(event);
-  };
-
-  console.log(`🔊 Hablando (${voiceType}) en ${utterance.lang}: "${text.substring(0, 50)}..."`);
-  window.speechSynthesis.speak(utterance);
-
-  return utterance;
 };
 
 /**
  * Detiene cualquier speech en curso
  */
 const stop = () => {
-  window.speechSynthesis.cancel();
+  if (!isSpeechSynthesisAvailable()) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch {
+    // ignore
+  }
 };
 
 /**
  * Pausa el speech actual
  */
 const pause = () => {
-  window.speechSynthesis.pause();
+  if (!isSpeechSynthesisAvailable()) return;
+  try {
+    window.speechSynthesis.pause();
+  } catch {
+    // ignore
+  }
 };
 
 /**
  * Reanuda el speech pausado
  */
 const resume = () => {
-  window.speechSynthesis.resume();
+  if (!isSpeechSynthesisAvailable()) return;
+  try {
+    window.speechSynthesis.resume();
+  } catch {
+    // ignore
+  }
 };
 
 /**
@@ -854,7 +933,12 @@ const resume = () => {
  * @returns {boolean}
  */
 const isSpeaking = () => {
-  return window.speechSynthesis.speaking;
+  if (!isSpeechSynthesisAvailable()) return false;
+  try {
+    return window.speechSynthesis.speaking;
+  } catch {
+    return false;
+  }
 };
 
 /**
