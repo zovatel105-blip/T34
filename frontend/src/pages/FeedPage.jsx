@@ -12,6 +12,7 @@ import savedPollsService from '../services/savedPollsService';
 import feedCache from '../services/feedCacheService';
 import thumbnailPrefetch from '../services/thumbnailPrefetchService';
 import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
+import audioMetadataCacheStore from '../services/audioMetadataCacheService';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -91,6 +92,54 @@ const FeedPage = () => {
     // También prefetch los vídeos del primer post + los siguientes 4 (los que
     // el usuario verá inmediatamente al abrir la app).
     feedMediaPrefetcher.prefetchVideosAroundIndex(polls, 0, 4);
+  }, [polls]);
+
+  // 🎵 OFFLINE-FIRST: Pre-fetchear metadatos de TODOS los audios extraídos
+  // del feed cuando hay red, para que el player funcione offline en cualquier
+  // post (incluso los que el usuario aún no ha visualizado). Sin esto, el
+  // primer slide del carrusel offline aparece con player roto porque el
+  // /api/audio/{id} no responde sin red.
+  useEffect(() => {
+    if (!polls || polls.length === 0) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+    const audioIds = new Set();
+    for (const p of polls) {
+      if (Array.isArray(p?.options)) {
+        for (const opt of p.options) {
+          if (opt?.extracted_audio_id) audioIds.add(opt.extracted_audio_id);
+        }
+      }
+      if (p?.music_id) audioIds.add(p.music_id);
+    }
+    if (audioIds.size === 0) return;
+
+    // Lanzar en background, sin bloquear render. Cap concurrency para no
+    // saturar la red en redes móviles lentas.
+    const ids = Array.from(audioIds);
+    const CONCURRENCY = 4;
+    let i = 0;
+    const worker = async () => {
+      while (i < ids.length) {
+        const id = ids[i++];
+        try {
+          // Si ya está en disco y reciente, get() devuelve hit y nos saltamos red.
+          const existing = await audioMetadataCacheStore.get(id);
+          if (existing && existing.public_url) continue;
+          const res = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/audio/${id}`,
+            { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+          );
+          if (!res.ok) continue;
+          const data = await res.json();
+          const audioData = data?.audio || data;
+          if (audioData) {
+            audioMetadataCacheStore.set(id, audioData).catch(() => {});
+          }
+        } catch { /* offline / error → ignorar */ }
+      }
+    };
+    Promise.all(Array.from({ length: CONCURRENCY }, () => worker())).catch(() => {});
   }, [polls]);
 
   // Load polls from backend

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { Trophy, User } from 'lucide-react';
 import audioManager from '../../services/AudioManager';
+import audioMetadataCacheStore from '../../services/audioMetadataCacheService';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
@@ -122,6 +123,20 @@ const CarouselLayout = ({
       return audioMetadataCache.current.get(extractedAudioId);
     }
 
+    // 💾 1) Cache de disco (Capacitor Preferences) — sobrevive a cierres de
+    //    app y funciona offline. Si hay hit, devolvemos al instante; si hay
+    //    red, refrescamos en background para mantenerlo al día.
+    let diskHit = null;
+    try {
+      diskHit = await audioMetadataCacheStore.get(extractedAudioId);
+      if (diskHit) {
+        audioMetadataCache.current.set(extractedAudioId, diskHit);
+      }
+    } catch { /* silent */ }
+
+    // 🌐 2) Fetch desde red. Si estamos offline o la red falla, devolvemos lo
+    //    que tengamos del disco (puede ser null) en lugar de propagar el error
+    //    para no romper el player.
     try {
       const res = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/audio/${extractedAudioId}`,
@@ -131,15 +146,23 @@ const CarouselLayout = ({
           }
         }
       );
-      if (!res.ok) return null;
+      if (!res.ok) return diskHit;
 
       const data = await res.json();
       const audioData = data.audio || data;
+      if (!audioData) return diskHit;
+
       audioMetadataCache.current.set(extractedAudioId, audioData);
+      // 💾 Persistir para offline. set() ignora payloads sin public_url.
+      audioMetadataCacheStore.set(extractedAudioId, audioData).catch(() => {});
       return audioData;
     } catch (error) {
-      console.error(`❌ Error fetching audio metadata:`, error);
-      return null;
+      console.warn(
+        `[fetchAudioMetadata] network failed for ${extractedAudioId}:`,
+        error?.message || error,
+      );
+      // Probable offline → usamos lo que haya en disco.
+      return diskHit;
     }
   };
 
