@@ -14,6 +14,7 @@ import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 import { pickPlayableVideoUrl } from '../../utils/mediaUrl';
 import PollOptionMedia from '../common/PollOptionMedia';
+import { useNavPreference } from '../../hooks/useNavPreference';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -39,6 +40,12 @@ const CarouselLayout = ({
 }) => {
 
   const navigate = useNavigate();
+
+  // === Detect bottom nav preference para subir los indicadores ===
+  // Cuando el usuario activa la barra de navegación inferior (estilo TikTok)
+  // la barra ocupa ~56px + safe-area-inset-bottom y tapaba los dots de
+  // paginación que estaban en bottom-16. Subimos su posición dinámicamente.
+  const { isBottomNav } = useNavPreference();
 
   // === Tracking references for video DOM elements ===
   const videoRefs = useRef(new Map());
@@ -512,7 +519,17 @@ const CarouselLayout = ({
 
       {/* INDICADORES PERSONALIZADOS */}
       {!isThumbnail && !isMoment && poll.options.length > 1 && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex gap-1.5 z-10"
+          style={{
+            // Si la barra de navegación inferior está activa, subimos los
+            // indicadores 56px (alto de la nav) + safe-area-inset-bottom
+            // para que no queden tapados.
+            bottom: isBottomNav
+              ? 'calc(4rem + 56px + var(--safe-area-inset-bottom, 0px))'
+              : '4rem',
+          }}
+        >
           {poll.options.map((_, i) => (
             <button
               key={i}
