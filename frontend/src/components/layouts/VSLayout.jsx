@@ -952,39 +952,128 @@ const VSLayout = ({
         ))}
       </div>
       
-      {/* Círculo central: VS o Temporizador con 2 colores del país del creador */}
+      {/* VS horizontal estilo gaming con efecto rayo/glow en colores del país */}
       {(() => {
-        // Usar los 2 colores del país del creador
-        const colors = getCountryColors(creatorCountry);
-        
+        const countryColors = getCountryColors(creatorCountry);
+        // Convertir colores hex a RGB para usar con alpha
+        const hexToRgb = (hex) => {
+          const cleaned = hex.replace('#', '');
+          const r = parseInt(cleaned.substring(0, 2), 16);
+          const g = parseInt(cleaned.substring(2, 4), 16);
+          const b = parseInt(cleaned.substring(4, 6), 16);
+          return `${r},${g},${b}`;
+        };
+        const primaryRgb = hexToRgb(countryColors.primary);
+        const secondaryRgb = hexToRgb(countryColors.secondary);
+
         return (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-            {/* Anillo exterior con 2 colores en diagonal */}
-            <div 
-              className="w-16 h-16 md:w-20 md:h-20 rounded-full p-1 shadow-2xl"
-              style={{
-                background: `linear-gradient(135deg, ${colors.primary} 50%, ${colors.secondary} 50%)`
-              }}
-            >
-              {/* Círculo interior negro */}
-              <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden">
-                {!showVS && !hasVoted && timeLeft > 0 && (
-                  <svg className="absolute inset-0 w-full h-full -rotate-90 z-10">
-                    <circle cx="50%" cy="50%" r="45%" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="4" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
+            <div className="relative flex items-center justify-center w-full">
+              {/* Rayo de fondo (solo cuando showVS) */}
+              {showVS && (
+                <>
+                  {/* Rayo principal diagonal con color primario del país */}
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-flash"
+                    style={{
+                      width: '140%',
+                      height: '220px',
+                      background: `radial-gradient(ellipse at center, rgba(${primaryRgb},0.55) 0%, rgba(${primaryRgb},0.25) 30%, transparent 65%)`,
+                      filter: 'blur(18px)',
+                      transform: 'translate(-50%, -50%) rotate(-18deg)',
+                    }}
+                  />
+                  {/* Destello central con mezcla de los 2 colores del país */}
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-pulse"
+                    style={{
+                      width: '90%',
+                      height: '120px',
+                      background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${primaryRgb},0.6) 22%, rgba(${secondaryRgb},0.45) 45%, transparent 70%)`,
+                      filter: 'blur(8px)',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                </>
+              )}
+
+              {/* Texto VS / Timer / Check */}
+              {showVS ? (
+                <span
+                  className="relative font-black tracking-tighter select-none animate-vs-bounce"
+                  style={{
+                    color: '#fff',
+                    fontSize: 'clamp(5rem, 22vw, 11rem)',
+                    fontStyle: 'italic',
+                    lineHeight: 1,
+                    letterSpacing: '-0.05em',
+                    textShadow: [
+                      '0 0 8px rgba(255,255,255,0.95)',
+                      `0 0 20px rgba(${primaryRgb},0.9)`,
+                      `0 0 40px rgba(${primaryRgb},0.8)`,
+                      `0 0 70px rgba(${secondaryRgb},0.7)`,
+                      '0 4px 0 rgba(0,0,0,0.6)',
+                      '2px 4px 10px rgba(0,0,0,0.8)',
+                    ].join(', '),
+                    WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  VS
+                </span>
+              ) : hasVoted ? (
+                <div
+                  className="relative flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-2xl"
+                  style={{
+                    width: 'clamp(3.5rem, 14vw, 5.5rem)',
+                    height: 'clamp(3.5rem, 14vw, 5.5rem)',
+                    boxShadow: '0 0 30px rgba(34,197,94,0.8), 0 0 60px rgba(34,197,94,0.4)',
+                  }}
+                >
+                  <svg className="w-2/3 h-2/3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="relative">
+                  {/* Anillo countdown con color del país */}
+                  <svg
+                    className="absolute inset-0 -rotate-90"
+                    style={{
+                      width: 'clamp(4rem, 16vw, 6.5rem)',
+                      height: 'clamp(4rem, 16vw, 6.5rem)',
+                    }}
+                  >
+                    <circle cx="50%" cy="50%" r="45%" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
                     <circle
                       cx="50%" cy="50%" r="45%"
-                      fill="none" stroke="white" strokeWidth="4"
-                      strokeDasharray={`${(timeLeft / 5) * 100} 100`}
+                      fill="none"
+                      stroke={countryColors.primary}
+                      strokeWidth="4"
+                      strokeDasharray={`${(timeLeft / 5) * 283} 283`}
                       strokeLinecap="round"
                       className="transition-all duration-1000"
+                      style={{ filter: `drop-shadow(0 0 6px rgba(${primaryRgb},0.9))` }}
                     />
                   </svg>
-                )}
-                
-                <span className="text-white font-black text-xl md:text-2xl relative z-10">
-                  {showVS ? 'VS' : (hasVoted ? '✓' : timeLeft)}
-                </span>
-              </div>
+                  <div
+                    className="relative flex items-center justify-center rounded-full bg-black/70 backdrop-blur-sm"
+                    style={{
+                      width: 'clamp(4rem, 16vw, 6.5rem)',
+                      height: 'clamp(4rem, 16vw, 6.5rem)',
+                    }}
+                  >
+                    <span
+                      className="text-white font-black"
+                      style={{
+                        fontSize: 'clamp(1.75rem, 7vw, 2.75rem)',
+                        textShadow: `0 0 10px rgba(${primaryRgb},0.9), 0 0 20px rgba(${secondaryRgb},0.6)`,
+                      }}
+                    >
+                      {timeLeft}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
