@@ -8,7 +8,20 @@
  * - Selección inteligente de la mejor voz disponible
  * - Soporte para múltiples idiomas y acentos
  * - Fallback automático si no hay voz disponible
+ * - TTS nativo en Android/iOS vía @capacitor-community/text-to-speech
  */
+
+import { Capacitor } from '@capacitor/core';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+
+// Detección de entorno nativo (Android/iOS) para usar TTS del sistema
+const IS_NATIVE_PLATFORM = (() => {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+})();
 
 // Tipos de voz disponibles
 export const VOICE_TYPES = {
@@ -809,25 +822,6 @@ const speak = async (text, options = {}) => {
     onError = () => {},
   } = options;
 
-  // Guard: si no hay speechSynthesis (Android WebView), silencioso y no crashear
-  if (!isSpeechSynthesisAvailable()) {
-    if (!window.__voiceServiceWarned) {
-      window.__voiceServiceWarned = true;
-      console.warn('⚠️ speechSynthesis no disponible en este entorno — TTS deshabilitado');
-    }
-    onEnd();
-    return null;
-  }
-
-  // Solo cancelar si se solicita explícitamente
-  if (cancelPrevious) {
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      // ignore
-    }
-  }
-
   if (!text || text.trim().length === 0) {
     console.warn('⚠️ Texto vacío, nada que hablar');
     onEnd();
@@ -838,7 +832,6 @@ const speak = async (text, options = {}) => {
   let detectedLang;
   
   if (country) {
-    // Si hay país, usar el idioma del país
     detectedLang = getLanguageFromCountry(country);
     if (detectedLang) {
       console.log(`🌍 Idioma determinado por país (${country}): ${detectedLang}`);
@@ -847,14 +840,69 @@ const speak = async (text, options = {}) => {
   
   if (!detectedLang && forceLanguage) {
     detectedLang = forceLanguage;
-    console.log(`🔒 Idioma forzado: ${detectedLang}`);
   }
   
   if (!detectedLang) {
     detectedLang = detectLanguage(text);
-    console.log(`🔍 Idioma detectado del texto: ${detectedLang}`);
   }
-  
+
+  const langConfig = LANGUAGE_CODES[detectedLang] || LANGUAGE_CODES.es;
+  const langCode = langConfig.variants[0] || 'es-ES';
+
+  // ========================================
+  // 📱 TTS NATIVO (Android/iOS vía plugin)
+  // ========================================
+  if (IS_NATIVE_PLATFORM) {
+    try {
+      if (cancelPrevious) {
+        try { await TextToSpeech.stop(); } catch { /* ignore */ }
+      }
+
+      onStart();
+      console.log(`🔊 [NATIVE TTS] ${langCode}: "${text.substring(0, 50)}..."`);
+
+      // Plugin retorna promesa que resuelve cuando termina de hablar
+      await TextToSpeech.speak({
+        text,
+        lang: langCode,
+        rate: typeof rate === 'number' ? rate : 1.0,
+        pitch: typeof pitch === 'number' ? pitch : 1.0,
+        volume: typeof volume === 'number' ? volume : 1.0,
+        category: 'ambient',
+      });
+
+      onEnd();
+      return null;
+    } catch (err) {
+      console.warn('⚠️ TTS nativo falló:', err);
+      onError(err);
+      onEnd();
+      return null;
+    }
+  }
+
+  // ========================================
+  // 🌐 TTS WEB (speechSynthesis)
+  // ========================================
+
+  // Guard: si no hay speechSynthesis, silencioso
+  if (!isSpeechSynthesisAvailable()) {
+    if (!window.__voiceServiceWarned) {
+      window.__voiceServiceWarned = true;
+      console.warn('⚠️ speechSynthesis no disponible — TTS deshabilitado');
+    }
+    onEnd();
+    return null;
+  }
+
+  if (cancelPrevious) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
+  }
+
   // Obtener la mejor voz para el idioma Y el tipo preferido
   const voice = await getBestVoice(detectedLang, voiceType);
 
@@ -866,8 +914,7 @@ const speak = async (text, options = {}) => {
       utterance.voice = voice;
       utterance.lang = voice.lang;
     } else {
-      const langConfig = LANGUAGE_CODES[detectedLang] || LANGUAGE_CODES.es;
-      utterance.lang = langConfig.variants[0] || 'es-ES';
+      utterance.lang = langCode;
     }
 
     utterance.rate = rate;
@@ -896,6 +943,11 @@ const speak = async (text, options = {}) => {
  * Detiene cualquier speech en curso
  */
 const stop = () => {
+  // Detener TTS nativo si está en entorno nativo
+  if (IS_NATIVE_PLATFORM) {
+    TextToSpeech.stop().catch(() => { /* ignore */ });
+    return;
+  }
   if (!isSpeechSynthesisAvailable()) return;
   try {
     window.speechSynthesis.cancel();
@@ -908,6 +960,11 @@ const stop = () => {
  * Pausa el speech actual
  */
 const pause = () => {
+  if (IS_NATIVE_PLATFORM) {
+    // Plugin no tiene pause separado — usamos stop como mejor esfuerzo
+    TextToSpeech.stop().catch(() => { /* ignore */ });
+    return;
+  }
   if (!isSpeechSynthesisAvailable()) return;
   try {
     window.speechSynthesis.pause();
@@ -920,6 +977,10 @@ const pause = () => {
  * Reanuda el speech pausado
  */
 const resume = () => {
+  if (IS_NATIVE_PLATFORM) {
+    // No aplicable en plugin nativo
+    return;
+  }
   if (!isSpeechSynthesisAvailable()) return;
   try {
     window.speechSynthesis.resume();
