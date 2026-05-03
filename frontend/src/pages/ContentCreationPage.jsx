@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Music, LayoutGrid, Plus, Upload, Image as ImageIcon, Video, AtSign, Edit3, Send, Camera, Crop } from 'lucide-react';
+import { X, Music, LayoutGrid, Plus, Upload, Image as ImageIcon, Video, AtSign, Edit3, Send, Camera } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -169,6 +169,20 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
   // y mencionar. Solo aplica al modo no-VS (en VS la barra de descripción
   // está siempre visible cuando hay imagen).
   const [activeButtonsSlot, setActiveButtonsSlot] = useState(null);
+
+  // Long-press: mantener pulsado sobre la imagen abre el editor de recorte
+  // (ajuste de la publicación). El click corto sigue alternando los botones.
+  const longPressTimerRef = useRef(null);
+  const longPressFiredRef = useRef(null);
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+  useEffect(() => {
+    return () => clearLongPressTimer();
+  }, []);
 
   // Si el slot activo deja de tener media (la imagen fue removida), ocultamos
   // los botones automáticamente.
@@ -448,7 +462,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                 {/* Fullscreen Feed-style Preview */}
                 <div 
                   className={`w-full h-full relative overflow-hidden ${
-                    cropActiveSlot === slotIndex ? '' : 'cursor-pointer'
+                    cropActiveSlot === slotIndex ? '' : 'cursor-pointer select-none'
                   }`}
                   onClick={(e) => {
                     // FIXED: Don't intercept events when in crop mode
@@ -458,15 +472,50 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                       return;
                     }
 
+                    // Si fue un long-press (ya disparó crop), ignoramos el
+                    // click sintético posterior.
+                    if (longPressFiredRef.current === slotIndex) {
+                      longPressFiredRef.current = null;
+                      return;
+                    }
+
                     if (option.media) {
-                      // Toggle del panel de botones (descripción / mencionar /
-                      // recortar). Si ya está abierto en este slot, lo
-                      // cerramos. Si no, lo abrimos en este slot.
+                      // Toggle del panel de botones (descripción / mencionar).
                       setActiveButtonsSlot((prev) => (prev === slotIndex ? null : slotIndex));
                     } else {
                       onImageUpload(slotIndex);
                     }
                   }}
+                  onMouseDown={() => {
+                    // Long-press abre el editor de recorte (ajuste de la
+                    // publicación). Solo aplica si hay imagen.
+                    if (cropActiveSlot === slotIndex) return;
+                    if (option.media && option.media.type === 'image') {
+                      clearLongPressTimer();
+                      longPressTimerRef.current = setTimeout(() => {
+                        longPressFiredRef.current = slotIndex;
+                        setActiveButtonsSlot(null);
+                        onCropFromPreview && onCropFromPreview(slotIndex);
+                      }, 500);
+                    }
+                  }}
+                  onMouseUp={clearLongPressTimer}
+                  onMouseLeave={clearLongPressTimer}
+                  onTouchStart={() => {
+                    if (cropActiveSlot === slotIndex) return;
+                    if (option.media && option.media.type === 'image') {
+                      clearLongPressTimer();
+                      longPressTimerRef.current = setTimeout(() => {
+                        longPressFiredRef.current = slotIndex;
+                        setActiveButtonsSlot(null);
+                        onCropFromPreview && onCropFromPreview(slotIndex);
+                      }, 500);
+                    }
+                  }}
+                  onTouchEnd={clearLongPressTimer}
+                  onTouchMove={clearLongPressTimer}
+                  onTouchCancel={clearLongPressTimer}
+                  onContextMenu={(e) => e.preventDefault()}
                   style={{
                     // FIXED: Disable pointer events on parent when crop is active
                     pointerEvents: cropActiveSlot === slotIndex ? 'none' : 'auto'
@@ -637,21 +686,6 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                         >
                           <AtSign className="w-5 h-5" />
                         </button>
-
-                        {/* Crop button - reemplaza el click directo a crop */}
-                        {option.media && option.media.type === 'image' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveButtonsSlot(null);
-                              onCropFromPreview && onCropFromPreview(slotIndex);
-                            }}
-                            className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                            title="Recortar"
-                          >
-                            <Crop className="w-5 h-5" />
-                          </button>
-                        )}
                       </div>
                     )
                   )
