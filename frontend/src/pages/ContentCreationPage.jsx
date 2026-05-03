@@ -905,6 +905,9 @@ const ContentCreationPage = () => {
   // States
   const [selectedLayout, setSelectedLayout] = useState(LAYOUT_OPTIONS[0]); // Off by default
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
+  // Pastilla de tabs deslizable: solo mostramos los títulos no-activos
+  // mientras el usuario está arrastrando o el swiper está en transición.
+  const [tabsSliding, setTabsSliding] = useState(false);
   const [showMusicSelector, setShowMusicSelector] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState(null);
   const [options, setOptions] = useState([]); // Changed from images to options
@@ -2000,10 +2003,19 @@ const ContentCreationPage = () => {
                       grabCursor={true}
                       threshold={5}
                       className="creation-tabs-swiper"
+                      onTouchStart={() => setTabsSliding(true)}
+                      onSliderFirstMove={() => setTabsSliding(true)}
+                      onTransitionStart={() => setTabsSliding(true)}
+                      onTransitionEnd={() => setTabsSliding(false)}
+                      onTouchEnd={() => {
+                        // Si el usuario soltó sin hacer cambiar el slide,
+                        // no habrá transición; cerramos manualmente.
+                        setTimeout(() => setTabsSliding(false), 250);
+                      }}
                       onSlideChangeTransitionEnd={(swiper) => {
                         const tab = TABS[swiper.activeIndex];
                         if (!tab) return;
-                        // Si la nueva tab ya es la activa (sin cambio), no hacemos nada.
+                        setTabsSliding(false);
                         if (tab.id === activeTabId) return;
                         applyTab(tab.id);
                       }}
@@ -2014,6 +2026,11 @@ const ContentCreationPage = () => {
                           ? (tab.id === 'challenge' ? 'text-yellow-500' : 'text-white')
                           : 'text-white/40';
                         const weight = active ? 'font-semibold' : 'font-medium';
+                        // En estado quieto solo se ve el título activo;
+                        // mientras el usuario desliza, todos visibles.
+                        const visibilityClass = tabsSliding || active
+                          ? 'opacity-100'
+                          : 'opacity-0 pointer-events-none';
                         return (
                           <SwiperSlide
                             key={tab.id}
@@ -2024,7 +2041,7 @@ const ContentCreationPage = () => {
                               type="button"
                               onClick={() => applyTab(tab.id)}
                               data-testid={`creation-tab-${tab.id}`}
-                              className={`${colorClass} ${weight} text-sm tracking-wide transition-colors px-1 select-none`}
+                              className={`${colorClass} ${weight} ${visibilityClass} text-sm tracking-wide transition-opacity duration-200 px-1 select-none`}
                             >
                               {tab.label}
                             </button>

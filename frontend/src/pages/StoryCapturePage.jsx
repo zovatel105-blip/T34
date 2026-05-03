@@ -439,10 +439,11 @@ const StoryCapturePage = ({ embedded = false, onClose: onCloseProp } = {}) => {
         </div>
       </div>
 
-      {/* Barra inferior en modo captura - En embedded subimos el botón de
-          captura 96px (bottom-24) para que no choque con la pastilla de
-          tabs del padre. La cámara mantiene su altura completa. */}
-      <div className={`absolute left-0 right-0 z-30 pb-8 ${embedded ? 'bottom-24' : 'bottom-0'}`}>
+      {/* Barra inferior en modo captura - En embedded subimos el contenedor
+          96px (bottom-24) para quedar encima de la pastilla de tabs, y
+          reducimos el padding inferior para que los botones queden más
+          cerca de la pastilla. La cámara mantiene su altura completa. */}
+      <div className={`absolute left-0 right-0 z-30 ${embedded ? 'bottom-24 pb-2' : 'bottom-0 pb-8'}`}>
         {/* Temporizador encima del círculo cuando está grabando */}
         {isRecording && (
           <div className="absolute bottom-36 left-1/2 transform -translate-x-1/2 bg-zinc-800/90 backdrop-blur-sm px-4 py-2 rounded-full">
