@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { X, Music, LayoutGrid, Plus, Upload, Image as ImageIcon, Video, AtSign, Edit3, Send, Camera } from 'lucide-react';
+import { X, Music, LayoutGrid, Plus, Upload, Image as ImageIcon, Video, AtSign, Edit3, Send, Camera, Crop } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -164,6 +164,20 @@ const LAYOUT_OPTIONS = [
 
 const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUpload, onImageRemove, onOptionTextChange, onMentionSelect, onCropFromPreview, cropActiveSlot, onInlineCropSave, onInlineCropCancel, mentionInputValues, onMentionInputChange, fullscreen = false, onOpenDescriptionDialog, onOpenMentionsDialog, creationMode = 'publicar' }) => {
   const isVSMode = creationMode === 'vs' && (layout.id === 'vertical' || layout.id === 'horizontal');
+
+  // Slot al que el usuario hizo tap para mostrar los botones de descripción
+  // y mencionar. Solo aplica al modo no-VS (en VS la barra de descripción
+  // está siempre visible cuando hay imagen).
+  const [activeButtonsSlot, setActiveButtonsSlot] = useState(null);
+
+  // Si el slot activo deja de tener media (la imagen fue removida), ocultamos
+  // los botones automáticamente.
+  useEffect(() => {
+    if (activeButtonsSlot != null) {
+      const opt = options[activeButtonsSlot];
+      if (!opt || !opt.media) setActiveButtonsSlot(null);
+    }
+  }, [options, activeButtonsSlot]);
   const getLayoutStyle = () => {
     switch (layout.id) {
       case 'off':
@@ -443,10 +457,12 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                       e.stopPropagation();
                       return;
                     }
-                    
-                    // If image exists, open crop directly. If not, upload new image.
-                    if (option.media && option.media.type === 'image') {
-                      onCropFromPreview(slotIndex);
+
+                    if (option.media) {
+                      // Toggle del panel de botones (descripción / mencionar /
+                      // recortar). Si ya está abierto en este slot, lo
+                      // cerramos. Si no, lo abrimos en este slot.
+                      setActiveButtonsSlot((prev) => (prev === slotIndex ? null : slotIndex));
                     } else {
                       onImageUpload(slotIndex);
                     }
@@ -571,7 +587,9 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                   </div>
                 )}
 
-                {/* Compact buttons for description and mentions - Icon only */}
+                {/* Compact buttons for description and mentions - Icon only.
+                    Solo aparecen al hacer tap sobre la imagen (toggle); en
+                    modo VS se reemplazan por una barra inline. */}
                 {option.media && (
                   isVSMode ? (
                     /* VS mode: inline description bar (no separate buttons) */
@@ -589,24 +607,53 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                       />
                     </div>
                   ) : (
-                    /* Default: description + mentions icon buttons */
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex gap-2 justify-center">
-                      {/* Description button - Icon only */}
-                      <button
-                        onClick={() => onOpenDescriptionDialog && onOpenDescriptionDialog(slotIndex)}
-                        className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                    /* Default: description + mentions + crop icon buttons - solo
+                       visibles cuando el usuario tocó esta imagen. */
+                    activeButtonsSlot === slotIndex && (
+                      <div
+                        className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex gap-2 justify-center z-20"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Edit3 className="w-5 h-5" />
-                      </button>
-                      
-                      {/* Mentions button - Icon only */}
-                      <button
-                        onClick={() => onOpenMentionsDialog && onOpenMentionsDialog(slotIndex)}
-                        className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                      >
-                        <AtSign className="w-5 h-5" />
-                      </button>
-                    </div>
+                        {/* Description button - Icon only */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenDescriptionDialog && onOpenDescriptionDialog(slotIndex);
+                          }}
+                          className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                          title="Descripción"
+                        >
+                          <Edit3 className="w-5 h-5" />
+                        </button>
+
+                        {/* Mentions button - Icon only */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenMentionsDialog && onOpenMentionsDialog(slotIndex);
+                          }}
+                          className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                          title="Mencionar"
+                        >
+                          <AtSign className="w-5 h-5" />
+                        </button>
+
+                        {/* Crop button - reemplaza el click directo a crop */}
+                        {option.media && option.media.type === 'image' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveButtonsSlot(null);
+                              onCropFromPreview && onCropFromPreview(slotIndex);
+                            }}
+                            className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                            title="Recortar"
+                          >
+                            <Crop className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+                    )
                   )
                 )}
                     </div>
