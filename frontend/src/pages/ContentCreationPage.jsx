@@ -1666,12 +1666,12 @@ const ContentCreationPage = () => {
           Nota: absolute top-0 ignora padding-top del padre; usamos top inline con safe-area. */}
       {!previewMode && creationMode !== 'momento' && (
         <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
-          {/* Main Controls Row */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
-            {/* Close button - Left */}
+          {/* Main Controls Row - Pastilla centrada con X absoluto a la izquierda */}
+          <div className="relative flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3">
+            {/* Close button - Left (absolute para no afectar el centrado) */}
             <button
               onClick={handleClose}
-              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-white bg-black/50 backdrop-blur-sm rounded-lg"
+              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-white bg-black/50 backdrop-blur-sm rounded-lg"
             >
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
