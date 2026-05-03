@@ -13,6 +13,7 @@ import feedCache from '../services/feedCacheService';
 import thumbnailPrefetch from '../services/thumbnailPrefetchService';
 import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import audioMetadataCacheStore from '../services/audioMetadataCacheService';
+import FeedOfflineToast from '../components/common/FeedOfflineToast';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -969,6 +970,9 @@ const FeedPage = () => {
         >
           <LogoWithQuickActions size={75} />
         </div>
+
+        {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
+        <FeedOfflineToast />
         
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="text-center">
@@ -998,6 +1002,9 @@ const FeedPage = () => {
         >
           <LogoWithQuickActions size={75} />
         </div>
+
+        {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
+        <FeedOfflineToast />
         
         <div className="fixed inset-0 z-50 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black flex items-center justify-center">
           <div className="text-center px-6 max-w-sm">
@@ -1053,6 +1060,9 @@ const FeedPage = () => {
         >
           <LogoWithQuickActions size={75} />
         </div>
+
+        {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
+        <FeedOfflineToast />
         
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="text-center px-6">
@@ -1103,6 +1113,9 @@ const FeedPage = () => {
         >
           <LogoWithQuickActions size={75} />
         </div>
+
+        {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
+        <FeedOfflineToast />
         
         <div className="fixed inset-0 z-50 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black flex items-center justify-center">
           <div className="text-center px-6 max-w-sm">

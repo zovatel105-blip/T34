@@ -74,9 +74,6 @@ import { useAppLifecycle } from './hooks/useAppLifecycle';
 // 🔙 Back Button Hook (Android hardware back / gesto atrás – estilo TikTok)
 import { useBackButton } from './hooks/useBackButton';
 
-// 🛜 Banner de estado offline (estilo Instagram/TikTok)
-import OfflineBanner from './components/common/OfflineBanner';
-
 // 🔁 Auto-flush de acciones encoladas offline cuando recuperamos conexión
 import OfflineQueueFlusher from './components/common/OfflineQueueFlusher';
 
@@ -305,7 +302,8 @@ function App() {
               <UploadProvider>
                 <CoinsProvider>
                   <AppContent />
-                  <OfflineBanner />
+                  {/* OfflineBanner removed from global mount — ahora se muestra
+                      solo en FeedPage/FollowingPage como FeedOfflineToast */}
                   <OfflineQueueFlusher />
                   <Toaster />
                 </CoinsProvider>

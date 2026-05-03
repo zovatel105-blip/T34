@@ -13,6 +13,7 @@ import storyService from '../services/storyService';
 import audioManager from '../services/AudioManager';
 import feedCache from '../services/feedCacheService';
 import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
+import FeedOfflineToast from '../components/common/FeedOfflineToast';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
 import { useTikTok } from '../contexts/TikTokContext';
@@ -705,20 +706,25 @@ const FollowingPage = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-white">Cargando Following...</h2>
-          <p className="text-white/70 mt-2">Obteniendo publicaciones de usuarios seguidos</p>
+      <>
+        <FeedOfflineToast />
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-white">Cargando Following...</h2>
+            <p className="text-white/70 mt-2">Obteniendo publicaciones de usuarios seguidos</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // Show error state
   if (error && !isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <>
+        <FeedOfflineToast />
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
         <div className="text-center px-6">
           <div className="w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
             <svg className="w-16 h-16 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -742,7 +748,8 @@ const FollowingPage = () => {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
@@ -809,6 +816,8 @@ const FollowingPage = () => {
   if (isMobile || isTikTokMode) {
     return (
       <div className="fixed inset-0 bg-black" style={{ zIndex: 0 }}>
+        {/* 🛜 Toast "Sin conexión" — sólo en Following (Siguiendo) */}
+        <FeedOfflineToast />
         {/* Stories tabs deslizables - Solo mostrar si hay historias reales */}
         {displayStories.length > 0 && (
           <div 
@@ -1114,6 +1123,8 @@ const FollowingPage = () => {
   // Renderizado desktop (Web layout similar a TikTok web)
   return (
     <>
+      {/* 🛜 Toast "Sin conexión" — sólo en Following desktop */}
+      <FeedOfflineToast />
       {/* Desktop mode - stories not shown per user requirement (solo móvil) */}
       
       <div className="min-h-screen bg-gray-50 pt-6 relative">
