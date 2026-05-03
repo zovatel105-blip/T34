@@ -1291,6 +1291,28 @@ const ContentCreationPage = () => {
   };
 
   /**
+   * Calcula las dimensiones del canvas de salida para un slot según el
+   * layout. Cada layout divide el contenedor 9:16 en celdas con un aspect
+   * ratio distinto. Si rasterizamos al aspect ratio incorrecto, el feed
+   * vuelve a recortar y el ajuste del usuario se pierde.
+   */
+  const getCellOutputSize = (layoutId) => {
+    const W = 1080;
+    const H = 1920;
+    switch (layoutId) {
+      case 'off':                 return { w: W, h: H };
+      case 'vertical':            return { w: W / 2, h: H };
+      case 'horizontal':          return { w: W, h: H / 2 };
+      case 'triptych-vertical':   return { w: W / 3, h: H };
+      case 'triptych-horizontal': return { w: W, h: H / 3 };
+      case 'grid-2x2':            return { w: W / 2, h: H / 2 };
+      case 'grid-3x2':            return { w: W / 3, h: H / 2 };
+      case 'grid-2x3':            return { w: W / 2, h: H / 3 };
+      default:                    return { w: W, h: H };
+    }
+  };
+
+  /**
    * Función para generar imagen recortada final aplicando transformaciones de crop
    * Esta función replica el comportamiento de object-fit: cover con object-position y scale
    * @param {string} imageSrc - URL de la imagen original
@@ -1468,19 +1490,40 @@ const ContentCreationPage = () => {
           console.warn('No se pudo detectar el país del creador:', e);
         }
 
+        // Cell size depende del layout VS (vertical = lado a lado, horizontal = arriba/abajo).
+        const vsCellSize = getCellOutputSize(selectedLayout.id);
+
         // Subir imágenes y armar las questions
         const uploadedQuestions = [];
         for (let qi = 0; qi < filledByPair.length; qi++) {
           const [optA, optB] = filledByPair[qi];
           const uploadedOptions = [];
           for (const [letter, opt] of [['a', optA], ['b', optB]]) {
+            // Si hay transform de crop, rasterizar primero al aspect ratio
+            // del layout VS para preservar el ajuste del usuario.
+            let fileToUpload = opt.media.file;
             let imageUrl = opt.media.url;
+            const tx = opt.media.transform;
+            const hasTransform = tx && (tx.scale !== 1 || tx.position.x !== 50 || tx.position.y !== 50);
+            if (hasTransform && opt.media.type && opt.media.type.startsWith('image')) {
+              try {
+                const croppedDataUrl = await getFinalCroppedImage(
+                  opt.media.url,
+                  tx,
+                  vsCellSize.w,
+                  vsCellSize.h
+                );
+                fileToUpload = dataURLtoFile(croppedDataUrl, `vs_${qi}_${letter}_cropped.jpg`);
+                imageUrl = croppedDataUrl;
+              } catch (cropErr) {
+                console.warn(`No se pudo aplicar crop a VS ${qi}-${letter}:`, cropErr);
+              }
+            }
             // Si todavía es un blob/data URL local, subirlo
-            if (opt.media.file instanceof File) {
-              const uploadResult = await uploadService.uploadFile(opt.media.file, 'poll_option');
+            if (fileToUpload instanceof File) {
+              const uploadResult = await uploadService.uploadFile(fileToUpload, 'poll_option');
               imageUrl = uploadResult.public_url || uploadResult.url;
             } else if (typeof imageUrl === 'string' && imageUrl.startsWith('data:')) {
-              // Convertir data URL a File y subir
               const file = dataURLtoFile(imageUrl, `vs_${qi}_${letter}.jpg`);
               const uploadResult = await uploadService.uploadFile(file, 'poll_option');
               imageUrl = uploadResult.public_url || uploadResult.url;
@@ -1568,7 +1611,12 @@ const ContentCreationPage = () => {
 
     // ✅ PASO 1: Aplicar recortes a imágenes y thumbnails con transformaciones
     console.log('🎨 Aplicando recortes a medios con transformaciones...');
-    
+
+    // Las dimensiones del canvas dependen del layout: cada layout divide el
+    // contenedor en celdas con un aspect ratio distinto. Sin esto, el feed
+    // re-recorta el resultado y se pierde el ajuste del usuario.
+    const cellSize = getCellOutputSize(selectedLayout.id);
+
     try {
       for (let i = 0; i < validOptions.length; i++) {
         const opt = validOptions[i];
@@ -1578,7 +1626,7 @@ const ContentCreationPage = () => {
             opt.media.transform.position.x !== 50 || 
             opt.media.transform.position.y !== 50)) {
           
-          console.log(`📐 Opción ${i}: Aplicando crop con transform:`, opt.media.transform);
+          console.log(`📐 Opción ${i}: Aplicando crop con transform:`, opt.media.transform, 'a tamaño', cellSize);
           
           const isVideo = opt.media.type.startsWith('video/');
           
@@ -1589,8 +1637,8 @@ const ContentCreationPage = () => {
               const croppedThumbnail = await getFinalCroppedImage(
                 opt.media.thumbnail,
                 opt.media.transform,
-                1080, // ancho
-                1920  // alto (formato vertical tipo TikTok)
+                cellSize.w,
+                cellSize.h
               );
               
               // Convertir a File para subir
@@ -1608,8 +1656,8 @@ const ContentCreationPage = () => {
             const croppedImage = await getFinalCroppedImage(
               opt.media.url,
               opt.media.transform,
-              1080, // ancho
-              1920  // alto
+              cellSize.w,
+              cellSize.h
             );
             
             // Convertir a File para subir
