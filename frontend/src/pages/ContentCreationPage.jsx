@@ -12,6 +12,7 @@ import pollService from '../services/pollService';
 import challengeService from '../services/challengeService';
 import InlineCrop from '../components/InlineCrop';
 import config from '../config/config';
+import uploadService from '../services/uploadService';
 import MomentCreationPage from './MomentCreationPage';
 import { 
   Dialog, 
@@ -1337,6 +1338,118 @@ const ContentCreationPage = () => {
       });
       return;
     }
+
+    // === VS PUBLISH PATH ===
+    // Cuando estamos en modo VS, no se publica como poll normal: cada pareja
+    // (slots 0+1, 2+3, 4+5) se mapea a una "question" con 2 options A/B y se
+    // envía a POST /api/vs/create — misma lógica que VSCreatePage.
+    if (creationMode === 'vs') {
+      // Validar pares completos (cada pareja debe tener ambas imágenes)
+      if (validOptions.length < 2) {
+        toast({
+          title: "Error",
+          description: "Necesitas al menos 2 imágenes para una comparación VS",
+          variant: "destructive"
+        });
+        return;
+      }
+      // Si el número de imágenes es impar, la última pareja está incompleta.
+      const filledByPair = [];
+      for (let i = 0; i < options.length; i += 2) {
+        const a = options[i];
+        const b = options[i + 1];
+        const aFilled = !!(a && a.media);
+        const bFilled = !!(b && b.media);
+        if (aFilled || bFilled) {
+          if (!(aFilled && bFilled)) {
+            toast({
+              title: "Pareja VS incompleta",
+              description: `La pareja ${(i / 2) + 1} necesita 2 imágenes (A y B)`,
+              variant: "destructive"
+            });
+            return;
+          }
+          filledByPair.push([a, b]);
+        }
+      }
+
+      setIsCreating(true);
+      try {
+        // Detectar país del creador
+        let creatorCountry = null;
+        try {
+          const geoRes = await fetch(`${config.BACKEND_URL}/api/geolocation`);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            creatorCountry = geoData.country_code || 'XX';
+          }
+        } catch (e) {
+          console.warn('No se pudo detectar el país del creador:', e);
+        }
+
+        // Subir imágenes y armar las questions
+        const uploadedQuestions = [];
+        for (let qi = 0; qi < filledByPair.length; qi++) {
+          const [optA, optB] = filledByPair[qi];
+          const uploadedOptions = [];
+          for (const [letter, opt] of [['a', optA], ['b', optB]]) {
+            let imageUrl = opt.media.url;
+            // Si todavía es un blob/data URL local, subirlo
+            if (opt.media.file instanceof File) {
+              const uploadResult = await uploadService.uploadFile(opt.media.file, 'poll_option');
+              imageUrl = uploadResult.public_url || uploadResult.url;
+            } else if (typeof imageUrl === 'string' && imageUrl.startsWith('data:')) {
+              // Convertir data URL a File y subir
+              const file = dataURLtoFile(imageUrl, `vs_${qi}_${letter}.jpg`);
+              const uploadResult = await uploadService.uploadFile(file, 'poll_option');
+              imageUrl = uploadResult.public_url || uploadResult.url;
+            }
+            uploadedOptions.push({
+              id: letter,
+              text: (opt.text || `Opción ${letter.toUpperCase()}`),
+              image: imageUrl
+            });
+          }
+          uploadedQuestions.push({ options: uploadedOptions });
+        }
+
+        const vsData = {
+          questions: uploadedQuestions,
+          creator_country: creatorCountry
+        };
+
+        const response = await fetch(`${config.BACKEND_URL}/api/vs/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(vsData)
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(errText || `VS create failed (${response.status})`);
+        }
+
+        toast({
+          title: "VS publicado",
+          description: "Tu comparación VS se publicó correctamente",
+        });
+        navigate('/feed');
+      } catch (error) {
+        console.error('Error publicando VS:', error);
+        toast({
+          title: "Error al publicar VS",
+          description: error.message || 'Hubo un problema al publicar la comparación',
+          variant: "destructive"
+        });
+      } finally {
+        setIsCreating(false);
+      }
+      return;
+    }
+    // === END VS PUBLISH PATH ===
 
     // Specific validation for "off" layout (full screen images)
     if (selectedLayout.id === 'off') {
