@@ -359,11 +359,12 @@ const StoryCapturePage = ({ embedded = false, onClose: onCloseProp } = {}) => {
       />
 
       {/* Header con botones transparentes. Cuando estamos embebidos, el
-          botón cerrar invoca onCloseProp en lugar de navigate(-1) — así
-          el ContentCreationPage padre puede salir limpio. */}
+          safe-area-top ya lo aplica el ContentCreationPage al contenedor;
+          solo aplicamos los 0.75rem de respiro habitual para no duplicar
+          el offset y dejar la X exactamente igual que standalone. */}
       <div
         className="absolute top-0 left-0 right-0 z-30 px-4"
-        style={{ paddingTop: embedded ? '0.5rem' : 'calc(var(--safe-area-inset-top) + 0.75rem)' }}
+        style={{ paddingTop: embedded ? '0.75rem' : 'calc(var(--safe-area-inset-top) + 0.75rem)' }}
       >
         <div className="flex items-start justify-between">
           {/* Botón cerrar a la izquierda */}
@@ -442,8 +443,8 @@ const StoryCapturePage = ({ embedded = false, onClose: onCloseProp } = {}) => {
         </div>
       </div>
 
-      {/* Barra inferior en modo captura */}
-      <div className={`absolute bottom-0 left-0 right-0 z-30 ${embedded ? 'pb-2' : 'pb-8'}`}>
+      {/* Barra inferior en modo captura - Mismas dimensiones que standalone */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 pb-8">
         {/* Temporizador encima del círculo cuando está grabando */}
         {isRecording && (
           <div className="absolute bottom-36 left-1/2 transform -translate-x-1/2 bg-zinc-800/90 backdrop-blur-sm px-4 py-2 rounded-full">
