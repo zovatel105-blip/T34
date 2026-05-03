@@ -161,7 +161,8 @@ const LAYOUT_OPTIONS = [
   { id: 'horizontal-3x2', name: 'Grid 2x3', description: 'Pantalla dividida en 6 partes (cuadrícula de 2x3)' }
 ];
 
-const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUpload, onImageRemove, onOptionTextChange, onMentionSelect, onCropFromPreview, cropActiveSlot, onInlineCropSave, onInlineCropCancel, mentionInputValues, onMentionInputChange, fullscreen = false, onOpenDescriptionDialog, onOpenMentionsDialog }) => {
+const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUpload, onImageRemove, onOptionTextChange, onMentionSelect, onCropFromPreview, cropActiveSlot, onInlineCropSave, onInlineCropCancel, mentionInputValues, onMentionInputChange, fullscreen = false, onOpenDescriptionDialog, onOpenMentionsDialog, creationMode = 'publicar' }) => {
+  const isVSMode = creationMode === 'vs' && (layout.id === 'vertical' || layout.id === 'horizontal');
   const getLayoutStyle = () => {
     switch (layout.id) {
       case 'off':
@@ -402,16 +403,24 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
           </Swiper>
         </div>
       ) : (
-        /* Regular grid layout */
-        <div className={`grid w-full h-full ${getLayoutStyle()}`} style={{ gap: '1px' }}>
-          {slots.map((slotIndex) => {
-            const option = options[slotIndex] || { text: '', media: null, mentionedUsers: [] };
-            return (
-              <div
-                key={slotIndex}
-                className="relative bg-black overflow-hidden group w-full h-full min-h-0"
-              >
-                {/* Letter identifier removed for cleaner UI */}
+        /* Regular grid layout - en modo VS lo envolvemos en un Swiper donde
+           cada slide es una pareja VS (slots 0+1, 2+3, 4+5; máx 3 parejas). */
+        (() => {
+          const filledCount = options.filter((opt) => opt && opt.media).length;
+          const totalPairs = isVSMode
+            ? Math.min(Math.max(1, Math.ceil((filledCount + 1) / 2)), 3)
+            : 1;
+
+          const renderGrid = (slotIndices) => (
+            <div className={`grid w-full h-full ${getLayoutStyle()}`} style={{ gap: '1px' }}>
+              {slotIndices.map((slotIndex) => {
+                const option = options[slotIndex] || { text: '', media: null, mentionedUsers: [] };
+                return (
+                  <div
+                    key={slotIndex}
+                    className="relative bg-black overflow-hidden group w-full h-full min-h-0"
+                  >
+                    {/* Letter identifier removed for cleaner UI */}
                 
                 {/* Fullscreen indicator for 'off' layout */}
                 {layout.id === 'off' && (
@@ -563,28 +572,70 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
 
                 {/* Compact buttons for description and mentions - Icon only */}
                 {option.media && (
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex gap-2 justify-center">
-                    {/* Description button - Icon only */}
-                    <button
-                      onClick={() => onOpenDescriptionDialog && onOpenDescriptionDialog(slotIndex)}
-                      className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                    >
-                      <Edit3 className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Mentions button - Icon only */}
-                    <button
-                      onClick={() => onOpenMentionsDialog && onOpenMentionsDialog(slotIndex)}
-                      className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                    >
-                      <AtSign className="w-5 h-5" />
-                    </button>
-                  </div>
+                  isVSMode ? (
+                    /* VS mode: inline description bar (no separate buttons) */
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent z-20">
+                      <input
+                        type="text"
+                        value={option.text || ''}
+                        onChange={(e) => onOptionTextChange && onOptionTextChange(slotIndex, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        placeholder="Agregar descripción..."
+                        data-option-index={slotIndex}
+                        className="w-full bg-black/60 backdrop-blur-sm text-white text-xs sm:text-sm placeholder-white/40 border border-white/20 rounded-full px-3 py-1.5 focus:outline-none focus:border-white/60"
+                      />
+                    </div>
+                  ) : (
+                    /* Default: description + mentions icon buttons */
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex gap-2 justify-center">
+                      {/* Description button - Icon only */}
+                      <button
+                        onClick={() => onOpenDescriptionDialog && onOpenDescriptionDialog(slotIndex)}
+                        className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                      >
+                        <Edit3 className="w-5 h-5" />
+                      </button>
+                      
+                      {/* Mentions button - Icon only */}
+                      <button
+                        onClick={() => onOpenMentionsDialog && onOpenMentionsDialog(slotIndex)}
+                        className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
+                      >
+                        <AtSign className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )
                 )}
+                    </div>
+                  );
+                })}
+              </div>
+          );
+
+          if (isVSMode && totalPairs > 1) {
+            return (
+              <div className="w-full h-full relative">
+                <Swiper
+                  spaceBetween={0}
+                  slidesPerView={1}
+                  speed={300}
+                  className="h-full w-full"
+                >
+                  {Array.from({ length: totalPairs }).map((_, pairIndex) => (
+                    <SwiperSlide key={pairIndex}>
+                      {renderGrid([pairIndex * 2, pairIndex * 2 + 1])}
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             );
-          })}
-        </div>
+          }
+
+          // VS de una sola pareja o layout normal: render directo
+          return renderGrid(isVSMode ? [0, 1] : slots);
+        })()
       )}
     </div>
   );
@@ -1465,6 +1516,7 @@ const ContentCreationPage = () => {
             options={options}
             title="" 
             selectedMusic={selectedMusic}
+            creationMode={creationMode}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
             onOptionTextChange={handleOptionTextChange}
