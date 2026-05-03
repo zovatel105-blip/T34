@@ -170,19 +170,72 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
   // está siempre visible cuando hay imagen).
   const [activeButtonsSlot, setActiveButtonsSlot] = useState(null);
 
-  // Long-press: mantener pulsado sobre la imagen abre el editor de recorte
-  // (ajuste de la publicación). El click corto sigue alternando los botones.
-  const longPressTimerRef = useRef(null);
-  const longPressFiredRef = useRef(null);
-  const clearLongPressTimer = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+  // TikTok-like: el ajuste de imagen no requiere mantener pulsado. Con
+  // mover el dedo (drag intent > 8px) o usar 2 dedos (pinch) se activa el
+  // crop e inyectamos la gestura en InlineCrop. Un tap simple (sin movi-
+  // miento) sigue alternando los botones de descripción/mencionar.
+  const cropRefsByIdx = useRef({});
+  const gestureStartRef = useRef(null); // { slotIndex, x, y }
+  const dragFiredRef = useRef(null);    // suprime el click sintético post-drag
+  const DRAG_THRESHOLD_PX = 8;
+
+  const activateCropAndInject = (slotIndex, eventLike) => {
+    dragFiredRef.current = slotIndex;
+    setActiveButtonsSlot(null);
+    onCropFromPreview && onCropFromPreview(slotIndex);
+    // Inyectamos la gestura en el InlineCrop del slot. El imperativo es
+    // sincrónico: el siguiente touchmove ya será capturado por sus listeners
+    // globales (que se montan cuando isActive pasa a true).
+    const ref = cropRefsByIdx.current[slotIndex];
+    if (ref && ref.startGestureAt) {
+      ref.startGestureAt(eventLike);
     }
   };
-  useEffect(() => {
-    return () => clearLongPressTimer();
-  }, []);
+
+  const beginGestureTracking = (slotIndex, e, isTouch) => {
+    if (cropActiveSlot === slotIndex) return;
+    const slot = options[slotIndex];
+    if (!slot || !slot.media || slot.media.type !== 'image') return;
+
+    if (isTouch && e.touches && e.touches.length >= 2) {
+      // Pinch directo: activar inmediatamente
+      activateCropAndInject(slotIndex, { touches: e.touches });
+      gestureStartRef.current = null;
+      return;
+    }
+    const point = isTouch ? e.touches[0] : e;
+    gestureStartRef.current = {
+      slotIndex,
+      x: point.clientX,
+      y: point.clientY
+    };
+  };
+
+  const handleTrackedMove = (slotIndex, e, isTouch) => {
+    const g = gestureStartRef.current;
+    if (!g || g.slotIndex !== slotIndex) return;
+
+    if (isTouch && e.touches && e.touches.length >= 2) {
+      activateCropAndInject(slotIndex, { touches: e.touches });
+      gestureStartRef.current = null;
+      return;
+    }
+    const point = isTouch ? e.touches[0] : e;
+    const dx = point.clientX - g.x;
+    const dy = point.clientY - g.y;
+    if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
+      // Pasar el punto actual para que el ajuste arranque sin saltar
+      const eventLike = isTouch
+        ? { touches: [{ clientX: point.clientX, clientY: point.clientY }] }
+        : { clientX: point.clientX, clientY: point.clientY };
+      activateCropAndInject(slotIndex, eventLike);
+      gestureStartRef.current = null;
+    }
+  };
+
+  const endGestureTracking = () => {
+    gestureStartRef.current = null;
+  };
 
   // Si el slot activo deja de tener media (la imagen fue removida), ocultamos
   // los botones automáticamente.
@@ -472,10 +525,10 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                       return;
                     }
 
-                    // Si fue un long-press (ya disparó crop), ignoramos el
-                    // click sintético posterior.
-                    if (longPressFiredRef.current === slotIndex) {
-                      longPressFiredRef.current = null;
+                    // Si fue un drag (ya disparó crop), ignoramos el click
+                    // sintético posterior.
+                    if (dragFiredRef.current === slotIndex) {
+                      dragFiredRef.current = null;
                       return;
                     }
 
@@ -486,35 +539,14 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                       onImageUpload(slotIndex);
                     }
                   }}
-                  onMouseDown={() => {
-                    // Long-press abre el editor de recorte (ajuste de la
-                    // publicación). Solo aplica si hay imagen.
-                    if (cropActiveSlot === slotIndex) return;
-                    if (option.media && option.media.type === 'image') {
-                      clearLongPressTimer();
-                      longPressTimerRef.current = setTimeout(() => {
-                        longPressFiredRef.current = slotIndex;
-                        setActiveButtonsSlot(null);
-                        onCropFromPreview && onCropFromPreview(slotIndex);
-                      }, 500);
-                    }
-                  }}
-                  onMouseUp={clearLongPressTimer}
-                  onMouseLeave={clearLongPressTimer}
-                  onTouchStart={() => {
-                    if (cropActiveSlot === slotIndex) return;
-                    if (option.media && option.media.type === 'image') {
-                      clearLongPressTimer();
-                      longPressTimerRef.current = setTimeout(() => {
-                        longPressFiredRef.current = slotIndex;
-                        setActiveButtonsSlot(null);
-                        onCropFromPreview && onCropFromPreview(slotIndex);
-                      }, 500);
-                    }
-                  }}
-                  onTouchEnd={clearLongPressTimer}
-                  onTouchMove={clearLongPressTimer}
-                  onTouchCancel={clearLongPressTimer}
+                  onMouseDown={(e) => beginGestureTracking(slotIndex, e, false)}
+                  onMouseMove={(e) => handleTrackedMove(slotIndex, e, false)}
+                  onMouseUp={endGestureTracking}
+                  onMouseLeave={endGestureTracking}
+                  onTouchStart={(e) => beginGestureTracking(slotIndex, e, true)}
+                  onTouchMove={(e) => handleTrackedMove(slotIndex, e, true)}
+                  onTouchEnd={endGestureTracking}
+                  onTouchCancel={endGestureTracking}
                   onContextMenu={(e) => e.preventDefault()}
                   style={{
                     // FIXED: Disable pointer events on parent when crop is active
@@ -540,6 +572,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                         </div>
                       ) : (
                         <InlineCrop
+                          ref={(el) => { cropRefsByIdx.current[slotIndex] = el; }}
                           key={slotIndex} // ✅ FIXED: Use stable key to prevent re-mounts when media object changes
                           isActive={cropActiveSlot === slotIndex}
                           imageSrc={option.media.url}

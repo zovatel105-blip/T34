@@ -4,17 +4,17 @@
  * - Prevents black areas by design
  * - Mobile-first touch gestures
  */
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Check } from 'lucide-react';
 
-const InlineCrop = ({
+const InlineCrop = forwardRef(({
   isActive = false,
   imageSrc = '',
   savedTransform = null,
   onSave = () => {},
   onCancel = () => {},
   className = ''
-}) => {
+}, ref) => {
   // Enhanced position and scale state - Initialize from savedTransform if available
   const [position, setPosition] = useState(() => {
     if (savedTransform && savedTransform.transform && savedTransform.transform.position) {
@@ -330,6 +330,31 @@ const InlineCrop = ({
     };
   }, []);
 
+  // Imperative API: permite que el contenedor padre "inyecte" el inicio de
+  // una gestura cuando detecta intención de arrastre (TikTok-like). Así no
+  // hace falta long-press: con mover el dedo, ya se está ajustando.
+  useImperativeHandle(ref, () => ({
+    startGestureAt(eventLike) {
+      setIsInteracting(true);
+      if (eventLike && eventLike.touches && eventLike.touches.length > 0) {
+        const t = eventLike.touches;
+        if (t.length === 1) {
+          setIsDragging(true);
+          setLastTouch({ x: t[0].clientX, y: t[0].clientY });
+        } else if (t.length >= 2) {
+          setIsDragging(false);
+          setLastDistance(getDistance(t));
+          const cx = (t[0].clientX + t[1].clientX) / 2;
+          const cy = (t[0].clientY + t[1].clientY) / 2;
+          setLastTouch({ x: cx, y: cy });
+        }
+      } else if (eventLike && typeof eventLike.clientX === 'number') {
+        setIsDragging(true);
+        setLastTouch({ x: eventLike.clientX, y: eventLike.clientY });
+      }
+    }
+  }), []);
+
   // Global event listeners for smooth gesture handling
   useEffect(() => {
     if (!isActive) return;
@@ -429,6 +454,8 @@ const InlineCrop = ({
       </div>
     </div>
   );
-};
+});
+
+InlineCrop.displayName = 'InlineCrop';
 
 export default InlineCrop;
