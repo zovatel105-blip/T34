@@ -1676,16 +1676,75 @@ const ContentCreationPage = () => {
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            {/* Add Sound button - Center (pill style) */}
-            <button
-              onClick={() => setShowMusicSelector(true)}
-              className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-black/70 backdrop-blur-sm hover:bg-black/80 rounded-full text-white transition-colors"
-            >
-              <Music className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-xs sm:text-sm font-medium truncate max-w-24 sm:max-w-40">
-                {selectedMusic ? `${selectedMusic.title}` : 'Add sound'}
-              </span>
-            </button>
+            {/* Add Sound + Layout combo pill - Center
+                Combina el selector de música y el selector de layout en una
+                sola pastilla con un separador vertical en el medio. */}
+            <div className="flex items-center bg-black/70 backdrop-blur-sm rounded-full text-white overflow-visible relative">
+              {/* Music section */}
+              <button
+                onClick={() => setShowMusicSelector(true)}
+                className="flex items-center gap-2 pl-3 sm:pl-5 pr-3 sm:pr-4 py-2 sm:py-3 hover:bg-white/10 rounded-l-full transition-colors"
+              >
+                <Music className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-xs sm:text-sm font-medium truncate max-w-24 sm:max-w-40">
+                  {selectedMusic ? `${selectedMusic.title}` : 'Add sound'}
+                </span>
+              </button>
+
+              {/* Vertical separator */}
+              <div className="w-px h-5 sm:h-6 bg-white/30 self-center"></div>
+
+              {/* Layout section */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (challengeRequiredLayout) {
+                      toast({
+                        title: "🔒 Layout bloqueado",
+                        description: `El creador del challenge eligió: ${challengeRequiredLayout.name}`,
+                      });
+                      return;
+                    }
+                    setShowLayoutMenu(!showLayoutMenu);
+                  }}
+                  className={`flex items-center justify-center pl-3 sm:pl-4 pr-3 sm:pr-5 py-2 sm:py-3 rounded-r-full transition-colors ${challengeRequiredLayout ? 'bg-yellow-600/40' : 'hover:bg-white/10'}`}
+                >
+                  <div className="scale-75 sm:scale-90">
+                    <LayoutIcon type={selectedLayout.id} />
+                  </div>
+                </button>
+
+                {/* Layout Menu - dropdown below the pill */}
+                {showLayoutMenu && !challengeRequiredLayout && (
+                  <div className="absolute right-0 top-full mt-2 w-16 sm:w-20 bg-black/80 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden z-50 border border-white/10">
+                    <div className="py-2">
+                      {LAYOUT_OPTIONS
+                        .filter((layout) => (
+                          // En modo VS solo se permiten lado-a-lado (vertical) y
+                          // arriba-abajo (horizontal). En PUBLICAR/CHALLENGE se
+                          // muestran todos.
+                          creationMode === 'vs'
+                            ? ['vertical', 'horizontal'].includes(layout.id)
+                            : true
+                        ))
+                        .map((layout) => (
+                        <button
+                          key={layout.id}
+                          onClick={() => handleLayoutSelect(layout)}
+                          className={`w-full px-2 py-2 text-left hover:bg-white/10 transition-colors ${
+                            selectedLayout.id === layout.id ? 'bg-white/20 text-white' : 'text-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-center">
+                            <LayoutIcon type={layout.id} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Preview button - Removed per user request */}
           </div>
@@ -1705,64 +1764,8 @@ const ContentCreationPage = () => {
         </button>
       )}
 
-      {/* Floating Right Sidebar - Overlay on top of content - Hidden in
-          preview mode y en MOMENTO. */}
-      {!previewMode && creationMode !== 'momento' && (
-        <div className="absolute top-16 sm:top-20 right-2 sm:right-4 z-40 flex flex-col gap-2 sm:gap-3">
-          {/* Layout Button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                if (challengeRequiredLayout) {
-                  toast({
-                    title: "🔒 Layout bloqueado",
-                    description: `El creador del challenge eligió: ${challengeRequiredLayout.name}`,
-                  });
-                  return;
-                }
-                setShowLayoutMenu(!showLayoutMenu);
-              }}
-              className={`w-10 h-10 sm:w-12 sm:h-12 ${challengeRequiredLayout ? 'bg-yellow-600/70' : 'bg-black/70'} backdrop-blur-sm hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all shadow-lg border ${challengeRequiredLayout ? 'border-yellow-400/30' : 'border-white/10'}`}
-            >
-              <div className="scale-75 sm:scale-90">
-                <LayoutIcon type={selectedLayout.id} />
-              </div>
-            </button>
-
-            {/* Layout Menu - hidden when layout is locked by challenge */}
-            {showLayoutMenu && !challengeRequiredLayout && (
-              <div className="absolute right-full top-0 mr-2 sm:mr-3 w-16 sm:w-20 bg-black/20 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden z-50 border border-white/10">
-                <div className="py-2">
-                  {LAYOUT_OPTIONS
-                    .filter((layout) => (
-                      // En modo VS solo se permiten lado-a-lado (vertical) y
-                      // arriba-abajo (horizontal). En PUBLICAR/CHALLENGE se
-                      // muestran todos.
-                      creationMode === 'vs'
-                        ? ['vertical', 'horizontal'].includes(layout.id)
-                        : true
-                    ))
-                    .map((layout) => (
-                    <button
-                      key={layout.id}
-                      onClick={() => handleLayoutSelect(layout)}
-                      className={`w-full px-2 py-2 text-left hover:bg-white/10 transition-colors ${
-                        selectedLayout.id === layout.id ? 'bg-white/20 text-white' : 'text-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center">
-                        <LayoutIcon type={layout.id} />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Add Slot Button - Removed per user request */}
-        </div>
-      )}
+      {/* Floating Right Sidebar - Removido. El botón de layout ahora vive
+          dentro de la pastilla "Add sound" en el header. */}
 
       {/* Bottom Tab Bar - Twyk style */}
       {!previewMode && (
