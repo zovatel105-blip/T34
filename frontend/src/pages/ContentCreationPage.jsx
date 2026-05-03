@@ -12,7 +12,6 @@ import pollService from '../services/pollService';
 import challengeService from '../services/challengeService';
 import InlineCrop from '../components/InlineCrop';
 import config from '../config/config';
-import VSCreatePage from './VSCreatePage';
 import MomentCreationPage from './MomentCreationPage';
 import { 
   Dialog, 
@@ -763,7 +762,22 @@ const ContentCreationPage = () => {
   // VS y MOMENTO ahora se renderizan embebidos dentro de esta página en vez
   // de navegar a otra ruta, para que la barra inferior de tabs se sienta
   // como un único contenedor.
+  // - PUBLICAR/CHALLENGE: editor base con todos los layouts.
+  // - VS: editor base, pero la sidebar solo permite "Lado a lado" y
+  //   "Arriba y abajo".
+  // - MOMENTO: renderiza MomentCreationPage embebido (imagen única, sin
+  //   selector de layouts).
   const [creationMode, setCreationMode] = useState('publicar');
+
+  // Cuando el usuario cambia a VS, si el layout actual no es uno de los
+  // permitidos para VS, lo cambiamos automáticamente a "vertical"
+  // (lado a lado), que es el layout VS clásico.
+  useEffect(() => {
+    if (creationMode === 'vs' && !['vertical', 'horizontal'].includes(selectedLayout.id)) {
+      const vsLayout = LAYOUT_OPTIONS.find((l) => l.id === 'vertical');
+      if (vsLayout) setSelectedLayout(vsLayout);
+    }
+  }, [creationMode, selectedLayout.id]);
 
   // Initialize with pre-selected audio if provided OR challengeId
   useEffect(() => {
@@ -1440,8 +1454,10 @@ const ContentCreationPage = () => {
     <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black pt-safe" style={{ margin: 0, padding: 0, paddingTop: 'var(--safe-area-inset-top)' }}>
       {/* Main Content Area - Con espacio inferior como StoryEditPage.
           Nota: absolute top-0 ignora padding-top del padre, así que añadimos
-          explícitamente el offset de safe-area-top. */}
-      {creationMode === 'publicar' && (
+          explícitamente el offset de safe-area-top. Se muestra para PUBLICAR,
+          CHALLENGE y VS — VS solo difiere en los layouts permitidos en la
+          sidebar (lado a lado / arriba y abajo). */}
+      {creationMode !== 'momento' && (
       <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           <LayoutPreview
@@ -1467,19 +1483,10 @@ const ContentCreationPage = () => {
       </div>
       )}
 
-      {/* Embedded VS editor - se renderiza en lugar del editor de PUBLICAR
-          cuando el usuario toca el tab "VS" en la barra inferior. Deja
-          ~96px en el inferior para que no tape la tab bar compartida. */}
-      {creationMode === 'vs' && (
-        <div
-          className="absolute left-0 right-0 z-20"
-          style={{ top: 'var(--safe-area-inset-top)', bottom: '96px' }}
-        >
-          <VSCreatePage embedded onClose={handleClose} />
-        </div>
-      )}
-
-      {/* Embedded MOMENTO editor */}
+      {/* Embedded MOMENTO editor - se renderiza en lugar del editor de
+          PUBLICAR/VS cuando el usuario toca el tab "MOMENTO". Es de imagen
+          única y trae su propia UI sin selector de layouts. Deja ~96px en
+          el inferior para que no tape la tab bar compartida. */}
       {creationMode === 'momento' && (
         <div
           className="absolute left-0 right-0 z-20"
@@ -1490,9 +1497,9 @@ const ContentCreationPage = () => {
       )}
 
       {/* Header Controls - Floating on top - Hidden in preview mode and in
-          embedded modes (VS/MOMENTO traen su propio header).
+          MOMENTO mode (que trae su propio header).
           Nota: absolute top-0 ignora padding-top del padre; usamos top inline con safe-area. */}
-      {!previewMode && creationMode === 'publicar' && (
+      {!previewMode && creationMode !== 'momento' && (
         <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
           {/* Main Controls Row */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
@@ -1534,8 +1541,8 @@ const ContentCreationPage = () => {
       )}
 
       {/* Floating Right Sidebar - Overlay on top of content - Hidden in
-          preview mode y cuando estamos en modos VS/MOMENTO. */}
-      {!previewMode && creationMode === 'publicar' && (
+          preview mode y en MOMENTO. */}
+      {!previewMode && creationMode !== 'momento' && (
         <div className="absolute top-16 sm:top-20 right-2 sm:right-4 z-40 flex flex-col gap-2 sm:gap-3">
           {/* Layout Button */}
           <div className="relative">
@@ -1561,7 +1568,16 @@ const ContentCreationPage = () => {
             {showLayoutMenu && !challengeRequiredLayout && (
               <div className="absolute right-full top-0 mr-2 sm:mr-3 w-16 sm:w-20 bg-black/20 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden z-50 border border-white/10">
                 <div className="py-2">
-                  {LAYOUT_OPTIONS.map((layout) => (
+                  {LAYOUT_OPTIONS
+                    .filter((layout) => (
+                      // En modo VS solo se permiten lado-a-lado (vertical) y
+                      // arriba-abajo (horizontal). En PUBLICAR/CHALLENGE se
+                      // muestran todos.
+                      creationMode === 'vs'
+                        ? ['vertical', 'horizontal'].includes(layout.id)
+                        : true
+                    ))
+                    .map((layout) => (
                     <button
                       key={layout.id}
                       onClick={() => handleLayoutSelect(layout)}
@@ -1586,8 +1602,8 @@ const ContentCreationPage = () => {
       {/* Bottom Tab Bar - Twyk style */}
       {!previewMode && (
         <div className="absolute bottom-0 left-0 right-0 z-30">
-          {/* Next button row - solo en modo PUBLICAR (VS/MOMENTO usan su propio botón) */}
-          {creationMode === 'publicar' && (
+          {/* Next button row - solo en PUBLICAR/CHALLENGE/VS (MOMENTO usa su propio botón) */}
+          {creationMode !== 'momento' && (
           <div className="px-4 pb-3 flex justify-end">
             <button
               onClick={handleCreate}
