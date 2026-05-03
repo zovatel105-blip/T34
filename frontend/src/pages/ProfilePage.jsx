@@ -25,6 +25,7 @@ import pollService from '../services/pollService';
 import userService from '../services/userService';
 import storyService from '../services/storyService';
 import feedCache from '../services/feedCacheService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useFollow } from '../contexts/FollowContext';
@@ -288,6 +289,12 @@ const ProfilePage = () => {
           setPolls(userPollsData);
           // Persistir en disco
           feedCache.setCachedFeed(userPollsData, cacheKey).catch(() => {});
+          // 🚀 Prefetch offline-first: thumbnails/avatares/posters/covers/audios
+          // de TODOS los polls del perfil → contenido + reproductor offline.
+          try {
+            feedMediaPrefetcher.prefetchLightweightForAll?.(userPollsData);
+            feedMediaPrefetcher.prefetchVideosAroundIndex?.(userPollsData, 0, 3);
+          } catch (e) { /* silent */ }
         } catch (error) {
           if (!usedCache) {
             console.error('Error loading user polls:', error);
@@ -652,6 +659,10 @@ const ProfilePage = () => {
       try {
         const savedData = await pollService.getSavedPolls();
         setSavedPolls(savedData || []);
+        // 🚀 Prefetch offline-first para los guardados del usuario
+        try {
+          feedMediaPrefetcher.prefetchLightweightForAll?.(savedData || []);
+        } catch (e) { /* silent */ }
       } catch (error) {
         console.error('Error loading saved polls:', error);
         setSavedPolls([]);

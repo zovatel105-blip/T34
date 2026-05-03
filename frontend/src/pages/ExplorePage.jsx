@@ -135,8 +135,10 @@ const ExplorePage = () => {
       // 💾 Persistir en disco para offline-first del siguiente arranque
       feedCache.setCachedFeed(transformedChallenges, 'explore').catch(() => {});
 
-      // 🚀 Prefetch de thumbnails y vídeos cercanos (TikTok-style)
+      // 🚀 Prefetch de medios para offline-first (TikTok-style)
       try {
+        // Thumbnails/avatares/posters/covers/audios de TODOS los challenges
+        feedMediaPrefetcher.prefetchLightweightForAll?.(transformedChallenges);
         feedMediaPrefetcher.prefetchVideosAroundIndex?.(transformedChallenges, 0, 3);
       } catch (e) {
         // silent

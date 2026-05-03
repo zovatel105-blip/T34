@@ -83,8 +83,13 @@ const FollowingPage = () => {
           setPolls(followingPolls);
           // Persistir snapshot fresco
           feedCache.setCachedFeed(followingPolls, 'following').catch(() => {});
-          // Prefetch de medios cercanos
+          // Prefetch de medios cercanos (offline-first)
           try {
+            // Thumbnails/avatares/posters/covers/audios de TODOS los posts
+            // → garantiza que el feed Following y su reproductor funcionen
+            // sin conexión, igual que la pestaña principal.
+            feedMediaPrefetcher.prefetchLightweightForAll?.(followingPolls);
+            // Vídeos pesados solo de los siguientes 3 posts
             feedMediaPrefetcher.prefetchVideosAroundIndex?.(followingPolls, 0, 3);
           } catch (e) { /* silent */ }
         } catch (err) {

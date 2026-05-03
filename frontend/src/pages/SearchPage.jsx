@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import searchService from '../services/searchService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 // import storyService from '../services/storyService'; // Removed - Stories feature disabled
 import userService from '../services/userService';
 import AutocompleteDropdown from '../components/search/AutocompleteDropdown';
@@ -218,6 +219,12 @@ const SearchPage = () => {
         SEARCH_CONFIG.LIMITS.SEARCH_RESULTS
       );
       setSearchResults(response.results || []);
+
+      // 🚀 Prefetch offline-first: cachea thumbnails/avatares/posters/covers/audios
+      // de los resultados (no-op para items que no son polls).
+      try {
+        feedMediaPrefetcher.prefetchLightweightForAll?.(response.results || []);
+      } catch (e) { /* silent */ }
       
       // Save search to recent searches (only for authenticated users)
       if (isAuthenticated && query.trim().length > 0) {

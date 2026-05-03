@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 
 /**
  * Full-screen TikTok-style viewer for a single post.
@@ -46,6 +47,11 @@ const PostViewerPage = () => {
         const transformed = await pollService.refreshPoll(postId);
         if (!cancelled && transformed) {
           setPolls([transformed]);
+          // 🚀 Prefetch offline-first del post (avatar, portada, audio, vídeos)
+          try {
+            feedMediaPrefetcher.prefetchLightweightForAll?.([transformed]);
+            feedMediaPrefetcher.prefetchVideosAroundIndex?.([transformed], 0, 1);
+          } catch (e) { /* silent */ }
         }
       } catch (e) {
         console.error('Error loading post:', e);

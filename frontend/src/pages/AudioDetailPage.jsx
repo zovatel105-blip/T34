@@ -7,6 +7,8 @@ import { useToast } from '../hooks/use-toast';
 import audioManager from '../services/AudioManager';
 import pollService from '../services/pollService';
 import feedCache from '../services/feedCacheService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
+import mediaCache from '../services/mediaCacheService';
 import { Button } from '../components/ui/button';
 import TikTokScrollView from '../components/TikTokScrollView';
 import TikTokProfileGrid from '../components/TikTokProfileGrid';
@@ -133,6 +135,20 @@ const AudioDetailPage = () => {
       if (response.ok) {
         const data = await response.json();
         setAudio(data.audio);
+        // 🎵 Prefetch a disco del audio + portada para que esta pantalla
+        // funcione offline la próxima vez (reproductor + cover).
+        try {
+          if (data?.audio?.public_url) {
+            mediaCache
+              .prefetch(resolveAssetUrl(data.audio.public_url) || data.audio.public_url, { maxBytes: 8 * 1024 * 1024 })
+              .catch(() => {});
+          }
+          if (data?.audio?.cover_url) {
+            mediaCache
+              .prefetch(resolveAssetUrl(data.audio.cover_url) || data.audio.cover_url)
+              .catch(() => {});
+          }
+        } catch (_) { /* ignore */ }
       } else {
         const musicUrl = `${backendUrl}/api/music/library-with-previews?limit=1000`;
         console.log('🎵 [AudioDetail] Fallback a music library:', musicUrl);
@@ -163,6 +179,19 @@ const AudioDetailPage = () => {
               genre: musicTrack.genre
             };
             setAudio(audioData);
+            // 🎵 Prefetch a disco del audio + portada (vía iTunes library)
+            try {
+              if (audioData.public_url) {
+                mediaCache
+                  .prefetch(resolveAssetUrl(audioData.public_url) || audioData.public_url, { maxBytes: 8 * 1024 * 1024 })
+                  .catch(() => {});
+              }
+              if (audioData.cover_url) {
+                mediaCache
+                  .prefetch(resolveAssetUrl(audioData.cover_url) || audioData.cover_url)
+                  .catch(() => {});
+              }
+            } catch (_) { /* ignore */ }
           } else {
             throw new Error(`Audio ${audioId} no encontrado en la librería`);
           }
@@ -238,6 +267,11 @@ const AudioDetailPage = () => {
         setPosts(transformedPosts);
         // 💾 Persistir en disco para offline
         feedCache.setCachedFeed(transformedPosts, cacheKey).catch(() => {});
+        // 🚀 Prefetch offline-first: thumbnails/avatares/portadas y AUDIOS
+        // de todos los posts asociados al audio → reproductor offline.
+        try {
+          feedMediaPrefetcher.prefetchLightweightForAll?.(transformedPosts);
+        } catch (e) { /* silent */ }
       } else if (!usedCache) {
         // Solo limpiar si NO había cache hidratado
         setPosts([]);
@@ -610,13 +644,27 @@ const AudioDetailPage = () => {
             >
               {audio.cover_url ? (
                 <img 
-                  src={resolveAssetUrl(audio.cover_url)} 
+                  src={(() => {
+                    // 🗂️ OFFLINE-FIRST: usar copia cacheada en disco si existe
+                    const resolved = resolveAssetUrl(audio.cover_url);
+                    try {
+                      const cached = mediaCache.lookupSync(resolved);
+                      if (cached) return cached;
+                    } catch (_) { /* ignore */ }
+                    return resolved;
+                  })()}
                   alt={audio.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Si la portada externa no carga (offline), mostrar el icono Music
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList?.remove?.('hidden');
+                  }}
                 />
               ) : (
                 <Music className="w-10 h-10 text-gray-600" />
               )}
+              <Music className="w-10 h-10 text-gray-600 hidden" />
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-all duration-200 rounded-xl">
                 <div className="opacity-0 hover:opacity-100 transition-opacity">
                   {isPlaying ? (
