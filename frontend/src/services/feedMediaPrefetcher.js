@@ -25,6 +25,10 @@ import resolveAssetUrl from '../utils/resolveAssetUrl';
 import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../utils/mediaUrl';
 
 const VIDEO_MAX_BYTES = 25 * 1024 * 1024; // 25 MB por vídeo
+// 8 MB por audio: cubre previews iTunes (~500 KB-1 MB) y audios originales
+// extraídos de vídeos cortos (~30-90 s en mp3/aac). Suficiente para feeds
+// largos sin reventar la cuota de 250 MB.
+const AUDIO_MAX_BYTES = 8 * 1024 * 1024;
 
 const isCapacitorNative = () => {
   try {
@@ -48,6 +52,11 @@ const extractLightweightUrls = (poll) => {
 
   // Thumbnail del post entero (si lo hay)
   if (poll?.thumbnail_url) urls.push(resolveAssetUrl(poll.thumbnail_url));
+
+  // 🎵 Portada de la música (música global tipo iTunes/Mock)
+  // Para que el reproductor inferior se vea igual offline.
+  const musicCover = poll?.music?.cover;
+  if (musicCover) urls.push(resolveAssetUrl(musicCover));
 
   // Por cada opción: poster del vídeo o url de imagen
   const options = Array.isArray(poll?.options) ? poll.options : [];
@@ -86,10 +95,56 @@ const extractVideoUrls = (poll) => {
   return urls.filter(Boolean);
 };
 
+/**
+ * Extrae URLs de AUDIO de un poll que conviene cachear en disco para que
+ * el reproductor funcione sin conexión.
+ *
+ * Cubre los 3 casos del feed:
+ *   1) Música global del poll (poll.music.preview_url) — iTunes 30 s.
+ *   2) Audio original extraído por slide en carruseles
+ *      (option.extracted_audio_url o option.extracted_audio.preview_url).
+ *   3) Audio subido por el usuario para el poll completo
+ *      (poll.audio_url o poll.audio.preview_url) si existe.
+ */
+const extractAudioUrls = (poll) => {
+  if (!poll || typeof poll !== 'object') return [];
+  const urls = [];
+
+  // 1) Música global del poll
+  const musicPreview = poll?.music?.preview_url;
+  if (musicPreview) urls.push(resolveAssetUrl(musicPreview));
+
+  // 2) Audio del poll completo (cuando no es por slide)
+  const pollAudio =
+    poll?.audio_url ||
+    poll?.audio?.preview_url ||
+    poll?.audio?.public_url ||
+    poll?.audio?.url;
+  if (pollAudio) urls.push(resolveAssetUrl(pollAudio));
+
+  // 3) Audios extraídos por slide en carruseles
+  const options = Array.isArray(poll?.options) ? poll.options : [];
+  for (const opt of options) {
+    if (!opt) continue;
+    const extracted =
+      opt.extracted_audio_url ||
+      opt.extracted_audio?.preview_url ||
+      opt.extracted_audio?.public_url ||
+      opt.extracted_audio?.url;
+    if (extracted) urls.push(resolveAssetUrl(extracted));
+  }
+
+  return urls.filter(Boolean);
+};
+
 const feedMediaPrefetcher = {
   /**
    * Cachea en disco los thumbnails/posters/avatares de TODOS los posts
    * de la lista. Es barato y crítico para que el feed se vea bien offline.
+   *
+   * También cachea las URLs de AUDIO (música global + audios extraídos
+   * de carruseles) de TODOS los posts. Los previews son pequeños (≤1 MB
+   * cada uno) y son críticos para que el reproductor funcione offline.
    *
    * @param {Array} polls — lista completa del feed
    */
@@ -102,6 +157,39 @@ const feedMediaPrefetcher = {
         const urls = extractLightweightUrls(p);
         for (const u of urls) {
           mediaCache.prefetch(u).catch(() => { /* offline — ignorar */ });
+        }
+        // 🎵 Audios — críticos para que el reproductor suene offline
+        const audios = extractAudioUrls(p);
+        for (const a of audios) {
+          mediaCache
+            .prefetch(a, { maxBytes: AUDIO_MAX_BYTES })
+            .catch(() => { /* offline o demasiado grande — ignorar */ });
+        }
+      }
+    });
+  },
+
+  /**
+   * Cachea en disco los AUDIOS de los próximos N posts a partir del índice
+   * activo. Útil cuando se carga más feed por scroll y queremos asegurar
+   * que el reproductor funcione offline para los siguientes posts.
+   *
+   * Es seguro llamar múltiples veces — `mediaCache.prefetch()` deduplica.
+   */
+  prefetchAudiosAroundIndex(polls, index, aheadCount = 5) {
+    if (!isCapacitorNative()) return;
+    if (!Array.isArray(polls) || polls.length === 0) return;
+    if (typeof index !== 'number' || index < 0) return;
+
+    const start = Math.max(0, index);
+    const end = Math.min(polls.length, index + 1 + aheadCount);
+    Promise.resolve().then(() => {
+      for (let i = start; i < end; i++) {
+        const audios = extractAudioUrls(polls[i]);
+        for (const a of audios) {
+          mediaCache
+            .prefetch(a, { maxBytes: AUDIO_MAX_BYTES })
+            .catch(() => { /* offline — ignorar */ });
         }
       }
     });

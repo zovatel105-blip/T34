@@ -4,9 +4,32 @@
  */
 
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import mediaCache from './mediaCacheService';
 
 const DEV = process.env.NODE_ENV === 'development';
 const log = DEV ? console.log.bind(console) : () => {};
+
+/**
+ * 🔧 OFFLINE-FIRST: dada una URL remota, devuelve la URI local cacheada
+ * en filesystem nativo si existe (Capacitor APK). Si no, devuelve la
+ * URL remota tal cual. Permite que el reproductor suene offline.
+ *
+ * En web siempre devuelve la URL remota porque mediaCache no cachea allí
+ * (el navegador maneja su propia cache HTTP).
+ */
+const _toPlayableUrl = (remoteUrl) => {
+  if (!remoteUrl) return remoteUrl;
+  try {
+    const cached = mediaCache.lookupSync(remoteUrl);
+    if (cached) {
+      log('🗂️ AudioManager: serving from disk cache:', remoteUrl);
+      return cached;
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return remoteUrl;
+};
 
 class AudioManager {
   constructor() {
@@ -38,7 +61,10 @@ class AudioManager {
     // 🔧 NATIVE-FIX: resolver URLs relativas (/api/uploads/...) contra el
     // BACKEND_URL real. En APK Capacitor `https://localhost/api/...` no existe.
     const resolvedUrl = resolveAssetUrl(url) || url;
-    if (this._preconnectUrl === resolvedUrl) return;
+    // 🗂️ OFFLINE-FIRST: si está cacheado en disco, usar la URI local.
+    // Así, si la red cae entre preconnect y play, el audio igual suena.
+    const playableUrl = _toPlayableUrl(resolvedUrl);
+    if (this._preconnectUrl === playableUrl) return;
 
     // Limpiar preconexión anterior
     if (this._preconnectAudio) {
@@ -47,16 +73,30 @@ class AudioManager {
       this._preconnectAudio = null;
     }
 
-    this._preconnectUrl = resolvedUrl;
+    this._preconnectUrl = playableUrl;
     const audio = new Audio();
     // ⚠️ NO usar crossOrigin para audio HTML5 simple: causa fallos CORS
     // en APK nativo si el servidor no devuelve los headers correctos.
     audio.preload = 'auto';
     audio.volume = 0;
-    audio.src = resolvedUrl;
+    audio.src = playableUrl;
     audio.load(); // descarga sin reproducir
     this._preconnectAudio = audio;
-    log('🔗 AudioManager: preconnected', resolvedUrl);
+    log('🔗 AudioManager: preconnected', playableUrl);
+
+    // 📥 Disparar prefetch a disco en background (idempotente). Si el
+    // usuario abre la APK más tarde sin red, este audio ya estará cacheado.
+    if (resolvedUrl && resolvedUrl !== playableUrl) {
+      // Ya estaba cacheado, nada que hacer
+    } else if (resolvedUrl) {
+      try {
+        mediaCache
+          .prefetch(resolvedUrl, { maxBytes: 8 * 1024 * 1024 })
+          .catch(() => { /* offline — ignorar */ });
+      } catch (_) {
+        /* mediaCache no disponible (web) */
+      }
+    }
   }
 
   /**
@@ -73,6 +113,12 @@ class AudioManager {
       // y el audio falla silenciosamente con el reproductor "roto".
       const resolvedUrl = resolveAssetUrl(audioUrl) || audioUrl;
 
+      // 🗂️ OFFLINE-FIRST: si la URL está cacheada en filesystem nativo
+      // (mediaCacheService), usar la URI local. Así el reproductor suena
+      // sin red. Si no está cacheada todavía, usamos la remota y disparamos
+      // prefetch en background para que esté disponible la próxima vez.
+      const playableUrl = _toPlayableUrl(resolvedUrl);
+
       // Detener completamente cualquier audio anterior
       if (this.currentAudio) {
         await this.stop();
@@ -80,8 +126,8 @@ class AudioManager {
 
       // ✅ Reutilizar audio pre-conectado si la URL coincide → ~0ms latencia
       let audio;
-      if (this._preconnectAudio && this._preconnectUrl === resolvedUrl) {
-        log('⚡ AudioManager: reusing preconnected audio for', resolvedUrl);
+      if (this._preconnectAudio && this._preconnectUrl === playableUrl) {
+        log('⚡ AudioManager: reusing preconnected audio for', playableUrl);
         audio = this._preconnectAudio;
         this._preconnectAudio = null;
         this._preconnectUrl = null;
@@ -92,7 +138,7 @@ class AudioManager {
         // en APK nativo si el servidor no devuelve los headers correctos.
         audio.preload = 'auto';
         audio.volume = 0;
-        audio.src = resolvedUrl;
+        audio.src = playableUrl;
       }
 
       if (options.loop !== undefined) audio.loop = options.loop;
@@ -108,7 +154,7 @@ class AudioManager {
 
       this.currentAudio = audio;
       this.currentPostId = postId;
-      this.currentAudioUrl = resolvedUrl;
+      this.currentAudioUrl = playableUrl;
 
       this.playPromise = audio.play();
       await this.playPromise;
@@ -117,6 +163,18 @@ class AudioManager {
       await this.fadeIn();
 
       log(`✅ AudioManager: playing post ${postId}`);
+
+      // 📥 Background prefetch para offline futuro (idempotente, no bloquea)
+      if (playableUrl === resolvedUrl) {
+        // No estaba cacheado todavía → guardar para próxima vez
+        try {
+          mediaCache
+            .prefetch(resolvedUrl, { maxBytes: 8 * 1024 * 1024 })
+            .catch(() => { /* offline — ignorar */ });
+        } catch (_) {
+          /* mediaCache no disponible (web) */
+        }
+      }
 
       if (!options.loop) {
         setTimeout(() => this.fadeOutAndPause(), 30000);

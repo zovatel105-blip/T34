@@ -9,6 +9,7 @@ import { cn } from '../../lib/utils';
 import { Trophy, User } from 'lucide-react';
 import audioManager from '../../services/AudioManager';
 import audioMetadataCacheStore from '../../services/audioMetadataCacheService';
+import mediaCache from '../../services/mediaCacheService';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
@@ -249,10 +250,38 @@ const CarouselLayout = ({
         // 🔧 NATIVE-FIX: resolver URL relativa contra BACKEND_URL.
         // En APK Capacitor "/api/uploads/audio/xxx.mp3" resolvería a
         // https://localhost/api/... que no existe → audio no reproduce.
-        const audioUrl = resolveAssetUrl(audioUrlRaw) || audioUrlRaw;
+        const audioUrlResolved = resolveAssetUrl(audioUrlRaw) || audioUrlRaw;
+        // 🗂️ OFFLINE-FIRST: si el audio está cacheado en filesystem nativo
+        // (mediaCacheService) servir desde disco para que suene sin red.
+        // Si no está cacheado, disparar prefetch en background para próxima vez.
+        let audioUrl = audioUrlResolved;
+        try {
+          const cached = mediaCache.lookupSync(audioUrlResolved);
+          if (cached) {
+            audioUrl = cached;
+          } else {
+            mediaCache
+              .prefetch(audioUrlResolved, { maxBytes: 8 * 1024 * 1024 })
+              .catch(() => { /* offline — ignorar */ });
+          }
+        } catch (_) {
+          /* mediaCache no disponible (web) */
+        }
 
         const coverRaw = audioData.cover_url || option.thumbnail_url;
-        const coverImage = resolveAssetUrl(coverRaw) || coverRaw;
+        const coverResolved = resolveAssetUrl(coverRaw) || coverRaw;
+        // 🗂️ Misma estrategia para la portada del audio
+        let coverImage = coverResolved;
+        try {
+          const cachedCover = mediaCache.lookupSync(coverResolved);
+          if (cachedCover) {
+            coverImage = cachedCover;
+          } else if (coverResolved) {
+            mediaCache.prefetch(coverResolved).catch(() => {});
+          }
+        } catch (_) {
+          /* ignore */
+        }
 
         if (onThumbnailChange && coverImage) {
           onThumbnailChange(coverImage);

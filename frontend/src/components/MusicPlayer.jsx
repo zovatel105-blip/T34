@@ -4,6 +4,8 @@ import { Play, Pause, Music, Loader2 } from 'lucide-react';
 import audioManager from '../services/AudioManager';
 import realMusicService from '../services/realMusicService';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import useCachedMedia from '../hooks/useCachedMedia';
+import mediaCache from '../services/mediaCacheService';
 
 const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', autoPlay = false, loop = false, authorAvatar = null, authorUsername = null, overrideAudioId = null, forceUseAvatar = false }) => {
   const navigate = useNavigate();
@@ -11,7 +13,32 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
   const [isLoading, setIsLoading] = useState(false);
   const [realPreviewUrl, setRealPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [imgLoadError, setImgLoadError] = useState(false);
   const mountedRef = useRef(true);
+
+  // Reset error visual cuando cambia la imagen mostrada
+  useEffect(() => {
+    setImgLoadError(false);
+  }, [music?.cover, authorAvatar]);
+
+  // 📥 Background prefetch a disco del preview de audio + portada para
+  // que el reproductor funcione offline la próxima vez.
+  useEffect(() => {
+    try {
+      const previewUrl = music?.preview_url ? resolveAssetUrl(music.preview_url) || music.preview_url : null;
+      if (previewUrl) {
+        mediaCache
+          .prefetch(previewUrl, { maxBytes: 8 * 1024 * 1024 })
+          .catch(() => { /* offline o no nativo — ignorar */ });
+      }
+      const coverUrl = music?.cover ? resolveAssetUrl(music.cover) || music.cover : null;
+      if (coverUrl) {
+        mediaCache.prefetch(coverUrl).catch(() => { /* ignorar */ });
+      }
+    } catch (_) {
+      /* mediaCache no disponible — ignorar */
+    }
+  }, [music?.preview_url, music?.cover]);
 
   // Efecto para obtener preview real
   useEffect(() => {
@@ -71,6 +98,21 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
       mountedRef.current = false;
     };
   }, []);
+
+  // ⚠️ Estos cálculos van ANTES del early-return porque incluyen un hook
+  // (useCachedMedia). React exige que los hooks se llamen en el mismo orden
+  // en cada render — no se pueden poner después de `return null`.
+
+  // Determinar si es original sound o música externa
+  const isOriginalSound = music?.isOriginal || music?.source === 'User Upload' || !music?.cover;
+  // Si forceUseAvatar es true (audio de carrusel), siempre usar authorAvatar si existe
+  // Prioridad: 1) forceUseAvatar con authorAvatar, 2) isOriginalSound con authorAvatar, 3) music.cover
+  const rawDisplayImage = (forceUseAvatar || isOriginalSound) && authorAvatar ? authorAvatar : music?.cover;
+  // 🔧 NATIVE-FIX: resolver URL relativa para que funcione en APK Capacitor
+  const resolvedDisplayImage = resolveAssetUrl(rawDisplayImage) || rawDisplayImage;
+  // 🗂️ OFFLINE-FIRST: si la portada/avatar está cacheada en filesystem
+  // nativo, servir desde disco para que el reproductor se vea igual offline.
+  const { src: displayImage } = useCachedMedia(resolvedDisplayImage, { enabled: !!resolvedDisplayImage });
 
   if (!music || !isVisible) {
     return null;
@@ -154,14 +196,6 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
     }
   };
 
-  // Determinar si es original sound o música externa
-  const isOriginalSound = music.isOriginal || music.source === 'User Upload' || !music.cover;
-  // Si forceUseAvatar es true (audio de carrusel), siempre usar authorAvatar si existe
-  // Prioridad: 1) forceUseAvatar con authorAvatar, 2) isOriginalSound con authorAvatar, 3) music.cover
-  const rawDisplayImage = (forceUseAvatar || isOriginalSound) && authorAvatar ? authorAvatar : music.cover;
-  // 🔧 NATIVE-FIX: resolver URL relativa para que funcione en APK Capacitor
-  const displayImage = resolveAssetUrl(rawDisplayImage) || rawDisplayImage;
-  
   return (
     <div className={`flex-shrink-0 ${className}`}>
       {/* Reproductor clicable - disco giratorio estilo TikTok */}
@@ -174,14 +208,19 @@ const MusicPlayer = ({ music, isVisible = true, onTogglePlay, className = '', au
             animation: 'none',
           }}
         >
-          {displayImage ? (
+          {displayImage && !imgLoadError ? (
             <img 
               src={displayImage} 
               alt={isOriginalSound ? `Avatar de ${authorUsername || 'usuario'}` : music.title}
               className="w-full h-full object-cover"
+              onError={() => {
+                // 🛟 Offline o URL inalcanzable → mostrar icono de música
+                // en vez del recuadro vacío (reproductor "roto").
+                setImgLoadError(true);
+              }}
             />
           ) : (
-            <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Music className="w-5 h-5 text-white" />
             </div>
           )}
