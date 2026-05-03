@@ -1824,14 +1824,12 @@ const ContentCreationPage = () => {
         </div>
       )}
 
-      {/* Embedded HISTORIA capture - se renderiza cuando el usuario tap/swipe
-          en la tab "HISTORIA". Trae su propia cámara y barra de captura.
-          Mismo bottom:96px para dejar la pastilla de tabs visible. */}
+      {/* Embedded HISTORIA capture - cubre toda la pantalla (inset-0) para
+          que la cámara conserve su altura original. La pastilla de tabs
+          queda encima al final (z-30) y el botón de captura interno se
+          desplaza 96px arriba para no chocar con ella. */}
       {creationMode === 'historia' && (
-        <div
-          className="absolute left-0 right-0 z-20"
-          style={{ top: 'var(--safe-area-inset-top)', bottom: '96px' }}
-        >
+        <div className="absolute inset-0 z-20">
           <StoryCapturePage embedded onClose={handleClose} />
         </div>
       )}
