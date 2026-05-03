@@ -1950,79 +1950,91 @@ const ContentCreationPage = () => {
           </div>
           )}
 
-          {/* Tab bar - Oculto cuando viene de un challenge existente */}
+          {/* Tab bar - Pastilla deslizable. Oculto cuando viene de un challenge existente */}
           {!joiningChallengeId ? (
-            <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
-              <div className="flex items-center justify-center gap-4">
-                {/* PUBLICAR */}
-                <button
-                  onClick={() => {
-                    setCreationMode('publicar');
-                    setIsChallengeMode(false);
-                  }}
-                  className={`font-semibold text-sm tracking-wide transition-colors ${
-                    creationMode === 'publicar' && !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  PUBLICAR
-                </button>
-                
-                {/* HISTORIA */}
-                <button
-                  onClick={() => navigate('/story-creation')}
-                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
-                >
-                  HISTORIA
-                </button>
-                
-                {/* VS */}
-                <button
-                  onClick={() => {
-                    setCreationMode('vs');
-                    setIsChallengeMode(false);
-                  }}
-                  className={`font-medium text-sm tracking-wide transition-colors ${
-                    creationMode === 'vs' ? 'text-white font-semibold' : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  VS
-                </button>
-                
-                {/* MOMENTO */}
-                <button
-                  onClick={() => {
-                    setCreationMode('momento');
-                    setIsChallengeMode(false);
-                  }}
-                  className={`font-medium text-sm tracking-wide transition-colors ${
-                    creationMode === 'momento' ? 'text-white font-semibold' : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  MOMENTO
-                </button>
-                
-                {/* CHALLENGE */}
-                <button
-                  onClick={() => {
-                    setCreationMode('publicar');
-                    setIsChallengeMode(true);
-                  }}
-                  className={`font-semibold text-sm tracking-wide transition-colors ${
-                    creationMode === 'publicar' && isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
-                  }`}
-                >
-                  CHALLENGE
-                </button>
-              </div>
-              
-              {/* Active indicator line */}
-              <div className="flex justify-center mt-2">
-                <div 
-                  className={`w-16 h-0.5 rounded-full transition-colors ${
-                    isChallengeMode ? 'bg-yellow-500' : 'bg-white'
-                  }`}
-                ></div>
-              </div>
+            <div className="bg-black/90 backdrop-blur-md py-4 pb-6">
+              {(() => {
+                const TABS = [
+                  { id: 'publicar',  label: 'PUBLICAR'  },
+                  { id: 'historia',  label: 'HISTORIA'  },
+                  { id: 'vs',        label: 'VS'        },
+                  { id: 'momento',   label: 'MOMENTO'   },
+                  { id: 'challenge', label: 'CHALLENGE' }
+                ];
+
+                const activeTabId =
+                  creationMode === 'vs'      ? 'vs' :
+                  creationMode === 'momento' ? 'momento' :
+                  isChallengeMode            ? 'challenge' :
+                                               'publicar';
+                const activeIndex = Math.max(0, TABS.findIndex(t => t.id === activeTabId));
+
+                const applyTab = (tabId) => {
+                  if (tabId === 'historia') {
+                    navigate('/story-creation');
+                    return;
+                  }
+                  if (tabId === 'publicar')       { setCreationMode('publicar'); setIsChallengeMode(false); }
+                  else if (tabId === 'vs')        { setCreationMode('vs');       setIsChallengeMode(false); }
+                  else if (tabId === 'momento')   { setCreationMode('momento');  setIsChallengeMode(false); }
+                  else if (tabId === 'challenge') { setCreationMode('publicar'); setIsChallengeMode(true); }
+                };
+
+                return (
+                  <>
+                    <Swiper
+                      slidesPerView="auto"
+                      centeredSlides={true}
+                      slideToClickedSlide={true}
+                      spaceBetween={24}
+                      initialSlide={activeIndex}
+                      grabCursor={true}
+                      threshold={5}
+                      className="creation-tabs-swiper"
+                      onSlideChangeTransitionEnd={(swiper) => {
+                        const tab = TABS[swiper.activeIndex];
+                        if (!tab) return;
+                        // Si la nueva tab ya es la activa (sin cambio), no hacemos nada.
+                        if (tab.id === activeTabId) return;
+                        applyTab(tab.id);
+                      }}
+                    >
+                      {TABS.map((tab) => {
+                        const active = tab.id === activeTabId;
+                        const colorClass = active
+                          ? (tab.id === 'challenge' ? 'text-yellow-500' : 'text-white')
+                          : 'text-white/40';
+                        const weight = active ? 'font-semibold' : 'font-medium';
+                        return (
+                          <SwiperSlide
+                            key={tab.id}
+                            style={{ width: 'auto' }}
+                            className="!w-auto"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => applyTab(tab.id)}
+                              data-testid={`creation-tab-${tab.id}`}
+                              className={`${colorClass} ${weight} text-sm tracking-wide transition-colors px-1 select-none`}
+                            >
+                              {tab.label}
+                            </button>
+                          </SwiperSlide>
+                        );
+                      })}
+                    </Swiper>
+
+                    {/* Indicador activo */}
+                    <div className="flex justify-center mt-2">
+                      <div
+                        className={`w-16 h-0.5 rounded-full transition-colors ${
+                          isChallengeMode ? 'bg-yellow-500' : 'bg-white'
+                        }`}
+                      ></div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             /* Indicador de Challenge cuando viene de un challenge existente */
@@ -2054,6 +2066,16 @@ const ContentCreationPage = () => {
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+        /* Pastilla deslizable de tabs de creación */
+        .creation-tabs-swiper {
+          width: 100%;
+          overflow: hidden;
+        }
+        .creation-tabs-swiper .swiper-slide {
+          width: auto !important;
+          height: auto;
+          flex-shrink: 0;
         }
       `}</style>
 
