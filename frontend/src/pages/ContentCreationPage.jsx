@@ -14,6 +14,7 @@ import InlineCrop from '../components/InlineCrop';
 import config from '../config/config';
 import uploadService from '../services/uploadService';
 import MomentCreationPage from './MomentCreationPage';
+import StoryCapturePage from './StoryCapturePage';
 import { 
   Dialog, 
   DialogContent, 
@@ -1783,7 +1784,7 @@ const ContentCreationPage = () => {
           explícitamente el offset de safe-area-top. Se muestra para PUBLICAR,
           CHALLENGE y VS — VS solo difiere en los layouts permitidos en la
           sidebar (lado a lado / arriba y abajo). */}
-      {creationMode !== 'momento' && (
+      {!['momento', 'historia'].includes(creationMode) && (
       <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           <LayoutPreview
@@ -1823,10 +1824,22 @@ const ContentCreationPage = () => {
         </div>
       )}
 
-      {/* Header Controls - Floating on top - Hidden in preview mode and in
-          MOMENTO mode (que trae su propio header).
+      {/* Embedded HISTORIA capture - se renderiza cuando el usuario tap/swipe
+          en la tab "HISTORIA". Trae su propia cámara y barra de captura.
+          Mismo bottom:96px para dejar la pastilla de tabs visible. */}
+      {creationMode === 'historia' && (
+        <div
+          className="absolute left-0 right-0 z-20"
+          style={{ top: 'var(--safe-area-inset-top)', bottom: '96px' }}
+        >
+          <StoryCapturePage embedded onClose={handleClose} />
+        </div>
+      )}
+
+      {/* Header Controls - Floating on top - Hidden in preview mode and en
+          MOMENTO/HISTORIA (que traen su propio header).
           Nota: absolute top-0 ignora padding-top del padre; usamos top inline con safe-area. */}
-      {!previewMode && creationMode !== 'momento' && (
+      {!previewMode && !['momento', 'historia'].includes(creationMode) && (
         <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
           {/* Main Controls Row - Pastilla centrada con X absoluto a la izquierda */}
           <div className="relative flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3">
@@ -1932,8 +1945,8 @@ const ContentCreationPage = () => {
       {/* Bottom Tab Bar - Twyk style */}
       {!previewMode && (
         <div className="absolute bottom-0 left-0 right-0 z-30">
-          {/* Next button row - solo en PUBLICAR/CHALLENGE/VS (MOMENTO usa su propio botón) */}
-          {creationMode !== 'momento' && (
+          {/* Next button row - solo en PUBLICAR/CHALLENGE/VS (MOMENTO/HISTORIA usan su propio botón/captura) */}
+          {!['momento', 'historia'].includes(creationMode) && (
           <div className="px-4 pb-3 flex justify-end">
             <button
               onClick={handleCreate}
@@ -1963,18 +1976,16 @@ const ContentCreationPage = () => {
                 ];
 
                 const activeTabId =
-                  creationMode === 'vs'      ? 'vs' :
-                  creationMode === 'momento' ? 'momento' :
-                  isChallengeMode            ? 'challenge' :
-                                               'publicar';
+                  creationMode === 'vs'       ? 'vs' :
+                  creationMode === 'momento'  ? 'momento' :
+                  creationMode === 'historia' ? 'historia' :
+                  isChallengeMode             ? 'challenge' :
+                                                'publicar';
                 const activeIndex = Math.max(0, TABS.findIndex(t => t.id === activeTabId));
 
                 const applyTab = (tabId) => {
-                  if (tabId === 'historia') {
-                    navigate('/story-creation');
-                    return;
-                  }
                   if (tabId === 'publicar')       { setCreationMode('publicar'); setIsChallengeMode(false); }
+                  else if (tabId === 'historia')  { setCreationMode('historia'); setIsChallengeMode(false); }
                   else if (tabId === 'vs')        { setCreationMode('vs');       setIsChallengeMode(false); }
                   else if (tabId === 'momento')   { setCreationMode('momento');  setIsChallengeMode(false); }
                   else if (tabId === 'challenge') { setCreationMode('publicar'); setIsChallengeMode(true); }

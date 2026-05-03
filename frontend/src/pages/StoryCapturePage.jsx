@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Camera, Video, Image as ImageIcon, Upload, RotateCw, Zap, ZapOff } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
-const StoryCapturePage = () => {
+const StoryCapturePage = ({ embedded = false, onClose: onCloseProp } = {}) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef(null);
@@ -345,7 +345,7 @@ const StoryCapturePage = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-hidden">
+    <div className={embedded ? "relative w-full h-full bg-black overflow-hidden" : "fixed inset-0 z-50 bg-black overflow-hidden"}>
       {/* Canvas oculto para capturar fotos */}
       <canvas ref={canvasRef} className="hidden" />
       
@@ -358,12 +358,17 @@ const StoryCapturePage = () => {
         className="hidden"
       />
 
-      {/* Header con botones transparentes */}
-      <div className="absolute top-0 left-0 right-0 z-30 px-4" style={{ paddingTop: 'calc(var(--safe-area-inset-top) + 0.75rem)' }}>
+      {/* Header con botones transparentes. Cuando estamos embebidos, el
+          botón cerrar invoca onCloseProp en lugar de navigate(-1) — así
+          el ContentCreationPage padre puede salir limpio. */}
+      <div
+        className="absolute top-0 left-0 right-0 z-30 px-4"
+        style={{ paddingTop: embedded ? '0.5rem' : 'calc(var(--safe-area-inset-top) + 0.75rem)' }}
+      >
         <div className="flex items-start justify-between">
           {/* Botón cerrar a la izquierda */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => (embedded && onCloseProp ? onCloseProp() : navigate(-1))}
             className="w-10 h-10 rounded-full bg-zinc-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-zinc-700/80 transition-all"
           >
             <X className="w-6 h-6 text-white" strokeWidth={1.5} />
@@ -438,7 +443,7 @@ const StoryCapturePage = () => {
       </div>
 
       {/* Barra inferior en modo captura */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 pb-8">
+      <div className={`absolute bottom-0 left-0 right-0 z-30 ${embedded ? 'pb-2' : 'pb-8'}`}>
         {/* Temporizador encima del círculo cuando está grabando */}
         {isRecording && (
           <div className="absolute bottom-36 left-1/2 transform -translate-x-1/2 bg-zinc-800/90 backdrop-blur-sm px-4 py-2 rounded-full">
