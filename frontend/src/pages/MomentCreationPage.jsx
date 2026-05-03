@@ -15,7 +15,7 @@ import {
   DialogTitle
 } from '../components/ui/dialog';
 
-const MomentCreationPage = () => {
+const MomentCreationPage = ({ embedded = false, onClose: onCloseProp } = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -23,16 +23,19 @@ const MomentCreationPage = () => {
   const { enterTikTokMode, exitTikTokMode, hideRightNavigationBar, showRightNavigationBar } = useTikTok();
   const fileInputRef = useRef(null);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (skip if embedded - parent handles auth)
   useEffect(() => {
+    if (embedded) return;
     if (!isAuthenticated) {
       navigate('/');
       return;
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, embedded]);
 
-  // Enter TikTok mode when on create page (hides all navigation)
+  // Enter TikTok mode when on create page (hides all navigation).
+  // Skip when embedded: parent (ContentCreationPage) already handles this.
   useEffect(() => {
+    if (embedded) return;
     enterTikTokMode();
     hideRightNavigationBar();
     
@@ -47,7 +50,7 @@ const MomentCreationPage = () => {
       showRightNavigationBar();
       document.body.style.overflow = 'auto';
     };
-  }, [enterTikTokMode, exitTikTokMode, hideRightNavigationBar, showRightNavigationBar]);
+  }, [enterTikTokMode, exitTikTokMode, hideRightNavigationBar, showRightNavigationBar, embedded]);
 
   // States - Single image instead of array
   const [showMusicSelector, setShowMusicSelector] = useState(false);
@@ -73,6 +76,10 @@ const MomentCreationPage = () => {
   }, [location.state, toast]);
 
   const handleClose = () => {
+    if (embedded && onCloseProp) {
+      onCloseProp();
+      return;
+    }
     navigate('/feed');
   };
 
@@ -447,9 +454,23 @@ const MomentCreationPage = () => {
 
   return (
     <>
-    <div className="fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black" style={{ margin: 0, padding: 0, paddingTop: 'var(--safe-area-inset-top)' }}>
+    <div
+      className={
+        embedded
+          ? "absolute inset-0 overflow-hidden bg-black"
+          : "fixed inset-0 z-50 h-screen w-screen overflow-hidden bg-black"
+      }
+      style={{
+        margin: 0,
+        padding: 0,
+        ...(embedded ? {} : { paddingTop: 'var(--safe-area-inset-top)' })
+      }}
+    >
       {/* Main Content Area (absolute ignora padding-top, usamos top inline con safe-area) */}
-      <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
+      <div
+        className={embedded ? "absolute left-0 right-0 bottom-14" : "absolute left-0 right-0 bottom-32"}
+        style={{ top: embedded ? 0 : 'var(--safe-area-inset-top)' }}
+      >
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           {/* Single Image Preview */}
           <div className="w-full h-full">
@@ -587,7 +608,10 @@ const MomentCreationPage = () => {
       </div>
 
       {/* Header Controls - Floating on top (absolute ignora padding-top, usamos top inline con safe-area) */}
-      <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
+      <div
+        className="absolute left-0 right-0 z-50"
+        style={{ top: embedded ? 0 : 'var(--safe-area-inset-top)' }}
+      >
         <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
           {/* Close button - Left */}
           <button
@@ -616,7 +640,10 @@ const MomentCreationPage = () => {
       {/* Bottom Tab Bar */}
       <div className="absolute bottom-0 left-0 right-0 z-30">
         {/* Next button row */}
-        <div className="px-4 pb-3 flex justify-end">
+        <div
+          className="px-4 pb-3 flex justify-end"
+          style={embedded ? { paddingBottom: '0.75rem' } : undefined}
+        >
           <button
             onClick={handleCreate}
             disabled={isCreating || !imageData.media}
@@ -631,7 +658,8 @@ const MomentCreationPage = () => {
           </button>
         </div>
 
-        {/* Tab bar */}
+        {/* Tab bar - skip when embedded (parent renders shared tab bar) */}
+        {!embedded && (
         <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
           <div className="flex items-center justify-center gap-6">
             {/* PUBLICAR */}
@@ -671,6 +699,7 @@ const MomentCreationPage = () => {
             <div className="w-16 h-0.5 bg-white rounded-full"></div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Hidden File Input */}

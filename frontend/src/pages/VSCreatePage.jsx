@@ -6,12 +6,20 @@ import { useAuth } from '../contexts/AuthContext';
 import AppConfig from '../config/config';
 import uploadService from '../services/uploadService';
 
-const VSCreatePage = () => {
+const VSCreatePage = ({ embedded = false, onClose: onCloseProp } = {}) => {
   const navigate = useNavigate();
   const { token } = useAuth();
   const fileInputRefs = useRef([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [creatorCountry, setCreatorCountry] = useState(null);
+
+  const handleCloseClick = () => {
+    if (embedded && onCloseProp) {
+      onCloseProp();
+      return;
+    }
+    navigate(-1);
+  };
   
   // Detectar país del usuario al cargar
   useEffect(() => {
@@ -190,11 +198,18 @@ const VSCreatePage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col z-50" style={{ paddingTop: 'var(--safe-area-inset-top)' }}>
+    <div
+      className={
+        embedded
+          ? "absolute inset-0 bg-black flex flex-col"
+          : "fixed inset-0 bg-black flex flex-col z-50"
+      }
+      style={embedded ? undefined : { paddingTop: 'var(--safe-area-inset-top)' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleCloseClick}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
         >
           <X className="w-6 h-6 text-white" />
@@ -319,7 +334,8 @@ const VSCreatePage = () => {
           </div>
         )}
 
-        {/* Tab bar */}
+        {/* Tab bar - skip when embedded (parent renders shared tab bar) */}
+        {!embedded && (
         <div className="bg-black/90 backdrop-blur-md px-4 py-4 pb-6">
           <div className="flex items-center justify-center gap-6">
             {/* PUBLICAR */}
@@ -359,6 +375,7 @@ const VSCreatePage = () => {
             <div className="w-8 h-0.5 bg-white rounded-full"></div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

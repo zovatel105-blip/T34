@@ -12,6 +12,8 @@ import pollService from '../services/pollService';
 import challengeService from '../services/challengeService';
 import InlineCrop from '../components/InlineCrop';
 import config from '../config/config';
+import VSCreatePage from './VSCreatePage';
+import MomentCreationPage from './MomentCreationPage';
 import { 
   Dialog, 
   DialogContent, 
@@ -757,6 +759,12 @@ const ContentCreationPage = () => {
   const [textPreviewPosition, setTextPreviewPosition] = useState('bottom'); // 'top', 'center', 'bottom'
   const [joiningChallengeId, setJoiningChallengeId] = useState(null); // ID del challenge al que unirse
 
+  // Creation mode: 'publicar' | 'vs' | 'momento'
+  // VS y MOMENTO ahora se renderizan embebidos dentro de esta página en vez
+  // de navegar a otra ruta, para que la barra inferior de tabs se sienta
+  // como un único contenedor.
+  const [creationMode, setCreationMode] = useState('publicar');
+
   // Initialize with pre-selected audio if provided OR challengeId
   useEffect(() => {
     const preSelectedAudio = location.state?.preSelectedAudio;
@@ -1433,6 +1441,7 @@ const ContentCreationPage = () => {
       {/* Main Content Area - Con espacio inferior como StoryEditPage.
           Nota: absolute top-0 ignora padding-top del padre, así que añadimos
           explícitamente el offset de safe-area-top. */}
+      {creationMode === 'publicar' && (
       <div className="absolute left-0 right-0 bottom-32" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="relative w-full h-full bg-black rounded-3xl overflow-hidden">
           <LayoutPreview
@@ -1456,10 +1465,34 @@ const ContentCreationPage = () => {
           />
         </div>
       </div>
+      )}
 
-      {/* Header Controls - Floating on top - Hidden in preview mode.
+      {/* Embedded VS editor - se renderiza en lugar del editor de PUBLICAR
+          cuando el usuario toca el tab "VS" en la barra inferior. Deja
+          ~96px en el inferior para que no tape la tab bar compartida. */}
+      {creationMode === 'vs' && (
+        <div
+          className="absolute left-0 right-0 z-20"
+          style={{ top: 'var(--safe-area-inset-top)', bottom: '96px' }}
+        >
+          <VSCreatePage embedded onClose={handleClose} />
+        </div>
+      )}
+
+      {/* Embedded MOMENTO editor */}
+      {creationMode === 'momento' && (
+        <div
+          className="absolute left-0 right-0 z-20"
+          style={{ top: 'var(--safe-area-inset-top)', bottom: '96px' }}
+        >
+          <MomentCreationPage embedded onClose={handleClose} />
+        </div>
+      )}
+
+      {/* Header Controls - Floating on top - Hidden in preview mode and in
+          embedded modes (VS/MOMENTO traen su propio header).
           Nota: absolute top-0 ignora padding-top del padre; usamos top inline con safe-area. */}
-      {!previewMode && (
+      {!previewMode && creationMode === 'publicar' && (
         <div className="absolute left-0 right-0 z-50" style={{ top: 'var(--safe-area-inset-top)' }}>
           {/* Main Controls Row */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3">
@@ -1500,8 +1533,9 @@ const ContentCreationPage = () => {
         </button>
       )}
 
-      {/* Floating Right Sidebar - Overlay on top of content - Hidden in preview mode */}
-      {!previewMode && (
+      {/* Floating Right Sidebar - Overlay on top of content - Hidden in
+          preview mode y cuando estamos en modos VS/MOMENTO. */}
+      {!previewMode && creationMode === 'publicar' && (
         <div className="absolute top-16 sm:top-20 right-2 sm:right-4 z-40 flex flex-col gap-2 sm:gap-3">
           {/* Layout Button */}
           <div className="relative">
@@ -1552,7 +1586,8 @@ const ContentCreationPage = () => {
       {/* Bottom Tab Bar - Twyk style */}
       {!previewMode && (
         <div className="absolute bottom-0 left-0 right-0 z-30">
-          {/* Next button row */}
+          {/* Next button row - solo en modo PUBLICAR (VS/MOMENTO usan su propio botón) */}
+          {creationMode === 'publicar' && (
           <div className="px-4 pb-3 flex justify-end">
             <button
               onClick={handleCreate}
@@ -1567,6 +1602,7 @@ const ContentCreationPage = () => {
               )}
             </button>
           </div>
+          )}
 
           {/* Tab bar - Oculto cuando viene de un challenge existente */}
           {!joiningChallengeId ? (
@@ -1574,9 +1610,12 @@ const ContentCreationPage = () => {
               <div className="flex items-center justify-center gap-4">
                 {/* PUBLICAR */}
                 <button
-                  onClick={() => setIsChallengeMode(false)}
+                  onClick={() => {
+                    setCreationMode('publicar');
+                    setIsChallengeMode(false);
+                  }}
                   className={`font-semibold text-sm tracking-wide transition-colors ${
-                    !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
+                    creationMode === 'publicar' && !isChallengeMode ? 'text-white' : 'text-white/50 hover:text-white/80'
                   }`}
                 >
                   PUBLICAR
@@ -1592,25 +1631,38 @@ const ContentCreationPage = () => {
                 
                 {/* VS */}
                 <button
-                  onClick={() => navigate('/vs-create')}
-                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
+                  onClick={() => {
+                    setCreationMode('vs');
+                    setIsChallengeMode(false);
+                  }}
+                  className={`font-medium text-sm tracking-wide transition-colors ${
+                    creationMode === 'vs' ? 'text-white font-semibold' : 'text-white/50 hover:text-white/80'
+                  }`}
                 >
                   VS
                 </button>
                 
                 {/* MOMENTO */}
                 <button
-                  onClick={() => navigate('/moment-create')}
-                  className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
+                  onClick={() => {
+                    setCreationMode('momento');
+                    setIsChallengeMode(false);
+                  }}
+                  className={`font-medium text-sm tracking-wide transition-colors ${
+                    creationMode === 'momento' ? 'text-white font-semibold' : 'text-white/50 hover:text-white/80'
+                  }`}
                 >
                   MOMENTO
                 </button>
                 
                 {/* CHALLENGE */}
                 <button
-                  onClick={() => setIsChallengeMode(true)}
+                  onClick={() => {
+                    setCreationMode('publicar');
+                    setIsChallengeMode(true);
+                  }}
                   className={`font-semibold text-sm tracking-wide transition-colors ${
-                    isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
+                    creationMode === 'publicar' && isChallengeMode ? 'text-yellow-500' : 'text-white/50 hover:text-white/80'
                   }`}
                 >
                   CHALLENGE
