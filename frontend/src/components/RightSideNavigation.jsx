@@ -125,7 +125,7 @@ const RightSideNavigation = () => {
         )}
       </div>
 
-      {/* Battle Live */}
+      {/* Battle Live - OCULTO en MVP VS-ONLY
       <button
         onClick={() => navigate('/explore')}
         className={cn(
@@ -142,13 +142,14 @@ const RightSideNavigation = () => {
           location.pathname === '/explore' ? "text-white" : "text-gray-600"
         )} />
       </button>
+      */}
 
       {/* Crear Poll */}
       <button
-        onClick={() => navigate('/content-creation')}
+        onClick={() => navigate('/vs-create')}
         className={cn(
           "rounded-full transition-all duration-300 relative overflow-hidden",
-          (location.pathname === '/create' || location.pathname === '/content-creation')
+          (location.pathname === '/create' || location.pathname === '/content-creation' || location.pathname === '/vs-create')
             ? "w-5 h-12 shadow-2xl"
             : "hover:scale-110 w-5 h-12 shadow-xl hover:opacity-90",
           "flex items-center justify-center flex-shrink-0"

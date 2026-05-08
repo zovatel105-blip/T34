@@ -3,6 +3,7 @@
  * Replaces mock data with real backend integration
  */
 import { queuedFetch } from './offlineQueueService';
+import { filterToVSOnly } from '../utils/postFilters';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -225,7 +226,8 @@ class PollService {
       const followingPolls = await response.json();
       
       // Transform and return the polls (they're already filtered by the backend)
-      return followingPolls.map(poll => this.transformPollData(poll));
+      // 🎯 MVP VS-ONLY: aplicar filtro frontend para mostrar solo publicaciones VS
+      return filterToVSOnly(followingPolls.map(poll => this.transformPollData(poll)));
       
     } catch (error) {
       console.error('Error loading following polls:', error);
@@ -337,7 +339,8 @@ class PollService {
   async getPollsForFrontend(options = {}) {
     try {
       const backendPolls = await this.getPolls(options);
-      return backendPolls.map(poll => this.transformPollData(poll));
+      // 🎯 MVP VS-ONLY: aplicar filtro frontend para mostrar solo publicaciones VS
+      return filterToVSOnly(backendPolls.map(poll => this.transformPollData(poll)));
     } catch (error) {
       console.error('Error fetching polls for frontend:', error);
       // 🔧 OFFLINE FIX: Re-lanzamos el error para que el caller (FeedPage)
@@ -362,15 +365,17 @@ class PollService {
         const data = await response.json();
         const polls = data.polls || data;
         console.log(`📋 getUserPolls: ${polls.length} polls loaded for user ${userId}`);
-        return polls.map(poll => this.transformPollData(poll));
+        // 🎯 MVP VS-ONLY: filtrar a solo publicaciones VS para perfil
+        return filterToVSOnly(polls.map(poll => this.transformPollData(poll)));
       }
       
       // Fallback to general feed if dedicated endpoint fails
       console.warn('⚠️ getUserPolls endpoint failed, falling back to general feed filter');
       const allPolls = await this.getPolls({ limit: 100 });
-      return allPolls
+      // 🎯 MVP VS-ONLY: aplicar filtro VS también en fallback
+      return filterToVSOnly(allPolls
         .filter(poll => poll.author?.id === userId || poll.author?.username === userId)
-        .map(poll => this.transformPollData(poll));
+        .map(poll => this.transformPollData(poll)));
     } catch (error) {
       console.error('Error fetching user polls:', error);
       return [];

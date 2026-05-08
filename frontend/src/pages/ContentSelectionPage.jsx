@@ -7,30 +7,32 @@ const ContentSelectionPage = () => {
   const navigate = useNavigate();
 
   const contentTypes = [
-    {
-      id: 'post',
-      title: 'Publicación',
-      description: 'Fotos y videos con votación',
-      icon: Image,
-      gradient: 'from-purple-500 to-pink-500',
-      route: '/content-creation'
-    },
-    {
-      id: 'moment',
-      title: 'Momento',
-      description: 'Momentos que no quieres olvidar',
-      icon: Camera,
-      gradient: 'from-amber-500 to-yellow-500',
-      route: '/moment-create'
-    },
-    {
-      id: 'story',
-      title: 'Historia',
-      description: 'Contenido temporal de 24h',
-      icon: Clock,
-      gradient: 'from-blue-500 to-cyan-500',
-      route: '/story-creation'
-    },
+    // 🎯 MVP VS-ONLY: solo se muestra la opción VS por ahora.
+    // Las demás opciones (post, moment, story) están ocultas hasta nuevo aviso.
+    // {
+    //   id: 'post',
+    //   title: 'Publicación',
+    //   description: 'Fotos y videos con votación',
+    //   icon: Image,
+    //   gradient: 'from-purple-500 to-pink-500',
+    //   route: '/content-creation'
+    // },
+    // {
+    //   id: 'moment',
+    //   title: 'Momento',
+    //   description: 'Momentos que no quieres olvidar',
+    //   icon: Camera,
+    //   gradient: 'from-amber-500 to-yellow-500',
+    //   route: '/moment-create'
+    // },
+    // {
+    //   id: 'story',
+    //   title: 'Historia',
+    //   description: 'Contenido temporal de 24h',
+    //   icon: Clock,
+    //   gradient: 'from-blue-500 to-cyan-500',
+    //   route: '/story-creation'
+    // },
     {
       id: 'vs',
       title: 'VS',

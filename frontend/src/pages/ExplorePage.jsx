@@ -47,6 +47,13 @@ const ExplorePage = () => {
   // 💾 OFFLINE-FIRST: si hay caché en disco, lo mostramos al instante;
   // luego refrescamos desde la red. Si la red falla → mantenemos cache + banner.
   const loadCompletedChallenges = useCallback(async ({ showLoader = true } = {}) => {
+    // 🎯 MVP VS-ONLY: los challenges están ocultos en el MVP. Mostramos
+    // estado vacío en su lugar. Para reactivar, eliminar este short-circuit.
+    setBattles([]);
+    setLoading(false);
+    return;
+
+    // eslint-disable-next-line no-unreachable
     let usedCache = false;
     try {
       // 1) Intentar leer caché de disco primero (renderizado instantáneo)
@@ -360,8 +367,8 @@ const ExplorePage = () => {
         showLogo={false}
         showActiveChallengesButton={true}
         isInitialLoading={loading}
-        emptyMessage="No hay retos completados"
-        emptySubMessage="Los retos completados aparecerán aquí. ¡Crea o participa en un reto!"
+        emptyMessage="Próximamente"
+        emptySubMessage="Esta sección está en construcción."
         savedPolls={savedPolls}
         setSavedPolls={setSavedPolls}
         commentedPolls={commentedPolls}

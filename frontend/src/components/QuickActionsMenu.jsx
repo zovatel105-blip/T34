@@ -263,15 +263,17 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
   if (!isVisible && !isAnimating) return null;
 
   const actions = [
-    {
-      id: 'moments',
-      icon: StoryPlusIcon,
-      label: 'Historias',
-      color: '',
-      borderColor: 'border-orange-300',
-      shadowColor: '',
-      position: { x: -28, y: 8 }, // SUBIDO: 8px más arriba
-    },
+    // 🎯 MVP VS-ONLY: ocultadas las acciones rápidas que no son VS
+    // (Historias y LIVE quedan deshabilitadas hasta nuevo aviso).
+    // {
+    //   id: 'moments',
+    //   icon: StoryPlusIcon,
+    //   label: 'Historias',
+    //   color: '',
+    //   borderColor: 'border-orange-300',
+    //   shadowColor: '',
+    //   position: { x: -28, y: 8 },
+    // },
     {
       id: 'search',
       icon: Search,
@@ -279,17 +281,17 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       color: '',
       borderColor: 'border-blue-300',
       shadowColor: '',
-      position: { x: -35, y: -13 }, // SUBIDO: 8px más arriba
+      position: { x: -35, y: -13 },
     },
-    {
-      id: 'live',
-      icon: TikTokLiveIcon,
-      label: 'LIVE',
-      color: '',
-      borderColor: 'border-red-300',
-      shadowColor: '',
-      position: { x: -8, y: 16 }, // AJUSTADO: manteniendo distancia proporcional
-    }
+    // {
+    //   id: 'live',
+    //   icon: TikTokLiveIcon,
+    //   label: 'LIVE',
+    //   color: '',
+    //   borderColor: 'border-red-300',
+    //   shadowColor: '',
+    //   position: { x: -8, y: 16 },
+    // }
   ];
 
   return (

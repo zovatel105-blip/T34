@@ -46,12 +46,12 @@ const LogoWithQuickActions = ({ size = 32, className = "" }) => {
         console.log('🔍 Navigating to search...');
         navigate('/search');
         break;
-      case 'moments':
-        console.log('📸 Moments action - Coming soon...');
-        // Funcionalidad de historias deshabilitada
-        break;
+      // 🎯 MVP VS-ONLY: 'moments' y 'live' deshabilitados en el MVP
+      // case 'moments':
+      //   console.log('📸 Moments action - Coming soon...');
+      //   break;
       default:
-        console.log('❓ Unknown action:', actionType);
+        console.log('❓ Unknown or hidden action:', actionType);
     }
   }, [navigate]);
 
