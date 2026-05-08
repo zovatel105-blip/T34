@@ -23,6 +23,30 @@ const ActiveChallengesPage = () => {
 
   const selectedBattle = battles[selectedBattleIndex];
 
+  // 🎯 MVP VS-ONLY: la sección "Activos" (challenges) está oculta hasta nuevo aviso.
+  // Mostramos un estado "Próximamente" consistente con /explore. Para revertir,
+  // eliminar este early-return (los hooks de arriba se mantienen para no romper
+  // el orden cuando se reactive la pantalla original).
+  // eslint-disable-next-line no-constant-condition
+  if (true) {
+    return (
+      <div
+        className="fixed inset-0 bg-zinc-900 overflow-y-auto"
+        style={{ paddingTop: 'var(--safe-area-inset-top)' }}
+      >
+        <div className="min-h-full flex flex-col items-center justify-center px-6 pb-24 text-center">
+          <div className="w-20 h-20 mb-5 rounded-full bg-zinc-800 flex items-center justify-center">
+            <Trophy className="w-10 h-10 text-zinc-500" strokeWidth={1.5} />
+          </div>
+          <h2 className="font-bold text-white text-2xl">Próximamente</h2>
+          <p className="text-sm text-zinc-400 mt-2 max-w-xs">
+            Esta sección está en construcción.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Cargar challenges activos del backend
   useEffect(() => {
     const loadActiveChallenges = async () => {
