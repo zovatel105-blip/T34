@@ -1,9 +1,29 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Heart, Flame, Zap, Trophy, Hourglass } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
+
+// 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
+// Top card (Player A) → lila, Bottom card (Player B) → azul.
+const TWYK_COLORS = {
+  top: {
+    primary: '#A855F7',      // lila / purple-500
+    primaryRgb: '168,85,247',
+    secondary: '#7C3AED',    // violet-600 (acento más oscuro)
+    glow: 'rgba(168,85,247,0.55)',
+    glowSoft: 'rgba(168,85,247,0.25)',
+  },
+  bottom: {
+    primary: '#3B82F6',      // azul / blue-500
+    primaryRgb: '59,130,246',
+    secondary: '#2563EB',    // blue-600 (acento más oscuro)
+    glow: 'rgba(59,130,246,0.55)',
+    glowSoft: 'rgba(59,130,246,0.25)',
+  },
+};
 
 // Colores por país - TODOS LOS PAÍSES DEL MUNDO
 const countryColors = {
@@ -496,7 +516,7 @@ const getCountryPrimaryColor = (text, index) => {
   return index === 0 ? defaultColors.top.primary : defaultColors.bottom.primary;
 };
 
-// Componente para una sola pregunta
+// Componente para una sola pregunta (Rediseño MVP — Twyk colors)
 const QuestionSlide = ({ 
   question, 
   questionIndex,
@@ -505,107 +525,339 @@ const QuestionSlide = ({
   selectedOption, 
   showResults,
   creatorCountry,
-  highlightedOption  // Opción resaltada por la voz (0 o 1)
+  highlightedOption,  // Opción resaltada por la voz (0 o 1)
+  totalQuestions = 1,
+  currentIndex = 0,
+  timeLeft = 0,
 }) => {
   const options = question.options || [];
+  const optionA = options[0];
+  const optionB = options[1];
+
+  // Cálculo de votos y porcentajes
+  const votesA = optionA?.votes || 0;
+  const votesB = optionB?.votes || 0;
+  const totalVotes = votesA + votesB;
 
   const getPercentage = (optionId) => {
-    const totalVotes = options.reduce((sum, opt) => sum + (opt.votes || 0), 0);
     if (totalVotes === 0) {
-      return optionId === selectedOption ? 65 : 35;
+      // Si no hay votos: si el usuario eligió, mostrar 65/35 sesgado a su voto
+      if (selectedOption) return optionId === selectedOption ? 65 : 35;
+      return 50;
     }
     const optionVotes = options.find(o => o.id === optionId)?.votes || 0;
     return Math.round((optionVotes / totalVotes) * 100);
   };
 
-  return (
-    <div className="w-full h-full flex flex-col">
-      {options.slice(0, 2).map((option, index) => {
-        const isSelected = selectedOption === option.id;
-        const isHighlighted = highlightedOption === index;
-        const percentage = showResults ? getPercentage(option.id) : 0;
-        const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
-        const bgColor = getCountryColor(option.text, index);
-        const isTop = index === 0;
-        
-        return (
+  const percA = getPercentage(optionA?.id);
+  const percB = 100 - percA;
+  const winnerIsA = percA > percB;
+  const winnerIsB = percB > percA;
+  const isTie = percA === percB;
+
+  // Mock "+N votos en los últimos 5s" — animado y con jitter realista
+  const [recentVotes, setRecentVotes] = useState(() => Math.floor(Math.random() * 25) + 8);
+  useEffect(() => {
+    if (!isActive) return;
+    const id = setInterval(() => {
+      setRecentVotes((v) => {
+        const delta = Math.floor(Math.random() * 9) - 3; // -3..+5
+        const next = Math.max(3, Math.min(99, v + delta));
+        return next;
+      });
+    }, 1800);
+    return () => clearInterval(id);
+  }, [isActive]);
+
+  // Estado label por opción
+  const getStatusLabel = (isOptionA) => {
+    const isSelected = (isOptionA && optionA && selectedOption === optionA.id)
+      || (!isOptionA && optionB && selectedOption === optionB.id);
+    if (isSelected) return { icon: '💜', text: '¡TU VOTO!', color: '#fff' };
+    if (!showResults) return null;
+    const myPerc = isOptionA ? percA : percB;
+    const otherPerc = isOptionA ? percB : percA;
+    if (myPerc > otherPerc) return { icon: '🔥', text: 'VA GANANDO', color: '#fff' };
+    if (myPerc < otherPerc) return { icon: '⚡', text: 'REMONTANDO', color: '#fff' };
+    return { icon: '⚖️', text: 'EMPATE', color: '#fff' };
+  };
+
+  const renderCard = (option, index) => {
+    if (!option) return <div className="flex-1 bg-black/40" />;
+    const isOptionA = index === 0;
+    const colors = isOptionA ? TWYK_COLORS.top : TWYK_COLORS.bottom;
+    const isSelected = selectedOption === option.id;
+    const isHighlighted = highlightedOption === index;
+    const percentage = isOptionA ? percA : percB;
+    const optionVotes = option.votes || 0;
+    const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
+    const status = getStatusLabel(isOptionA);
+    const isWinning = showResults && (isOptionA ? winnerIsA : winnerIsB);
+
+    return (
+      <div
+        className={cn(
+          "flex-1 relative overflow-hidden transition-all duration-300",
+          isHighlighted && !isSelected && "scale-[1.01]"
+        )}
+        style={{
+          // Glow lila/azul del lado correspondiente
+          boxShadow: isActive
+            ? `inset 0 0 ${isSelected ? '120px' : '60px'} ${isSelected ? colors.glow : colors.glowSoft}`
+            : 'none',
+        }}
+      >
+        <DoubleTapVoteAnimation
+          onDoubleTap={() => isActive && !showResults && onVote(option.id)}
+          disabled={showResults}
+        >
+          {/* Imagen de fondo (cacheable) */}
+          {imageUrl ? (
+            <SafeImage
+              src={imageUrl}
+              alt=""
+              loading={isActive ? "eager" : "lazy"}
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(${isOptionA ? '180deg' : '0deg'}, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+              }}
+            />
+          )}
+
+          {/* Overlay degradado para legibilidad del texto */}
           <div
-            key={option.id}
-            className={cn(
-              "flex-1 relative overflow-hidden transition-all duration-300",
-              !imageUrl && bgColor,
-              isSelected && "ring-4 ring-white ring-inset",
-              isHighlighted && !isSelected && "ring-4 ring-yellow-400 ring-inset scale-[1.02]"
-            )}
-          >
-            <DoubleTapVoteAnimation
-              onDoubleTap={() => isActive && !showResults && onVote(option.id)}
-              disabled={showResults}
-            >
-            {/* Overlay de resaltado por voz */}
-            {isHighlighted && !isSelected && (
-              <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse" />
-            )}
-            
-            {/* Imagen de fondo completo (offline-first cacheable) */}
-            {imageUrl && (
-              <SafeImage
-                src={imageUrl}
-                alt=""
-                loading={isActive ? "eager" : "lazy"}
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-            
-            {/* Contenido - posicionado arriba o abajo según la opción */}
-            <div className={cn(
-              "absolute left-0 right-0 z-10 flex flex-col items-center px-4",
-              isTop ? "bottom-8 md:bottom-10" : "top-8 md:top-10"
-            )}>
-              <h2 className={cn(
-                "text-white font-black text-2xl md:text-3xl uppercase tracking-wide",
-                "drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center",
-                "[text-shadow:_2px_2px_0_#000,_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000]",
-                isSelected && "scale-110"
-              )}>
-                {option.text || `Opción ${index + 1}`}
-              </h2>
-              
-              {showResults && (
-                <div className="mt-1 animate-in fade-in zoom-in">
-                  <span className="text-4xl md:text-5xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                    {percentage}%
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Indicador de selección */}
-            {isSelected && (
-              <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
-            </DoubleTapVoteAnimation>
-          </div>
-        );
-      })}
-      
-      {/* Línea divisora con 2 colores del país del creador */}
-      {(() => {
-        const colors = getCountryColors(creatorCountry);
-        return (
-          <div 
-            className="absolute top-1/2 left-0 right-0 h-1.5 z-10 transform -translate-y-1/2"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              background: `linear-gradient(90deg, ${colors.primary} 50%, ${colors.secondary} 50%)`
+              background: isOptionA
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)'
+                : 'linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)',
             }}
           />
-        );
-      })()}
+
+          {/* Glow de borde Twyk (lila arriba, azul abajo) */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              boxShadow: `inset 0 0 0 2px ${colors.primary}, inset 0 0 30px ${colors.glow}`,
+              opacity: isSelected ? 1 : (isActive ? 0.65 : 0.3),
+              transition: 'opacity 0.3s ease',
+            }}
+          />
+
+          {/* Resaltado por voz */}
+          {isHighlighted && !isSelected && (
+            <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse pointer-events-none" />
+          )}
+
+          {/* Status pill (VA GANANDO / REMONTANDO / TU VOTO) */}
+          {status && (
+            <div
+              className={cn(
+                "absolute z-20 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
+                "border border-white/30 shadow-lg",
+                isOptionA ? "top-3" : "bottom-3"
+              )}
+              style={{
+                background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
+              }}
+            >
+              <span className="text-xs">{status.icon}</span>
+              <span className="text-[11px] font-black uppercase tracking-wider text-white drop-shadow-md">
+                {status.text}
+              </span>
+            </div>
+          )}
+
+          {/* Trofeo si es el ganador (cuando se muestran resultados) */}
+          {isWinning && showResults && (
+            <div
+              className={cn(
+                "absolute right-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
+                "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
+                isOptionA ? "top-12" : "bottom-12"
+              )}
+            >
+              <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">GANADOR</span>
+            </div>
+          )}
+
+          {/* Contenido principal — nombre, porcentaje, votos */}
+          <div
+            className={cn(
+              "absolute left-0 right-16 z-10 flex flex-col px-4",
+              isOptionA ? "bottom-6" : "top-6",
+              isOptionA ? "items-start" : "items-start"
+            )}
+          >
+            <h2
+              className="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-none"
+              style={{
+                textShadow: '2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)',
+                WebkitTextStroke: '0.5px rgba(0,0,0,0.4)',
+              }}
+            >
+              {option.text || `Opción ${index + 1}`}
+            </h2>
+
+            {/* Porcentaje gigante + votos */}
+            {showResults && (
+              <div className="mt-1 flex items-baseline gap-2 animate-in fade-in zoom-in duration-300">
+                <span
+                  className="text-5xl md:text-6xl font-black leading-none"
+                  style={{
+                    color: '#fff',
+                    textShadow: `0 0 16px ${colors.glow}, 2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)`,
+                  }}
+                >
+                  {percentage}%
+                </span>
+                <span className="text-xs text-white/85 font-bold tabular-nums">
+                  {optionVotes.toLocaleString()} votos
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Botón corazón vote — derecha */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isActive && !showResults) onVote(option.id);
+            }}
+            disabled={showResults}
+            className={cn(
+              "absolute right-3 z-20 w-12 h-12 rounded-full flex items-center justify-center",
+              "backdrop-blur-md border-2 transition-all active:scale-90",
+              isOptionA ? "top-1/2 -translate-y-1/2" : "top-1/2 -translate-y-1/2",
+              isSelected
+                ? "border-white scale-110"
+                : "border-white/40 hover:border-white/70"
+            )}
+            style={{
+              background: isSelected
+                ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+                : 'rgba(0,0,0,0.45)',
+              boxShadow: isSelected ? `0 0 24px ${colors.glow}` : 'none',
+            }}
+            aria-label={`Votar por ${option.text || 'opción'}`}
+          >
+            <Heart
+              className="w-6 h-6 text-white"
+              fill={isSelected ? '#fff' : 'transparent'}
+              strokeWidth={2.5}
+            />
+          </button>
+
+          {/* Indicador de selección — checkmark verde (mantenido para feedback) */}
+          {isSelected && !showResults && (
+            <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+        </DoubleTapVoteAnimation>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col relative">
+      {renderCard(optionA, 0)}
+      {renderCard(optionB, 1)}
+
+      {/* Header overlay — DUELO + RONDA + live votes (solo cuando es activo) */}
+      {isActive && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none">
+          {/* Pill RONDA */}
+          {totalQuestions > 1 && (
+            <div className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                RONDA {currentIndex + 1}/{totalQuestions}
+              </span>
+            </div>
+          )}
+          {/* Pill +N votos en los últimos 5s */}
+          {!showResults && (
+            <div
+              className="px-3 py-1 rounded-full backdrop-blur-md border border-white/30 flex items-center gap-1.5 shadow-lg animate-pulse"
+              style={{
+                background: 'linear-gradient(90deg, rgba(239,68,68,0.85), rgba(249,115,22,0.85))',
+              }}
+            >
+              <Flame className="w-3 h-3 text-white" fill="#fff" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                +{recentVotes} votos · últimos 5s
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Footer overlay — Hourglass + timer + progress bar */}
+      {isActive && !showResults && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]">
+          <div className="flex items-center gap-2">
+            <div className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center gap-1.5">
+              <Hourglass className="w-3 h-3 text-amber-300" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white tabular-nums">
+                QUEDAN 00:{String(timeLeft).padStart(2, '0')}
+              </span>
+            </div>
+            <div className="px-2.5 py-1 rounded-full bg-emerald-500/80 backdrop-blur-md border border-white/20 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                DUELO ACTIVO
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de progreso lila/azul (Twyk) — visible cuando hay resultados */}
+      {showResults && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none">
+          <div className="h-2 rounded-full overflow-hidden bg-black/50 backdrop-blur-md border border-white/20 shadow-lg">
+            <div
+              className="h-full transition-all duration-700 ease-out"
+              style={{
+                width: `${percA}%`,
+                background: `linear-gradient(90deg, ${TWYK_COLORS.top.primary}, ${TWYK_COLORS.top.secondary})`,
+                boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}`,
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-1 px-1">
+            <span
+              className="text-[10px] font-black tabular-nums"
+              style={{ color: TWYK_COLORS.top.primary, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+            >
+              {percA}%
+            </span>
+            <span
+              className="text-[10px] font-black tabular-nums"
+              style={{ color: TWYK_COLORS.bottom.primary, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+            >
+              {percB}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Línea divisora horizontal con gradiente Twyk (lila → azul) */}
+      <div
+        className="absolute top-1/2 left-0 right-0 h-1.5 z-10 transform -translate-y-1/2 pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`,
+          boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}, 0 0 12px ${TWYK_COLORS.bottom.glow}`,
+        }}
+      />
     </div>
   );
 };
@@ -947,24 +1199,19 @@ const VSLayout = ({
               selectedOption={selectedOptions[question.id]}
               showResults={showResults[question.id]}
               creatorCountry={creatorCountry}
+              highlightedOption={qIndex === currentIndex ? highlightedOption : null}
+              totalQuestions={totalQuestions}
+              currentIndex={currentIndex}
+              timeLeft={timeLeft}
             />
           </div>
         ))}
       </div>
       
-      {/* VS horizontal estilo gaming con efecto rayo/glow en colores del país */}
+      {/* VS central — rediseño Twyk: lila (top) + azul (bottom) */}
       {(() => {
-        const countryColors = getCountryColors(creatorCountry);
-        // Convertir colores hex a RGB para usar con alpha
-        const hexToRgb = (hex) => {
-          const cleaned = hex.replace('#', '');
-          const r = parseInt(cleaned.substring(0, 2), 16);
-          const g = parseInt(cleaned.substring(2, 4), 16);
-          const b = parseInt(cleaned.substring(4, 6), 16);
-          return `${r},${g},${b}`;
-        };
-        const primaryRgb = hexToRgb(countryColors.primary);
-        const secondaryRgb = hexToRgb(countryColors.secondary);
+        const topRgb = TWYK_COLORS.top.primaryRgb;
+        const bottomRgb = TWYK_COLORS.bottom.primaryRgb;
 
         return (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
@@ -972,24 +1219,24 @@ const VSLayout = ({
               {/* Rayo de fondo (solo cuando showVS) */}
               {showVS && (
                 <>
-                  {/* Rayo principal diagonal con color primario del país */}
+                  {/* Rayo principal con gradiente Twyk lila→azul */}
                   <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-flash"
                     style={{
                       width: '140%',
                       height: '220px',
-                      background: `radial-gradient(ellipse at center, rgba(${primaryRgb},0.55) 0%, rgba(${primaryRgb},0.25) 30%, transparent 65%)`,
+                      background: `radial-gradient(ellipse at center, rgba(${topRgb},0.55) 0%, rgba(${bottomRgb},0.35) 35%, transparent 65%)`,
                       filter: 'blur(18px)',
                       transform: 'translate(-50%, -50%) rotate(-18deg)',
                     }}
                   />
-                  {/* Destello central con mezcla de los 2 colores del país */}
+                  {/* Destello central blanco con halo lila/azul */}
                   <div
                     className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-pulse"
                     style={{
                       width: '90%',
                       height: '120px',
-                      background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${primaryRgb},0.6) 22%, rgba(${secondaryRgb},0.45) 45%, transparent 70%)`,
+                      background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${topRgb},0.6) 22%, rgba(${bottomRgb},0.45) 45%, transparent 70%)`,
                       filter: 'blur(8px)',
                       transform: 'translate(-50%, -50%)',
                     }}
@@ -1009,9 +1256,9 @@ const VSLayout = ({
                     letterSpacing: '-0.05em',
                     textShadow: [
                       '0 0 8px rgba(255,255,255,0.95)',
-                      `0 0 20px rgba(${primaryRgb},0.9)`,
-                      `0 0 40px rgba(${primaryRgb},0.8)`,
-                      `0 0 70px rgba(${secondaryRgb},0.7)`,
+                      `0 0 20px rgba(${topRgb},0.9)`,
+                      `0 0 40px rgba(${topRgb},0.8)`,
+                      `0 0 70px rgba(${bottomRgb},0.7)`,
                       '0 4px 0 rgba(0,0,0,0.6)',
                       '2px 4px 10px rgba(0,0,0,0.8)',
                     ].join(', '),
@@ -1022,11 +1269,12 @@ const VSLayout = ({
                 </span>
               ) : hasVoted ? (
                 <div
-                  className="relative flex items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-2xl"
+                  className="relative flex items-center justify-center rounded-full shadow-2xl"
                   style={{
                     width: 'clamp(3.5rem, 14vw, 5.5rem)',
                     height: 'clamp(3.5rem, 14vw, 5.5rem)',
-                    boxShadow: '0 0 30px rgba(34,197,94,0.8), 0 0 60px rgba(34,197,94,0.4)',
+                    background: `linear-gradient(135deg, ${TWYK_COLORS.top.primary}, ${TWYK_COLORS.bottom.primary})`,
+                    boxShadow: `0 0 30px rgba(${topRgb},0.7), 0 0 60px rgba(${bottomRgb},0.4)`,
                   }}
                 >
                   <svg className="w-2/3 h-2/3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1035,7 +1283,7 @@ const VSLayout = ({
                 </div>
               ) : (
                 <div className="relative">
-                  {/* Anillo countdown con color del país */}
+                  {/* Anillo countdown gradiente Twyk */}
                   <svg
                     className="absolute inset-0 -rotate-90"
                     style={{
@@ -1043,16 +1291,22 @@ const VSLayout = ({
                       height: 'clamp(4rem, 16vw, 6.5rem)',
                     }}
                   >
+                    <defs>
+                      <linearGradient id="twyk-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={TWYK_COLORS.top.primary} />
+                        <stop offset="100%" stopColor={TWYK_COLORS.bottom.primary} />
+                      </linearGradient>
+                    </defs>
                     <circle cx="50%" cy="50%" r="45%" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
                     <circle
                       cx="50%" cy="50%" r="45%"
                       fill="none"
-                      stroke={countryColors.primary}
+                      stroke="url(#twyk-ring)"
                       strokeWidth="4"
                       strokeDasharray={`${(timeLeft / 5) * 283} 283`}
                       strokeLinecap="round"
                       className="transition-all duration-1000"
-                      style={{ filter: `drop-shadow(0 0 6px rgba(${primaryRgb},0.9))` }}
+                      style={{ filter: `drop-shadow(0 0 6px rgba(${topRgb},0.9))` }}
                     />
                   </svg>
                   <div
@@ -1066,7 +1320,7 @@ const VSLayout = ({
                       className="text-white font-black"
                       style={{
                         fontSize: 'clamp(1.75rem, 7vw, 2.75rem)',
-                        textShadow: `0 0 10px rgba(${primaryRgb},0.9), 0 0 20px rgba(${secondaryRgb},0.6)`,
+                        textShadow: `0 0 10px rgba(${topRgb},0.9), 0 0 20px rgba(${bottomRgb},0.6)`,
                       }}
                     >
                       {timeLeft}
