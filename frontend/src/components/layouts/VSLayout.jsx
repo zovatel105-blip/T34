@@ -530,18 +530,34 @@ const QuestionSlide = ({
   currentIndex = 0,
   timeLeft = 0,
   orientation = 'horizontal',  // 'horizontal' = arriba-abajo, 'vertical' = lado a lado (izquierda-derecha)
+  stats = null,  // 🗳️ Stats actualizados del servidor: { total_votes, options: [{ id, votes, percentage }] }
 }) => {
   const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
   const optionA = options[0];
   const optionB = options[1];
 
-  // Cálculo de votos y porcentajes
-  const votesA = optionA?.votes || 0;
-  const votesB = optionB?.votes || 0;
-  const totalVotes = votesA + votesB;
+  // Cálculo de votos y porcentajes — preferir los stats del servidor si
+  // existen (rellenados tras el voto), si no usar los conteos del propio
+  // poll.options.
+  const getServerVotes = (optionId) => {
+    if (!stats?.options) return null;
+    const found = stats.options.find(o => o.id === optionId);
+    return found ? { votes: found.votes, percentage: found.percentage } : null;
+  };
+
+  const serverA = getServerVotes(optionA?.id);
+  const serverB = getServerVotes(optionB?.id);
+
+  const votesA = serverA?.votes ?? optionA?.votes ?? 0;
+  const votesB = serverB?.votes ?? optionB?.votes ?? 0;
+  const totalVotes = stats?.total_votes ?? (votesA + votesB);
 
   const getPercentage = (optionId) => {
+    // 1) Stats del servidor (más preciso)
+    const sv = getServerVotes(optionId);
+    if (sv) return sv.percentage;
+    // 2) Cálculo a partir de conteos locales
     if (totalVotes === 0) {
       // Si no hay votos: si el usuario eligió, mostrar 65/35 sesgado a su voto
       if (selectedOption) return optionId === selectedOption ? 65 : 35;
@@ -591,7 +607,8 @@ const QuestionSlide = ({
     const isSelected = selectedOption === option.id;
     const isHighlighted = highlightedOption === index;
     const percentage = isOptionA ? percA : percB;
-    const optionVotes = option.votes || 0;
+    // Preferir conteo del servidor si existe; si no, el del propio option.
+    const optionVotes = isOptionA ? votesA : votesB;
     const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
     const status = getStatusLabel(isOptionA);
     const isWinning = showResults && (isOptionA ? winnerIsA : winnerIsB);
@@ -895,6 +912,10 @@ const VSLayout = ({
   const [timeLeft, setTimeLeft] = useState(5);
   const [showVS, setShowVS] = useState(true);
   const [highlightedOption, setHighlightedOption] = useState(null); // Para resaltar visualmente
+  // 🗳️ Stats actualizados del servidor por pregunta. Se rellena tras cada
+  // voto con la respuesta del endpoint /api/vs/{vs_id}/vote.
+  // Estructura: { [question_id]: { total_votes, options: [{ id, votes, percentage }] } }
+  const [questionStats, setQuestionStats] = useState({});
 
   const currentQuestion = allQuestions[currentIndex];
   const currentQuestionId = currentQuestion?.id;
@@ -1093,7 +1114,17 @@ const VSLayout = ({
             option_id: optionId,
           }),
         });
-        if (!res.ok) {
+        if (res.ok) {
+          // 📊 Guardar stats actualizados (total_votes y porcentajes por
+          // opción) para mostrarlos correctamente en la UI.
+          const data = await res.json().catch(() => null);
+          if (data?.stats) {
+            setQuestionStats(prev => ({
+              ...prev,
+              [questionId]: data.stats,
+            }));
+          }
+        } else {
           // No revertimos la UI optimista para no confundir al usuario
           // (probablemente ya votó). Solo loggeamos.
           // eslint-disable-next-line no-console
@@ -1180,6 +1211,7 @@ const VSLayout = ({
               currentIndex={currentIndex}
               timeLeft={timeLeft}
               orientation={vsOrientation}
+              stats={questionStats[question.id]}
             />
           </div>
         ))}
