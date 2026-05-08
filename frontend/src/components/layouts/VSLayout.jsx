@@ -529,7 +529,9 @@ const QuestionSlide = ({
   totalQuestions = 1,
   currentIndex = 0,
   timeLeft = 0,
+  orientation = 'horizontal',  // 'horizontal' = arriba-abajo, 'vertical' = lado a lado (izquierda-derecha)
 }) => {
+  const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
   const optionA = options[0];
   const optionB = options[1];
@@ -633,9 +635,13 @@ const QuestionSlide = ({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: isOptionA
-                ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)'
-                : 'linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)',
+              background: isRow
+                ? (isOptionA
+                    ? 'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)'
+                    : 'linear-gradient(270deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)')
+                : (isOptionA
+                    ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)'
+                    : 'linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.55) 100%)'),
             }}
           />
 
@@ -658,9 +664,11 @@ const QuestionSlide = ({
           {status && (
             <div
               className={cn(
-                "absolute z-20 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
+                "absolute z-20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
                 "border border-white/30 shadow-lg",
-                isOptionA ? "top-3" : "bottom-3"
+                isRow
+                  ? cn("top-3", isOptionA ? "left-3" : "right-3")
+                  : cn("left-1/2 -translate-x-1/2", isOptionA ? "top-3" : "bottom-3")
               )}
               style={{
                 background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
@@ -677,9 +685,11 @@ const QuestionSlide = ({
           {isWinning && showResults && (
             <div
               className={cn(
-                "absolute right-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
+                "absolute z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
                 "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
-                isOptionA ? "top-12" : "bottom-12"
+                isRow
+                  ? cn("top-12", isOptionA ? "left-3" : "right-3")
+                  : cn("right-3", isOptionA ? "top-12" : "bottom-12")
               )}
             >
               <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
@@ -690,9 +700,10 @@ const QuestionSlide = ({
           {/* Contenido principal — nombre, porcentaje, votos */}
           <div
             className={cn(
-              "absolute left-0 right-16 z-10 flex flex-col px-4",
-              isOptionA ? "bottom-6" : "top-6",
-              isOptionA ? "items-start" : "items-start"
+              "absolute z-10 flex flex-col px-4",
+              isRow
+                ? cn("bottom-6 right-3 left-3 items-start")
+                : cn("left-0 right-16 items-start", isOptionA ? "bottom-6" : "top-6")
             )}
           >
             <h2
@@ -724,7 +735,7 @@ const QuestionSlide = ({
             )}
           </div>
 
-          {/* Botón corazón vote — derecha */}
+          {/* Botón corazón vote — derecha (o inferior en lado a lado) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -732,9 +743,11 @@ const QuestionSlide = ({
             }}
             disabled={showResults}
             className={cn(
-              "absolute right-3 z-20 w-12 h-12 rounded-full flex items-center justify-center",
+              "absolute z-20 w-12 h-12 rounded-full flex items-center justify-center",
               "backdrop-blur-md border-2 transition-all active:scale-90",
-              isOptionA ? "top-1/2 -translate-y-1/2" : "top-1/2 -translate-y-1/2",
+              isRow
+                ? "bottom-3 left-1/2 -translate-x-1/2"
+                : "right-3 top-1/2 -translate-y-1/2",
               isSelected
                 ? "border-white scale-110"
                 : "border-white/40 hover:border-white/70"
@@ -768,7 +781,7 @@ const QuestionSlide = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col relative">
+    <div className={cn("w-full h-full flex relative", isRow ? "flex-row" : "flex-col")}>
       {renderCard(optionA, 0)}
       {renderCard(optionB, 1)}
 
@@ -850,11 +863,18 @@ const QuestionSlide = ({
         </div>
       )}
 
-      {/* Línea divisora horizontal con gradiente Twyk (lila → azul) */}
+      {/* Línea divisora con gradiente Twyk (lila → azul) — horizontal o vertical según orientación */}
       <div
-        className="absolute top-1/2 left-0 right-0 h-1.5 z-10 transform -translate-y-1/2 pointer-events-none"
+        className={cn(
+          "absolute z-10 pointer-events-none",
+          isRow
+            ? "top-0 bottom-0 left-1/2 w-1.5 transform -translate-x-1/2"
+            : "left-0 right-0 top-1/2 h-1.5 transform -translate-y-1/2"
+        )}
         style={{
-          background: `linear-gradient(90deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`,
+          background: isRow
+            ? `linear-gradient(180deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`
+            : `linear-gradient(90deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`,
           boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}, 0 0 12px ${TWYK_COLORS.bottom.glow}`,
         }}
       />
@@ -875,6 +895,13 @@ const VSLayout = ({
   
   // País del creador para los colores y voz
   const creatorCountry = poll.creator_country;
+
+  // 🆕 Orientación VS: 'vertical' = lado a lado (izq-der), 'horizontal' = arriba-abajo
+  // Default 'horizontal' para retrocompatibilidad con publicaciones anteriores.
+  const vsOrientation = ['vertical', 'horizontal'].includes(poll.vs_orientation)
+    ? poll.vs_orientation
+    : 'horizontal';
+  const isRow = vsOrientation === 'vertical';
   
   // Preparar todas las preguntas
   const vsQuestions = poll.vs_questions || [];
@@ -1147,7 +1174,7 @@ const VSLayout = ({
     const thumbOptions = initialOptions.slice(0, 2);
     return (
       <div className="w-full h-full relative">
-        <div className="absolute inset-0 flex flex-col">
+        <div className={cn("absolute inset-0 flex", isRow ? "flex-row" : "flex-col")}>
           {thumbOptions.map((option, index) => {
             const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
             const bgColor = getCountryColor(option.text, index);
@@ -1203,6 +1230,7 @@ const VSLayout = ({
               totalQuestions={totalQuestions}
               currentIndex={currentIndex}
               timeLeft={timeLeft}
+              orientation={vsOrientation}
             />
           </div>
         ))}

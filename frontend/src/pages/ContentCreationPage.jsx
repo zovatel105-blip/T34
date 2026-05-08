@@ -1581,7 +1581,13 @@ const ContentCreationPage = () => {
 
         const vsData = {
           questions: uploadedQuestions,
-          creator_country: creatorCountry
+          creator_country: creatorCountry,
+          // 🆕 Enviar la orientación elegida en la sidebar:
+          //   selectedLayout.id === 'vertical'   → lado a lado (izquierda-derecha)
+          //   selectedLayout.id === 'horizontal' → arriba-abajo
+          vs_orientation: ['vertical', 'horizontal'].includes(selectedLayout.id)
+            ? selectedLayout.id
+            : 'horizontal'
         };
 
         const response = await fetch(`${config.BACKEND_URL}/api/vs/create`, {

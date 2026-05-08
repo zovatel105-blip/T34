@@ -12765,6 +12765,7 @@ class VSQuestion(BaseModel):
 class VSExperienceCreate(BaseModel):
     questions: List[VSQuestion]
     creator_country: Optional[str] = None  # País del creador detectado por IP
+    vs_orientation: Optional[str] = "horizontal"  # 'vertical' (lado a lado / izq-der) o 'horizontal' (arriba-abajo)
 
 class VSVote(BaseModel):
     question_id: str
@@ -12812,11 +12813,16 @@ async def create_vs_experience(
         
         logger.info(f"Total questions processed: {len(questions)}")
         
+        # Validar orientación VS — sólo aceptamos 'vertical' (lado a lado) o
+        # 'horizontal' (arriba-abajo). Default = 'horizontal' (comportamiento previo).
+        vs_orientation = vs_data.vs_orientation if vs_data.vs_orientation in ("vertical", "horizontal") else "horizontal"
+
         vs_doc = {
             "id": vs_id,
             "author_id": author_data["id"],
             "author": author_data,
             "questions": questions,
+            "vs_orientation": vs_orientation,
             "total_participants": 0,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
@@ -12848,6 +12854,7 @@ async def create_vs_experience(
             "author": author_data,
             "options": poll_options,
             "layout": "vs",  # Nuevo tipo de layout para VS
+            "vs_orientation": vs_orientation,  # Orientación interna del VS: 'vertical'=lado a lado, 'horizontal'=arriba-abajo
             "vs_id": vs_id,  # Referencia a la experiencia VS completa
             "vs_questions": questions,  # Incluir todas las preguntas
             "creator_country": vs_data.creator_country,  # País del creador

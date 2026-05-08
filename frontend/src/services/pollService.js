@@ -294,6 +294,7 @@ class PollService {
       vs_id: backendPoll.vs_id || null,
       vs_questions: backendPoll.vs_questions || [],
       creator_country: backendPoll.creator_country || null,  // Country where VS was created
+      vs_orientation: backendPoll.vs_orientation || 'horizontal',  // 'vertical' (lado a lado) o 'horizontal' (arriba-abajo)
       // Post settings - snake_case from backend
       comments_enabled: backendPoll.comments_enabled !== undefined ? backendPoll.comments_enabled : true,
       show_vote_count: backendPoll.show_vote_count !== undefined ? backendPoll.show_vote_count : true,
