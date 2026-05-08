@@ -937,7 +937,10 @@ const ContentCreationPage = () => {
   //   "Arriba y abajo".
   // - MOMENTO: renderiza MomentCreationPage embebido (imagen única, sin
   //   selector de layouts).
-  const [creationMode, setCreationMode] = useState('publicar');
+  // 🎯 MVP: si la navegación trae state.creationMode === 'vs', arrancamos en VS.
+  const [creationMode, setCreationMode] = useState(
+    location.state?.creationMode === 'vs' ? 'vs' : 'publicar'
+  );
 
   // Cuando el usuario cambia a VS, si el layout actual no es uno de los
   // permitidos para VS, lo cambiamos automáticamente a "vertical"
@@ -1965,15 +1968,17 @@ const ContentCreationPage = () => {
           )}
 
           {/* Tab bar - Pastilla deslizable. Oculto cuando viene de un challenge existente */}
+          {/* 🎯 MVP VS-ONLY: el tab bar muestra solo VS (los demás tabs están ocultos). */}
           {!joiningChallengeId ? (
             <div className="bg-black/90 backdrop-blur-md py-4 pb-6">
               {(() => {
                 const TABS = [
-                  { id: 'publicar',  label: 'PUBLICAR'  },
-                  { id: 'historia',  label: 'HISTORIA'  },
+                  // 🎯 MVP VS-ONLY: solo el tab VS está activo. Para revertir, descomentar los demás.
+                  // { id: 'publicar',  label: 'PUBLICAR'  },
+                  // { id: 'historia',  label: 'HISTORIA'  },
                   { id: 'vs',        label: 'VS'        },
-                  { id: 'momento',   label: 'MOMENTO'   },
-                  { id: 'challenge', label: 'CHALLENGE' }
+                  // { id: 'momento',   label: 'MOMENTO'   },
+                  // { id: 'challenge', label: 'CHALLENGE' }
                 ];
 
                 const activeTabId =

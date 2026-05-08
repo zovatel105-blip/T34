@@ -125,7 +125,7 @@ const RightSideNavigation = () => {
         )}
       </div>
 
-      {/* Battle Live - OCULTO en MVP VS-ONLY
+      {/* Battle Live - acceso visible (MVP solo muestra "Próximamente" dentro) */}
       <button
         onClick={() => navigate('/explore')}
         className={cn(
@@ -142,14 +142,13 @@ const RightSideNavigation = () => {
           location.pathname === '/explore' ? "text-white" : "text-gray-600"
         )} />
       </button>
-      */}
 
-      {/* Crear Poll */}
+      {/* Crear Poll - MVP: abre /content-creation directamente en modo VS */}
       <button
-        onClick={() => navigate('/vs-create')}
+        onClick={() => navigate('/content-creation', { state: { creationMode: 'vs' } })}
         className={cn(
           "rounded-full transition-all duration-300 relative overflow-hidden",
-          (location.pathname === '/create' || location.pathname === '/content-creation' || location.pathname === '/vs-create')
+          (location.pathname === '/create' || location.pathname === '/content-creation')
             ? "w-5 h-12 shadow-2xl"
             : "hover:scale-110 w-5 h-12 shadow-xl hover:opacity-90",
           "flex items-center justify-center flex-shrink-0"

@@ -39,7 +39,10 @@ const ContentSelectionPage = () => {
       description: '¿Qué prefieres? Votación rápida',
       icon: Swords,
       gradient: 'from-orange-500 to-red-500',
-      route: '/vs-create'
+      // 🎯 MVP VS-ONLY: usamos el editor general (ContentCreationPage)
+      // arrancando en modo VS. Esa es la página correcta confirmada por el usuario.
+      route: '/content-creation',
+      state: { creationMode: 'vs' }
     }
   ];
 
@@ -67,7 +70,7 @@ const ContentSelectionPage = () => {
           {contentTypes.map((type) => (
             <button
               key={type.id}
-              onClick={() => navigate(type.route)}
+              onClick={() => navigate(type.route, type.state ? { state: type.state } : undefined)}
               className={cn(
                 "w-full p-6 rounded-2xl transition-all duration-300",
                 "bg-gradient-to-r", type.gradient,

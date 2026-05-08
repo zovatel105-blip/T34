@@ -143,7 +143,7 @@ const BottomNavigation = () => {
           />
         </button>
 
-        {/* Explorar / Battle - OCULTO en MVP (solo VS visible)
+        {/* Explorar / Battle - Entrada visible, página muestra "Próximamente" en MVP */}
         <button
           onClick={() => navigate('/explore')}
           className="flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90"
@@ -156,11 +156,10 @@ const BottomNavigation = () => {
             strokeWidth={isActive('/explore') ? 2.5 : 1.5}
           />
         </button>
-        */}
 
-        {/* Crear - borde gradiente */}
+        {/* Crear - borde gradiente. MVP: abre /content-creation directamente en modo VS */}
         <button
-          onClick={() => navigate('/vs-create')}
+          onClick={() => navigate('/content-creation', { state: { creationMode: 'vs' } })}
           className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 active:scale-90 relative overflow-hidden flex-shrink-0"
           style={{
             background: 'linear-gradient(180deg, #000 0%, #000 100%)',
