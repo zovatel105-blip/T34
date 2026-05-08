@@ -1099,35 +1099,17 @@ const VSLayout = ({
       ...prev,
       [currentQuestionId]: true
     }));
-    
-    // Anunciar la elección con voz
-    if (selectedOption) {
-      const totalVotes = options.reduce((sum, opt) => sum + (opt.votes || 0), 0);
-      const selectedVotes = selectedOption.votes || 0;
-      const otherVotes = otherOption?.votes || 0;
-      
-      // Calcular porcentajes (simulados si no hay votos reales)
-      let selectedPercent, otherPercent;
-      if (totalVotes === 0) {
-        selectedPercent = 65;
-        otherPercent = 35;
-      } else {
-        selectedPercent = Math.round(((selectedVotes + 1) / (totalVotes + 1)) * 100);
-        otherPercent = 100 - selectedPercent;
-      }
-      
-      setTimeout(() => {
-        speak(`Elegiste ${selectedOption.text}. ${selectedPercent} por ciento contra ${otherPercent} por ciento.`, 1.1);
-      }, 300);
-    }
-    
+
+    // 🔇 Voz al votar desactivada por petición del usuario.
+    // (Antes se anunciaba "Elegiste X. 65 por ciento contra 35 por ciento.")
+
     if (onVote) {
       onVote(poll.id, optionId);
     }
 
     // Auto-avanzar después de votar
     if (currentIndex < totalQuestions - 1) {
-      setTimeout(() => goToNext(), 2500); // Aumentado para dar tiempo a la voz
+      setTimeout(() => goToNext(), 1200);
     }
   };
 
