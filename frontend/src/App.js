@@ -17,7 +17,8 @@ import EditProfilePage from './pages/EditProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import AudioDetailPage from './pages/AudioDetailPage';
 import SearchPage from './pages/SearchPage';
-import ContentSelectionPage from './pages/ContentSelectionPage';
+// ContentSelectionPage hidden in MVP VS-only — /create redirects to /content-creation in VS mode
+// import ContentSelectionPage from './pages/ContentSelectionPage';
 import ContentCreationPage from './pages/ContentCreationPage';
 import ContentPublishPage from './pages/ContentPublishPage';
 // VSCreatePage removed in MVP — VS creation now happens via ContentCreationPage with creationMode='vs'
@@ -261,7 +262,12 @@ function AppContent() {
         <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route path="/audio/:audioId" element={<AudioDetailPage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/create" element={<ContentSelectionPage />} />
+        {/* /create route redirects to /content-creation in VS mode (MVP VS-only).
+            ContentSelectionPage está oculta porque solo hay 1 opción (VS). */}
+        <Route
+          path="/create"
+          element={<Navigate to="/content-creation" state={{ creationMode: 'vs' }} replace />}
+        />
         <Route path="/content-creation" element={<ContentCreationPage />} />
         <Route path="/content-publish" element={<ContentPublishPage />} />
         {/* /vs-create route removed — replaced by /content-creation with state.creationMode='vs' */}

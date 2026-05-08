@@ -937,9 +937,11 @@ const ContentCreationPage = () => {
   //   "Arriba y abajo".
   // - MOMENTO: renderiza MomentCreationPage embebido (imagen única, sin
   //   selector de layouts).
-  // 🎯 MVP: si la navegación trae state.creationMode === 'vs', arrancamos en VS.
+  // 🎯 MVP VS-ONLY: el modo por defecto es 'vs'. Si la navegación trae
+  // otro state.creationMode, lo respetamos (por compatibilidad), pero el
+  // fallback de fábrica es VS.
   const [creationMode, setCreationMode] = useState(
-    location.state?.creationMode === 'vs' ? 'vs' : 'publicar'
+    location.state?.creationMode || 'vs'
   );
 
   // Cuando el usuario cambia a VS, si el layout actual no es uno de los
