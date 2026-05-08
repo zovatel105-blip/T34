@@ -1198,9 +1198,71 @@ const VSLayout = ({
         ))}
       </div>
 
-      {/* 🚫 Bloque central VS / contador / círculo eliminado por petición del
-          usuario — el VS ya no muestra el flash "VS", ni el countdown, ni el
-          check tras votar en el centro. */}
+      {/* VS central — solo el texto "VS" con efectos. Sin círculo ni contador
+          (eliminados por petición del usuario). El "VS" siempre se muestra. */}
+      {(() => {
+        const topRgb = TWYK_COLORS.top.primaryRgb;
+        const bottomRgb = TWYK_COLORS.bottom.primaryRgb;
+
+        return (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
+            <div className="relative flex items-center justify-center w-full">
+              {/* Rayo de fondo (solo durante el flash inicial showVS) */}
+              {showVS && (
+                <>
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-flash"
+                    style={{
+                      width: '140%',
+                      height: '220px',
+                      background: `radial-gradient(ellipse at center, rgba(${topRgb},0.55) 0%, rgba(${bottomRgb},0.35) 35%, transparent 65%)`,
+                      filter: 'blur(18px)',
+                      transform: 'translate(-50%, -50%) rotate(-18deg)',
+                    }}
+                  />
+                  <div
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-pulse"
+                    style={{
+                      width: '90%',
+                      height: '120px',
+                      background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${topRgb},0.6) 22%, rgba(${bottomRgb},0.45) 45%, transparent 70%)`,
+                      filter: 'blur(8px)',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                </>
+              )}
+
+              {/* Texto "VS" — siempre visible, con animación de bounce sólo
+                  durante el flash inicial. */}
+              <span
+                className={cn(
+                  "relative font-black tracking-tighter select-none",
+                  showVS && "animate-vs-bounce"
+                )}
+                style={{
+                  color: '#fff',
+                  fontSize: 'clamp(3.5rem, 16vw, 8rem)',
+                  fontStyle: 'italic',
+                  lineHeight: 1,
+                  letterSpacing: '-0.05em',
+                  textShadow: [
+                    '0 0 8px rgba(255,255,255,0.9)',
+                    `0 0 20px rgba(${topRgb},0.85)`,
+                    `0 0 40px rgba(${topRgb},0.7)`,
+                    `0 0 60px rgba(${bottomRgb},0.6)`,
+                    '0 4px 0 rgba(0,0,0,0.55)',
+                    '2px 4px 10px rgba(0,0,0,0.75)',
+                  ].join(', '),
+                  WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                }}
+              >
+                VS
+              </span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
