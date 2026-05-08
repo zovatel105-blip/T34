@@ -20,7 +20,7 @@ import SearchPage from './pages/SearchPage';
 import ContentSelectionPage from './pages/ContentSelectionPage';
 import ContentCreationPage from './pages/ContentCreationPage';
 import ContentPublishPage from './pages/ContentPublishPage';
-import VSCreatePage from './pages/VSCreatePage';
+// VSCreatePage removed in MVP — VS creation now happens via ContentCreationPage with creationMode='vs'
 import VSExperiencePage from './pages/VSExperiencePage';
 import MomentCreationPage from './pages/MomentCreationPage';
 import FollowingPage from './pages/FollowingPage';
@@ -264,7 +264,7 @@ function AppContent() {
         <Route path="/create" element={<ContentSelectionPage />} />
         <Route path="/content-creation" element={<ContentCreationPage />} />
         <Route path="/content-publish" element={<ContentPublishPage />} />
-        <Route path="/vs-create" element={<VSCreatePage />} />
+        {/* /vs-create route removed — replaced by /content-creation with state.creationMode='vs' */}
         <Route path="/vs-experience" element={<VSExperiencePage />} />
         <Route path="/moment-create" element={<MomentCreationPage />} />
         <Route path="/following" element={<FollowingPage />} />

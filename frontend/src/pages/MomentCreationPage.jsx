@@ -678,9 +678,9 @@ const MomentCreationPage = ({ embedded = false, onClose: onCloseProp } = {}) => 
               HISTORIA
             </button>
             
-            {/* VS */}
+            {/* VS — MVP: navega a ContentCreationPage en modo VS */}
             <button
-              onClick={() => navigate('/vs-create')}
+              onClick={() => navigate('/content-creation', { state: { creationMode: 'vs' } })}
               className="text-white/50 font-medium text-sm tracking-wide hover:text-white/80 transition-colors"
             >
               VS
