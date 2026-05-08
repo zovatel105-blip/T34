@@ -599,7 +599,7 @@ const QuestionSlide = ({
     return (
       <div
         className={cn(
-          "flex-1 relative overflow-hidden transition-all duration-300",
+          "flex-1 relative overflow-hidden transition-all duration-300 cursor-pointer",
           isHighlighted && !isSelected && "scale-[1.01]"
         )}
         style={{
@@ -607,6 +607,9 @@ const QuestionSlide = ({
           boxShadow: isActive
             ? `inset 0 0 ${isSelected ? '120px' : '60px'} ${isSelected ? colors.glow : colors.glowSoft}`
             : 'none',
+        }}
+        onClick={() => {
+          if (isActive && !showResults) onVote(option.id);
         }}
       >
         <DoubleTapVoteAnimation
@@ -735,37 +738,9 @@ const QuestionSlide = ({
             )}
           </div>
 
-          {/* Botón corazón vote — derecha (o inferior en lado a lado) */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isActive && !showResults) onVote(option.id);
-            }}
-            disabled={showResults}
-            className={cn(
-              "absolute z-20 w-12 h-12 rounded-full flex items-center justify-center",
-              "backdrop-blur-md border-2 transition-all active:scale-90",
-              isRow
-                ? "bottom-3 left-1/2 -translate-x-1/2"
-                : "right-3 top-1/2 -translate-y-1/2",
-              isSelected
-                ? "border-white scale-110"
-                : "border-white/40 hover:border-white/70"
-            )}
-            style={{
-              background: isSelected
-                ? `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
-                : 'rgba(0,0,0,0.45)',
-              boxShadow: isSelected ? `0 0 24px ${colors.glow}` : 'none',
-            }}
-            aria-label={`Votar por ${option.text || 'opción'}`}
-          >
-            <Heart
-              className="w-6 h-6 text-white"
-              fill={isSelected ? '#fff' : 'transparent'}
-              strokeWidth={2.5}
-            />
-          </button>
+          {/* 🚫 Botón corazón eliminado por petición del usuario.
+              El voto se realiza con doble tap sobre la imagen
+              (DoubleTapVoteAnimation) o con un solo tap. */}
 
           {/* Indicador de selección — checkmark verde (mantenido para feedback) */}
           {isSelected && !showResults && (
