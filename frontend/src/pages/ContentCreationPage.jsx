@@ -1587,7 +1587,10 @@ const ContentCreationPage = () => {
           //   selectedLayout.id === 'horizontal' → arriba-abajo
           vs_orientation: ['vertical', 'horizontal'].includes(selectedLayout.id)
             ? selectedLayout.id
-            : 'horizontal'
+            : 'horizontal',
+          // 🎵 Música seleccionada (si la hay)
+          music_id: selectedMusic?.id || null,
+          music: selectedMusic || null,
         };
 
         const response = await fetch(`${config.BACKEND_URL}/api/vs/create`, {

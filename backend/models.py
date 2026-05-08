@@ -549,6 +549,7 @@ class PollResponse(BaseModel):
     vs_id: Optional[str] = None  # Reference to VS experience
     vs_questions: List[dict] = []  # All questions for VS experience
     creator_country: Optional[str] = None  # Country where VS was created
+    vs_orientation: Optional[str] = "horizontal"  # 'vertical'=lado a lado (izq-der), 'horizontal'=arriba-abajo
     created_at: datetime
     time_ago: str  # Campo calculado como "hace 2 horas"
     # Post settings

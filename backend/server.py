@@ -11,7 +11,7 @@ import uuid
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import uuid
 from datetime import datetime, timedelta, date, timedelta
 import random
@@ -6156,6 +6156,7 @@ async def get_polls(
             vs_id=poll_data.get("vs_id"),
             vs_questions=poll_data.get("vs_questions", []),
             creator_country=poll_data.get("creator_country"),  # Country where VS was created
+            vs_orientation=poll_data.get("vs_orientation", "horizontal"),  # VS orientation: 'vertical' or 'horizontal'
             created_at=poll_data["created_at"],
             time_ago=calculate_time_ago(poll_data["created_at"]),
             # Post settings
@@ -6469,7 +6470,8 @@ async def get_ultra_fast_feed(
                     # VS fields
                     "vs_id": poll_data.get("vs_id"),
                     "vs_questions": poll_data.get("vs_questions", []),
-                    "creator_country": poll_data.get("creator_country")
+                    "creator_country": poll_data.get("creator_country"),
+                    "vs_orientation": poll_data.get("vs_orientation", "horizontal")
                 }
                 result.append(poll_response)
         
@@ -7192,6 +7194,7 @@ async def get_following_polls(
             vs_id=poll_data.get("vs_id"),
             vs_questions=poll_data.get("vs_questions", []),
             creator_country=poll_data.get("creator_country"),
+            vs_orientation=poll_data.get("vs_orientation", "horizontal"),
             created_at=poll_data["created_at"],
             time_ago=calculate_time_ago(poll_data["created_at"]),
             # Post settings
@@ -7525,6 +7528,7 @@ async def get_user_polls(
                 "vs_id": poll_data.get("vs_id"),
                 "vs_questions": poll_data.get("vs_questions", []),
                 "creator_country": poll_data.get("creator_country"),
+                "vs_orientation": poll_data.get("vs_orientation", "horizontal"),
                 "is_challenge": poll_data.get("is_challenge", False),
                 "challenge_id": poll_data.get("challenge_id"),
                 "challenge_status": poll_data.get("challenge_status"),
@@ -7824,6 +7828,11 @@ async def get_user_mentioned_polls(
                 layout=poll_data.get("layout", "carousel"),
                 created_at=poll_data.get("created_at"),
                 time_ago=calculate_time_ago(poll_data["created_at"]) if poll_data.get("created_at") else "hace un momento",
+                # VS Experience fields
+                vs_id=poll_data.get("vs_id"),
+                vs_questions=poll_data.get("vs_questions", []),
+                creator_country=poll_data.get("creator_country"),
+                vs_orientation=poll_data.get("vs_orientation", "horizontal"),
                 # Post settings
                 comments_enabled=poll_data.get("comments_enabled", True),
                 show_vote_count=poll_data.get("show_vote_count", True)
@@ -12766,6 +12775,8 @@ class VSExperienceCreate(BaseModel):
     questions: List[VSQuestion]
     creator_country: Optional[str] = None  # País del creador detectado por IP
     vs_orientation: Optional[str] = "horizontal"  # 'vertical' (lado a lado / izq-der) o 'horizontal' (arriba-abajo)
+    music_id: Optional[str] = None  # 🎵 ID de la música seleccionada (iTunes / user_audio_)
+    music: Optional[Dict[str, Any]] = None  # 🎵 Snapshot del objeto music para fallback
 
 class VSVote(BaseModel):
     question_id: str
@@ -12848,7 +12859,7 @@ async def create_vs_experience(
         
         poll_doc = {
             "id": vs_id,  # Usar el mismo ID
-            "title": "¿Qué prefieres?",
+            "title": "",  # 🔇 Sin título — petición del usuario (antes: "¿Qué prefieres?")
             "description": f"VS • {len(questions)} {'pregunta' if len(questions) == 1 else 'preguntas'}",
             "author_id": author_data["id"],
             "author": author_data,
@@ -12876,7 +12887,11 @@ async def create_vs_experience(
             "is_private": False,
             "comments_enabled": True,
             "show_vote_count": True,
-            "background_color": "#000000"
+            "background_color": "#000000",
+            # 🎵 Música seleccionada (si hubo) — se utiliza para reproducirla
+            # en el feed cuando el VS está activo.
+            "music_id": vs_data.music_id,
+            "music": vs_data.music,
         }
         
         await db.polls.insert_one(poll_doc)

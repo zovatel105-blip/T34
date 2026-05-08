@@ -1015,49 +1015,11 @@ const VSLayout = ({
   }, [creatorCountry]);
 
   // Secuencia de voz con resaltado visual
+  // 🔇 Voz desactivada por petición del usuario — VS ya no usa TTS ni
+  // pronuncia la frase intro "¿Qué prefieres?" / "What do you prefer?".
   const startVoiceSequence = useCallback(() => {
-    if (isThumbnail || hasVoted || !isActive) return;
-    
-    const options = currentQuestion?.options || [];
-    const optionA = options[0]?.text || 'Opción A';
-    const optionB = options[1]?.text || 'Opción B';
-    
-    // Cancelar secuencia anterior
-    stopVoice();
-    
-    const timers = [];
-    
-    // Solo decir intro en la primera pregunta
-    const isFirstQuestion = currentIndex === 0;
-    const introDelay = isFirstQuestion ? 1500 : 0;  // Más tiempo para la intro (1.5 segundos)
-    
-    // Paso 0: Decir frase intro (en el idioma del país) solo en la primera pregunta
-    if (isFirstQuestion) {
-      const introPhrase = getIntroPhrase();
-      timers.push(setTimeout(() => {
-        speak(introPhrase, 0.85);  // Velocidad más lenta para intro
-      }, 0));
-    }
-    
-    // Paso 1: Resaltar y hablar opción A (después de que termine la intro)
-    timers.push(setTimeout(() => {
-      setHighlightedOption(0);
-      speak(optionA, 0.95);
-    }, introDelay));
-    
-    // Paso 2: Resaltar y hablar opción B
-    timers.push(setTimeout(() => {
-      setHighlightedOption(1);
-      speak(optionB, 0.95);
-    }, introDelay + 2000));  // 2 segundos entre opciones
-    
-    // Paso 3: Quitar resaltado
-    timers.push(setTimeout(() => {
-      setHighlightedOption(null);
-    }, introDelay + 4000));  // 4 segundos total después de intro
-    
-    voiceSequenceRef.current = timers;
-  }, [isThumbnail, hasVoted, isActive, currentQuestion, currentIndex, speak, stopVoice, getIntroPhrase]);
+    return; // no-op
+  }, []);
 
   // Detener speech cuando el componente se desmonta
   useEffect(() => {
