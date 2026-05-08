@@ -1083,14 +1083,10 @@ const VSLayout = ({
     return () => clearInterval(timer);
   }, [isActive, hasVoted, isThumbnail, showVS, goToNext]);
 
-  const handleVote = (optionId) => {
+  const handleVote = async (optionId) => {
     if (hasVoted) return;
-    
-    // Obtener la opción seleccionada para la voz
-    const options = currentQuestion?.options || [];
-    const selectedOption = options.find(opt => opt.id === optionId);
-    const otherOption = options.find(opt => opt.id !== optionId);
-    
+
+    // Optimistic UI: marcar la opción y mostrar resultados ya
     setSelectedOptions(prev => ({
       ...prev,
       [currentQuestionId]: optionId
@@ -1101,8 +1097,42 @@ const VSLayout = ({
     }));
 
     // 🔇 Voz al votar desactivada por petición del usuario.
-    // (Antes se anunciaba "Elegiste X. 65 por ciento contra 35 por ciento.")
 
+    // 🗳️ Persistir voto en el backend usando el endpoint específico VS,
+    // que registra question_id + option_id por usuario (un voto por
+    // pregunta). poll.vs_id apunta al VS experience.
+    const vsId = poll.vs_id || poll.id;
+    const questionId = currentQuestionId;
+    if (vsId && questionId) {
+      try {
+        const token = localStorage.getItem('token');
+        const backendUrl = process.env.REACT_APP_BACKEND_URL;
+        const res = await fetch(`${backendUrl}/api/vs/${vsId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify({
+            question_id: questionId,
+            option_id: optionId,
+          }),
+        });
+        if (!res.ok) {
+          // No revertimos la UI optimista para no confundir al usuario
+          // (probablemente ya votó). Solo loggeamos.
+          // eslint-disable-next-line no-console
+          console.warn('[VSLayout] vote failed', res.status, await res.text());
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('[VSLayout] vote error', err);
+      }
+    }
+
+    // También notificamos al padre por compat (FeedPage muestra toast,
+    // pero el endpoint genérico /api/polls/{id}/vote también sirve para
+    // marcar el VS poll-doc como "votado" por este usuario).
     if (onVote) {
       onVote(poll.id, optionId);
     }
