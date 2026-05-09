@@ -131,14 +131,14 @@ const VSWinnerCard = ({
         style={{ background: '#0a0a0a' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Fondo: imagen del ganador con blur y tinte */}
+        {/* Fondo: imagen del ganador (nítida) con vignette para legibilidad del texto */}
         <div className="absolute inset-0">
           {winnerImage ? (
             <SafeImage
               src={winnerImage}
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: 'blur(12px) brightness(0.7) saturate(1.1)' }}
+              style={{ filter: 'brightness(0.78) saturate(1.05)' }}
             />
           ) : (
             <div
@@ -154,7 +154,7 @@ const VSWinnerCard = ({
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.55) 100%)',
+                'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.65) 100%)',
             }}
           />
         </div>
