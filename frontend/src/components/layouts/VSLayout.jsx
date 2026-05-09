@@ -863,9 +863,62 @@ const QuestionSlide = ({
       {renderCard(optionA, 0)}
       {renderCard(optionB, 1)}
 
+      {/* 🎬 LIFT SUBJECT — duplicado del sujeto principal de la opción
+          VOTADA, recortado por máscara radial. Se LEVANTA en 3D y se
+          monta un poco sobre la card perdedora (estilo iOS Visual Look
+          Up / Lift Subject from Background). */}
+      {selectedOption && (() => {
+        const isVotedA = optionA?.id === selectedOption;
+        const voted = isVotedA ? optionA : optionB;
+        const votedImg = voted?.media?.url
+          || voted?.media?.thumbnail
+          || voted?.media_url
+          || voted?.thumbnail_url
+          || voted?.image;
+        if (!votedImg) return null;
+
+        // El overlay cubre la mitad de la card votada; el <img> dentro
+        // se escala 1.16-1.23 con la animación → al estar dentro del
+        // overlay con overflow visible, el sujeto se sale de su mitad
+        // y se monta sobre la card perdedora.
+        const slotStyle = isRow
+          ? {
+              top: 0,
+              bottom: 0,
+              width: '50%',
+              [isVotedA ? 'left' : 'right']: 0,
+            }
+          : {
+              left: 0,
+              right: 0,
+              height: '50%',
+              [isVotedA ? 'top' : 'bottom']: 0,
+            };
+
+        return (
+          <div
+            aria-hidden
+            className="absolute pointer-events-none vs-cinema-lift-subject-wrapper"
+            style={{
+              ...slotStyle,
+              zIndex: 31, // por encima de la card votada (30) y la perdedora (1)
+              transformStyle: 'preserve-3d',
+              overflow: 'visible',
+            }}
+          >
+            <img
+              src={votedImg}
+              alt=""
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
+            />
+          </div>
+        );
+      })()}
+
       {/* Header overlay — DUELO + RONDA + live votes (solo cuando es activo) */}
       {isActive && (
-        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none", TOP_OFFSET)}>
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-none", TOP_OFFSET)}>
           {/* Pill RONDA */}
           {totalQuestions > 1 && (
             <div className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
@@ -893,7 +946,7 @@ const QuestionSlide = ({
 
       {/* Footer overlay — Hourglass + timer + progress bar */}
       {isActive && !showResults && (
-        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]", BOTTOM_OFFSET)}>
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]", BOTTOM_OFFSET)}>
           <div className="flex items-center gap-2">
             <div className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center gap-1.5">
               <Hourglass className="w-3 h-3 text-amber-300" />
@@ -913,7 +966,7 @@ const QuestionSlide = ({
 
       {/* Footer con resultados — barra de progreso + COMPARTIR + countdown */}
       {showResults && (
-        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none flex flex-col items-center gap-2", BOTTOM_OFFSET)}>
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 w-[88%] pointer-events-none flex flex-col items-center gap-2", BOTTOM_OFFSET)}>
           {/* Barra de progreso lila/azul (Twyk) */}
           <div className="w-full">
             <div className="h-2 rounded-full overflow-hidden bg-black/50 backdrop-blur-md border border-white/20 shadow-lg">

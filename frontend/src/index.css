@@ -185,6 +185,84 @@
   will-change: opacity, transform;
 }
 
+/* ==========================================================
+   🎬 LIFT SUBJECT — el SUJETO PRINCIPAL de la imagen votada
+   "se levanta" del fondo (estilo iOS Visual Look Up) y se
+   monta sobre la card perdedora.
+   Implementación CSS pura: capa duplicada del mismo asset,
+   con máscara radial que difumina los bordes a transparente
+   simulando el recorte del sujeto, y animación 3D que la
+   lleva hacia delante en Z y hacia el territorio de la otra
+   card.
+   ========================================================== */
+@keyframes vsLiftSubject {
+  0%, 100% {
+    transform: scale(1.16) translateZ(120px) rotateX(0deg) rotateY(0deg);
+  }
+  25% {
+    transform: scale(1.19) translateZ(140px) rotateX(2.5deg) rotateY(-1.8deg);
+  }
+  50% {
+    transform: scale(1.23) translateZ(165px) rotateX(0deg) rotateY(1.4deg);
+  }
+  75% {
+    transform: scale(1.19) translateZ(140px) rotateX(-1.8deg) rotateY(1.8deg);
+  }
+}
+.vs-cinema-lift-subject {
+  animation: vsLiftSubject 4.8s ease-in-out infinite;
+  will-change: transform, filter;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  /* Máscara radial: el centro (donde típicamente está el sujeto) se
+     ve completo, los bordes se difuminan a transparente → ilusión
+     de sujeto recortado del fondo. */
+  -webkit-mask-image: radial-gradient(
+    ellipse 56% 64% at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 1) 38%,
+    rgba(0, 0, 0, 0.88) 58%,
+    rgba(0, 0, 0, 0.40) 78%,
+    transparent 92%
+  );
+  mask-image: radial-gradient(
+    ellipse 56% 64% at 50% 50%,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 1) 38%,
+    rgba(0, 0, 0, 0.88) 58%,
+    rgba(0, 0, 0, 0.40) 78%,
+    transparent 92%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  /* Halo + drop shadow + RGB split sutil (gafas 3D) → el sujeto
+     parece levantado del fondo con luz propia */
+  filter:
+    drop-shadow(0 28px 40px rgba(0, 0, 0, 0.78))
+    drop-shadow(0 0 32px rgba(255, 255, 255, 0.18))
+    drop-shadow(-2px 0 0 rgba(255, 56, 96, 0.42))
+    drop-shadow(2px 0 0 rgba(0, 220, 255, 0.42));
+  pointer-events: none;
+}
+
+/* Aparición suave del sujeto al votar (fade + scale-in) */
+@keyframes vsLiftSubjectAppear {
+  0% {
+    opacity: 0;
+    transform: scale(1.0) translateZ(0px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.20) translateZ(140px);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.vs-cinema-lift-subject-wrapper {
+  animation: vsLiftSubjectAppear 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
