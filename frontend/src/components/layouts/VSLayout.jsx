@@ -531,11 +531,22 @@ const QuestionSlide = ({
   timeLeft = 0,
   orientation = 'horizontal',  // 'horizontal' = arriba-abajo, 'vertical' = lado a lado (izquierda-derecha)
   stats = null,  // 🗳️ Stats actualizados del servidor: { total_votes, options: [{ id, votes, percentage }] }
+  // 🧭 NUEVO: si la barra de navegación inferior está visible se reservan
+  // ~56px adicionales en la zona inferior del post.
+  isBottomNavVisible = false,
 }) => {
   const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
   const optionA = options[0];
   const optionB = options[1];
+
+  // 🧭 Offsets dinámicos según el tipo de barra de navegación
+  // - bottom-nav visible (feed normal): se suma ~56px al fondo
+  // - bottom-nav oculta (modo TikTok fullscreen): valores estándar
+  const TOP_OFFSET = 'top-14';
+  const BOTTOM_OFFSET = isBottomNavVisible ? 'bottom-40' : 'bottom-24';
+  const TROPHY_TOP = 'top-24';
+  const TROPHY_BOTTOM = isBottomNavVisible ? 'bottom-52' : 'bottom-36';
 
   // Cálculo de votos y porcentajes — preferir los stats del servidor si
   // existen (rellenados tras el voto), si no usar los conteos del propio
@@ -687,8 +698,8 @@ const QuestionSlide = ({
                 "absolute z-20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
                 "border border-white/30 shadow-lg",
                 isRow
-                  ? cn("top-14", isOptionA ? "left-3" : "right-3")
-                  : cn("left-1/2 -translate-x-1/2", isOptionA ? "top-14" : "bottom-24")
+                  ? cn(TOP_OFFSET, isOptionA ? "left-3" : "right-3")
+                  : cn("left-1/2 -translate-x-1/2", isOptionA ? TOP_OFFSET : BOTTOM_OFFSET)
               )}
               style={{
                 background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
@@ -708,8 +719,8 @@ const QuestionSlide = ({
                 "absolute z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
                 "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
                 isRow
-                  ? cn("top-24", isOptionA ? "left-3" : "right-3")
-                  : cn("right-3", isOptionA ? "top-24" : "bottom-36")
+                  ? cn(TROPHY_TOP, isOptionA ? "left-3" : "right-3")
+                  : cn("right-3", isOptionA ? TROPHY_TOP : TROPHY_BOTTOM)
               )}
             >
               <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
@@ -761,7 +772,7 @@ const QuestionSlide = ({
 
           {/* Indicador de selección — checkmark verde (mantenido para feedback) */}
           {isSelected && !showResults && (
-            <div className="absolute top-14 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20">
+            <div className={cn("absolute right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20", TOP_OFFSET)}>
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
@@ -779,7 +790,7 @@ const QuestionSlide = ({
 
       {/* Header overlay — DUELO + RONDA + live votes (solo cuando es activo) */}
       {isActive && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none">
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none", TOP_OFFSET)}>
           {/* Pill RONDA */}
           {totalQuestions > 1 && (
             <div className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
@@ -807,7 +818,7 @@ const QuestionSlide = ({
 
       {/* Footer overlay — Hourglass + timer + progress bar */}
       {isActive && !showResults && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]">
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]", BOTTOM_OFFSET)}>
           <div className="flex items-center gap-2">
             <div className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center gap-1.5">
               <Hourglass className="w-3 h-3 text-amber-300" />
@@ -827,7 +838,7 @@ const QuestionSlide = ({
 
       {/* Barra de progreso lila/azul (Twyk) — visible cuando hay resultados */}
       {showResults && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none">
+        <div className={cn("absolute left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none", BOTTOM_OFFSET)}>
           <div className="h-2 rounded-full overflow-hidden bg-black/50 backdrop-blur-md border border-white/20 shadow-lg">
             <div
               className="h-full transition-all duration-700 ease-out"
@@ -878,7 +889,11 @@ const VSLayout = ({
   poll, 
   onVote, 
   isActive,
-  isThumbnail = false
+  isThumbnail = false,
+  // 🧭 Si la bottom-nav está visible, se reservan ~56px más al pie del post
+  // (ver TikTokScrollView padding). Se propaga a QuestionSlide para ajustar
+  // las posiciones de los overlays (timer, status pills, trofeo, etc.).
+  isBottomNavVisible = false
 }) => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
@@ -1212,6 +1227,7 @@ const VSLayout = ({
               timeLeft={timeLeft}
               orientation={vsOrientation}
               stats={questionStats[question.id]}
+              isBottomNavVisible={isBottomNavVisible}
             />
           </div>
         ))}

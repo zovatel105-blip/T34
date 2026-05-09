@@ -62,7 +62,9 @@ const LayoutRenderer = ({
   // 🚀 NUEVO: Si es true, conexión rápida/WiFi → permite preload más agresivo
   isHighBandwidth = true,
   // 🖼️ NUEVO: Para ocultar UI en miniaturas del perfil
-  isThumbnail = false
+  isThumbnail = false,
+  // 🧭 NUEVO: estado de la barra de navegación (afecta a overlays VS)
+  isBottomNavVisible = false
 }) => {
   // Obtener el layout type del poll, con fallback a 'vertical'
   const layoutType = poll.layout || 'vertical';
@@ -79,6 +81,7 @@ const LayoutRenderer = ({
           onVote={onVote} 
           isActive={isActive}
           isThumbnail={isThumbnail}
+          isBottomNavVisible={isBottomNavVisible}
         />
       </ErrorBoundary>
     );

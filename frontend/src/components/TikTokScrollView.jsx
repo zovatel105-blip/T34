@@ -1065,6 +1065,9 @@ const TikTokPollCard = ({
             distanceFromActive={distanceFromActive}
             isHighBandwidth={isHighBandwidth}
             layout={layout}
+            // 🧭 NAV: pass nav-bar state so layouts (e.g. VSLayout)
+            // can position overlays based on visible nav bar.
+            isBottomNavVisible={isBottomNavVisible}
           />
         )}
       </div>
