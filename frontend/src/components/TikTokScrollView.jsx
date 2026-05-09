@@ -608,6 +608,251 @@ const TikTokPollCard = ({
     (showVotersModal && !isVotersExpanded)
   );
 
+  // 🎯 Helper: renderiza los botones de acción (like, comentar, compartir, guardar, menú, música)
+  // sideMode=true → estilo TikTok: columna vertical en lateral derecho, SIN marco
+  // sideMode=false → estilo actual: fila horizontal en la parte inferior, CON marco
+  const renderActionButtons = (sideMode) => {
+    const iconCls = sideMode ? "w-7 h-7" : "w-5 h-5";
+    const txtCls = sideMode ? "text-[11px]" : "text-sm";
+    const btnLayout = sideMode
+      ? "flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent hover:bg-transparent"
+      : "flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm";
+    const dropShadowStyle = sideMode ? { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' } : undefined;
+
+    return (
+      <>
+        {/* Like */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLike(poll.id);
+          }}
+          className={cn(
+            btnLayout,
+            sideMode
+              ? cn("text-white hover:text-white", poll.userLiked && "text-red-500")
+              : cn("text-white hover:text-red-400 bg-black/20", poll.userLiked && "text-red-500 bg-red-500/20")
+          )}
+          style={dropShadowStyle}
+        >
+          <Heart className={cn(
+            `${iconCls} flex-shrink-0 transition-all duration-200`,
+            poll.userLiked && "fill-current scale-110"
+          )} />
+          <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.likes)}</span>
+        </Button>
+
+        {/* Comment */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCommentsModal(true);
+            const commentsEnabled = poll.comments_enabled !== false && poll.commentsEnabled !== false;
+            if (commentsEnabled) {
+              setCommentedPolls(prev => {
+                const newSet = new Set(prev);
+                newSet.add(poll.id);
+                return newSet;
+              });
+            }
+          }}
+          className={cn(
+            btnLayout,
+            sideMode
+              ? cn("text-white hover:text-white", (commentedPolls.has(poll.id) || poll.userCommented) && "text-blue-400")
+              : ((commentedPolls.has(poll.id) || poll.userCommented)
+                  ? "text-blue-400 bg-blue-500/20 hover:text-blue-300"
+                  : "text-white bg-black/20 hover:text-blue-400")
+          )}
+          style={dropShadowStyle}
+        >
+          <MessageCircle className={`${iconCls} flex-shrink-0 ${(commentedPolls.has(poll.id) || poll.userCommented) ? 'fill-current' : ''}`} />
+          {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
+            <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.comments)}</span>
+          )}
+        </Button>
+
+        {/* Share */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async (e) => {
+            e.stopPropagation();
+            const registerShareInBackend = async () => {
+              const token = localStorage.getItem('token');
+              if (token) {
+                try {
+                  const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/polls/${poll.id}/share`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  if (response.ok) {
+                    const result = await response.json();
+                    console.log('🔗 TikTokScrollView: Poll shared successfully, new count:', result.shares);
+                    setSharedPolls(prev => {
+                      const newSet = new Set(prev);
+                      newSet.add(poll.id);
+                      return newSet;
+                    });
+                  }
+                } catch (error) {
+                  console.error('🔗 TikTokScrollView: Error sharing poll:', error);
+                }
+              }
+            };
+            if (navigator.share) {
+              navigator.share({
+                title: poll.question || 'Vota en esta encuesta',
+                text: 'Mira esta increíble votación',
+                url: `${window.location.origin}/poll/${poll.id}`,
+              }).then(async () => {
+                await registerShareInBackend();
+                onShare && onShare(poll.id);
+              }).catch((error) => {
+                if (error.name !== 'AbortError') {
+                  sharePoll(poll);
+                }
+              });
+            } else {
+              sharePoll(poll);
+            }
+          }}
+          className={cn(
+            btnLayout,
+            sideMode
+              ? cn("text-white hover:text-white", (sharedPolls.has(poll.id) || poll.userShared) && "text-green-400")
+              : ((sharedPolls.has(poll.id) || poll.userShared)
+                  ? "text-green-400 bg-green-500/20 hover:text-green-300"
+                  : "text-white bg-black/20 hover:text-green-400")
+          )}
+          style={dropShadowStyle}
+        >
+          <Share2 className={`${iconCls} flex-shrink-0 ${(sharedPolls.has(poll.id) || poll.userShared) ? 'fill-current' : ''}`} />
+          <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.shares)}</span>
+        </Button>
+
+        {/* Save */}
+        {onSave && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const isCurrentlySaved = savedPolls.has(poll.id);
+              try {
+                if (isCurrentlySaved) {
+                  const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/polls/${poll.id}/save`, {
+                    method: 'DELETE',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  if (response.ok) {
+                    setSavedPolls(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(poll.id);
+                      return newSet;
+                    });
+                  }
+                } else {
+                  onSave(poll.id);
+                  setSavedPolls(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(poll.id);
+                    return newSet;
+                  });
+                }
+              } catch (error) {
+                console.error('🔖 TikTokScrollView: Error with save/unsave:', error);
+              }
+            }}
+            className={cn(
+              btnLayout,
+              "cursor-pointer pointer-events-auto z-50",
+              sideMode
+                ? cn("text-white hover:text-white", (savedPolls.has(poll.id) || poll.isSaved) && "text-yellow-400")
+                : ((savedPolls.has(poll.id) || poll.isSaved)
+                    ? "text-yellow-400 bg-yellow-500/20 hover:text-yellow-300"
+                    : "text-white bg-black/20 hover:text-yellow-400")
+            )}
+            style={{ pointerEvents: 'auto', ...(dropShadowStyle || {}) }}
+          >
+            <Bookmark className={`${iconCls} flex-shrink-0 ${(savedPolls.has(poll.id) || poll.isSaved) ? 'fill-current' : ''}`} />
+            <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.saves_count || 0)}</span>
+          </Button>
+        )}
+
+        {/* Feed Menu - Only shown for other users' posts */}
+        {(() => {
+          const shouldShowMenu = currentUser && (
+            (poll.author?.id && poll.author.id !== currentUser.id) ||
+            (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
+          );
+          return shouldShowMenu;
+        })() && (
+          <FeedMenu
+            poll={poll}
+            onNotInterested={handleNotInterested}
+            onHideUser={handleHideUser}
+            onToggleNotifications={handleToggleNotifications}
+            onReport={handleReport}
+            isNotificationEnabled={isNotificationEnabled}
+            onOpenChange={setIsMenuOpen}
+            className={sideMode
+              ? "flex items-center justify-center text-white hover:text-gray-300 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent"
+              : "flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"}
+          />
+        )}
+
+        {/* Post Management Menu - Only shown for own posts */}
+        {onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
+          <PostManagementMenu
+            poll={poll}
+            onUpdate={onUpdatePoll}
+            onDelete={onDeletePoll}
+            currentUser={authUser}
+            isOwnProfile={isOwnProfile}
+            onOpenChange={setIsMenuOpen}
+            className={sideMode
+              ? "flex items-center justify-center text-white hover:text-purple-400 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent"
+              : "flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"}
+          />
+        )}
+
+        {/* Music Player - disco rotativo */}
+        {poll.music && (() => {
+          const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+          const displayMusic = hasExtractedAudio && carouselAudioData
+            ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
+            : poll.music;
+          return (
+            <MusicPlayer
+              music={displayMusic}
+              isVisible={isActive}
+              onTogglePlay={handleMusicToggle}
+              autoPlay={!hasExtractedAudio}
+              loop={true}
+              authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+              authorUsername={poll.author?.username || poll.author?.display_name}
+              overrideAudioId={carouselAudioId}
+              forceUseAvatar={!!carouselThumbnail}
+              className={sideMode ? "flex-shrink-0" : "flex-shrink-0 ml-auto"}
+            />
+          );
+        })()}
+      </>
+    );
+  };
+
   return (
     <div className="w-full h-full flex flex-col relative bg-black overflow-hidden">
       
@@ -1115,249 +1360,12 @@ const TikTokPollCard = ({
           </div>
         )}
 
-        {(() => {
+        {!isBottomNavVisible && (() => {
           const hasHighInteractions = (poll.likes >= 1000 || poll.comments >= 1000 || poll.shares >= 1000 || (poll.saves_count || 0) >= 1000);
           return (
-        <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${hasHighInteractions ? 'gap-0.5' : 'gap-3'}`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLike(poll.id);
-              }}
-              className={cn(
-                `flex items-center gap-1 hover:scale-105 transition-all duration-200 text-white hover:text-red-400 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm`,
-                poll.userLiked && "text-red-500 bg-red-500/20"
-              )}
-            >
-              <Heart className={cn(
-                "w-5 h-5 flex-shrink-0 transition-all duration-200",
-                poll.userLiked && "fill-current scale-110"
-              )} />
-              <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.likes)}</span>
-            </Button>
-            
-            {/* Botón de comentarios - siempre visible */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                
-                // Siempre abrir el modal de comentarios
-                setShowCommentsModal(true);
-                
-                // Solo marcar como comentado si los comentarios están habilitados
-                const commentsEnabled = poll.comments_enabled !== false && poll.commentsEnabled !== false;
-                if (commentsEnabled) {
-                  setCommentedPolls(prev => {
-                    const newSet = new Set(prev);
-                    newSet.add(poll.id);
-                    return newSet;
-                  });
-                }
-              }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm ${
-                commentedPolls.has(poll.id) || poll.userCommented
-                  ? 'text-blue-400 bg-blue-500/20 hover:text-blue-300'
-                  : 'text-white bg-black/20 hover:text-blue-400'
-              }`}
-            >
-              <MessageCircle className={`w-5 h-5 flex-shrink-0 ${commentedPolls.has(poll.id) || poll.userCommented ? 'fill-current' : ''}`} />
-              {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-                <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.comments)}</span>
-              )}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={async (e) => {
-                e.stopPropagation();
-                
-                // Función para registrar el share en el backend SOLO después de compartir exitosamente
-                const registerShareInBackend = async () => {
-                  const token = localStorage.getItem('token');
-                  if (token) {
-                    try {
-                      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/polls/${poll.id}/share`, {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Content-Type': 'application/json'
-                        }
-                      });
-                      
-                      if (response.ok) {
-                        const result = await response.json();
-                        console.log('🔗 TikTokScrollView: Poll shared successfully, new count:', result.shares);
-                        
-                        // Marcar como compartido localmente
-                        setSharedPolls(prev => {
-                          const newSet = new Set(prev);
-                          newSet.add(poll.id);
-                          return newSet;
-                        });
-                      }
-                    } catch (error) {
-                      console.error('🔗 TikTokScrollView: Error sharing poll:', error);
-                    }
-                  }
-                };
-                
-                // Intentar Web Share API primero
-                if (navigator.share) {
-                  navigator.share({
-                    title: poll.question || 'Vota en esta encuesta',
-                    text: 'Mira esta increíble votación',
-                    url: `${window.location.origin}/poll/${poll.id}`,
-                  }).then(async () => {
-                    // SOLO registrar el share si el usuario realmente compartió
-                    await registerShareInBackend();
-                    onShare && onShare(poll.id);
-                  }).catch((error) => {
-                    // Si el usuario canceló (AbortError), NO registrar el share
-                    if (error.name !== 'AbortError') {
-                      // Error diferente a cancelación - abrir modal como fallback
-                      sharePoll(poll);
-                    }
-                    // NO llamamos a registerShareInBackend aquí porque el usuario no compartió
-                  });
-                } else {
-                  // Si no hay Web Share API, usar modal (no registra share automáticamente)
-                  sharePoll(poll);
-                }
-              }}
-              className={`flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm ${
-                sharedPolls.has(poll.id) || poll.userShared
-                  ? 'text-green-400 bg-green-500/20 hover:text-green-300'
-                  : 'text-white bg-black/20 hover:text-green-400'
-              }`}
-            >
-              <Share2 className={`w-5 h-5 flex-shrink-0 ${sharedPolls.has(poll.id) || poll.userShared ? 'fill-current' : ''}`} />
-              <span className="font-medium text-sm whitespace-nowrap">{formatNumber(poll.shares)}</span>
-            </Button>
-
-            {/* Save button */}
-            {onSave ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  const isCurrentlySaved = savedPolls.has(poll.id);
-                  console.log('🔖 TikTokScrollView: Save button clicked for poll:', poll.id);
-                  console.log('🔖 TikTokScrollView: Currently saved:', isCurrentlySaved);
-                  
-                  try {
-                    if (isCurrentlySaved) {
-                      // Unsave the poll
-                      console.log('🔖 TikTokScrollView: Unsaving poll...');
-                      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/polls/${poll.id}/save`, {
-                        method: 'DELETE',
-                        headers: {
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                          'Content-Type': 'application/json'
-                        }
-                      });
-                      
-                      if (response.ok) {
-                        setSavedPolls(prev => {
-                          const newSet = new Set(prev);
-                          newSet.delete(poll.id);
-                          return newSet;
-                        });
-                        console.log('🔖 TikTokScrollView: Poll unsaved successfully');
-                      }
-                    } else {
-                      // Save the poll
-                      console.log('🔖 TikTokScrollView: Saving poll...');
-                      onSave(poll.id);
-                      // Add to local state immediately for visual feedback
-                      setSavedPolls(prev => {
-                        const newSet = new Set(prev);
-                        newSet.add(poll.id);
-                        return newSet;
-                      });
-                    }
-                  } catch (error) {
-                    console.error('🔖 TikTokScrollView: Error with save/unsave:', error);
-                  }
-                }}
-                className={`flex flex-row items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm cursor-pointer pointer-events-auto z-50 ${
-                  savedPolls.has(poll.id) || poll.isSaved
-                    ? 'text-yellow-400 bg-yellow-500/20 hover:text-yellow-300' 
-                    : 'text-white bg-black/20 hover:text-yellow-400'
-                }`}
-                style={{ pointerEvents: 'auto' }}
-              >
-                <Bookmark className={`w-5 h-5 flex-shrink-0 ${savedPolls.has(poll.id) || poll.isSaved ? 'fill-current' : ''}`} />
-                <span className="font-medium text-sm whitespace-nowrap">
-                  {formatNumber(poll.saves_count || 0)}
-                </span>
-              </Button>
-            ) : (
-              console.log('🔖 TikTokScrollView: onSave prop is falsy, not rendering save button')
-            )}
-
-            {/* Feed Menu - Only shown for other users' posts */}
-            {(() => {
-              const shouldShowMenu = currentUser && (
-                (poll.author?.id && poll.author.id !== currentUser.id) ||
-                (poll.authorUser?.id && poll.authorUser.id !== currentUser.id)
-              );
-              return shouldShowMenu;
-            })() && (
-              <FeedMenu
-                poll={poll}
-                onNotInterested={handleNotInterested}
-                onHideUser={handleHideUser}
-                onToggleNotifications={handleToggleNotifications}
-                onReport={handleReport}
-                isNotificationEnabled={isNotificationEnabled}
-                onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-gray-300 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"
-              />
-            )}
-
-            {/* Post Management Menu - Only shown for own posts */}
-            {onUpdatePoll && onDeletePoll && authUser && poll.author?.id === authUser.id && (
-              <PostManagementMenu
-                poll={poll}
-                onUpdate={onUpdatePoll}
-                onDelete={onDeletePoll}
-                currentUser={authUser}
-                isOwnProfile={isOwnProfile}
-                onOpenChange={setIsMenuOpen}
-                className="flex items-center justify-center text-white hover:text-purple-400 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg bg-black/20 backdrop-blur-sm"
-              />
-            )}
-
-            {/* Music Player - disco en el lateral derecho */}
-            {poll.music && (() => {
-              const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-              const displayMusic = hasExtractedAudio && carouselAudioData
-                ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
-                : poll.music;
-              return (
-                <MusicPlayer
-                  music={displayMusic}
-                  isVisible={isActive}
-                  onTogglePlay={handleMusicToggle}
-                  autoPlay={!hasExtractedAudio}
-                  loop={true}
-                  authorAvatar={carouselThumbnail || poll.author?.avatar_url}
-                  authorUsername={poll.author?.username || poll.author?.display_name}
-                  overrideAudioId={carouselAudioId}
-                  forceUseAvatar={!!carouselThumbnail}
-                  className="flex-shrink-0 ml-auto"
-                />
-              );
-            })()}
-      </div>
+            <div className={`flex items-center -ml-2 pointer-events-auto flex-nowrap ${hasHighInteractions ? 'gap-0.5' : 'gap-3'}`}>
+              {renderActionButtons(false)}
+            </div>
           );
         })()}
 
@@ -1409,6 +1417,21 @@ const TikTokPollCard = ({
       })()}
 
       </div>{/* Cierre del overlay de botones inferior */}
+
+      {/* 🎯 BOTONES SOCIALES ESTILO TIKTOK - Lateral derecho, centrados verticalmente, sin marco */}
+      {/* Solo cuando la barra de navegación inferior está activa */}
+      {isBottomNavVisible && !isPostMiniature && (
+        <div
+          className="absolute z-30 flex flex-col items-center gap-5 pointer-events-auto"
+          style={{
+            right: 'max(0.5rem, var(--safe-area-inset-right))',
+            top: '50%',
+            transform: 'translateY(-50%)'
+          }}
+        >
+          {renderActionButtons(true)}
+        </div>
+      )}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
