@@ -613,8 +613,8 @@ const TikTokPollCard = ({
   // sideMode=true → estilo TikTok: columna vertical en lateral derecho, SIN marco
   // sideMode=false → estilo actual: fila horizontal en la parte inferior, CON marco
   const renderActionButtons = (sideMode) => {
-    const iconCls = sideMode ? "w-7 h-7" : "w-5 h-5";
-    const txtCls = sideMode ? "text-[11px]" : "text-sm";
+    const iconCls = sideMode ? "w-9 h-9" : "w-5 h-5";
+    const txtCls = sideMode ? "text-[12px]" : "text-sm";
     const btnLayout = sideMode
       ? "flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent hover:bg-transparent"
       : "flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm";
@@ -1445,11 +1445,11 @@ const TikTokPollCard = ({
                   return (
                     <>
                       {showTrophy ? (
-                        <Trophy className="w-7 h-7 flex-shrink-0" strokeWidth={1.5} />
+                        <Trophy className="w-9 h-9 flex-shrink-0" strokeWidth={1.5} />
                       ) : (
-                        <VoteIcon className="w-7 h-7 flex-shrink-0" />
+                        <VoteIcon className="w-9 h-9 flex-shrink-0" />
                       )}
-                      <span className="text-[10px] font-semibold whitespace-nowrap text-center px-1 max-w-[64px] truncate">
+                      <span className="text-[11px] font-semibold whitespace-nowrap text-center px-1 max-w-[72px] truncate">
                         {(() => {
                           if (totalVotes === 0) return "Sé el primero";
                           if (isTie) return "Empate";
@@ -1470,8 +1470,8 @@ const TikTokPollCard = ({
                 className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
-                <VoteIcon className="w-7 h-7 flex-shrink-0" />
-                <span className="text-[11px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
+                <VoteIcon className="w-9 h-9 flex-shrink-0" />
+                <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
               </button>
             )
           )}
