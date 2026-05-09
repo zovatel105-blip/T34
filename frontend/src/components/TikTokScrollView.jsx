@@ -616,7 +616,7 @@ const TikTokPollCard = ({
     const iconCls = sideMode ? "w-10 h-10" : "w-5 h-5";
     const txtCls = sideMode ? "text-[12px]" : "text-sm";
     const btnLayout = sideMode
-      ? "flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent hover:bg-transparent"
+      ? "flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent hover:bg-transparent [&_svg]:size-10"
       : "flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm";
     const dropShadowStyle = sideMode ? { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' } : undefined;
 
