@@ -311,10 +311,115 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
 
             {/* Header - Título y stats */}
             <div className={cn("px-4 sm:px-6 pb-4 flex-shrink-0", isMobile && isBottomNav ? "bg-white" : "")}>
-              <div className={cn("pb-4 border-b", isMobile && isBottomNav ? "border-gray-200" : "border-white/10")}>
-                <h2 className={cn("font-semibold text-center text-base leading-tight", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
+              <div className="pb-4">
+                <h2 className={cn("font-semibold text-center text-base leading-tight mb-3", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                   Votos y<br />reproducciones
                 </h2>
+
+                {/* 📊 Barra de progreso de votos por opción — actúa como separador bajo el título */}
+                {(() => {
+                  // Determinar de dónde sacar las opciones:
+                  // 1. poll.options (encuesta estándar)
+                  // 2. poll.vs_questions[0].options (VS / duelo) — fallback
+                  let opts = Array.isArray(poll?.options) ? poll.options : [];
+                  if (opts.length < 2 && Array.isArray(poll?.vs_questions) && poll.vs_questions.length > 0) {
+                    opts = poll.vs_questions[0]?.options || [];
+                  }
+                  if (opts.length < 2) {
+                    // Fallback visual: línea separadora cuando no hay opciones (encuestas sin VS, etc.)
+                    return (
+                      <div className={cn("h-px w-full", isMobile && isBottomNav ? "bg-gray-200" : "bg-white/10")} />
+                    );
+                  }
+
+                  // Calcular votos por opción
+                  let counts = opts.map((o) => Number(o?.votes) || 0);
+                  let total = counts.reduce((s, n) => s + n, 0);
+
+                  if (total === 0 && Array.isArray(voters) && voters.length > 0) {
+                    // Fallback: contar voted_option desde la lista de voters
+                    const fallbackCounts = opts.map(() => 0);
+                    voters.forEach((v) => {
+                      const idx = opts.findIndex((o) => (o?.text || '') === v.voted_option);
+                      if (idx >= 0) fallbackCounts[idx]++;
+                    });
+                    const fallbackTotal = fallbackCounts.reduce((s, n) => s + n, 0);
+                    if (fallbackTotal > 0) {
+                      counts = fallbackCounts;
+                      total = fallbackTotal;
+                    }
+                  }
+
+                  const percentages = counts.map((n) =>
+                    total > 0 ? Math.round((n / total) * 100) : 0
+                  );
+                  const isVS = opts.length === 2;
+                  const darkText = isMobile && isBottomNav;
+
+                  if (isVS) {
+                    // VS: barra única con gradiente Twyk (lila → azul)
+                    return (
+                      <div>
+                        <div className={cn("h-2 rounded-full overflow-hidden border", darkText ? "bg-gray-200 border-gray-200" : "bg-black/50 border-white/15")}>
+                          <div
+                            className="h-full transition-all duration-700 ease-out"
+                            style={{
+                              width: `${percentages[0]}%`,
+                              background: 'linear-gradient(90deg, #B061FF, #5B8DEF)',
+                              boxShadow: '0 0 8px rgba(176,97,255,0.45)',
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-1.5 px-0.5">
+                          <span
+                            className="text-[11px] font-black tabular-nums"
+                            style={{ color: '#B061FF' }}
+                          >
+                            {percentages[0]}%
+                          </span>
+                          <span
+                            className="text-[11px] font-black tabular-nums"
+                            style={{ color: '#5B8DEF' }}
+                          >
+                            {percentages[1]}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Multi-opción: lista de barras
+                  const palette = ['#B061FF', '#5B8DEF', '#FF6B9D', '#FCD34D', '#22C55E', '#F97316'];
+                  return (
+                    <div className="space-y-2">
+                      {opts.map((o, i) => (
+                        <div key={o.id || i}>
+                          <div className="flex justify-between mb-0.5">
+                            <span className={cn("text-[11px] font-medium truncate max-w-[70%]", darkText ? "text-gray-700" : "text-white/80")}>
+                              {o.text || `Opción ${i + 1}`}
+                            </span>
+                            <span
+                              className="text-[11px] font-black tabular-nums"
+                              style={{ color: palette[i % palette.length] }}
+                            >
+                              {percentages[i]}%
+                            </span>
+                          </div>
+                          <div className={cn("h-1.5 rounded-full overflow-hidden", darkText ? "bg-gray-200" : "bg-white/10")}>
+                            <div
+                              className="h-full transition-all duration-700 ease-out rounded-full"
+                              style={{
+                                width: `${percentages[i]}%`,
+                                backgroundColor: palette[i % palette.length],
+                                boxShadow: `0 0 6px ${palette[i % palette.length]}55`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center justify-center gap-8 pt-4">
@@ -332,108 +437,6 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
                   </span>
                 </div>
               </div>
-
-              {/* 📊 Barra de progreso de votos por opción (movida desde el post) */}
-              {(() => {
-                // Determinar de dónde sacar las opciones:
-                // 1. poll.options (encuesta estándar)
-                // 2. poll.vs_questions[0].options (VS / duelo) — fallback
-                let opts = Array.isArray(poll?.options) ? poll.options : [];
-                if (opts.length < 2 && Array.isArray(poll?.vs_questions) && poll.vs_questions.length > 0) {
-                  opts = poll.vs_questions[0]?.options || [];
-                }
-                if (opts.length < 2) return null;
-
-                // Calcular votos por opción. Si poll.options tiene 0 votos
-                // pero la API de voters retornó info, intentamos contar desde
-                // voters[].voted_option como fallback.
-                let counts = opts.map((o) => Number(o?.votes) || 0);
-                let total = counts.reduce((s, n) => s + n, 0);
-
-                if (total === 0 && Array.isArray(voters) && voters.length > 0) {
-                  // Fallback: contar voted_option desde la lista de voters
-                  const fallbackCounts = opts.map((o) => 0);
-                  voters.forEach((v) => {
-                    const idx = opts.findIndex((o) => (o?.text || '') === v.voted_option);
-                    if (idx >= 0) fallbackCounts[idx]++;
-                  });
-                  const fallbackTotal = fallbackCounts.reduce((s, n) => s + n, 0);
-                  if (fallbackTotal > 0) {
-                    counts = fallbackCounts;
-                    total = fallbackTotal;
-                  }
-                }
-
-                const percentages = counts.map((n) =>
-                  total > 0 ? Math.round((n / total) * 100) : 0
-                );
-                const isVS = opts.length === 2;
-                const darkText = isMobile && isBottomNav;
-
-                if (isVS) {
-                  // VS: barra única con gradiente Twyk (lila → azul)
-                  return (
-                    <div className="pt-4">
-                      <div className={cn("h-2 rounded-full overflow-hidden border", darkText ? "bg-gray-200 border-gray-200" : "bg-black/50 border-white/15")}>
-                        <div
-                          className="h-full transition-all duration-700 ease-out"
-                          style={{
-                            width: `${percentages[0]}%`,
-                            background: 'linear-gradient(90deg, #B061FF, #5B8DEF)',
-                            boxShadow: '0 0 8px rgba(176,97,255,0.45)',
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1.5 px-0.5">
-                        <span
-                          className="text-[11px] font-black tabular-nums"
-                          style={{ color: '#B061FF' }}
-                        >
-                          {percentages[0]}%
-                        </span>
-                        <span
-                          className="text-[11px] font-black tabular-nums"
-                          style={{ color: '#5B8DEF' }}
-                        >
-                          {percentages[1]}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Multi-opción: lista de barras
-                const palette = ['#B061FF', '#5B8DEF', '#FF6B9D', '#FCD34D', '#22C55E', '#F97316'];
-                return (
-                  <div className="pt-4 space-y-2">
-                    {opts.map((o, i) => (
-                      <div key={o.id || i}>
-                        <div className="flex justify-between mb-0.5">
-                          <span className={cn("text-[11px] font-medium truncate max-w-[70%]", darkText ? "text-gray-700" : "text-white/80")}>
-                            {o.text || `Opción ${i + 1}`}
-                          </span>
-                          <span
-                            className="text-[11px] font-black tabular-nums"
-                            style={{ color: palette[i % palette.length] }}
-                          >
-                            {percentages[i]}%
-                          </span>
-                        </div>
-                        <div className={cn("h-1.5 rounded-full overflow-hidden", darkText ? "bg-gray-200" : "bg-white/10")}>
-                          <div
-                            className="h-full transition-all duration-700 ease-out rounded-full"
-                            style={{
-                              width: `${percentages[i]}%`,
-                              backgroundColor: palette[i % palette.length],
-                              boxShadow: `0 0 6px ${palette[i % palette.length]}55`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
             </div>
 
             {/* Lista de votantes */}
