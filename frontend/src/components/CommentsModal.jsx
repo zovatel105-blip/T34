@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Sparkles, Minus, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
@@ -177,7 +178,7 @@ const CommentsModal = ({
       : { opacity: 0, scale: 0.85, y: 60 }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[100]" style={{ pointerEvents: isBottomSheet && !isExpanded ? 'none' : 'auto' }}>
         {/* Backdrop - transparente en bottom sheet medio abierto para ver el post */}
@@ -305,7 +306,8 @@ const CommentsModal = ({
           </motion.div>
         </div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

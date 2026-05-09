@@ -17,6 +17,13 @@
 - Display Name: APK Test
 - Auth: JWT (POST /api/auth/login → access_token)
 
+## E1 Fork Test User (CommentsModal verification)
+- Email: e1test@test.com
+- Password: test1234
+- Username: e1test
+- Display Name: E1 Test
+- Auth: JWT — login uses `email` + `password` payload
+
 ## Content Author for Video Thumbnail Testing
 - Username: ruby
 - UserId: d4054045-3379-4ae3-b0fc-51801a1e75a8

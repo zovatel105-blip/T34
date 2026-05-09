@@ -51,9 +51,18 @@
 ✅ Rasterización dinámica con aspect ratio del layout.
 ✅ Aplicado uniforme en Publicar/Challenge/VS.
 
+### Sesión Feb 2026 — UI de feed (TikTok-like)
+✅ Botón "stories" oculto en Following.
+✅ Frame del menú 3-puntos eliminado; iconos de voto agrandados.
+✅ `VSWinnerCard` portalizado con flechas animadas + auto-advance 1.5s tras votar; UI duplicada removida del post.
+✅ Barra de progreso de votación movida a `VotersModal` (incluye payload VS).
+✅ Bug submit comentarios (typo `addCommentForFrontend`) en `BottomNavigation.jsx` arreglado.
+✅ **CommentsModal portalizado a `document.body`** — antes el modal aparecía completamente negro al abrirse desde la barra inferior porque un ancestro con CSS `transform` (TikTokScrollView) rompía `position: fixed` y posicionaba el modal en `top: -915px`. Fix: `createPortal(..., document.body)`.
+
 ## Backlog / Próximas mejoras (P2)
 - **Borradores autoguardados por modo en localStorage** (texto/posición/menciones/layout/música por `publicar` y `vs`). Permitiría sobrevivir refreshes.
 - Refactor `ContentCreationPage.jsx` (>2200 líneas): extraer `LayoutPreview` y handlers de upload.
+- Refactor `CommentsModal.jsx` / `CommentSection.jsx`: lógica condicional `isBottomSheet` + `darkMode` + `isMobile` se está volviendo enredada; consolidar en variantes.
 - Tests E2E con testing_agent_v3 cubriendo los 3 modos.
 
 ## Endpoints clave
