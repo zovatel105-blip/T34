@@ -1252,37 +1252,55 @@ const VSLayout = ({
                 />
               )}
 
-              {/* Texto "VS" — BLANCO con glow neón Twyk (lila+azul) intenso */}
+              {/* Texto "VS" — V lila + S azul (colores Twyk), neón intenso */}
               <span
                 className={cn(
-                  "relative font-black tracking-tighter select-none",
+                  "relative font-black tracking-tighter select-none inline-flex",
                   showVS && "animate-vs-bounce"
                 )}
                 style={{
-                  color: '#fff',
                   fontSize: 'clamp(3.5rem, 16vw, 8rem)',
                   fontStyle: 'italic',
                   lineHeight: 1,
                   letterSpacing: '-0.05em',
-                  textShadow: [
-                    // Núcleo blanco brillante (efecto neón)
-                    '0 0 8px rgba(255,255,255,0.95)',
-                    // Halo lila cercano (intenso)
-                    `0 0 18px rgba(${topRgb},1)`,
-                    `0 0 32px rgba(${topRgb},0.95)`,
-                    // Halo lila medio
-                    `0 0 55px rgba(${topRgb},0.8)`,
-                    // Halo azul exterior (mezcla con lila)
-                    `0 0 70px rgba(${bottomRgb},0.7)`,
-                    `0 0 95px rgba(${bottomRgb},0.55)`,
-                    // Sombra para profundidad
-                    '0 4px 0 rgba(0,0,0,0.55)',
-                    '2px 4px 12px rgba(0,0,0,0.75)',
-                  ].join(', '),
-                  WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
                 }}
               >
-                VS
+                {/* V — lila Twyk */}
+                <span
+                  style={{
+                    color: TWYK_COLORS.top.primary,
+                    textShadow: [
+                      '0 0 6px rgba(255,255,255,0.85)',
+                      `0 0 14px rgba(${topRgb},1)`,
+                      `0 0 28px rgba(${topRgb},0.95)`,
+                      `0 0 50px rgba(${topRgb},0.8)`,
+                      `0 0 75px rgba(${topRgb},0.6)`,
+                      '0 4px 0 rgba(0,0,0,0.55)',
+                      '2px 4px 12px rgba(0,0,0,0.75)',
+                    ].join(', '),
+                    WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  V
+                </span>
+                {/* S — azul Twyk */}
+                <span
+                  style={{
+                    color: TWYK_COLORS.bottom.primary,
+                    textShadow: [
+                      '0 0 6px rgba(255,255,255,0.85)',
+                      `0 0 14px rgba(${bottomRgb},1)`,
+                      `0 0 28px rgba(${bottomRgb},0.95)`,
+                      `0 0 50px rgba(${bottomRgb},0.8)`,
+                      `0 0 75px rgba(${bottomRgb},0.6)`,
+                      '0 4px 0 rgba(0,0,0,0.55)',
+                      '2px 4px 12px rgba(0,0,0,0.75)',
+                    ].join(', '),
+                    WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                  }}
+                >
+                  S
+                </span>
               </span>
             </div>
           </div>
