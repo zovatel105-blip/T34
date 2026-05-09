@@ -1217,46 +1217,16 @@ const VSLayout = ({
         ))}
       </div>
 
-      {/* VS central — diseño NEÓN ROJO según referencia:
-          - Letras rojas brillantes con glow intenso (efecto neón)
-          - Líneas rojas horizontales extendiéndose a ambos lados del VS
-          - Núcleo blanco interno para que las letras "brillen" */}
+      {/* VS central — letras BLANCAS con halo ROJO NEÓN (estilo referencia).
+          Sin líneas de energía horizontales. */}
       {(() => {
-        // Paleta neón rojo (tipo referencia)
-        const NEON_RED = '#FF0A36';        // rojo neón principal
         const NEON_RED_RGB = '255,10,54';
-        const NEON_RED_DEEP_RGB = '220,38,38'; // rojo más profundo para halo exterior
+        const NEON_RED_DEEP_RGB = '220,38,38';
 
         return (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
             <div className="relative flex items-center justify-center w-full">
-              {/* Líneas rojas horizontales (rayos de energía) — siempre visibles */}
-              {/* Línea izquierda */}
-              <div
-                className="absolute right-1/2 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{
-                  width: '42%',
-                  height: '3px',
-                  marginRight: 'clamp(2.2rem, 9vw, 4.5rem)',
-                  background: `linear-gradient(90deg, transparent 0%, rgba(${NEON_RED_RGB},0.0) 5%, rgba(${NEON_RED_RGB},0.85) 55%, ${NEON_RED} 100%)`,
-                  boxShadow: `0 0 12px rgba(${NEON_RED_RGB},0.95), 0 0 24px rgba(${NEON_RED_RGB},0.7), 0 0 40px rgba(${NEON_RED_DEEP_RGB},0.55)`,
-                  borderRadius: '2px',
-                }}
-              />
-              {/* Línea derecha */}
-              <div
-                className="absolute left-1/2 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{
-                  width: '42%',
-                  height: '3px',
-                  marginLeft: 'clamp(2.2rem, 9vw, 4.5rem)',
-                  background: `linear-gradient(270deg, transparent 0%, rgba(${NEON_RED_RGB},0.0) 5%, rgba(${NEON_RED_RGB},0.85) 55%, ${NEON_RED} 100%)`,
-                  boxShadow: `0 0 12px rgba(${NEON_RED_RGB},0.95), 0 0 24px rgba(${NEON_RED_RGB},0.7), 0 0 40px rgba(${NEON_RED_DEEP_RGB},0.55)`,
-                  borderRadius: '2px',
-                }}
-              />
-
-              {/* Halo radial rojo detrás del VS — siempre visible (sutil) */}
+              {/* Halo radial rojo detrás del VS — siempre visible */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                 style={{
@@ -1275,29 +1245,28 @@ const VSLayout = ({
                   style={{
                     width: '90%',
                     height: '140px',
-                    background: `radial-gradient(ellipse at center, rgba(255,255,255,0.85) 0%, rgba(${NEON_RED_RGB},0.7) 22%, rgba(${NEON_RED_DEEP_RGB},0.5) 45%, transparent 70%)`,
+                    background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${NEON_RED_RGB},0.7) 22%, rgba(${NEON_RED_DEEP_RGB},0.5) 45%, transparent 70%)`,
                     filter: 'blur(10px)',
                     transform: 'translate(-50%, -50%)',
                   }}
                 />
               )}
 
-              {/* Texto "VS" — rojo neón con núcleo blanco brillante */}
+              {/* Texto "VS" — BLANCO con glow rojo neón intenso */}
               <span
                 className={cn(
                   "relative font-black tracking-tighter select-none",
                   showVS && "animate-vs-bounce"
                 )}
                 style={{
-                  color: NEON_RED,
+                  color: '#fff',
                   fontSize: 'clamp(3.5rem, 16vw, 8rem)',
                   fontStyle: 'italic',
                   lineHeight: 1,
                   letterSpacing: '-0.05em',
                   textShadow: [
                     // Núcleo blanco brillante (efecto neón)
-                    '0 0 4px rgba(255,255,255,1)',
-                    '0 0 10px rgba(255,255,255,0.95)',
+                    '0 0 8px rgba(255,255,255,0.95)',
                     // Halo rojo cercano (intenso)
                     `0 0 18px rgba(${NEON_RED_RGB},1)`,
                     `0 0 32px rgba(${NEON_RED_RGB},0.95)`,
@@ -1308,7 +1277,7 @@ const VSLayout = ({
                     '0 4px 0 rgba(0,0,0,0.55)',
                     '2px 4px 12px rgba(0,0,0,0.75)',
                   ].join(', '),
-                  WebkitTextStroke: `1px rgba(${NEON_RED_RGB},0.9)`,
+                  WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
                 }}
               >
                 VS
