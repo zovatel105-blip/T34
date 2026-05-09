@@ -1253,7 +1253,7 @@ const VSLayout = ({
               )}
 
               {/* Texto "VS" — letras BLANCAS, bordes Twyk (V lila / S azul),
-                  estilo neón cinematográfico con doble stroke + glow intenso */}
+                  V ligeramente arriba, S ligeramente abajo. Blancos igualados. */}
               <span
                 className={cn(
                   "relative font-black select-none inline-flex items-baseline",
@@ -1268,7 +1268,7 @@ const VSLayout = ({
                   fontWeight: 900,
                 }}
               >
-                {/* V — fill blanco, borde LILA Twyk + glow lila intenso */}
+                {/* V — fill blanco, borde LILA Twyk + glow lila intenso (un poco arriba) */}
                 <span
                   className="relative"
                   style={{
@@ -1276,9 +1276,10 @@ const VSLayout = ({
                     WebkitTextStroke: `3px ${TWYK_COLORS.top.primary}`,
                     paintOrder: 'stroke fill',
                     textShadow: [
-                      // núcleo blanco brillante interno
-                      '0 0 2px rgba(255,255,255,1)',
-                      '0 0 6px rgba(255,255,255,0.95)',
+                      // núcleo blanco brillante reforzado (igualar con S)
+                      '0 0 1px rgba(255,255,255,1)',
+                      '0 0 3px rgba(255,255,255,1)',
+                      '0 0 7px rgba(255,255,255,0.98)',
                       // glow lila multicapa
                       `0 0 12px rgba(${topRgb},1)`,
                       `0 0 22px rgba(${topRgb},0.95)`,
@@ -1289,13 +1290,13 @@ const VSLayout = ({
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    transform: 'skewX(-6deg)',
+                    transform: 'skewX(-6deg) translateY(-0.08em)',
                     display: 'inline-block',
                   }}
                 >
                   V
                 </span>
-                {/* S — fill blanco, borde AZUL Twyk + glow azul intenso */}
+                {/* S — fill blanco, borde AZUL Twyk + glow azul intenso (un poco abajo) */}
                 <span
                   className="relative"
                   style={{
@@ -1303,9 +1304,10 @@ const VSLayout = ({
                     WebkitTextStroke: `3px ${TWYK_COLORS.bottom.primary}`,
                     paintOrder: 'stroke fill',
                     textShadow: [
-                      // núcleo blanco brillante interno
-                      '0 0 2px rgba(255,255,255,1)',
-                      '0 0 6px rgba(255,255,255,0.95)',
+                      // núcleo blanco brillante reforzado (igualar con V)
+                      '0 0 1px rgba(255,255,255,1)',
+                      '0 0 3px rgba(255,255,255,1)',
+                      '0 0 7px rgba(255,255,255,0.98)',
                       // glow azul multicapa
                       `0 0 12px rgba(${bottomRgb},1)`,
                       `0 0 22px rgba(${bottomRgb},0.95)`,
@@ -1316,7 +1318,7 @@ const VSLayout = ({
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    transform: 'skewX(-6deg)',
+                    transform: 'skewX(-6deg) translateY(0.08em)',
                     display: 'inline-block',
                     marginLeft: '-0.05em',
                   }}
