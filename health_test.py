@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://right-side-engage.preview.emergentagent.com/api"
+BACKEND_URL = "https://pod-hex-tracker.preview.emergentagent.com/api"
 
 class HealthTester:
     def __init__(self):
