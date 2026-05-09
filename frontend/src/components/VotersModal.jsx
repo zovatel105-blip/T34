@@ -12,7 +12,7 @@ import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { useNavPreference } from '../hooks/useNavPreference';
 import { useModalBackButton } from '../hooks/useBackButton';
 
-const VotersModal = ({ isOpen, onClose, pollId, onExpandChange = null }) => {
+const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = null }) => {
   // 📱 Cerrar con botón atrás / gesto (Android/Capacitor)
   useModalBackButton(isOpen, onClose);
 
@@ -332,6 +332,81 @@ const VotersModal = ({ isOpen, onClose, pollId, onExpandChange = null }) => {
                   </span>
                 </div>
               </div>
+
+              {/* 📊 Barra de progreso de votos por opción (movida desde el post) */}
+              {(() => {
+                const opts = Array.isArray(poll?.options) ? poll.options : [];
+                if (opts.length < 2) return null;
+                const total = opts.reduce((s, o) => s + (Number(o?.votes) || 0), 0);
+                if (total <= 0) return null;
+                const percentages = opts.map((o) => Math.round(((Number(o?.votes) || 0) / total) * 100));
+                const isVS = opts.length === 2;
+                const darkText = isMobile && isBottomNav;
+
+                if (isVS) {
+                  // VS: barra única con gradiente Twyk (lila → azul)
+                  return (
+                    <div className="pt-4">
+                      <div className={cn("h-2 rounded-full overflow-hidden border", darkText ? "bg-gray-200 border-gray-200" : "bg-black/50 border-white/15")}>
+                        <div
+                          className="h-full transition-all duration-700 ease-out"
+                          style={{
+                            width: `${percentages[0]}%`,
+                            background: 'linear-gradient(90deg, #B061FF, #5B8DEF)',
+                            boxShadow: '0 0 8px rgba(176,97,255,0.45)',
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1.5 px-0.5">
+                        <span
+                          className="text-[11px] font-black tabular-nums"
+                          style={{ color: '#B061FF' }}
+                        >
+                          {percentages[0]}%
+                        </span>
+                        <span
+                          className="text-[11px] font-black tabular-nums"
+                          style={{ color: '#5B8DEF' }}
+                        >
+                          {percentages[1]}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Multi-opción: lista de barras
+                const palette = ['#B061FF', '#5B8DEF', '#FF6B9D', '#FCD34D', '#22C55E', '#F97316'];
+                return (
+                  <div className="pt-4 space-y-2">
+                    {opts.map((o, i) => (
+                      <div key={o.id || i}>
+                        <div className="flex justify-between mb-0.5">
+                          <span className={cn("text-[11px] font-medium truncate max-w-[70%]", darkText ? "text-gray-700" : "text-white/80")}>
+                            {o.text || `Opción ${i + 1}`}
+                          </span>
+                          <span
+                            className="text-[11px] font-black tabular-nums"
+                            style={{ color: palette[i % palette.length] }}
+                          >
+                            {percentages[i]}%
+                          </span>
+                        </div>
+                        <div className={cn("h-1.5 rounded-full overflow-hidden", darkText ? "bg-gray-200" : "bg-white/10")}>
+                          <div
+                            className="h-full transition-all duration-700 ease-out rounded-full"
+                            style={{
+                              width: `${percentages[i]}%`,
+                              backgroundColor: palette[i % palette.length],
+                              boxShadow: `0 0 6px ${palette[i % palette.length]}55`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Lista de votantes */}

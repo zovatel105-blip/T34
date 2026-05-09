@@ -978,38 +978,7 @@ const QuestionSlide = ({
         </div>
       )}
 
-      {/* Footer con resultados — solo barra de progreso (Compartir y Siguiente duelo viven en la WinnerCard) */}
-      {showResults && (
-        <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 w-[88%] pointer-events-none flex flex-col items-center gap-2", BOTTOM_OFFSET)}>
-          {/* Barra de progreso lila/azul (Twyk) */}
-          <div className="w-full">
-            <div className="h-2 rounded-full overflow-hidden bg-black/50 backdrop-blur-md border border-white/20 shadow-lg">
-              <div
-                className="h-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${percA}%`,
-                  background: `linear-gradient(90deg, ${TWYK_COLORS.top.primary}, ${TWYK_COLORS.top.secondary})`,
-                  boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}`,
-                }}
-              />
-            </div>
-            <div className="flex justify-between mt-1 px-1">
-              <span
-                className="text-[10px] font-black tabular-nums"
-                style={{ color: TWYK_COLORS.top.primary, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
-              >
-                {percA}%
-              </span>
-              <span
-                className="text-[10px] font-black tabular-nums"
-                style={{ color: TWYK_COLORS.bottom.primary, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
-              >
-                {percB}%
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Footer post-voto: la barra de progreso vive ahora en el modal "Votos y reproducciones" y los % en la WinnerCard */}
 
       {/* Línea divisora con gradiente Twyk (lila → azul) — horizontal o vertical según orientación */}
       <div

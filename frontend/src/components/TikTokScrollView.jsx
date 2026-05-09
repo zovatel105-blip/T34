@@ -1571,6 +1571,7 @@ const TikTokPollCard = ({
         isOpen={showVotersModal}
         onClose={() => { setShowVotersModal(false); setIsVotersExpanded(false); }}
         pollId={poll.id}
+        poll={poll}
         onExpandChange={setIsVotersExpanded}
       />
 
