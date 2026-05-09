@@ -1455,42 +1455,18 @@ const VSLayout = ({
       </div>
 
       {/* VS central — diseño tipo referencia (italic, bold, neón intenso)
-          pero con los colores Twyk: lila (arriba) + azul (abajo). */}
+          pero con los colores Twyk: lila (arriba) + azul (abajo).
+          🚫 SOMBRAS DE COLORES ELIMINADAS por petición del usuario:
+          se quita el halo radial lila/azul, el flash colorido y los
+          glows multicapa (lila/azul) alrededor de las letras. Se
+          mantienen los bordes lila (V) y azul (S) y una sombra negra
+          neutra para conservar la profundidad. */}
       {(() => {
-        const topRgb = TWYK_COLORS.top.primaryRgb;        // lila
-        const bottomRgb = TWYK_COLORS.bottom.primaryRgb;  // azul
-
         return (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
             <div className="relative flex items-center justify-center w-full">
-              {/* Halo radial Twyk detrás del VS — siempre visible (lila→azul) */}
-              <div
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{
-                  width: '70%',
-                  height: '180px',
-                  background: `radial-gradient(ellipse at center, rgba(${topRgb},0.55) 0%, rgba(${bottomRgb},0.4) 45%, transparent 70%)`,
-                  filter: 'blur(22px)',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-
-              {/* Flash extra (solo durante showVS inicial) */}
-              {showVS && (
-                <div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none animate-vs-pulse"
-                  style={{
-                    width: '90%',
-                    height: '140px',
-                    background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${topRgb},0.7) 22%, rgba(${bottomRgb},0.5) 45%, transparent 70%)`,
-                    filter: 'blur(10px)',
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                />
-              )}
-
               {/* Texto "VS" — letras BLANCAS, bordes Twyk (V lila / S azul),
-                  V ligeramente arriba, S ligeramente abajo. Blancos igualados. */}
+                  V ligeramente arriba, S ligeramente abajo. Sin glow de color. */}
               <span
                 className={cn(
                   "relative font-black select-none inline-flex items-baseline",
@@ -1505,7 +1481,7 @@ const VSLayout = ({
                   fontWeight: 900,
                 }}
               >
-                {/* V — fill blanco, borde LILA Twyk + glow lila intenso (un poco arriba) */}
+                {/* V — fill blanco, borde LILA Twyk (sin glow de color) */}
                 <span
                   className="relative"
                   style={{
@@ -1513,17 +1489,7 @@ const VSLayout = ({
                     WebkitTextStroke: `3px ${TWYK_COLORS.top.primary}`,
                     paintOrder: 'stroke fill',
                     textShadow: [
-                      // núcleo blanco (mismo nivel que la S)
-                      '0 0 1px rgba(255,255,255,1)',
-                      '0 0 3px rgba(255,255,255,1)',
-                      '0 0 7px rgba(255,255,255,0.98)',
-                      // glow lila multicapa (capa cercana atenuada para no comerse el blanco)
-                      `0 0 14px rgba(${topRgb},0.9)`,
-                      `0 0 26px rgba(${topRgb},0.9)`,
-                      `0 0 44px rgba(${topRgb},0.75)`,
-                      `0 0 66px rgba(${topRgb},0.6)`,
-                      `0 0 92px rgba(${topRgb},0.42)`,
-                      // sombra dramática para profundidad 3D
+                      // sólo sombra negra neutra para profundidad 3D
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
@@ -1534,7 +1500,7 @@ const VSLayout = ({
                 >
                   V
                 </span>
-                {/* S — fill blanco, borde AZUL Twyk + glow azul intenso (un poco abajo) */}
+                {/* S — fill blanco, borde AZUL Twyk (sin glow de color) */}
                 <span
                   className="relative"
                   style={{
@@ -1542,17 +1508,7 @@ const VSLayout = ({
                     WebkitTextStroke: `3px ${TWYK_COLORS.bottom.primary}`,
                     paintOrder: 'stroke fill',
                     textShadow: [
-                      // núcleo blanco brillante reforzado (igualar con V)
-                      '0 0 1px rgba(255,255,255,1)',
-                      '0 0 3px rgba(255,255,255,1)',
-                      '0 0 7px rgba(255,255,255,0.98)',
-                      // glow azul multicapa
-                      `0 0 12px rgba(${bottomRgb},1)`,
-                      `0 0 22px rgba(${bottomRgb},0.95)`,
-                      `0 0 38px rgba(${bottomRgb},0.85)`,
-                      `0 0 60px rgba(${bottomRgb},0.65)`,
-                      `0 0 90px rgba(${bottomRgb},0.45)`,
-                      // sombra dramática para profundidad 3D
+                      // sólo sombra negra neutra para profundidad 3D
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
