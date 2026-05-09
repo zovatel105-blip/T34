@@ -7,7 +7,7 @@ import React from 'react';
 const VoteIcon = ({ className = '', style, strokeWidth = 250, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 600 600"
+    viewBox="-60 -60 720 720"
     className={className}
     style={style}
     fill="currentColor"
