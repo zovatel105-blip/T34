@@ -1217,23 +1217,23 @@ const VSLayout = ({
         ))}
       </div>
 
-      {/* VS central — letras BLANCAS con halo ROJO NEÓN (estilo referencia).
-          Sin líneas de energía horizontales. */}
+      {/* VS central — diseño tipo referencia (italic, bold, neón intenso)
+          pero con los colores Twyk: lila (arriba) + azul (abajo). */}
       {(() => {
-        const NEON_RED_RGB = '255,10,54';
-        const NEON_RED_DEEP_RGB = '220,38,38';
+        const topRgb = TWYK_COLORS.top.primaryRgb;        // lila
+        const bottomRgb = TWYK_COLORS.bottom.primaryRgb;  // azul
 
         return (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
             <div className="relative flex items-center justify-center w-full">
-              {/* Halo radial rojo detrás del VS — siempre visible */}
+              {/* Halo radial Twyk detrás del VS — siempre visible (lila→azul) */}
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                 style={{
                   width: '70%',
                   height: '180px',
-                  background: `radial-gradient(ellipse at center, rgba(${NEON_RED_RGB},0.55) 0%, rgba(${NEON_RED_DEEP_RGB},0.3) 30%, transparent 65%)`,
-                  filter: 'blur(20px)',
+                  background: `radial-gradient(ellipse at center, rgba(${topRgb},0.55) 0%, rgba(${bottomRgb},0.4) 45%, transparent 70%)`,
+                  filter: 'blur(22px)',
                   transform: 'translate(-50%, -50%)',
                 }}
               />
@@ -1245,14 +1245,14 @@ const VSLayout = ({
                   style={{
                     width: '90%',
                     height: '140px',
-                    background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${NEON_RED_RGB},0.7) 22%, rgba(${NEON_RED_DEEP_RGB},0.5) 45%, transparent 70%)`,
+                    background: `radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(${topRgb},0.7) 22%, rgba(${bottomRgb},0.5) 45%, transparent 70%)`,
                     filter: 'blur(10px)',
                     transform: 'translate(-50%, -50%)',
                   }}
                 />
               )}
 
-              {/* Texto "VS" — BLANCO con glow rojo neón intenso */}
+              {/* Texto "VS" — BLANCO con glow neón Twyk (lila+azul) intenso */}
               <span
                 className={cn(
                   "relative font-black tracking-tighter select-none",
@@ -1267,12 +1267,14 @@ const VSLayout = ({
                   textShadow: [
                     // Núcleo blanco brillante (efecto neón)
                     '0 0 8px rgba(255,255,255,0.95)',
-                    // Halo rojo cercano (intenso)
-                    `0 0 18px rgba(${NEON_RED_RGB},1)`,
-                    `0 0 32px rgba(${NEON_RED_RGB},0.95)`,
-                    // Halo rojo medio
-                    `0 0 55px rgba(${NEON_RED_RGB},0.85)`,
-                    `0 0 80px rgba(${NEON_RED_DEEP_RGB},0.7)`,
+                    // Halo lila cercano (intenso)
+                    `0 0 18px rgba(${topRgb},1)`,
+                    `0 0 32px rgba(${topRgb},0.95)`,
+                    // Halo lila medio
+                    `0 0 55px rgba(${topRgb},0.8)`,
+                    // Halo azul exterior (mezcla con lila)
+                    `0 0 70px rgba(${bottomRgb},0.7)`,
+                    `0 0 95px rgba(${bottomRgb},0.55)`,
                     // Sombra para profundidad
                     '0 4px 0 rgba(0,0,0,0.55)',
                     '2px 4px 12px rgba(0,0,0,0.75)',
