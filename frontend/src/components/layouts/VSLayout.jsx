@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
+import VSWinnerCard from './VSWinnerCard';
 
 // 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
 // Top card (Player A) → lila, Bottom card (Player B) → azul.
@@ -534,6 +535,9 @@ const QuestionSlide = ({
   // 🧭 NUEVO: si la barra de navegación inferior está visible se reservan
   // ~56px adicionales en la zona inferior del post.
   isBottomNavVisible = false,
+  // 🏆 Winner card overlay
+  pollId,
+  onRequestNextDuel,
 }) => {
   const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
@@ -550,6 +554,16 @@ const QuestionSlide = ({
 
   // ⏱️ Countdown "SIGUIENTE DUELO EN Xs" — se activa cuando aparecen los resultados
   const [nextDuelCountdown, setNextDuelCountdown] = useState(null);
+  // 🏆 Winner card — aparece 1.5s después del voto/resultados (no en empates)
+  const [showWinnerCard, setShowWinnerCard] = useState(false);
+  useEffect(() => {
+    if (!showResults) {
+      setShowWinnerCard(false);
+      return;
+    }
+    const t = setTimeout(() => setShowWinnerCard(true), 1500);
+    return () => clearTimeout(t);
+  }, [showResults]);
   useEffect(() => {
     if (!showResults) {
       setNextDuelCountdown(null);
@@ -1101,6 +1115,67 @@ const QuestionSlide = ({
           boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}, 0 0 12px ${TWYK_COLORS.bottom.glow}`,
         }}
       />
+
+      {/* 🏆 Winner Card overlay — aparece 1.5s después de votar (no en empates) */}
+      {showResults && showWinnerCard && !isTie && (() => {
+        const winnerOpt = winnerIsA ? optionA : optionB;
+        const loserOpt = winnerIsA ? optionB : optionA;
+        const winnerName = (winnerOpt?.participant_username || winnerOpt?.text || 'Ganador').toString();
+        const loserName = (loserOpt?.participant_username || loserOpt?.text || '').toString();
+        const winnerPerc = winnerIsA ? percA : percB;
+        const loserPerc = winnerIsA ? percB : percA;
+        const winnerImage =
+          winnerOpt?.media?.url ||
+          winnerOpt?.media?.thumbnail ||
+          winnerOpt?.media_url ||
+          winnerOpt?.thumbnail_url ||
+          winnerOpt?.image ||
+          null;
+
+        const handleShare = () => {
+          const text = `¡${winnerName} ganó con ${winnerPerc}%! ⚔️ Vota tu favorito en Twyk`;
+          try {
+            if (navigator.share) {
+              navigator.share({ title: 'Twyk · Duelo', text, url: window.location.href }).catch(() => {});
+            } else if (navigator.clipboard) {
+              navigator.clipboard.writeText(`${text} ${window.location.href}`).catch(() => {});
+            }
+          } catch (err) { /* noop */ }
+        };
+
+        const handleComments = () => {
+          if (typeof window !== 'undefined' && pollId) {
+            window.dispatchEvent(new CustomEvent('vs:openComments', { detail: { pollId } }));
+          }
+        };
+
+        const handleNext = () => {
+          // Cierra la winner card y delega: si quedan rondas internas avanza a
+          // la siguiente; si es la última, dispara evento para avanzar al
+          // siguiente post del feed.
+          setShowWinnerCard(false);
+          if (typeof onRequestNextDuel === 'function') {
+            onRequestNextDuel();
+          }
+        };
+
+        return (
+          <VSWinnerCard
+            visible={showWinnerCard}
+            winnerName={winnerName.toUpperCase()}
+            winnerPercentage={winnerPerc}
+            winnerImage={winnerImage}
+            loserName={loserName ? loserName.toUpperCase() : ''}
+            loserPercentage={loserPerc}
+            totalVotes={totalVotes}
+            currentRound={currentIndex + 1}
+            totalRounds={totalQuestions}
+            onShare={handleShare}
+            onComments={handleComments}
+            onNext={handleNext}
+          />
+        );
+      })()}
     </div>
   );
 };
@@ -1449,6 +1524,14 @@ const VSLayout = ({
               orientation={vsOrientation}
               stats={questionStats[question.id]}
               isBottomNavVisible={isBottomNavVisible}
+              pollId={poll.id}
+              onRequestNextDuel={() => {
+                if (currentIndex < totalQuestions - 1) {
+                  goToNext();
+                } else if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('vs:nextPost', { detail: { pollId: poll.id } }));
+                }
+              }}
             />
           </div>
         ))}

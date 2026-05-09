@@ -255,6 +255,18 @@ const TikTokPollCard = ({
       setShowPostDetailModal(false);
     }
   }, [isActive, showCommentsModal, showPostDetailModal]);
+
+  // 🏆 Listener para abrir comentarios desde la VSWinnerCard
+  useEffect(() => {
+    const handleOpenComments = (e) => {
+      if (!isActive) return;
+      if (e?.detail?.pollId && e.detail.pollId === poll?.id) {
+        setShowCommentsModal(true);
+      }
+    };
+    window.addEventListener('vs:openComments', handleOpenComments);
+    return () => window.removeEventListener('vs:openComments', handleOpenComments);
+  }, [isActive, poll?.id]);
   
   // Feed menu state
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
@@ -1823,6 +1835,21 @@ const TikTokScrollView = ({
       isAnimatingRef.current = false;
     }, TRANSITION_MS);
   }, [activeIndex, polls.length, onSwipeStart, onActiveIndexChange, showScrollHint, onLoadMore, hasMoreContent, isLoadingMore]);
+
+  // 🏆 Listener para "Siguiente duelo" desde la VSWinnerCard → avanzar al
+  // siguiente post del feed.
+  useEffect(() => {
+    const handleNextPost = (e) => {
+      const sourcePollId = e?.detail?.pollId;
+      // Solo avanza si el evento proviene del post activo
+      if (sourcePollId && polls[activeIndex]?.id !== sourcePollId) return;
+      if (activeIndex < polls.length - 1) {
+        goToIndex(activeIndex + 1);
+      }
+    };
+    window.addEventListener('vs:nextPost', handleNextPost);
+    return () => window.removeEventListener('vs:nextPost', handleNextPost);
+  }, [activeIndex, polls, goToIndex]);
 
   // ─── DRAG / SWIPE GESTURE (TikTok-style live tracking) ───────────────────
   // While dragging: the tape follows the finger 1:1 with no transition.
