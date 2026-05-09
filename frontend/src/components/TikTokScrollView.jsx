@@ -23,7 +23,7 @@ import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { pickPlayableVideoUrl } from '../utils/mediaUrl';
-import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords, BarChart2 } from 'lucide-react';
+import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords, Vote } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { useToast } from '../hooks/use-toast';
@@ -1440,10 +1440,10 @@ const TikTokPollCard = ({
                   const maxVotes = sortedOptions[0]?.votes || 0;
                   const secondVotes = sortedOptions[1]?.votes || 0;
                   const isTie = totalVotes > 0 && maxVotes === secondVotes;
-                  const Icon = totalVotes === 0 ? BarChart2 : (isTie ? BarChart2 : Trophy);
+                  const Icon = totalVotes === 0 ? Vote : (isTie ? Vote : Trophy);
                   return (
                     <>
-                      <Icon className="w-7 h-7 flex-shrink-0" />
+                      <Icon className="w-7 h-7 flex-shrink-0" strokeWidth={1.5} />
                       <span className="text-[10px] font-semibold whitespace-nowrap text-center px-1 max-w-[64px] truncate">
                         {(() => {
                           if (totalVotes === 0) return "Sé el primero";
@@ -1465,7 +1465,7 @@ const TikTokPollCard = ({
                 className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
-                <BarChart2 className="w-7 h-7 flex-shrink-0" />
+                <Vote className="w-7 h-7 flex-shrink-0" strokeWidth={1.5} />
                 <span className="text-[11px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
               </button>
             )
