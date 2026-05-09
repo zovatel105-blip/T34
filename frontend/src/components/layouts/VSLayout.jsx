@@ -687,8 +687,8 @@ const QuestionSlide = ({
                 "absolute z-20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
                 "border border-white/30 shadow-lg",
                 isRow
-                  ? cn("top-3", isOptionA ? "left-3" : "right-3")
-                  : cn("left-1/2 -translate-x-1/2", isOptionA ? "top-3" : "bottom-3")
+                  ? cn("top-20", isOptionA ? "left-3" : "right-20")
+                  : cn("left-1/2 -translate-x-1/2", isOptionA ? "top-20" : "bottom-36")
               )}
               style={{
                 background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
@@ -708,8 +708,8 @@ const QuestionSlide = ({
                 "absolute z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
                 "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
                 isRow
-                  ? cn("top-12", isOptionA ? "left-3" : "right-3")
-                  : cn("right-3", isOptionA ? "top-12" : "bottom-12")
+                  ? cn("top-32", isOptionA ? "left-3" : "right-20")
+                  : cn("right-20", isOptionA ? "top-32" : "bottom-48")
               )}
             >
               <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
@@ -761,7 +761,7 @@ const QuestionSlide = ({
 
           {/* Indicador de selección — checkmark verde (mantenido para feedback) */}
           {isSelected && !showResults && (
-            <div className="absolute top-3 right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20">
+            <div className="absolute top-20 right-20 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
@@ -779,7 +779,7 @@ const QuestionSlide = ({
 
       {/* Header overlay — DUELO + RONDA + live votes (solo cuando es activo) */}
       {isActive && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none">
           {/* Pill RONDA */}
           {totalQuestions > 1 && (
             <div className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
@@ -807,7 +807,7 @@ const QuestionSlide = ({
 
       {/* Footer overlay — Hourglass + timer + progress bar */}
       {isActive && !showResults && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]">
+        <div className="absolute bottom-36 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 pointer-events-none w-[88%]">
           <div className="flex items-center gap-2">
             <div className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center gap-1.5">
               <Hourglass className="w-3 h-3 text-amber-300" />
@@ -827,7 +827,7 @@ const QuestionSlide = ({
 
       {/* Barra de progreso lila/azul (Twyk) — visible cuando hay resultados */}
       {showResults && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none">
+        <div className="absolute bottom-36 left-1/2 -translate-x-1/2 z-30 w-[88%] pointer-events-none">
           <div className="h-2 rounded-full overflow-hidden bg-black/50 backdrop-blur-md border border-white/20 shadow-lg">
             <div
               className="h-full transition-all duration-700 ease-out"
