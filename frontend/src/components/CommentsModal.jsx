@@ -198,10 +198,22 @@ const CommentsModal = ({
         />
         
         {/* Modal Container */}
-        <div className={cn(
-          "flex h-full",
-          isMobile ? "items-end justify-center" : "items-center justify-center p-4"
-        )} style={{ pointerEvents: 'none' }}>
+        <div
+          className={cn(
+            "flex h-full",
+            isMobile ? "items-end justify-center" : "items-center justify-center p-4"
+          )}
+          style={{
+            pointerEvents: 'none',
+            // 🛠️ En bottom-sheet reservamos espacio inferior igual a la altura del
+            // nav (que aloja el input para enviar comentarios). Sin esto el modal
+            // quedaba encima del input de la barra inferior y bloqueaba los
+            // clicks → no se podía escribir ni enviar.
+            paddingBottom: isBottomSheet
+              ? 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+              : 0,
+          }}
+        >
           <motion.div
             ref={modalRef}
             className={cn(
