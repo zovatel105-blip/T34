@@ -1173,6 +1173,7 @@ const QuestionSlide = ({
             onShare={handleShare}
             onComments={handleComments}
             onNext={handleNext}
+            onClose={() => setShowWinnerCard(false)}
           />
         );
       })()}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Trophy, Share2, MessageCircle, Zap, Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -11,19 +11,19 @@ import SafeImage from '../common/SafeImage';
  * Muestra: ganador (avatar/imagen de fondo), porcentaje, votos totales,
  * perdedor con su %, y acciones: Compartir, Comentarios y Siguiente duelo.
  *
+ * Interacción:
+ * - Click fuera de la card (backdrop)  → onClose
+ * - Click en Compartir / Comentarios   → ejecutar acción + onClose
+ * - Click en "Siguiente duelo"         → onNext (cierra + avanza)
+ * - Swipe vertical (>60px)             → onNext (avanza al siguiente duelo)
+ *
  * Props:
- * - winnerName: string (texto del ganador)
- * - winnerPercentage: number
- * - winnerImage: string (URL de imagen para el fondo, opcional)
- * - loserName: string
- * - loserPercentage: number
- * - totalVotes: number
- * - currentRound: number (1-indexed)
- * - totalRounds: number
- * - onShare: () => void
- * - onComments: () => void
- * - onNext: () => void
- * - visible: boolean (controla la animación de entrada)
+ * - winnerName, winnerPercentage, winnerImage
+ * - loserName, loserPercentage
+ * - totalVotes
+ * - currentRound, totalRounds
+ * - onShare, onComments, onNext, onClose
+ * - visible: boolean
  */
 const VSWinnerCard = ({
   winnerName = 'GANADOR',
@@ -37,9 +37,62 @@ const VSWinnerCard = ({
   onShare,
   onComments,
   onNext,
+  onClose,
   visible = true,
 }) => {
   const showRoundLabel = totalRounds > 1;
+
+  // 👆 Detección de swipe vertical para avanzar al siguiente duelo.
+  // Como la card está portalizada con z muy alto, los gestos del feed no
+  // llegan al tape de TikTokScrollView. Replicamos la detección aquí.
+  const touchStartY = useRef(null);
+  const touchStartX = useRef(null);
+  const touchMoved = useRef(false);
+  const SWIPE_THRESHOLD = 60; // px
+
+  const handleTouchStart = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    touchStartY.current = t.clientY;
+    touchStartX.current = t.clientX;
+    touchMoved.current = false;
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStartY.current === null) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    const dy = Math.abs(t.clientY - touchStartY.current);
+    const dx = Math.abs(t.clientX - touchStartX.current);
+    if (dy > 8 || dx > 8) touchMoved.current = true;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartY.current === null) return;
+    const t = e.changedTouches?.[0];
+    if (!t) {
+      touchStartY.current = null;
+      return;
+    }
+    const dy = touchStartY.current - t.clientY; // positivo = swipe arriba
+    const dx = Math.abs(t.clientX - touchStartX.current);
+    touchStartY.current = null;
+    touchStartX.current = null;
+
+    // Swipe vertical predominante → siguiente duelo
+    if (Math.abs(dy) > SWIPE_THRESHOLD && Math.abs(dy) > dx) {
+      onNext?.();
+    }
+  };
+
+  const handleBackdropClick = (e) => {
+    // Si fue un swipe (touch con movimiento), no tratar como click
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      return;
+    }
+    onClose?.();
+  };
 
   // 🚪 Portal a document.body — necesario porque el VSLayout tiene
   // transform/preserve-3d en sus contenedores (crean nuevos stacking
@@ -60,7 +113,10 @@ const VSWinnerCard = ({
         // Backdrop oscurecido para enfocar la winner card
         background: 'rgba(0,0,0,0.55)',
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleBackdropClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Card principal */}
       <div
@@ -73,6 +129,7 @@ const VSWinnerCard = ({
           visible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'
         )}
         style={{ background: '#0a0a0a' }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Fondo: imagen del ganador con blur y tinte */}
         <div className="absolute inset-0">
@@ -220,6 +277,7 @@ const VSWinnerCard = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   onShare?.();
+                  onClose?.();
                 }}
                 className={cn(
                   'flex items-center justify-center gap-2',
@@ -242,6 +300,7 @@ const VSWinnerCard = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   onComments?.();
+                  onClose?.();
                 }}
                 className={cn(
                   'flex items-center justify-center gap-2',
