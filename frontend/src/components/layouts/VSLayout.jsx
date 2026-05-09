@@ -659,15 +659,21 @@ const QuestionSlide = ({
           isLoser && "vs-cinema-recede"
         )}
         style={{
-          transformOrigin: isOptionA ? 'center bottom' : 'center top',
+          // 🎬 Lift Subject: origen en el CENTRO para que la card crezca
+          // hacia AMBOS lados y se SUPERPONGA sobre la vecina (estilo iOS).
+          transformOrigin: 'center center',
           transformStyle: 'preserve-3d',
           zIndex: isSelected ? 30 : (isLoser ? 1 : 5),
+          // 🎬 Border radius animado: la card votada parece RECORTADA del
+          // fondo (Visual Look Up / Lift Subject from Background) — bordes
+          // limpios al superponerse sobre la card vecina.
+          borderRadius: isSelected ? '22px' : '0px',
           // Solo aplicamos transform inline cuando NO está la animación 3D activa
           // (la animación CSS controla el transform de los estados isSelected/isLoser).
           transform: !isSelected && !isLoser ? 'none' : undefined,
           transition: !isSelected && !isLoser
-            ? 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease'
-            : undefined,
+            ? 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease, border-radius 0.4s ease'
+            : 'border-radius 0.4s cubic-bezier(0.16,1,0.3,1)',
           filter: !isSelected && !isLoser ? 'none' : undefined,
           opacity: !isSelected && !isLoser ? 1 : undefined,
           // Glow base sólo cuando NO está votada (sin animar). Cuando está votada,
