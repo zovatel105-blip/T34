@@ -828,8 +828,8 @@ const TikTokPollCard = ({
           />
         )}
 
-        {/* Music Player - disco rotativo */}
-        {poll.music && (() => {
+        {/* Music Player - disco rotativo - SOLO en modo bottom (no se mueve al lateral) */}
+        {!sideMode && poll.music && (() => {
           const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
           const displayMusic = hasExtractedAudio && carouselAudioData
             ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
@@ -845,7 +845,7 @@ const TikTokPollCard = ({
               authorUsername={poll.author?.username || poll.author?.display_name}
               overrideAudioId={carouselAudioId}
               forceUseAvatar={!!carouselThumbnail}
-              className={sideMode ? "flex-shrink-0" : "flex-shrink-0 ml-auto"}
+              className="flex-shrink-0 ml-auto"
             />
           );
         })()}
@@ -1325,7 +1325,8 @@ const TikTokPollCard = ({
              paddingRight: 'max(1rem, var(--safe-area-inset-right))'
            }}>
         {/* Solo mostrar votos si show_vote_count es true (o por defecto si no existe) */}
-        {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
+        {/* Cuando isBottomNavVisible, el contador se mueve al lateral derecho */}
+        {!isBottomNavVisible && (poll.show_vote_count !== false && poll.showVoteCount !== false) && (
           <div className="mb-4 pointer-events-auto">
             {poll.is_challenge ? (
               /* 🏆 CHALLENGE: Mostrar estado en vez de conteo de votos */
@@ -1429,9 +1430,70 @@ const TikTokPollCard = ({
             transform: 'translateY(-50%)'
           }}
         >
+          {/* Contador de votos compacto al inicio (estilo TikTok) */}
+          {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
+            poll.is_challenge ? (
+              <div className="flex flex-col items-center gap-0.5 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}>
+                <span className="text-[10px] font-semibold whitespace-nowrap text-center px-1">
+                  {(() => {
+                    const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                    if (totalVotes === 0) return "Sé el primero";
+                    const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+                    const maxVotes = sortedOptions[0]?.votes || 0;
+                    const secondVotes = sortedOptions[1]?.votes || 0;
+                    if (maxVotes === secondVotes) return "Empate";
+                    const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
+                    return `${winnerName} gana`;
+                  })()}
+                </span>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowVotersModal(true);
+                }}
+                className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
+              >
+                <span className="text-base font-bold whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
+                <span className="text-[10px] font-medium opacity-90">votos</span>
+              </button>
+            )
+          )}
           {renderActionButtons(true)}
         </div>
       )}
+
+      {/* Reproductor de música (disco) - posicionado abajo derecha cuando sideMode (no se mueve al lateral con los sociales) */}
+      {isBottomNavVisible && !isPostMiniature && poll.music && (() => {
+        const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+        const displayMusic = hasExtractedAudio && carouselAudioData
+          ? { ...poll.music, title: carouselAudioData.title || poll.music?.title, artist: carouselAudioData.artist || poll.music?.artist, cover: carouselAudioData.cover || poll.music?.cover, preview_url: carouselAudioData.preview_url || poll.music?.preview_url, id: carouselAudioData.id || poll.music?.id }
+          : poll.music;
+        return (
+          <div
+            className="absolute z-30 pointer-events-auto"
+            style={{
+              right: 'max(0.5rem, var(--safe-area-inset-right))',
+              bottom: 'calc(56px + max(0.75rem, var(--safe-area-inset-bottom)))'
+            }}
+          >
+            <MusicPlayer
+              music={displayMusic}
+              isVisible={isActive}
+              onTogglePlay={handleMusicToggle}
+              autoPlay={!hasExtractedAudio}
+              loop={true}
+              authorAvatar={carouselThumbnail || poll.author?.avatar_url}
+              authorUsername={poll.author?.username || poll.author?.display_name}
+              overrideAudioId={carouselAudioId}
+              forceUseAvatar={!!carouselThumbnail}
+              className="flex-shrink-0"
+            />
+          </div>
+        );
+      })()}
 
       {/* Scroll hints - Solo para usuarios nuevos que no han hecho scroll */}
       {showScrollHint && (
