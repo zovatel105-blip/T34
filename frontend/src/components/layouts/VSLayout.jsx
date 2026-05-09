@@ -691,27 +691,6 @@ const QuestionSlide = ({
             <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse pointer-events-none" />
           )}
 
-          {/* Status pill (VA GANANDO / REMONTANDO / TU VOTO) */}
-          {status && (
-            <div
-              className={cn(
-                "absolute z-20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5",
-                "border border-white/30 shadow-lg",
-                isRow
-                  ? cn(TOP_OFFSET, isOptionA ? "left-3" : "right-3")
-                  : cn("left-1/2 -translate-x-1/2", isOptionA ? TOP_OFFSET : BOTTOM_OFFSET)
-              )}
-              style={{
-                background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
-              }}
-            >
-              <span className="text-xs">{status.icon}</span>
-              <span className="text-[11px] font-black uppercase tracking-wider text-white drop-shadow-md">
-                {status.text}
-              </span>
-            </div>
-          )}
-
           {/* Trofeo si es el ganador (cuando se muestran resultados) */}
           {isWinning && showResults && (
             <div
@@ -728,7 +707,10 @@ const QuestionSlide = ({
             </div>
           )}
 
-          {/* Contenido principal — nombre, porcentaje, votos */}
+          {/* Contenido principal — nombre + status pill + porcentaje + votos.
+              La status pill (VA GANANDO / REMONTANDO / ¡TU VOTO!) va INLINE
+              justo debajo del nombre, alineada a la izquierda como en la
+              imagen de referencia. */}
           <div
             className={cn(
               "absolute z-10 flex flex-col px-4",
@@ -746,6 +728,21 @@ const QuestionSlide = ({
             >
               {option.text || `Opción ${index + 1}`}
             </h2>
+
+            {/* Status pill — debajo del nombre (estilo referencia) */}
+            {status && (
+              <div
+                className="mt-1.5 px-2.5 py-0.5 rounded-full backdrop-blur-md flex items-center gap-1 border border-white/30 shadow-md"
+                style={{
+                  background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
+                }}
+              >
+                <span className="text-[10px]">{status.icon}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white drop-shadow-md">
+                  {status.text}
+                </span>
+              </div>
+            )}
 
             {/* Porcentaje gigante + votos */}
             {showResults && (
