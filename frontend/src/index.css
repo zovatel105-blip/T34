@@ -121,20 +121,15 @@
   will-change: transform;
 }
 
-/* "Visual Look Up / Lift Subject from Background" (estilo iOS)
-   + Aberración cromática sutil tipo gafas 3D del cine.
+/* "Visual Look Up / Lift Subject from Background" (estilo iOS).
    La card votada parece RECORTADA y LEVANTADA del fondo:
    - Halo blanco/luz alrededor del borde (subject lifted)
    - Drop shadow profundo bajo la card (eleva sobre fondo)
-   - RGB split sutil (rojo/cian) para el toque cinema 3D
    Se aplica como box-shadow animado (no se clipea porque
    box-shadow se pinta fuera del propio elemento). */
 @keyframes vsCinemaChroma {
   0%, 100% {
     box-shadow:
-      /* RGB split — gafas 3D del cine */
-      -3px 0 0 rgba(255, 56, 96, 0.5),
-      3px 0 0 rgba(0, 220, 255, 0.5),
       /* Halo del subject levantado (anillo de luz blanco) */
       0 0 0 2px rgba(255, 255, 255, 0.18),
       0 0 22px rgba(255, 255, 255, 0.22),
@@ -146,8 +141,6 @@
   }
   50% {
     box-shadow:
-      -5px 0 0 rgba(255, 56, 96, 0.65),
-      5px 0 0 rgba(0, 220, 255, 0.65),
       0 0 0 3px rgba(255, 255, 255, 0.28),
       0 0 32px rgba(255, 255, 255, 0.35),
       0 38px 70px -10px rgba(0, 0, 0, 0.92),
