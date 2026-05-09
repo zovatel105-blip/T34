@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Trophy, Share2, MessageCircle, ChevronsDown, Flame } from 'lucide-react';
+import { Trophy, MessageCircle, ChevronsDown, Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import SafeImage from '../common/SafeImage';
 
@@ -280,14 +280,13 @@ const VSWinnerCard = ({
                   onClose?.();
                 }}
                 className={cn(
-                  'flex items-center justify-center gap-2',
+                  'flex items-center justify-center',
                   'px-4 py-2.5 rounded-full',
                   'border border-white/40',
                   'bg-white/5 backdrop-blur-sm',
                   'transition-all active:scale-[0.97] hover:bg-white/10'
                 )}
               >
-                <Share2 className="w-4 h-4 text-white" strokeWidth={2.5} />
                 <span
                   className="text-[12px] font-black tracking-[0.18em] text-white uppercase"
                   style={{ fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif' }}
@@ -338,7 +337,7 @@ const VSWinnerCard = ({
                 Siguiente duelo
               </span>
               <ChevronsDown
-                className="w-6 h-6 text-white -mt-0.5"
+                className="w-7 h-7 text-white -mt-0.5 vs-arrow-bounce"
                 strokeWidth={2.5}
                 style={{
                   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))',
@@ -348,6 +347,23 @@ const VSWinnerCard = ({
           </div>
         </div>
       </div>
+
+      {/* 🎬 Animación de las flechas "swipe down" */}
+      <style>{`
+        @keyframes vs-arrow-bounce {
+          0%, 100% {
+            transform: translateY(0);
+            opacity: 0.85;
+          }
+          50% {
+            transform: translateY(7px);
+            opacity: 1;
+          }
+        }
+        .vs-arrow-bounce {
+          animation: vs-arrow-bounce 1.2s ease-in-out infinite;
+        }
+      `}</style>
     </div>,
     document.body
   );
