@@ -65,10 +65,12 @@ const BottomNavigation = () => {
     
     setSubmittingComment(true);
     try {
-      await commentService.addComment(commentInputConfig.pollId, content);
+      // ⚠️ commentService no expone addComment; el método correcto es
+      // addCommentForFrontend (alias de createComment con el shape del API).
+      await commentService.addCommentForFrontend(commentInputConfig.pollId, content);
       if (commentInputRef.current) commentInputRef.current.value = '';
     } catch (error) {
-      // Error silencioso
+      console.error('Error enviando comentario desde BottomNavigation:', error);
     } finally {
       setSubmittingComment(false);
     }
