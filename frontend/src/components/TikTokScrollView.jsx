@@ -23,7 +23,7 @@ import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { pickPlayableVideoUrl } from '../utils/mediaUrl';
-import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords } from 'lucide-react';
+import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords, BarChart2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { useToast } from '../hooks/use-toast';
@@ -1434,18 +1434,27 @@ const TikTokPollCard = ({
           {(poll.show_vote_count !== false && poll.showVoteCount !== false) && (
             poll.is_challenge ? (
               <div className="flex flex-col items-center gap-0.5 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}>
-                <span className="text-[10px] font-semibold whitespace-nowrap text-center px-1">
-                  {(() => {
-                    const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
-                    if (totalVotes === 0) return "Sé el primero";
-                    const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
-                    const maxVotes = sortedOptions[0]?.votes || 0;
-                    const secondVotes = sortedOptions[1]?.votes || 0;
-                    if (maxVotes === secondVotes) return "Empate";
-                    const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
-                    return `${winnerName} gana`;
-                  })()}
-                </span>
+                {(() => {
+                  const totalVotes = poll.options?.reduce((sum, opt) => sum + (opt.votes || 0), 0) || 0;
+                  const sortedOptions = [...(poll.options || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+                  const maxVotes = sortedOptions[0]?.votes || 0;
+                  const secondVotes = sortedOptions[1]?.votes || 0;
+                  const isTie = totalVotes > 0 && maxVotes === secondVotes;
+                  const Icon = totalVotes === 0 ? BarChart2 : (isTie ? BarChart2 : Trophy);
+                  return (
+                    <>
+                      <Icon className="w-7 h-7 flex-shrink-0" />
+                      <span className="text-[10px] font-semibold whitespace-nowrap text-center px-1 max-w-[64px] truncate">
+                        {(() => {
+                          if (totalVotes === 0) return "Sé el primero";
+                          if (isTie) return "Empate";
+                          const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
+                          return `${winnerName} gana`;
+                        })()}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <button
@@ -1456,8 +1465,8 @@ const TikTokPollCard = ({
                 className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
-                <span className="text-base font-bold whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
-                <span className="text-[10px] font-medium opacity-90">votos</span>
+                <BarChart2 className="w-7 h-7 flex-shrink-0" />
+                <span className="text-[11px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
               </button>
             )
           )}
