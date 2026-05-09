@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Trophy, Share2, MessageCircle, Zap, Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import SafeImage from '../common/SafeImage';
@@ -40,15 +41,22 @@ const VSWinnerCard = ({
 }) => {
   const showRoundLabel = totalRounds > 1;
 
-  return (
+  // 🚪 Portal a document.body — necesario porque el VSLayout tiene
+  // transform/preserve-3d en sus contenedores (crean nuevos stacking
+  // contexts) y los botones sociales de TikTokScrollView viven en otro
+  // contexto padre. Portalizando garantizamos que la card cubra TODO.
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className={cn(
-        'absolute inset-0 z-50 pointer-events-auto',
+        'fixed inset-0 pointer-events-auto',
         'flex items-center justify-center px-4',
         'transition-opacity duration-300 ease-out',
         visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       )}
       style={{
+        zIndex: 9998,
         // Backdrop oscurecido para enfocar la winner card
         background: 'rgba(0,0,0,0.55)',
       }}
@@ -275,7 +283,8 @@ const VSWinnerCard = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
