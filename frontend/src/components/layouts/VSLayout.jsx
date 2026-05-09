@@ -1276,24 +1276,23 @@ const VSLayout = ({
                     WebkitTextStroke: `3px ${TWYK_COLORS.top.primary}`,
                     paintOrder: 'stroke fill',
                     textShadow: [
-                      // núcleo blanco MUY reforzado (compensar luminancia alta del lila)
+                      // núcleo blanco (mismo nivel que la S)
                       '0 0 1px rgba(255,255,255,1)',
-                      '0 0 2px rgba(255,255,255,1)',
-                      '0 0 4px rgba(255,255,255,1)',
-                      '0 0 8px rgba(255,255,255,1)',
-                      '0 0 12px rgba(255,255,255,0.9)',
+                      '0 0 3px rgba(255,255,255,1)',
+                      '0 0 7px rgba(255,255,255,0.98)',
                       // glow lila multicapa (capa cercana atenuada para no comerse el blanco)
-                      `0 0 18px rgba(${topRgb},0.85)`,
-                      `0 0 30px rgba(${topRgb},0.85)`,
-                      `0 0 48px rgba(${topRgb},0.7)`,
-                      `0 0 70px rgba(${topRgb},0.55)`,
-                      `0 0 95px rgba(${topRgb},0.4)`,
+                      `0 0 14px rgba(${topRgb},0.9)`,
+                      `0 0 26px rgba(${topRgb},0.9)`,
+                      `0 0 44px rgba(${topRgb},0.75)`,
+                      `0 0 66px rgba(${topRgb},0.6)`,
+                      `0 0 92px rgba(${topRgb},0.42)`,
                       // sombra dramática para profundidad 3D
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
                     transform: 'skewX(-6deg) translateY(-0.08em)',
                     display: 'inline-block',
+                    marginRight: '0.08em',
                   }}
                 >
                   V
@@ -1322,7 +1321,6 @@ const VSLayout = ({
                     ].join(', '),
                     transform: 'skewX(-6deg) translateY(0.08em)',
                     display: 'inline-block',
-                    marginLeft: '-0.05em',
                   }}
                 >
                   S
