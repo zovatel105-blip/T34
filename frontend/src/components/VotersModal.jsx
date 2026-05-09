@@ -335,11 +335,38 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
 
               {/* 📊 Barra de progreso de votos por opción (movida desde el post) */}
               {(() => {
-                const opts = Array.isArray(poll?.options) ? poll.options : [];
+                // Determinar de dónde sacar las opciones:
+                // 1. poll.options (encuesta estándar)
+                // 2. poll.vs_questions[0].options (VS / duelo) — fallback
+                let opts = Array.isArray(poll?.options) ? poll.options : [];
+                if (opts.length < 2 && Array.isArray(poll?.vs_questions) && poll.vs_questions.length > 0) {
+                  opts = poll.vs_questions[0]?.options || [];
+                }
                 if (opts.length < 2) return null;
-                const total = opts.reduce((s, o) => s + (Number(o?.votes) || 0), 0);
-                if (total <= 0) return null;
-                const percentages = opts.map((o) => Math.round(((Number(o?.votes) || 0) / total) * 100));
+
+                // Calcular votos por opción. Si poll.options tiene 0 votos
+                // pero la API de voters retornó info, intentamos contar desde
+                // voters[].voted_option como fallback.
+                let counts = opts.map((o) => Number(o?.votes) || 0);
+                let total = counts.reduce((s, n) => s + n, 0);
+
+                if (total === 0 && Array.isArray(voters) && voters.length > 0) {
+                  // Fallback: contar voted_option desde la lista de voters
+                  const fallbackCounts = opts.map((o) => 0);
+                  voters.forEach((v) => {
+                    const idx = opts.findIndex((o) => (o?.text || '') === v.voted_option);
+                    if (idx >= 0) fallbackCounts[idx]++;
+                  });
+                  const fallbackTotal = fallbackCounts.reduce((s, n) => s + n, 0);
+                  if (fallbackTotal > 0) {
+                    counts = fallbackCounts;
+                    total = fallbackTotal;
+                  }
+                }
+
+                const percentages = counts.map((n) =>
+                  total > 0 ? Math.round((n / total) * 100) : 0
+                );
                 const isVS = opts.length === 2;
                 const darkText = isMobile && isBottomNav;
 
