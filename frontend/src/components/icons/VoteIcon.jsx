@@ -4,7 +4,7 @@ import React from 'react';
  * VoteIcon - Ícono custom de voto (papeleta marcada estilo trazo a mano)
  * Usa fill + stroke para tener el mismo grosor visual que los iconos de Lucide (Heart, etc.)
  */
-const VoteIcon = ({ className = '', style, strokeWidth = 300, ...props }) => (
+const VoteIcon = ({ className = '', style, strokeWidth = 250, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 600 600"
