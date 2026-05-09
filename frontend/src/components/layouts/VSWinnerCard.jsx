@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Trophy, Share2, MessageCircle, Zap, Flame } from 'lucide-react';
+import { Trophy, Share2, MessageCircle, ChevronsDown, Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import SafeImage from '../common/SafeImage';
 
@@ -320,13 +320,13 @@ const VSWinnerCard = ({
               </button>
             </div>
 
-            {/* SIGUIENTE DUELO */}
+            {/* SIGUIENTE DUELO con doble flecha hacia abajo */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onNext?.();
               }}
-              className="flex items-center justify-center gap-2 mt-1 active:scale-[0.97] transition-transform"
+              className="flex flex-col items-center justify-center gap-0.5 mt-1 active:scale-[0.97] transition-transform"
             >
               <span
                 className="text-[14px] font-black tracking-[0.22em] text-white uppercase"
@@ -337,7 +337,13 @@ const VSWinnerCard = ({
               >
                 Siguiente duelo
               </span>
-              <Zap className="w-4 h-4 text-yellow-400" fill="currentColor" />
+              <ChevronsDown
+                className="w-6 h-6 text-white -mt-0.5"
+                strokeWidth={2.5}
+                style={{
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))',
+                }}
+              />
             </button>
           </div>
         </div>
