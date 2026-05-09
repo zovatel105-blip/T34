@@ -1252,51 +1252,73 @@ const VSLayout = ({
                 />
               )}
 
-              {/* Texto "VS" — V lila + S azul (colores Twyk), neón intenso */}
+              {/* Texto "VS" — letras BLANCAS, bordes Twyk (V lila / S azul),
+                  estilo neón cinematográfico con doble stroke + glow intenso */}
               <span
                 className={cn(
-                  "relative font-black tracking-tighter select-none inline-flex",
+                  "relative font-black select-none inline-flex items-baseline",
                   showVS && "animate-vs-bounce"
                 )}
                 style={{
-                  fontSize: 'clamp(3.5rem, 16vw, 8rem)',
+                  fontSize: 'clamp(4rem, 18vw, 9rem)',
                   fontStyle: 'italic',
                   lineHeight: 1,
-                  letterSpacing: '-0.05em',
+                  letterSpacing: '-0.08em',
+                  fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
+                  fontWeight: 900,
                 }}
               >
-                {/* V — lila Twyk */}
+                {/* V — fill blanco, borde LILA Twyk + glow lila intenso */}
                 <span
+                  className="relative"
                   style={{
-                    color: TWYK_COLORS.top.primary,
+                    color: '#fff',
+                    WebkitTextStroke: `3px ${TWYK_COLORS.top.primary}`,
+                    paintOrder: 'stroke fill',
                     textShadow: [
-                      '0 0 6px rgba(255,255,255,0.85)',
-                      `0 0 14px rgba(${topRgb},1)`,
-                      `0 0 28px rgba(${topRgb},0.95)`,
-                      `0 0 50px rgba(${topRgb},0.8)`,
-                      `0 0 75px rgba(${topRgb},0.6)`,
-                      '0 4px 0 rgba(0,0,0,0.55)',
-                      '2px 4px 12px rgba(0,0,0,0.75)',
+                      // núcleo blanco brillante interno
+                      '0 0 2px rgba(255,255,255,1)',
+                      '0 0 6px rgba(255,255,255,0.95)',
+                      // glow lila multicapa
+                      `0 0 12px rgba(${topRgb},1)`,
+                      `0 0 22px rgba(${topRgb},0.95)`,
+                      `0 0 38px rgba(${topRgb},0.85)`,
+                      `0 0 60px rgba(${topRgb},0.65)`,
+                      `0 0 90px rgba(${topRgb},0.45)`,
+                      // sombra dramática para profundidad 3D
+                      '0 5px 0 rgba(0,0,0,0.6)',
+                      '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                    transform: 'skewX(-6deg)',
+                    display: 'inline-block',
                   }}
                 >
                   V
                 </span>
-                {/* S — azul Twyk */}
+                {/* S — fill blanco, borde AZUL Twyk + glow azul intenso */}
                 <span
+                  className="relative"
                   style={{
-                    color: TWYK_COLORS.bottom.primary,
+                    color: '#fff',
+                    WebkitTextStroke: `3px ${TWYK_COLORS.bottom.primary}`,
+                    paintOrder: 'stroke fill',
                     textShadow: [
-                      '0 0 6px rgba(255,255,255,0.85)',
-                      `0 0 14px rgba(${bottomRgb},1)`,
-                      `0 0 28px rgba(${bottomRgb},0.95)`,
-                      `0 0 50px rgba(${bottomRgb},0.8)`,
-                      `0 0 75px rgba(${bottomRgb},0.6)`,
-                      '0 4px 0 rgba(0,0,0,0.55)',
-                      '2px 4px 12px rgba(0,0,0,0.75)',
+                      // núcleo blanco brillante interno
+                      '0 0 2px rgba(255,255,255,1)',
+                      '0 0 6px rgba(255,255,255,0.95)',
+                      // glow azul multicapa
+                      `0 0 12px rgba(${bottomRgb},1)`,
+                      `0 0 22px rgba(${bottomRgb},0.95)`,
+                      `0 0 38px rgba(${bottomRgb},0.85)`,
+                      `0 0 60px rgba(${bottomRgb},0.65)`,
+                      `0 0 90px rgba(${bottomRgb},0.45)`,
+                      // sombra dramática para profundidad 3D
+                      '0 5px 0 rgba(0,0,0,0.6)',
+                      '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    WebkitTextStroke: '1.5px rgba(0,0,0,0.35)',
+                    transform: 'skewX(-6deg)',
+                    display: 'inline-block',
+                    marginLeft: '-0.05em',
                   }}
                 >
                   S
