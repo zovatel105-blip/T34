@@ -183,7 +183,7 @@ const CommentsModal = ({
         {/* Backdrop - transparente en bottom sheet medio abierto para ver el post */}
         <motion.div
           className={cn(
-            "absolute inset-0",
+            "absolute",
             isBottomSheet && !isExpanded 
               ? "" 
               : isBottomSheet && isExpanded 
@@ -194,7 +194,18 @@ const CommentsModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          style={{ pointerEvents: 'auto' }}
+          style={{
+            pointerEvents: 'auto',
+            top: 0,
+            left: 0,
+            right: 0,
+            // 🛠️ En bottom-sheet, el backdrop NO debe cubrir la zona del input
+            // de comentario de la barra inferior; si lo hace, intercepta los
+            // taps en el botón "enviar" y no se puede publicar.
+            bottom: isBottomSheet
+              ? 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+              : 0,
+          }}
         />
         
         {/* Modal Container */}
