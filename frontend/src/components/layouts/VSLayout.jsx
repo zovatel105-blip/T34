@@ -1476,7 +1476,7 @@ const VSLayout = ({
                   fontSize: 'clamp(4rem, 18vw, 9rem)',
                   fontStyle: 'italic',
                   lineHeight: 1,
-                  letterSpacing: '-0.08em',
+                  letterSpacing: '-0.14em',
                   fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
                   fontWeight: 900,
                 }}
@@ -1493,9 +1493,9 @@ const VSLayout = ({
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    transform: 'skewX(-6deg) translateY(-0.08em)',
+                    transform: 'skewX(-6deg) translateY(-0.16em)',
                     display: 'inline-block',
-                    marginRight: '0.08em',
+                    marginRight: '0.02em',
                   }}
                 >
                   V
@@ -1512,7 +1512,7 @@ const VSLayout = ({
                       '0 5px 0 rgba(0,0,0,0.6)',
                       '3px 6px 14px rgba(0,0,0,0.75)',
                     ].join(', '),
-                    transform: 'skewX(-6deg) translateY(0.08em)',
+                    transform: 'skewX(-6deg) translateY(0.16em)',
                     display: 'inline-block',
                   }}
                 >
