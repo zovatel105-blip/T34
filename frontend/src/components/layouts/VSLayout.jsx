@@ -978,7 +978,7 @@ const QuestionSlide = ({
         </div>
       )}
 
-      {/* Footer con resultados — barra de progreso + COMPARTIR + countdown */}
+      {/* Footer con resultados — solo barra de progreso (Compartir y Siguiente duelo viven en la WinnerCard) */}
       {showResults && (
         <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 w-[88%] pointer-events-none flex flex-col items-center gap-2", BOTTOM_OFFSET)}>
           {/* Barra de progreso lila/azul (Twyk) */}
@@ -1005,95 +1005,6 @@ const QuestionSlide = ({
                 style={{ color: TWYK_COLORS.bottom.primary, textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
               >
                 {percB}%
-              </span>
-            </div>
-          </div>
-
-          {/* Botón COMPARTIR RESULTADO */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              const winnerName = winnerIsA ? (optionA?.text || 'Opción A') : (winnerIsB ? (optionB?.text || 'Opción B') : 'Empate');
-              const winnerPerc = winnerIsA ? percA : (winnerIsB ? percB : percA);
-              const text = `¡${winnerName} ganó con ${winnerPerc}%! ⚔️ Vota tu favorito en Twyk`;
-              try {
-                if (navigator.share) {
-                  navigator.share({ title: 'Twyk · Duelo', text, url: window.location.href }).catch(() => {});
-                } else if (navigator.clipboard) {
-                  navigator.clipboard.writeText(`${text} ${window.location.href}`).catch(() => {});
-                }
-              } catch (err) { /* noop */ }
-            }}
-            className="pointer-events-auto px-4 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 shadow-xl border border-white/30 hover:scale-[1.03] active:scale-[0.97] transition-transform"
-            style={{
-              background: `linear-gradient(90deg, rgba(${TWYK_COLORS.top.primaryRgb},0.85), rgba(${TWYK_COLORS.bottom.primaryRgb},0.85))`,
-            }}
-          >
-            <Share2 className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-            <span className="text-[11px] font-black uppercase tracking-wider text-white">
-              Compartir resultado
-            </span>
-          </button>
-
-          {/* Mini countdown "SIGUIENTE DUELO EN Xs" */}
-          {nextDuelCountdown !== null && nextDuelCountdown > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-                Siguiente duelo en
-              </span>
-              <span
-                className="text-[12px] font-black tabular-nums"
-                style={{
-                  color: TWYK_COLORS.top.primary,
-                  textShadow: `0 0 8px ${TWYK_COLORS.top.glow}`,
-                }}
-              >
-                {nextDuelCountdown}s
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 🆙 Animación SIGUIENTE DUELO ↑↑ — aparece en el último segundo
-          de la transición tras el resultado (efecto "scroll automático") */}
-      {showResults && nextDuelCountdown !== null && nextDuelCountdown <= 1 && (
-        <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-          <div
-            className="flex flex-col items-center gap-2 animate-in fade-in zoom-in duration-300"
-            style={{
-              animation: 'vsNextSlide 0.8s ease-out',
-            }}
-          >
-            <div className="flex flex-col items-center -space-y-2">
-              <ChevronsUp
-                className="w-12 h-12"
-                style={{
-                  color: TWYK_COLORS.top.primary,
-                  filter: `drop-shadow(0 0 8px ${TWYK_COLORS.top.glow}) drop-shadow(0 0 16px ${TWYK_COLORS.top.glow})`,
-                  animation: 'vsArrowBounce 0.6s ease-in-out infinite alternate',
-                }}
-                strokeWidth={3}
-              />
-              <ChevronsUp
-                className="w-12 h-12"
-                style={{
-                  color: TWYK_COLORS.bottom.primary,
-                  filter: `drop-shadow(0 0 8px ${TWYK_COLORS.bottom.glow}) drop-shadow(0 0 16px ${TWYK_COLORS.bottom.glow})`,
-                  animation: 'vsArrowBounce 0.6s ease-in-out 0.15s infinite alternate',
-                }}
-                strokeWidth={3}
-              />
-            </div>
-            <div
-              className="px-4 py-1.5 rounded-full backdrop-blur-md border border-white/40 shadow-2xl"
-              style={{
-                background: `linear-gradient(90deg, rgba(${TWYK_COLORS.top.primaryRgb},0.85), rgba(${TWYK_COLORS.bottom.primaryRgb},0.85))`,
-              }}
-            >
-              <span className="text-xs font-black uppercase tracking-widest text-white">
-                Siguiente duelo
               </span>
             </div>
           </div>
