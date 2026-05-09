@@ -645,33 +645,36 @@ const QuestionSlide = ({
     const status = getStatusLabel(isOptionA);
     const isWinning = showResults && (isOptionA ? winnerIsA : winnerIsB);
 
+    // 🎬 CINEMA 3D — clases para el efecto estereoscópico tipo cine 3D
+    const isLoser = showResults && !isSelected && !isWinning;
     return (
       <div
         className={cn(
           "flex-1 relative overflow-hidden cursor-pointer",
-          isHighlighted && !isSelected && "scale-[1.01]"
+          isHighlighted && !isSelected && "scale-[1.01]",
+          // Card votada → respira/flota en 3D ("sale" de la pantalla, viva)
+          // + aberración cromática (RGB split) tipo gafas 3D
+          isSelected && "vs-cinema-3d-active vs-cinema-chroma-shadow",
+          // Card perdedora → se va AL FONDO (translateZ negativo + blur)
+          isLoser && "vs-cinema-recede"
         )}
         style={{
-          // 🧊 ZOOM 3D sobre la opción VOTADA
-          // - Si está seleccionada: scale + perspective + sombra dramática
-          // - Si NO está seleccionada (cuando hay resultados): desaturar + oscurecer
-          transform: isSelected
-            ? 'scale(1.04) perspective(900px) translateZ(30px)'
-            : 'none',
           transformOrigin: isOptionA ? 'center bottom' : 'center top',
-          zIndex: isSelected ? 30 : 1,
-          transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease',
-          // 🌑 Desaturación fuerte del PERDEDOR cuando hay resultado
-          filter: showResults && !isSelected && !isWinning
-            ? 'grayscale(0.85) brightness(0.45) saturate(0.25)'
-            : 'none',
-          opacity: showResults && !isSelected && !isWinning ? 0.75 : 1,
-          // Glow lila/azul del lado correspondiente (más intenso si seleccionada)
-          boxShadow: isSelected
-            ? `inset 0 0 140px ${colors.glow}, 0 0 60px ${colors.glow}, 0 25px 60px rgba(0,0,0,0.6)`
-            : isActive
-              ? `inset 0 0 60px ${colors.glowSoft}`
-              : 'none',
+          transformStyle: 'preserve-3d',
+          zIndex: isSelected ? 30 : (isLoser ? 1 : 5),
+          // Solo aplicamos transform inline cuando NO está la animación 3D activa
+          // (la animación CSS controla el transform de los estados isSelected/isLoser).
+          transform: !isSelected && !isLoser ? 'none' : undefined,
+          transition: !isSelected && !isLoser
+            ? 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease'
+            : undefined,
+          filter: !isSelected && !isLoser ? 'none' : undefined,
+          opacity: !isSelected && !isLoser ? 1 : undefined,
+          // Glow base sólo cuando NO está votada (sin animar). Cuando está votada,
+          // el box-shadow lo controla la animación .vs-cinema-chroma-shadow.
+          boxShadow: !isSelected
+            ? (isActive ? `inset 0 0 60px ${colors.glowSoft}` : 'none')
+            : undefined,
         }}
         onClick={() => {
           if (isActive && !showResults) onVote(option.id);
@@ -681,20 +684,41 @@ const QuestionSlide = ({
           onDoubleTap={() => isActive && !showResults && onVote(option.id)}
           disabled={showResults}
         >
-          {/* Imagen de fondo (cacheable) */}
+          {/* Imagen de fondo (cacheable) — con paralaje 3D si está votada */}
           {imageUrl ? (
             <SafeImage
               src={imageUrl}
               alt=""
               loading={isActive ? "eager" : "lazy"}
               decoding="async"
-              className="absolute inset-0 w-full h-full object-cover"
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover",
+                // 🎬 Paralaje 3D — la imagen se aleja un poco más que el marco,
+                // creando sensación de profundidad real (como en el cine 3D).
+                isSelected && "vs-cinema-image-depth"
+              )}
             />
           ) : (
             <div
-              className="absolute inset-0"
+              className={cn(
+                "absolute inset-0",
+                isSelected && "vs-cinema-image-depth"
+              )}
               style={{
                 background: `linear-gradient(${isOptionA ? '180deg' : '0deg'}, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+              }}
+            />
+          )}
+
+          {/* 🎬 Pulso interno cinematográfico — solo en la card votada.
+              Da sensación de "vida" — la publicación respira luz por dentro. */}
+          {isSelected && (
+            <div
+              aria-hidden
+              className="absolute inset-0 vs-cinema-inner-pulse pointer-events-none"
+              style={{
+                background: `radial-gradient(ellipse at 50% 50%, ${colors.glow} 0%, transparent 65%)`,
+                mixBlendMode: 'screen',
               }}
             />
           )}
@@ -753,7 +777,9 @@ const QuestionSlide = ({
               "absolute z-10 flex flex-col px-4",
               isRow
                 ? cn("bottom-6 right-3 left-3 items-start")
-                : cn("left-0 right-16 items-start", isOptionA ? "bottom-6" : "top-6")
+                : cn("left-0 right-16 items-start", isOptionA ? "bottom-6" : "top-6"),
+              // 🎬 Texto/porcentaje flota DELANTE de la imagen (3 capas de profundidad)
+              isSelected && "vs-cinema-text-float"
             )}
           >
             <h2
@@ -818,7 +844,16 @@ const QuestionSlide = ({
   };
 
   return (
-    <div className={cn("w-full h-full flex relative", isRow ? "flex-row" : "flex-col")}>
+    <div
+      className={cn("w-full h-full flex relative", isRow ? "flex-row" : "flex-col")}
+      style={{
+        // 🎬 Contexto 3D cinematográfico — esencial para que translateZ
+        // de las cards funcione como pop-out estereoscópico real (gafas 3D).
+        perspective: '1400px',
+        perspectiveOrigin: '50% 45%',
+        transformStyle: 'preserve-3d',
+      }}
+    >
       {renderCard(optionA, 0)}
       {renderCard(optionB, 1)}
 

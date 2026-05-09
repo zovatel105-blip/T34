@@ -67,6 +67,108 @@
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* ====================================================
+   🎬 CINEMA 3D — Efecto VS al votar (sensación viva)
+   Pop-out estereoscópico estilo gafas 3D del cine.
+   El opción votada respira, flota y "sale" de la pantalla
+   con paralaje real entre imagen, texto y aro de borde.
+   ==================================================== */
+
+/* Capa principal de la card votada: respira y flota en 3D */
+@keyframes vsCinema3DBreathe {
+  0%, 100% {
+    transform: scale(1.05) translateZ(50px) rotateX(0deg) rotateY(0deg);
+  }
+  25% {
+    transform: scale(1.065) translateZ(70px) rotateX(2.2deg) rotateY(-1.6deg);
+  }
+  50% {
+    transform: scale(1.075) translateZ(85px) rotateX(0deg) rotateY(1.2deg);
+  }
+  75% {
+    transform: scale(1.065) translateZ(70px) rotateX(-1.8deg) rotateY(1.6deg);
+  }
+}
+.vs-cinema-3d-active {
+  animation: vsCinema3DBreathe 4.8s ease-in-out infinite;
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+/* Paralaje interno de la imagen — se aleja un poco más rápido
+   que el marco de la card → ilusión de profundidad real (cine 3D) */
+@keyframes vsCinemaImageDepth {
+  0%, 100% { transform: scale(1.08) translateZ(15px); }
+  50%      { transform: scale(1.13) translateZ(35px); }
+}
+.vs-cinema-image-depth {
+  animation: vsCinemaImageDepth 4.8s ease-in-out infinite;
+  will-change: transform;
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+
+/* Texto y porcentajes flotan claramente DELANTE de la imagen
+   (3 capas de profundidad: imagen → marco → texto) */
+@keyframes vsCinemaTextFloat {
+  0%, 100% { transform: translateZ(55px); }
+  50%      { transform: translateZ(85px); }
+}
+.vs-cinema-text-float {
+  animation: vsCinemaTextFloat 4.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Chromatic Aberration sutil (RGB split) — ilusión de gafas 3D.
+   Se aplica como box-shadow animado en la card votada (no se clipea
+   porque box-shadow se pinta fuera del propio elemento). */
+@keyframes vsCinemaChroma {
+  0%, 100% {
+    box-shadow:
+      -3px 0 0 rgba(255, 56, 96, 0.45),
+      3px 0 0 rgba(0, 220, 255, 0.45),
+      0 30px 60px rgba(0, 0, 0, 0.7),
+      0 0 90px rgba(255, 255, 255, 0.08),
+      inset 0 0 160px rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    box-shadow:
+      -5px 0 0 rgba(255, 56, 96, 0.6),
+      5px 0 0 rgba(0, 220, 255, 0.6),
+      0 50px 100px rgba(0, 0, 0, 0.85),
+      0 0 140px rgba(255, 255, 255, 0.14),
+      inset 0 0 200px rgba(255, 255, 255, 0.06);
+  }
+}
+.vs-cinema-chroma-shadow {
+  animation: vsCinemaChroma 2.8s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+/* Card perdedora — empujada AL FONDO de la pantalla (translateZ negativo)
+   con desenfoque y desaturación → contraste de profundidad cinematográfico */
+@keyframes vsCinemaRecede {
+  0%   { transform: translateZ(0) scale(1); }
+  100% { transform: translateZ(-40px) scale(0.93); }
+}
+.vs-cinema-recede {
+  animation: vsCinemaRecede 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  filter: grayscale(0.92) brightness(0.38) saturate(0.18) blur(1.5px);
+  opacity: 0.7;
+  will-change: transform;
+}
+
+/* Brillo cinematográfico que pulsa desde el centro de la card votada */
+@keyframes vsCinemaInnerPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.05); }
+}
+.vs-cinema-inner-pulse {
+  animation: vsCinemaInnerPulse 2.2s ease-in-out infinite;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
