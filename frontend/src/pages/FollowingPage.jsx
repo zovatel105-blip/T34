@@ -818,8 +818,8 @@ const FollowingPage = () => {
       <div className="fixed inset-0 bg-black" style={{ zIndex: 0 }}>
         {/* 🛜 Toast "Sin conexión" — sólo en Following (Siguiendo) */}
         <FeedOfflineToast />
-        {/* Stories tabs deslizables - Solo mostrar si hay historias reales */}
-        {displayStories.length > 0 && (
+        {/* Stories tabs deslizables - OCULTO PARA MVP (Stories feature disabled) */}
+        {false && displayStories.length > 0 && (
           <div 
             className="fixed top-1 right-0 z-[9999] flex items-center gap-2"
             style={{ 
