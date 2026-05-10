@@ -204,7 +204,7 @@ const CommentsModal = ({
             // de comentario de la barra inferior; si lo hace, intercepta los
             // taps en el botón "enviar" y no se puede publicar.
             bottom: isBottomSheet
-              ? 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+              ? 'calc(105px + max(var(--safe-area-inset-bottom, 0px), 8px))'
               : 0,
           }}
         />
@@ -218,11 +218,11 @@ const CommentsModal = ({
           style={{
             pointerEvents: 'none',
             // 🛠️ En bottom-sheet reservamos espacio inferior igual a la altura del
-            // nav (que aloja el input para enviar comentarios). Sin esto el modal
-            // quedaba encima del input de la barra inferior y bloqueaba los
-            // clicks → no se podía escribir ni enviar.
+            // nav (que aloja el input para enviar comentarios + barra de emojis).
+            // Sin esto el modal quedaba encima del input de la barra inferior y
+            // bloqueaba los clicks → no se podía escribir ni enviar.
             paddingBottom: isBottomSheet
-              ? 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+              ? 'calc(105px + max(var(--safe-area-inset-bottom, 0px), 8px))'
               : 0,
           }}
         >

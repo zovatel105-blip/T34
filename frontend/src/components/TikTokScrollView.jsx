@@ -878,11 +878,12 @@ const TikTokPollCard = ({
           right: 0,
           bottom: 'auto',
           width: '100%',
-          // 🛠️ El post miniatura termina justo donde empieza el modal medio-abierto
-          // (el modal ocupa 46vh + 56px de input inferior). Así NO se solapa con
-          // el modal cuando está medio-abierto y solo el modal completamente
-          // expandido se superpone a la publicación.
-          height: 'calc(100dvh - 46dvh - 56px - 16px)',
+            // 🛠️ El post miniatura termina justo donde empieza el modal medio-abierto
+            // (el modal ocupa 46vh + ~105px de la barra inferior expandida con
+            // emojis + input). Así NO se solapa con el modal cuando está
+            // medio-abierto y solo el modal completamente expandido se
+            // superpone a la publicación.
+            height: 'calc(100dvh - 46dvh - 105px - 16px)',
           borderRadius: '20px',
           overflow: 'hidden',
           zIndex: 101,

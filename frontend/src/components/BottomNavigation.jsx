@@ -93,34 +93,60 @@ const BottomNavigation = () => {
       }}
     >
       {hideBottomNav && commentInputConfig ? (
-        <div className="px-4 py-2">
-          <form onSubmit={handleCommentSubmit} className="flex items-center bg-gray-100 rounded-full px-2.5 py-1.5">
-            <Avatar className="w-7 h-7 flex-shrink-0">
-              {user?.avatar_url ? (
-                <AvatarImage src={resolveAssetUrl(user.avatar_url)} alt={user?.username} />
-              ) : null}
-              <AvatarFallback className="bg-gray-300 text-gray-500 flex items-center justify-center">
-                <User className="w-3.5 h-3.5" />
-              </AvatarFallback>
-            </Avatar>
-            <input
-              ref={commentInputRef}
-              type="text"
-              placeholder="Add comment"
-              className="flex-1 px-2.5 py-0 text-sm bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none"
-              maxLength={500}
-              disabled={submittingComment}
-            />
-            <button
-              type="submit"
-              disabled={submittingComment}
-              className="flex-shrink-0 disabled:opacity-30"
-            >
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-          </form>
+        <div>
+          {/* 😊 Barra de emojis rápidos siempre visible: al tap inserta el
+              emoji en el campo de comentario. Estilo TikTok/Instagram. */}
+          <div
+            data-testid="quick-emoji-bar"
+            className="flex items-center justify-around px-4 py-3 border-t border-gray-100"
+          >
+            {['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'].map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                data-testid={`quick-emoji-${emoji}`}
+                onClick={() => {
+                  const input = commentInputRef.current;
+                  if (!input) return;
+                  const v = input.value || '';
+                  input.value = v + emoji;
+                  input.focus();
+                }}
+                className="text-[26px] leading-none transition-transform active:scale-90 hover:scale-125"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="px-4 py-2">
+            <form onSubmit={handleCommentSubmit} className="flex items-center bg-gray-100 rounded-full px-2.5 py-1.5">
+              <Avatar className="w-7 h-7 flex-shrink-0">
+                {user?.avatar_url ? (
+                  <AvatarImage src={resolveAssetUrl(user.avatar_url)} alt={user?.username} />
+                ) : null}
+                <AvatarFallback className="bg-gray-300 text-gray-500 flex items-center justify-center">
+                  <User className="w-3.5 h-3.5" />
+                </AvatarFallback>
+              </Avatar>
+              <input
+                ref={commentInputRef}
+                type="text"
+                placeholder="Add comment"
+                className="flex-1 px-2.5 py-0 text-sm bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none"
+                maxLength={500}
+                disabled={submittingComment}
+              />
+              <button
+                type="submit"
+                disabled={submittingComment}
+                className="flex-shrink-0 disabled:opacity-30"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </form>
+          </div>
         </div>
       ) : (
       <div className="flex items-center justify-around px-4 py-2.5">
