@@ -9814,6 +9814,12 @@ async def get_posts_using_audio(
                     is_featured=poll_data.get("is_featured", False),
                     time_ago=time_ago,  # ¡Campo faltante!
                     layout=poll_data.get("layout", "vertical"),  # 🎨 CRITICAL: Include layout to prevent split-screen issue
+                    # 🆚 VS Experience fields — críticos para que AudioDetailPage renderice
+                    # los duelos VS con la orientación correcta (vertical = lado a lado).
+                    vs_id=poll_data.get("vs_id"),
+                    vs_questions=poll_data.get("vs_questions", []),
+                    vs_orientation=poll_data.get("vs_orientation", "horizontal"),
+                    creator_country=poll_data.get("creator_country"),
                     # Post settings
                     comments_enabled=poll_data.get("comments_enabled", True),
                     show_vote_count=poll_data.get("show_vote_count", True)
