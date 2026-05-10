@@ -17,6 +17,7 @@ import PullToRefresh from '../components/PullToRefresh';
 import { useUpload } from '../contexts/UploadContext';
 import StoriesViewer from '../components/StoriesViewer';
 import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
+import VoteIcon from '../components/icons/VoteIcon';
 import { 
   Settings, SlidersHorizontal, Cog, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
   Share2, UserPlus, UserCheck, ChevronDown, Plus, BarChart3, Mail, MessageCircle, Send, Hash, Bell, BellOff, UserCircle, Link, X, Trash2, TrendingUp, User 
@@ -2132,7 +2133,7 @@ const ProfilePage = () => {
                 <div className="text-left">
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                      <Vote className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" strokeWidth={1.5} />
+                      <VoteIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" strokeWidth={250} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(displayUser?.totalVotes || 0)}</p>

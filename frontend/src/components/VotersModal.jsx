@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Vote, Loader2, User, Search, Heart, Eye, ChevronUp, ChevronDown } from 'lucide-react';
+import VoteIcon from './icons/VoteIcon';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -424,7 +425,7 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
 
               <div className="flex items-center justify-center gap-8 pt-4">
                 <div className="flex items-center gap-2">
-                  <Vote className={cn("w-5 h-5", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={1.5} />
+                  <VoteIcon className={cn("w-5 h-5", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={250} />
                   <span className={cn("text-lg font-normal", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                     {totalVotes.toLocaleString()}
                   </span>
@@ -449,7 +450,7 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
               ) : filteredVoters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
                   <div className={cn("w-14 h-14 rounded-full flex items-center justify-center mb-3", isMobile && isBottomNav ? "bg-gray-100" : "bg-white/10")}>
-                    <Vote className={cn("w-7 h-7", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} />
+                    <VoteIcon className={cn("w-7 h-7", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} />
                   </div>
                   <p className={cn("text-center text-sm", isMobile && isBottomNav ? "text-gray-400" : "text-white/50")}>
                     Aún no hay votos en esta publicación
