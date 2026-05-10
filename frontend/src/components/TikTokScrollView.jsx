@@ -1468,9 +1468,9 @@ const TikTokPollCard = ({
                   return (
                     <>
                       {showTrophy ? (
-                        <Trophy className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={2} />
+                        <Trophy className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={1.75} />
                       ) : (
-                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={400} />
+                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
                       )}
                       <span className="text-[11px] font-semibold whitespace-nowrap text-center px-1 max-w-[72px] truncate">
                         {(() => {
@@ -1493,7 +1493,7 @@ const TikTokPollCard = ({
                 className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
-                <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={400} />
+                <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
                 <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
               </button>
             )
