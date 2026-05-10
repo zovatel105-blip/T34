@@ -2133,7 +2133,7 @@ const ProfilePage = () => {
                 <div className="text-left">
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                      <VoteIcon className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" strokeWidth={250} />
+                      <VoteIcon className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" strokeWidth={320} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(displayUser?.totalVotes || 0)}</p>
