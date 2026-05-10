@@ -174,8 +174,12 @@ const TikTokPollCard = ({
   // tras el fetch a /api/vs/{vs_id}. Guardamos el override para mostrarlo
   // en el botón social de votos.
   const [vsTotalsOverride, setVsTotalsOverride] = useState({});
+  // 🎨 VS posts: lado votado por el usuario en la PRIMERA pregunta del post
+  // (a=lila #A855F7, b=azul #3B82F6). Se usa para colorear el botón social
+  // de votos. VSLayout dispara `vs:userVote` al votar / al prefetch.
+  const [vsUserVote, setVsUserVote] = useState({});
   useEffect(() => {
-    const handler = (e) => {
+    const onStats = (e) => {
       const { pollId, totalVotes } = e?.detail || {};
       if (!pollId || typeof totalVotes !== 'number') return;
       setVsTotalsOverride(prev => {
@@ -186,13 +190,31 @@ const TikTokPollCard = ({
         return { ...prev, [pollId]: totalVotes };
       });
     };
-    window.addEventListener('vs:statsUpdate', handler);
-    return () => window.removeEventListener('vs:statsUpdate', handler);
+    const onUserVote = (e) => {
+      const { pollId, votedSide } = e?.detail || {};
+      if (!pollId || (votedSide !== 'a' && votedSide !== 'b')) return;
+      setVsUserVote(prev => ({ ...prev, [pollId]: votedSide }));
+    };
+    window.addEventListener('vs:statsUpdate', onStats);
+    window.addEventListener('vs:userVote', onUserVote);
+    return () => {
+      window.removeEventListener('vs:statsUpdate', onStats);
+      window.removeEventListener('vs:userVote', onUserVote);
+    };
   }, []);
   const getDisplayedTotalVotes = (p) => {
     const override = vsTotalsOverride[p?.id];
     const base = Number(p?.totalVotes) || 0;
     return typeof override === 'number' ? Math.max(override, base) : base;
+  };
+  const getVoteButtonColor = (p) => {
+    // Solo colorear cuando es VS y el usuario ya votó en este post.
+    const isVS = p?.layout === 'vs' || !!p?.vs_id;
+    if (!isVS) return null;
+    const side = vsUserVote[p?.id];
+    if (side === 'a') return '#A855F7'; // Twyk lila (purple-500)
+    if (side === 'b') return '#3B82F6'; // Twyk azul (blue-500)
+    return null;
   };
   
   // Carousel state for multiple options
@@ -1516,8 +1538,11 @@ const TikTokPollCard = ({
                   e.stopPropagation();
                   setShowVotersModal(true);
                 }}
-                className="flex flex-col items-center gap-0.5 text-white hover:scale-110 transition-all duration-200 cursor-pointer"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
+                className="flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 cursor-pointer"
+                style={{
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))',
+                  color: getVoteButtonColor(poll) || '#fff'
+                }}
               >
                 <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
                 <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(getDisplayedTotalVotes(poll))}</span>

@@ -1185,6 +1185,19 @@ const VSLayout = ({
             detail: { pollId: poll.id, totalVotes: realTotal },
           }));
         }
+
+        // 4) 🎨 Determinar el lado votado por el usuario en la PRIMERA pregunta
+        // (la principal del post) para colorear el botón social: A=lila, B=azul.
+        const firstQ = questions[0];
+        if (firstQ && userVotes[firstQ.id]) {
+          const optsArr = Array.isArray(firstQ.options) ? firstQ.options : [];
+          const idx = optsArr.findIndex(o => o.id === userVotes[firstQ.id]);
+          if (idx === 0 || idx === 1) {
+            window.dispatchEvent(new CustomEvent('vs:userVote', {
+              detail: { pollId: poll.id, votedSide: idx === 0 ? 'a' : 'b' },
+            }));
+          }
+        }
       } catch (e) {
         // silent: si falla, se usa el snapshot local del poll
       }
@@ -1400,6 +1413,18 @@ const VSLayout = ({
     });
 
     // 🔇 Voz al votar desactivada por petición del usuario.
+
+    // 🎨 Notificar el lado votado SOLO si es la primera pregunta del post
+    // (la principal). El botón social se colorea: A=lila, B=azul.
+    const firstQuestionId = allQuestions[0]?.id;
+    if (currentQuestionId === firstQuestionId && currentQuestion?.options) {
+      const idx = currentQuestion.options.findIndex(o => o.id === optionId);
+      if ((idx === 0 || idx === 1) && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('vs:userVote', {
+          detail: { pollId: poll.id, votedSide: idx === 0 ? 'a' : 'b' },
+        }));
+      }
+    }
 
     // 🗳️ Persistir voto en el backend usando el endpoint específico VS,
     // que registra question_id + option_id por usuario (un voto por
