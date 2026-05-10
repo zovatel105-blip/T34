@@ -1527,7 +1527,7 @@ const TikTokPollCard = ({
                       {showTrophy ? (
                         <Trophy className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={1.75} />
                       ) : (
-                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={2.2} />
+                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
                       )}
                       <span className="text-[11px] font-semibold whitespace-nowrap text-center px-1 max-w-[72px] truncate">
                         {(() => {
@@ -1554,7 +1554,7 @@ const TikTokPollCard = ({
                   const voteColor = getVoteButtonColor(poll);
                   return (
                     <span style={{ color: voteColor || '#fff', display: 'inline-flex', transition: 'color 200ms' }}>
-                      <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={2.2} />
+                      <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
                     </span>
                   );
                 })()}

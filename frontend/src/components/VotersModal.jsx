@@ -425,7 +425,7 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
 
               <div className="flex items-center justify-center gap-8 pt-4">
                 <div className="flex items-center gap-2">
-                  <VoteIcon className={cn("w-7 h-7", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={2.2} />
+                  <VoteIcon className={cn("w-7 h-7", isMobile && isBottomNav ? "text-gray-700" : "text-white")} strokeWidth={320} />
                   <span className={cn("text-lg font-normal", isMobile && isBottomNav ? "text-gray-900" : "text-white")}>
                     {totalVotes.toLocaleString()}
                   </span>
@@ -450,7 +450,7 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
               ) : filteredVoters.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-6">
                   <div className={cn("w-14 h-14 rounded-full flex items-center justify-center mb-3", isMobile && isBottomNav ? "bg-gray-100" : "bg-white/10")}>
-                    <VoteIcon className={cn("w-9 h-9", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} strokeWidth={2.2} />
+                    <VoteIcon className={cn("w-9 h-9", isMobile && isBottomNav ? "text-gray-400" : "text-white/40")} strokeWidth={320} />
                   </div>
                   <p className={cn("text-center text-sm", isMobile && isBottomNav ? "text-gray-400" : "text-white/50")}>
                     Aún no hay votos en esta publicación
