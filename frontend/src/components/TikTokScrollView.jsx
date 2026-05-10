@@ -882,7 +882,7 @@ const TikTokPollCard = ({
           // (el modal ocupa 46vh + 56px de input inferior). Así NO se solapa con
           // el modal cuando está medio-abierto y solo el modal completamente
           // expandido se superpone a la publicación.
-          height: 'calc(100vh - 46vh - 56px - 16px)',
+          height: 'calc(100dvh - 46dvh - 56px - 16px)',
           borderRadius: '20px',
           overflow: 'hidden',
           zIndex: 101,
