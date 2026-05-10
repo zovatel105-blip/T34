@@ -699,16 +699,16 @@ const TikTokPollCard = ({
           className={cn(
             btnLayout,
             sideMode
-              ? cn("text-white hover:text-white", poll.userLiked && "text-red-500")
-              : cn("text-white hover:text-red-400 bg-black/20", poll.userLiked && "text-red-500 bg-red-500/20")
+              ? "text-white hover:text-white"
+              : cn("text-white hover:text-red-400 bg-black/20", poll.userLiked && "bg-red-500/20")
           )}
           style={dropShadowStyle}
         >
           <Heart className={cn(
             `${iconCls} flex-shrink-0 transition-all duration-200`,
-            poll.userLiked && "fill-current scale-110"
+            poll.userLiked && "fill-current scale-110 text-red-500"
           )} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.likes)}</span>
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.likes)}</span>
         </Button>
 
         {/* Comment */}
@@ -730,16 +730,19 @@ const TikTokPollCard = ({
           className={cn(
             btnLayout,
             sideMode
-              ? cn("text-white hover:text-white", (commentedPolls.has(poll.id) || poll.userCommented) && "text-blue-400")
+              ? "text-white hover:text-white"
               : ((commentedPolls.has(poll.id) || poll.userCommented)
-                  ? "text-blue-400 bg-blue-500/20 hover:text-blue-300"
+                  ? "text-white bg-blue-500/20 hover:text-blue-300"
                   : "text-white bg-black/20 hover:text-blue-400")
           )}
           style={dropShadowStyle}
         >
-          <MessageCircle className={`${iconCls} flex-shrink-0 ${(commentedPolls.has(poll.id) || poll.userCommented) ? 'fill-current' : ''}`} />
+          <MessageCircle className={cn(
+            `${iconCls} flex-shrink-0`,
+            (commentedPolls.has(poll.id) || poll.userCommented) && "fill-current text-blue-400"
+          )} />
           {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-            <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.comments)}</span>
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.comments)}</span>
           )}
         </Button>
 
@@ -794,15 +797,18 @@ const TikTokPollCard = ({
           className={cn(
             btnLayout,
             sideMode
-              ? cn("text-white hover:text-white", (sharedPolls.has(poll.id) || poll.userShared) && "text-green-400")
+              ? "text-white hover:text-white"
               : ((sharedPolls.has(poll.id) || poll.userShared)
-                  ? "text-green-400 bg-green-500/20 hover:text-green-300"
+                  ? "text-white bg-green-500/20 hover:text-green-300"
                   : "text-white bg-black/20 hover:text-green-400")
           )}
           style={dropShadowStyle}
         >
-          <Share2 className={`${iconCls} flex-shrink-0 ${(sharedPolls.has(poll.id) || poll.userShared) ? 'fill-current' : ''}`} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.shares)}</span>
+          <Share2 className={cn(
+            `${iconCls} flex-shrink-0`,
+            (sharedPolls.has(poll.id) || poll.userShared) && "fill-current text-green-400"
+          )} />
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.shares)}</span>
         </Button>
 
         {/* Save */}
@@ -846,15 +852,18 @@ const TikTokPollCard = ({
               btnLayout,
               "cursor-pointer pointer-events-auto z-50",
               sideMode
-                ? cn("text-white hover:text-white", (savedPolls.has(poll.id) || poll.isSaved) && "text-yellow-400")
+                ? "text-white hover:text-white"
                 : ((savedPolls.has(poll.id) || poll.isSaved)
-                    ? "text-yellow-400 bg-yellow-500/20 hover:text-yellow-300"
+                    ? "text-white bg-yellow-500/20 hover:text-yellow-300"
                     : "text-white bg-black/20 hover:text-yellow-400")
             )}
             style={{ pointerEvents: 'auto', ...(dropShadowStyle || {}) }}
           >
-            <Bookmark className={`${iconCls} flex-shrink-0 ${(savedPolls.has(poll.id) || poll.isSaved) ? 'fill-current' : ''}`} />
-            <span className={`font-medium ${txtCls} whitespace-nowrap`}>{formatNumber(poll.saves_count || 0)}</span>
+            <Bookmark className={cn(
+              `${iconCls} flex-shrink-0`,
+              (savedPolls.has(poll.id) || poll.isSaved) && "fill-current text-yellow-400"
+            )} />
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.saves_count || 0)}</span>
           </Button>
         )}
 
@@ -1538,14 +1547,21 @@ const TikTokPollCard = ({
                   e.stopPropagation();
                   setShowVotersModal(true);
                 }}
-                className="flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 cursor-pointer"
-                style={{
-                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))',
-                  color: getVoteButtonColor(poll) || '#fff'
-                }}
+                className="flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 cursor-pointer text-white"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
-                <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
-                <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(getDisplayedTotalVotes(poll))}</span>
+                {(() => {
+                  const voteColor = getVoteButtonColor(poll);
+                  return (
+                    <VoteIcon
+                      className="w-[40px] h-[40px] flex-shrink-0"
+                      strokeWidth={320}
+                      fillColor={voteColor || 'currentColor'}
+                      strokeColor={voteColor ? '#fff' : 'currentColor'}
+                    />
+                  );
+                })()}
+                <span className="text-[12px] font-medium whitespace-nowrap leading-none text-white">{formatNumber(getDisplayedTotalVotes(poll))}</span>
               </button>
             )
           )}
