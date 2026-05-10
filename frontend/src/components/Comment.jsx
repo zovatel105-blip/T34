@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, MessageCircle, MoreHorizontal, Edit3, Trash2, 
@@ -291,46 +292,46 @@ const Comment = ({
                 {comment.content}
               </p>
 
-              {/* Emoji reaction picker (long-press) — fijo encima del input */}
-              <AnimatePresence>
-                {showReactionPicker && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-[150]"
-                      onClick={() => setShowReactionPicker(false)}
-                    />
-                    <motion.div
-                      data-testid="comment-reaction-picker"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 12 }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-                      className={cn(
-                        "fixed left-0 right-0 z-[160] flex items-center justify-around px-4 py-3 border-t",
-                        bottomSheetMode ? "bg-white border-gray-100" : "bg-zinc-900 border-white/10"
-                      )}
-                      style={{
-                        // Justo encima del input "Add comment" del bottom nav
-                        bottom: 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
-                      }}
-                    >
-                      {QUICK_EMOJIS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          data-testid={`react-emoji-${emoji}`}
-                          onClick={(e) => { e.stopPropagation(); handleReact(emoji); }}
-                          className={cn(
-                            "text-[28px] leading-none transition-transform active:scale-90 hover:scale-125",
-                            comment.user_reaction === emoji && "scale-125"
-                          )}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+              {/* Emoji reaction picker (long-press) — portalizado a body para
+                  escapar de los transforms del modal y quedar fijo al viewport */}
+              {showReactionPicker && createPortal(
+                <AnimatePresence>
+                  <div
+                    className="fixed inset-0 z-[150]"
+                    onClick={() => setShowReactionPicker(false)}
+                  />
+                  <motion.div
+                    data-testid="comment-reaction-picker"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 12 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                    className={cn(
+                      "fixed left-0 right-0 z-[160] flex items-center justify-around px-4 py-3 border-t",
+                      bottomSheetMode ? "bg-white border-gray-100" : "bg-zinc-900 border-white/10"
+                    )}
+                    style={{
+                      // Justo encima del input "Add comment" del bottom nav
+                      bottom: 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+                    }}
+                  >
+                    {QUICK_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        data-testid={`react-emoji-${emoji}`}
+                        onClick={(e) => { e.stopPropagation(); handleReact(emoji); }}
+                        className={cn(
+                          "text-[28px] leading-none transition-transform active:scale-90 hover:scale-125",
+                          comment.user_reaction === emoji && "scale-125"
+                        )}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>,
+                document.body
+              )}
 
               {/* Reaction chips (debajo del texto) */}
               {comment.reactions && Object.keys(comment.reactions).length > 0 && (
