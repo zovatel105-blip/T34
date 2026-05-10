@@ -1553,12 +1553,9 @@ const TikTokPollCard = ({
                 {(() => {
                   const voteColor = getVoteButtonColor(poll);
                   return (
-                    <VoteIcon
-                      className="w-[40px] h-[40px] flex-shrink-0"
-                      strokeWidth={320}
-                      fillColor={voteColor || 'currentColor'}
-                      strokeColor={voteColor ? '#fff' : 'currentColor'}
-                    />
+                    <span style={{ color: voteColor || '#fff', display: 'inline-flex', transition: 'color 200ms' }}>
+                      <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
+                    </span>
                   );
                 })()}
                 <span className="text-[12px] font-medium whitespace-nowrap leading-none text-white">{formatNumber(getDisplayedTotalVotes(poll))}</span>
