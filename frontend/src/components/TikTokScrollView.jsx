@@ -159,7 +159,13 @@ const TikTokPollCard = ({
   const [audioContextActivated, setAudioContextActivated] = useState(false);
   const { isBottomNav } = useNavPreference();
   const { hideRightNavigation } = useTikTok();
-  const isBottomNavVisible = isBottomNav && !hideRightNavigation;
+  // 🎯 LAYOUT MODE: refleja la preferencia del usuario (botones sociales a un lado vs abajo).
+  // Debe permanecer constante aunque la barra inferior se oculte (vista inmersiva en
+  // Profile/Audio/PostViewer/etc.) — los botones sociales laterales deben seguir visibles
+  // en todas las páginas que renderizan TikTokScrollView, no solo en /feed.
+  const isBottomNavVisible = isBottomNav;
+  // 📐 Visibilidad REAL de la barra inferior (para reservar 56px de padding cuando aplica).
+  const isBottomNavBarShown = isBottomNav && !hideRightNavigation;
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [isVotersExpanded, setIsVotersExpanded] = useState(false);
   
@@ -1330,7 +1336,7 @@ const TikTokPollCard = ({
             layout={layout}
             // 🧭 NAV: pass nav-bar state so layouts (e.g. VSLayout)
             // can position overlays based on visible nav bar.
-            isBottomNavVisible={isBottomNavVisible}
+            isBottomNavVisible={isBottomNavBarShown}
           />
         )}
       </div>
@@ -1338,7 +1344,7 @@ const TikTokPollCard = ({
       {/* Bottom info and actions - Enhanced with safe area */}
       <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pt-8 pointer-events-none"
            style={{ 
-             paddingBottom: isPostMiniature ? 'max(0.5rem, var(--safe-area-inset-bottom))' : (isBottomNavVisible ? 'calc(56px + max(0.5rem, var(--safe-area-inset-bottom)))' : 'max(1.5rem, var(--safe-area-inset-bottom))'),
+             paddingBottom: isPostMiniature ? 'max(0.5rem, var(--safe-area-inset-bottom))' : (isBottomNavBarShown ? 'calc(56px + max(0.5rem, var(--safe-area-inset-bottom)))' : (isBottomNavVisible ? 'max(0.5rem, var(--safe-area-inset-bottom))' : 'max(1.5rem, var(--safe-area-inset-bottom))')),
              paddingLeft: 'max(1rem, var(--safe-area-inset-left))',
              paddingRight: 'max(1rem, var(--safe-area-inset-right))'
            }}>
@@ -1507,7 +1513,7 @@ const TikTokPollCard = ({
             className="absolute z-30 pointer-events-auto"
             style={{
               right: 'max(0.5rem, var(--safe-area-inset-right))',
-              bottom: 'calc(56px + max(0.75rem, var(--safe-area-inset-bottom)))'
+              bottom: isBottomNavBarShown ? 'calc(56px + max(0.75rem, var(--safe-area-inset-bottom)))' : 'max(0.75rem, var(--safe-area-inset-bottom))'
             }}
           >
             <MusicPlayer
