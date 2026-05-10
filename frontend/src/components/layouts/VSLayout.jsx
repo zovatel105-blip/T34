@@ -1165,6 +1165,26 @@ const VSLayout = ({
             return next;
           });
         }
+
+        // 3) 📣 Notificar el TOTAL real de votos al contenedor (TikTokScrollView)
+        // para que el contador del botón social refleje el conteo real de
+        // `vs_experiences` (no el snapshot estancado de `polls.total_votes`).
+        // Se prefiere `total_participants` (usuarios únicos que votaron); si no
+        // existe, se calcula como suma de votos / nº de preguntas (~ usuarios).
+        const totalParticipants = Number(data?.total_participants) || 0;
+        let realTotal = totalParticipants;
+        if (!realTotal && questions.length > 0) {
+          const sumAll = questions.reduce((acc, q) => {
+            const opts = Array.isArray(q?.options) ? q.options : [];
+            return acc + opts.reduce((s, o) => s + (Number(o?.votes) || 0), 0);
+          }, 0);
+          realTotal = Math.round(sumAll / questions.length);
+        }
+        if (realTotal > 0 && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('vs:statsUpdate', {
+            detail: { pollId: poll.id, totalVotes: realTotal },
+          }));
+        }
       } catch (e) {
         // silent: si falla, se usa el snapshot local del poll
       }

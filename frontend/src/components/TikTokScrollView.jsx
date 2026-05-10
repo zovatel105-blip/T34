@@ -168,6 +168,32 @@ const TikTokPollCard = ({
   const isBottomNavBarShown = isBottomNav && !hideRightNavigation;
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [isVotersExpanded, setIsVotersExpanded] = useState(false);
+
+  // 🗳️ VS posts: el snapshot `polls.total_votes` no se actualiza al votar
+  // en el endpoint VS. VSLayout dispara `vs:statsUpdate` con el conteo real
+  // tras el fetch a /api/vs/{vs_id}. Guardamos el override para mostrarlo
+  // en el botón social de votos.
+  const [vsTotalsOverride, setVsTotalsOverride] = useState({});
+  useEffect(() => {
+    const handler = (e) => {
+      const { pollId, totalVotes } = e?.detail || {};
+      if (!pollId || typeof totalVotes !== 'number') return;
+      setVsTotalsOverride(prev => {
+        const cur = prev[pollId];
+        // Mantenemos siempre el valor MÁS ALTO conocido para evitar que el
+        // contador "baje" por carreras de eventos durante votos optimistas.
+        if (typeof cur === 'number' && cur >= totalVotes) return prev;
+        return { ...prev, [pollId]: totalVotes };
+      });
+    };
+    window.addEventListener('vs:statsUpdate', handler);
+    return () => window.removeEventListener('vs:statsUpdate', handler);
+  }, []);
+  const getDisplayedTotalVotes = (p) => {
+    const override = vsTotalsOverride[p?.id];
+    const base = Number(p?.totalVotes) || 0;
+    return typeof override === 'number' ? Math.max(override, base) : base;
+  };
   
   // Carousel state for multiple options
   // When coming from AudioDetailPage, start at the slide matching the current audio
@@ -1379,7 +1405,7 @@ const TikTokPollCard = ({
                 }}
                 className="inline-flex items-center px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm text-white/90 font-semibold text-sm hover:text-white transition-colors cursor-pointer"
               >
-                {formatNumber(poll.totalVotes)} votos
+                {formatNumber(getDisplayedTotalVotes(poll))} votos
               </button>
             )}
           </div>
@@ -1494,7 +1520,7 @@ const TikTokPollCard = ({
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' }}
               >
                 <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
-                <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(poll.totalVotes)}</span>
+                <span className="text-[12px] font-medium whitespace-nowrap leading-none">{formatNumber(getDisplayedTotalVotes(poll))}</span>
               </button>
             )
           )}
