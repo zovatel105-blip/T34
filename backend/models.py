@@ -408,12 +408,28 @@ class CommentResponse(BaseModel):
     replies: List["CommentResponse"] = []  # Lista de comentarios hijos
     reply_count: int = 0  # Conteo total de respuestas anidadas
     user_liked: bool = False  # Si el usuario actual le dio like
+    # Reacciones rápidas (emoji): {emoji: count}
+    reactions: Dict[str, int] = Field(default_factory=dict)
+    user_reaction: Optional[str] = None  # Emoji con el que el usuario actual reaccionó
 
 class CommentLike(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     comment_id: str
     user_id: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommentReaction(BaseModel):
+    """Reacción rápida con emoji a un comentario.
+    Un usuario solo puede tener UNA reacción activa por comentario; cambiar de
+    emoji reemplaza la anterior."""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    comment_id: str
+    user_id: str
+    emoji: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ReactionRequest(BaseModel):
+    emoji: str
 
 # =============  POLL MODELS =============
 
