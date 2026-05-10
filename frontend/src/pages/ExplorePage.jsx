@@ -15,12 +15,14 @@ import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useTranslation } from '../hooks/useTranslation';
 import AppConfig from '../config/config';
 
 const ExplorePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const { enterTikTokMode, exitTikTokMode } = useTikTok();
+  const { t } = useTranslation();
   const [battles, setBattles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedPolls, setSavedPolls] = useState(new Set());
@@ -269,7 +271,7 @@ const ExplorePage = () => {
       try {
         await navigator.share({
           title: battle.title,
-          text: battle.title || 'Mira este reto',
+          text: battle.title || t('explore.shareText'),
           url: `${window.location.origin}/explore`
         });
         setSharedPolls(prev => new Set([...prev, pollId]));
@@ -322,8 +324,8 @@ const ExplorePage = () => {
       const result = await savedPollsService.toggleSavePoll(pollId);
       
       toast({
-        title: result.saved ? "¡Guardado!" : "Eliminado de guardados",
-        description: result.saved ? "El reto ha sido guardado" : "El reto ha sido eliminado de guardados",
+        title: result.saved ? t('explore.toast.savedTitle') : t('explore.toast.unsavedTitle'),
+        description: result.saved ? t('explore.toast.savedDesc') : t('explore.toast.unsavedDesc'),
         duration: 2000,
       });
     } catch (error) {
@@ -350,7 +352,7 @@ const ExplorePage = () => {
         <div className="flex items-center pointer-events-auto">
           <h1 className="text-white text-lg font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
-            Retos Completados
+            {t('explore.title')}
           </h1>
         </div>
       </div>
@@ -367,8 +369,8 @@ const ExplorePage = () => {
         showLogo={false}
         showActiveChallengesButton={true}
         isInitialLoading={loading}
-        emptyMessage="Próximamente"
-        emptySubMessage="Esta sección está en construcción."
+        emptyMessage={t('explore.empty.title')}
+        emptySubMessage={t('explore.empty.desc')}
         savedPolls={savedPolls}
         setSavedPolls={setSavedPolls}
         commentedPolls={commentedPolls}

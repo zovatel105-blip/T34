@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../hooks/useTranslation';
 
 const AuthPage = () => {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -13,7 +15,7 @@ const AuthPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  
+
   const { login, register, loginLoading, registrationLoading } = useAuth();
   const navigate = useNavigate();
   const loading = loginLoading || registrationLoading;
@@ -21,39 +23,39 @@ const AuthPage = () => {
   // Form validation
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (isLogin) {
       // Login: accept email or username
       if (!formData.email.trim()) {
-        newErrors.email = 'Email requerido';
+        newErrors.email = t('auth.errors.emailRequired');
       }
     } else {
       // Register: require valid email
       if (!formData.email.trim()) {
-        newErrors.email = 'Email requerido';
+        newErrors.email = t('auth.errors.emailRequired');
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Email inválido';
+        newErrors.email = t('auth.errors.emailInvalid');
       }
     }
-    
+
     if (!formData.password.trim()) {
-      newErrors.password = 'Contraseña requerida';
+      newErrors.password = t('auth.errors.passwordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Mínimo 6 caracteres';
+      newErrors.password = t('auth.errors.passwordMin');
     }
-    
+
     if (!isLogin) {
       if (!formData.username.trim()) {
-        newErrors.username = 'Usuario requerido';
+        newErrors.username = t('auth.errors.usernameRequired');
       } else if (formData.username.length < 3) {
-        newErrors.username = 'Mínimo 3 caracteres';
+        newErrors.username = t('auth.errors.usernameMin');
       }
-      
+
       if (!formData.display_name.trim()) {
-        newErrors.display_name = 'Nombre requerido';
+        newErrors.display_name = t('auth.errors.nameRequired');
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -65,7 +67,7 @@ const AuthPage = () => {
       ...prev,
       [name]: value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -77,14 +79,14 @@ const AuthPage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setErrors({});
 
     try {
       let result;
-      
+
       if (isLogin) {
         result = await login(formData.email, formData.password);
       } else {
@@ -103,28 +105,28 @@ const AuthPage = () => {
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setErrors({ general: "Error inesperado. Intenta de nuevo." });
+      setErrors({ general: t('auth.errors.unexpected') });
     }
   };
 
   // Handle authentication errors
   const handleAuthError = (error) => {
     let errorMessage = error;
-    
+
     if (error.toLowerCase().includes('incorrect email') || error.toLowerCase().includes('incorrect email/username')) {
-      errorMessage = 'Email/usuario o contraseña incorrectos';
+      errorMessage = t('auth.errors.wrongCredentials');
     } else if (error.toLowerCase().includes('user already exists') || error.toLowerCase().includes('email already registered')) {
-      errorMessage = 'Email ya registrado';
+      errorMessage = t('auth.errors.emailTaken');
       setErrors({ email: errorMessage });
       return;
     } else if (error.toLowerCase().includes('username already exists')) {
-      errorMessage = 'Usuario ya existe';
+      errorMessage = t('auth.errors.usernameTaken');
       setErrors({ username: errorMessage });
       return;
     } else if (error.toLowerCase().includes('social login') || error.toLowerCase().includes('google sign-in')) {
-      errorMessage = 'Esta cuenta usa inicio de sesión con Google. Usa el botón de Google.';
+      errorMessage = t('auth.errors.googleAccount');
     }
-    
+
     setErrors({ general: errorMessage });
   };
 
@@ -152,12 +154,12 @@ const AuthPage = () => {
       </div>
 
       <div className="w-full max-w-md md:max-w-lg relative z-10">
-        
+
         {/* Header - Responsive design */}
         <div className="text-center mb-8 md:mb-12">
           {/* Logo personalizado */}
           <div className="inline-flex items-center justify-center mb-10 md:mb-6">
-            <img 
+            <img
               src="/twyk-auth-logo.png"
               alt="Twyk Logo"
               className="w-72 h-72 md:w-48 md:h-48 object-contain"
@@ -165,16 +167,16 @@ const AuthPage = () => {
           </div>
           {/* Title - Hidden on mobile for Twyk style */}
           <h1 className="hidden md:block text-3xl font-bold text-black mb-2">
-            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            {isLogin ? t('auth.title.login') : t('auth.title.register')}
           </h1>
           <p className="hidden md:block text-gray-600">
-            {isLogin ? 'Accede a tu cuenta' : 'Únete a nosotros'}
+            {isLogin ? t('auth.subtitle.login') : t('auth.subtitle.register')}
           </p>
         </div>
 
         {/* Form - Twyk style spacing on mobile */}
         <form onSubmit={handleSubmit} className="space-y-3 md:space-y-6">
-          
+
           {/* General Error */}
           {errors.general && (
             <div className="p-3 md:p-4 border border-red-500 md:border-black bg-red-50 md:bg-gray-50 rounded-md md:rounded-none flex items-start gap-3">
@@ -183,10 +185,10 @@ const AuthPage = () => {
             </div>
           )}
 
-          {/* Email/Username Field - Twyk style */}
+          {/* Email/Username Field */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-black hidden md:block">
-              Email
+              {t('auth.labels.email')}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
@@ -198,7 +200,7 @@ const AuthPage = () => {
                 className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                   errors.email ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                 }`}
-                placeholder="username, email or mobile number"
+                placeholder={isLogin ? t('auth.placeholders.emailLogin') : t('auth.placeholders.emailRegister')}
                 disabled={loading}
               />
             </div>
@@ -210,10 +212,10 @@ const AuthPage = () => {
           {/* Register-only fields */}
           {!isLogin && (
             <>
-              {/* Username Field - Twyk style */}
+              {/* Username Field */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-black hidden md:block">
-                  Usuario
+                  {t('auth.labels.username')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
@@ -225,7 +227,7 @@ const AuthPage = () => {
                     className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                       errors.username ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                     }`}
-                    placeholder="username"
+                    placeholder={t('auth.placeholders.username')}
                     disabled={loading}
                   />
                 </div>
@@ -234,10 +236,10 @@ const AuthPage = () => {
                 )}
               </div>
 
-              {/* Display Name Field - Twyk style */}
+              {/* Display Name Field */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-black hidden md:block">
-                  Nombre
+                  {t('auth.labels.displayName')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
@@ -249,7 +251,7 @@ const AuthPage = () => {
                     className={`w-full md:pl-10 px-4 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                       errors.display_name ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                     }`}
-                    placeholder="Full Name"
+                    placeholder={t('auth.placeholders.displayName')}
                     disabled={loading}
                   />
                 </div>
@@ -260,10 +262,10 @@ const AuthPage = () => {
             </>
           )}
 
-          {/* Password Field - Twyk style */}
+          {/* Password Field */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-black hidden md:block">
-              Contraseña
+              {t('auth.labels.password')}
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hidden md:block" />
@@ -275,7 +277,7 @@ const AuthPage = () => {
                 className={`w-full md:pl-10 px-4 pr-12 py-3 border text-sm md:text-base text-black placeholder-gray-400 bg-gray-50 md:bg-white rounded-md md:rounded-none focus:outline-none focus:border-purple-600 md:focus:border-black transition-colors ${
                   errors.password ? 'border-red-500' : 'border-gray-300 md:border-gray-200'
                 }`}
-                placeholder="Password"
+                placeholder={t('auth.placeholders.password')}
                 disabled={loading}
               />
               <button
@@ -292,27 +294,27 @@ const AuthPage = () => {
             )}
           </div>
 
-          {/* Forgot Password - Mobile only, Twyk style */}
+          {/* Forgot Password - Mobile only */}
           {isLogin && (
             <div className="text-right md:hidden -mt-2">
               <button
                 type="button"
                 className="text-sm text-purple-600 font-semibold hover:text-purple-800 transition-colors"
               >
-                Forgot password?
+                {t('auth.forgotPassword')}
               </button>
             </div>
           )}
 
-          {/* Submit Button - Purple on mobile, Black on desktop */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-purple-600 md:bg-black text-white py-3.5 md:py-4 font-semibold rounded-lg md:rounded-none hover:bg-purple-700 md:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-600 md:focus:ring-black focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading 
-              ? (isLogin ? 'Iniciando...' : 'Creando...') 
-              : (isLogin ? 'Log in' : 'Sign up')
+            {loading
+              ? (isLogin ? t('auth.submit.loadingLogin') : t('auth.submit.loadingRegister'))
+              : (isLogin ? t('auth.submit.login') : t('auth.submit.register'))
             }
           </button>
 
@@ -322,11 +324,11 @@ const AuthPage = () => {
               <div className="w-full border-t border-gray-300 md:border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-semibold md:font-normal">OR</span>
+              <span className="px-4 bg-white text-gray-500 font-semibold md:font-normal">{t('auth.or')}</span>
             </div>
           </div>
 
-          {/* Google OAuth Button - Twyk style on mobile */}
+          {/* Google OAuth Button */}
           <button
             type="button"
             onClick={() => {
@@ -344,25 +346,15 @@ const AuthPage = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="currentColor"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="currentColor"/>
             </svg>
-            <span className="hidden md:inline">Continuar con Google</span>
-            <span className="md:hidden">Log in with Google</span>
+            <span className="hidden md:inline">{t('auth.googleContinue')}</span>
+            <span className="md:hidden">{t('auth.googleLogin')}</span>
           </button>
         </form>
 
-        {/* Toggle Auth Mode - Twyk style on mobile */}
+        {/* Toggle Auth Mode */}
         <div className="mt-6 md:mt-8 text-center">
           <p className="text-gray-600 text-sm md:text-base">
-            {isLogin ? (
-              <>
-                <span className="hidden md:inline">¿No tienes cuenta?</span>
-                <span className="md:hidden">Don't have an account?</span>
-              </>
-            ) : (
-              <>
-                <span className="hidden md:inline">¿Ya tienes cuenta?</span>
-                <span className="md:hidden">Have an account?</span>
-              </>
-            )}
+            {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
             {' '}
             <button
               type="button"
@@ -370,17 +362,7 @@ const AuthPage = () => {
               disabled={loading}
               className="text-purple-600 md:text-black font-semibold md:font-medium hover:underline transition-colors disabled:opacity-50"
             >
-              {isLogin ? (
-                <>
-                  <span className="hidden md:inline">Crear una</span>
-                  <span className="md:hidden">Sign up</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden md:inline">Iniciar sesión</span>
-                  <span className="md:hidden">Log in</span>
-                </>
-              )}
+              {isLogin ? t('auth.createOne') : t('auth.logIn')}
             </button>
           </p>
         </div>
@@ -388,7 +370,7 @@ const AuthPage = () => {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-gray-400 text-xs">
-            Al continuar, aceptas nuestros términos y política de privacidad
+            {t('auth.footer')}
           </p>
         </div>
       </div>

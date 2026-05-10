@@ -6,11 +6,13 @@ import { useAuth } from '../contexts/AuthContext';
 import CircularCrop from '../components/CircularCrop';
 import uploadService from '../services/uploadService';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { useTranslation } from '../hooks/useTranslation';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
-  const { user, updateUser, apiRequest } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
@@ -72,10 +74,10 @@ const EditProfilePage = () => {
       const uploadResult = await uploadService.uploadAvatar(file);
       const permanentUrl = uploadService.getPublicUrl(uploadResult.public_url);
       setFormData(prev => ({ ...prev, avatar_url: permanentUrl }));
-      toast({ title: "¡Foto recortada y guardada!", description: "Tu nueva foto de perfil está lista. No olvides guardar los cambios.", variant: "default" });
+      toast({ title: t('editProfile.toast.photoCroppedTitle'), description: t('editProfile.toast.photoCroppedDesc'), variant: "default" });
     } catch (error) {
       console.error('Error al subir la imagen recortada:', error);
-      toast({ title: "Error al subir imagen", description: error.message || "No se pudo subir la imagen.", variant: "destructive" });
+      toast({ title: t('editProfile.toast.uploadErrorTitle'), description: error.message || t('editProfile.toast.uploadErrorDesc'), variant: "destructive" });
     }
   };
 
@@ -90,17 +92,17 @@ const EditProfilePage = () => {
       if (formData.avatar_url.trim() !== (user.avatar_url || '')) updateData.avatar_url = formData.avatar_url.trim();
 
       if (Object.keys(updateData).length === 0) {
-        toast({ title: "Sin cambios", description: "No hay cambios que guardar", variant: "default" });
+        toast({ title: t('editProfile.toast.noChangesTitle'), description: t('editProfile.toast.noChangesDesc'), variant: "default" });
         setLoading(false);
         return;
       }
 
       await updateUser(updateData);
-      toast({ title: "¡Perfil actualizado!", description: "Los cambios se han guardado exitosamente", variant: "default" });
+      toast({ title: t('editProfile.toast.successTitle'), description: t('editProfile.toast.successDesc'), variant: "default" });
       navigate(-1);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast({ title: "Error al actualizar", description: error.message || "No se pudo conectar con el servidor", variant: "destructive" });
+      toast({ title: t('editProfile.toast.errorTitle'), description: error.message || t('editProfile.toast.errorDesc'), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -108,9 +110,9 @@ const EditProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header (sticky para que no se deslice) */}
-      <div 
-        className="sticky top-0 z-20 relative w-full flex items-center justify-center px-4 py-4 transition-colors duration-300" 
+      {/* Header (sticky) */}
+      <div
+        className="sticky top-0 z-20 relative w-full flex items-center justify-center px-4 py-4 transition-colors duration-300"
         style={{backgroundColor: isScrolled ? 'white' : 'rgba(176, 97, 255, 0.1)'}}
       >
         <button
@@ -121,14 +123,14 @@ const EditProfilePage = () => {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <div className="flex-1 flex items-center justify-center">
-          <h1 className="text-lg font-semibold text-gray-900 mt-3">Editar perfil</h1>
+          <h1 className="text-lg font-semibold text-gray-900 mt-3">{t('editProfile.title')}</h1>
         </div>
       </div>
 
       {/* Contenido scrolleable */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <form id="edit-profile-form" onSubmit={handleSubmit} className="min-h-full">
-          
+
           {/* Foto de perfil hero section */}
           <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, rgba(176, 97, 255, 0.1), white)'}}>
             <div className="flex flex-col items-center">
@@ -139,7 +141,7 @@ const EditProfilePage = () => {
                   className="relative w-36 h-36 rounded-full overflow-hidden bg-white ring-4 ring-white shadow-xl transition-all duration-300 group-hover:shadow-2xl hover:ring-blue-200 cursor-pointer group"
                 >
                   {formData.avatar_url ? (
-                    <img src={resolveAssetUrl(formData.avatar_url)} alt="Foto de perfil" className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75" />
+                    <img src={resolveAssetUrl(formData.avatar_url)} alt={t('editProfile.profilePhotoAlt')} className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                       <User className="w-16 h-16 text-gray-400" />
@@ -151,34 +153,34 @@ const EditProfilePage = () => {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               </div>
-              <p className="text-sm text-gray-500">Toca para cambiar foto</p>
+              <p className="text-sm text-gray-500">{t('editProfile.tapChangePhoto')}</p>
             </div>
           </div>
 
-          {/* Formulario — campos en tarjetas redondeadas */}
+          {/* Formulario */}
           <div className="px-5 py-6 flex flex-col gap-3">
             <div className="p-4 rounded-2xl bg-gray-50">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('editProfile.labels.name')}</label>
               <input
                 type="text"
                 value={formData.display_name}
                 onChange={(e) => handleChange('display_name', e.target.value)}
-                placeholder="Tu nombre completo"
+                placeholder={t('editProfile.placeholders.name')}
                 maxLength={50}
                 className="w-full text-base font-medium text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none"
               />
               <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-400">Así te verán otros usuarios</p>
+                <p className="text-xs text-gray-400">{t('editProfile.hints.name')}</p>
                 <p className="text-xs text-gray-300">{formData.display_name.length}/50</p>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Biografía</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('editProfile.labels.bio')}</label>
               <textarea
                 value={formData.bio}
                 onChange={(e) => handleChange('bio', e.target.value)}
-                placeholder="¿Qué te apasiona? Comparte lo que quieras..."
+                placeholder={t('editProfile.placeholders.bio')}
                 maxLength={160}
                 rows={4}
                 className="w-full text-base text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none resize-none leading-relaxed"
@@ -189,17 +191,17 @@ const EditProfilePage = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Ocupación</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{t('editProfile.labels.occupation')}</label>
               <input
                 type="text"
                 value={formData.occupation}
                 onChange={(e) => handleChange('occupation', e.target.value)}
-                placeholder="Estudiante, Diseñador, Músico..."
+                placeholder={t('editProfile.placeholders.occupation')}
                 maxLength={100}
                 className="w-full text-base font-medium text-gray-900 placeholder-gray-300 bg-transparent border-0 focus:outline-none"
               />
               <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-400">Campo opcional</p>
+                <p className="text-xs text-gray-400">{t('editProfile.hints.occupation')}</p>
                 <p className="text-xs text-gray-300">{formData.occupation.length}/100</p>
               </div>
             </div>
@@ -217,7 +219,7 @@ const EditProfilePage = () => {
             onClick={() => navigate(-1)}
             className="flex-1 h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-all duration-200 active:scale-95"
           >
-            Cancelar
+            {t('editProfile.cancel')}
           </button>
           <button
             type="submit"
@@ -231,10 +233,10 @@ const EditProfilePage = () => {
             {loading ? (
               <div className="flex items-center justify-center">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Guardando...
+                {t('editProfile.saving')}
               </div>
             ) : (
-              'Guardar cambios'
+              t('editProfile.save')
             )}
           </button>
         </div>

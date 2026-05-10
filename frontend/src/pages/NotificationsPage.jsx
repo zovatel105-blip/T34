@@ -5,8 +5,9 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Bell, Heart, MessageCircle, Users, Vote, Trophy, Clock, User } from 'lucide-react';
 import PullToRefresh from '../components/PullToRefresh';
+import { useTranslation } from '../hooks/useTranslation';
 
-const NotificationItem = ({ type, user, message, time, poll, isNew = false }) => {
+const NotificationItem = ({ type, user, message, time, poll, isNew = false, t }) => {
   const getIcon = () => {
     switch (type) {
       case 'like': return <Heart className="w-4 h-4 text-red-500" />;
@@ -41,7 +42,7 @@ const NotificationItem = ({ type, user, message, time, poll, isNew = false }) =>
               </AvatarFallback>
             </Avatar>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-semibold text-gray-900">{user}</span>
@@ -50,13 +51,13 @@ const NotificationItem = ({ type, user, message, time, poll, isNew = false }) =>
               </div>
               {isNew && (
                 <Badge variant="default" className="text-xs bg-blue-600">
-                  Nuevo
+                  {t('notifications.newBadge')}
                 </Badge>
               )}
             </div>
-            
+
             <p className="text-sm text-gray-700 mb-2">{message}</p>
-            
+
             {poll && (
               <div className="bg-white/60 rounded-lg p-2 mb-2">
                 <p className="text-xs font-medium text-gray-600 truncate">
@@ -64,16 +65,16 @@ const NotificationItem = ({ type, user, message, time, poll, isNew = false }) =>
                 </p>
               </div>
             )}
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Clock className="w-3 h-3" />
                 <span>{time}</span>
               </div>
-              
+
               {type === 'follow' && (
                 <Button size="sm" variant="outline" className="text-xs h-6 px-2">
-                  Seguir
+                  {t('notifications.followBack')}
                 </Button>
               )}
             </div>
@@ -85,13 +86,15 @@ const NotificationItem = ({ type, user, message, time, poll, isNew = false }) =>
 };
 
 const NotificationsPage = () => {
+  const { t } = useTranslation();
+
   const notifications = [
     {
       id: 1,
       type: 'like',
       user: 'MariaGonzalez',
-      message: 'le dio like a tu votación',
-      time: 'hace 5 min',
+      message: t('notifications.messages.liked'),
+      time: t('notifications.time.minAgo', { n: 5 }),
       poll: '¿Quién ganó el mejor outfit de hoy?',
       isNew: true
     },
@@ -99,8 +102,8 @@ const NotificationsPage = () => {
       id: 2,
       type: 'comment',
       user: 'CarlosRuiz',
-      message: 'comentó en tu votación',
-      time: 'hace 15 min',
+      message: t('notifications.messages.commented'),
+      time: t('notifications.time.minAgo', { n: 15 }),
       poll: '¿Cuál es la mejor receta de cocina?',
       isNew: true
     },
@@ -108,57 +111,53 @@ const NotificationsPage = () => {
       id: 3,
       type: 'follow',
       user: 'AnaLopez',
-      message: 'comenzó a seguirte',
-      time: 'hace 30 min',
+      message: t('notifications.messages.followed'),
+      time: t('notifications.time.minAgo', { n: 30 }),
       isNew: true
     },
     {
       id: 4,
       type: 'vote',
       user: 'PedroMartinez',
-      message: 'votó en tu votación',
-      time: 'hace 1 hora',
+      message: t('notifications.messages.voted'),
+      time: t('notifications.time.hourAgo'),
       poll: '¿Cuál es el mejor baile de Twyk?'
     },
     {
       id: 5,
       type: 'achievement',
-      user: 'Sistema',
-      message: '¡Tu votación alcanzó 1000 votos!',
-      time: 'hace 2 horas',
+      user: t('notifications.system'),
+      message: t('notifications.messages.achievement'),
+      time: t('notifications.time.hoursAgo', { n: 2 }),
       poll: '¿Quién ganó el mejor outfit de hoy?'
     },
     {
       id: 6,
       type: 'like',
       user: 'LuisaFernandez',
-      message: 'le dio like a tu votación',
-      time: 'hace 3 horas',
+      message: t('notifications.messages.liked'),
+      time: t('notifications.time.hoursAgo', { n: 3 }),
       poll: '¿Cuál es la mejor receta de cocina?'
     },
     {
       id: 7,
       type: 'follow',
       user: 'RobertoGarcia',
-      message: 'comenzó a seguirte',
-      time: 'hace 5 horas'
+      message: t('notifications.messages.followed'),
+      time: t('notifications.time.hoursAgo', { n: 5 })
     },
     {
       id: 8,
       type: 'vote',
       user: 'SofiaHernandez',
-      message: 'votó en tu votación',
-      time: 'hace 1 día',
+      message: t('notifications.messages.voted'),
+      time: t('notifications.time.dayAgo'),
       poll: '¿Cuál es el mejor baile de Twyk?'
     }
   ];
 
   const newNotificationsCount = notifications.filter(n => n.isNew).length;
 
-  // 🔄 Pull-to-refresh handler. Las notificaciones de momento son mock;
-  // aún así mostramos el spinner unos 700 ms para dar el feedback visual
-  // estilo Instagram (cuando se conecte el backend real, solo basta con
-  // sustituir este body por el fetch real).
   const handleNotificationsRefresh = async () => {
     console.log('🔄 [NotificationsPage] Pull-to-refresh triggered');
     await new Promise((resolve) => setTimeout(resolve, 700));
@@ -183,15 +182,15 @@ const NotificationsPage = () => {
                 )}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Notificaciones</h1>
+                <h1 className="text-xl font-bold text-gray-900">{t('notifications.title')}</h1>
                 <p className="text-xs text-gray-500">
-                  {newNotificationsCount > 0 ? `${newNotificationsCount} nuevas` : 'Todo al día'}
+                  {newNotificationsCount > 0 ? t('notifications.newCount', { count: newNotificationsCount }) : t('notifications.allCaughtUp')}
                 </p>
               </div>
             </div>
 
             <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
-              Marcar todas como leídas
+              {t('notifications.markAllRead')}
             </Button>
           </div>
         </div>
@@ -204,8 +203,8 @@ const NotificationsPage = () => {
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Bell className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">No tienes notificaciones</h3>
-            <p className="text-gray-600 mb-6">Cuando tengas nuevas interacciones, aparecerán aquí</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('notifications.empty.title')}</h3>
+            <p className="text-gray-600 mb-6">{t('notifications.empty.desc')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -214,13 +213,13 @@ const NotificationsPage = () => {
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                  Nuevas ({newNotificationsCount})
+                  {t('notifications.sectionNew')} ({newNotificationsCount})
                 </h2>
                 <div className="space-y-3">
                   {notifications
                     .filter(notification => notification.isNew)
                     .map((notification) => (
-                      <NotificationItem key={notification.id} {...notification} />
+                      <NotificationItem key={notification.id} {...notification} t={t} />
                     ))}
                 </div>
               </div>
@@ -229,12 +228,12 @@ const NotificationsPage = () => {
             {/* Earlier Notifications */}
             {notifications.some(n => !n.isNew) && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-3">Anteriores</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('notifications.sectionEarlier')}</h2>
                 <div className="space-y-3">
                   {notifications
                     .filter(notification => !notification.isNew)
                     .map((notification) => (
-                      <NotificationItem key={notification.id} {...notification} />
+                      <NotificationItem key={notification.id} {...notification} t={t} />
                     ))}
                 </div>
               </div>
