@@ -2404,14 +2404,14 @@ async def update_settings(
 
 @api_router.get("/user/profile")
 async def get_my_profile(current_user: UserResponse = Depends(get_current_user)):
-    """Get current user profile"""
-    profile_data = await db.user_profiles.find_one({"id": current_user.id})
+    """Get current user profile (recalculates stats to keep totals fresh)"""
+    profile_data = await ensure_user_profile(current_user.id)
     if not profile_data:
-        # Create profile if it doesn't exist
+        # Fallback: create a new profile if user has no doc and ensure failed
         profile = UserProfile(id=current_user.id, username=current_user.username)
         await db.user_profiles.insert_one(profile.dict())
         return profile
-    
+
     profile = UserProfile(**profile_data)
     return profile
 
@@ -2460,8 +2460,24 @@ async def ensure_user_profile(user_id: str):
         challenge_votes_result = await db.challenges.aggregate(challenge_votes_pipeline).to_list(length=1)
         challenge_votes_received = challenge_votes_result[0]["challenge_votes"] if challenge_votes_result else 0
         total_votes_received += challenge_votes_received
-        
-        logger.info(f"📊 Calculated real votes for user {user_id}: {total_votes_received} (polls + {challenge_votes_received} challenge votes)")
+
+        # 🆚 Also count votes received in VS experiences (votes are stored in
+        # vs_experiences.questions[].options[].votes; the corresponding poll doc
+        # is not incremented, so the polls aggregation above misses them).
+        vs_votes_pipeline = [
+            {"$match": {"author_id": user_id}},
+            {"$unwind": "$questions"},
+            {"$unwind": "$questions.options"},
+            {"$group": {
+                "_id": None,
+                "vs_votes": {"$sum": "$questions.options.votes"}
+            }}
+        ]
+        vs_votes_result = await db.vs_experiences.aggregate(vs_votes_pipeline).to_list(length=1)
+        vs_votes_received = vs_votes_result[0]["vs_votes"] if vs_votes_result else 0
+        total_votes_received += vs_votes_received
+
+        logger.info(f"📊 Calculated real votes for user {user_id}: {total_votes_received} (polls + {challenge_votes_received} challenge + {vs_votes_received} VS)")
         
         # Count votes made by this user
         votes_made_by_user = await db.votes.count_documents({"user_id": user_id})
