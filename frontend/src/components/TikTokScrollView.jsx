@@ -1527,7 +1527,7 @@ const TikTokPollCard = ({
                       {showTrophy ? (
                         <Trophy className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={1.75} />
                       ) : (
-                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} />
+                        <VoteIcon className="w-[40px] h-[40px] flex-shrink-0" strokeWidth={320} filled={false} />
                       )}
                       <span className="text-[11px] font-semibold whitespace-nowrap text-center px-1 max-w-[72px] truncate">
                         {(() => {
