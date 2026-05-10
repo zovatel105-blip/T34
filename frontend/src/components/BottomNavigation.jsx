@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import { useInboxUnreadCount } from '../hooks/useInboxUnreadCount';
 import { useAuth } from '../contexts/AuthContext';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import commentService from '../services/commentService';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
@@ -14,6 +15,7 @@ const BottomNavigation = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { hideBottomNav, commentInputConfig } = useTikTok();
+  const { t } = useTranslation();
   const { unreadCount } = useInboxUnreadCount(!!user);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [currentMode, setCurrentMode] = useState('feed');
@@ -131,7 +133,7 @@ const BottomNavigation = () => {
               <input
                 ref={commentInputRef}
                 type="text"
-                placeholder="Add comment"
+                placeholder={t('nav.addComment')}
                 className="flex-1 px-2.5 py-0 text-sm bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none"
                 maxLength={500}
                 disabled={submittingComment}

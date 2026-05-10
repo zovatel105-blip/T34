@@ -93,6 +93,18 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setToken(tokenData);
       setAuthState(AUTH_STATES.AUTHENTICATED);
+
+      // 🌐 Sync app language with i18n if backend has a stored preference
+      try {
+        if (userData?.app_language) {
+          // Lazy import to avoid circular deps at module load time
+          // eslint-disable-next-line global-require
+          const i18n = require('../i18n').default;
+          if (i18n.getCurrentLocale() !== userData.app_language) {
+            i18n.setLocale(userData.app_language);
+          }
+        }
+      } catch (_) { /* noop */ }
       
       // Save to localStorage with error handling
       try {

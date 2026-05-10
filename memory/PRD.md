@@ -63,7 +63,20 @@
 ✅ **Marco unificado**: bottom nav sin `rounded-t-3xl` cuando hay comentarios activos → modal + input se ven como un único marco blanco continuo que se expande.
 ✅ **Reacciones rápidas con emoji**: long-press sobre un comentario abre picker con ❤️🔥😂😮😢👏. Backend: `POST /api/comments/{id}/reaction` (toggle/replace), nueva colección `comment_reactions`. Frontend: chips clickeables debajo del texto con conteo y estado del usuario actual; optimistic UI; fallback a refresh ante error.
 
+### Sesión Feb 2026 — i18n (Fase 1)
+✅ **Selector de idioma funcional**: `SettingsPage` ahora llama a `i18n.setLocale(value)` al cambiarlo y aplica re-render inmediato vía evento `localeChanged`.
+✅ **Sincronización con backend**: `AuthContext.setAuthData` lee `userData.app_language` y aplica el locale al iniciar sesión / refrescar el usuario.
+✅ **4 idiomas soportados**: `es`, `en`, `fr`, `pt` en `frontend/src/i18n/translations.js`.
+✅ **Traducidos en Fase 1**:
+   - `SettingsPage` (todas las secciones, modales, toasts).
+   - `BottomNavigation` (placeholder "Add comment").
+   - `ProfilePage` stats labels (Votos, Me gusta, Seguidores, Seguidos), botones (Editar perfil/Estadísticas/Seguir/Mensaje), toasts y panel "Invitación enviada".
+✅ **Bug VS votos en perfil**: `ensure_user_profile` ahora suma también votos de `vs_experiences.questions[].options[].votes` (antes solo contaba `polls`). Endpoint `/user/profile` recalcula en cada GET.
+
 ## Backlog / Próximas mejoras (P2)
+- **i18n Fase 2**: traducir TikTokScrollView, layouts (VS/Image/Music/Audio), modals (Voters/Share/Comments/Stats).
+- **i18n Fase 3**: ContentCreationPage, ChallengeCreationPage, MessagesPage, NotificationsPage.
+- **i18n Fase 4**: ExplorePage, Stories, LivePage, AuthPage, EditProfilePage, ChangePasswordPage.
 - **Borradores autoguardados por modo en localStorage** (texto/posición/menciones/layout/música por `publicar` y `vs`). Permitiría sobrevivir refreshes.
 - Refactor `ContentCreationPage.jsx` (>2200 líneas): extraer `LayoutPreview` y handlers de upload.
 - Refactor `CommentsModal.jsx` / `CommentSection.jsx`: lógica condicional `isBottomSheet` + `darkMode` + `isMobile` se está volviendo enredada; consolidar en variantes.

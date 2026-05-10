@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
-  ArrowLeft, ChevronRight, User, Shield, Bell, Eye, MessageCircle, 
-  Lock, LogOut, Save, Monitor, Key, Globe, Moon, Sun, Volume2, Smartphone,
-  Download, Wifi, BatteryLow, Languages, Type, HelpCircle, Info, Mail, Settings,
-  Mic, UserCircle, UserCircle2, PanelBottom, PanelRight
+  ArrowLeft, ChevronRight, User, Shield, Bell, MessageCircle, 
+  LogOut, Monitor, Key, Globe, Moon, Sun, Volume2, Smartphone,
+  Wifi, BatteryLow, Languages, Type, HelpCircle, Info, Mail,
+  Mic, PanelBottom, PanelRight
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
+import i18n from '../i18n';
 import voiceService, { VOICE_TYPES } from '../services/voiceService';
 import SettingsSelectModal from '../components/SettingsSelectModal';
 import { useNavPreference, NAV_STYLES } from '../hooks/useNavPreference';
@@ -18,7 +19,8 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const { user, logout, apiRequest, refreshUser } = useAuth();
   const { toast } = useToast();
-  const { navStyle, setNavStyle, isBottomNav } = useNavPreference();
+  const { t } = useTranslation();
+  const { setNavStyle, isBottomNav } = useNavPreference();
   
   const [settings, setSettings] = useState({
     is_public: true,
@@ -40,7 +42,7 @@ const SettingsPage = () => {
     large_text: false,
     two_factor_enabled: false
   });
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [savingField, setSavingField] = useState(null);
 
   const [voiceSettings, setVoiceSettings] = useState(() => voiceService.getPreferences());
@@ -78,6 +80,11 @@ const SettingsPage = () => {
     const previousValue = settings[field];
     setSettings(prev => ({ ...prev, [field]: value }));
     setSavingField(field);
+
+    // Aplicación local inmediata para campos UX-críticos
+    if (field === 'app_language') {
+      i18n.setLocale(value);
+    }
     
     try {
       const settingsUpdate = { [field]: value };
@@ -89,19 +96,37 @@ const SettingsPage = () => {
       if (updatedUser) {
         await refreshUser();
       }
-      
-      toast({
-        title: "Configuración actualizada",
-        description: `${getFieldDisplayName(field)} se ha guardado exitosamente`,
-        variant: "default"
-      });
+
+      if (field === 'app_language') {
+        const langLabel = {
+          es: t('settings.appearance.languageEs'),
+          en: t('settings.appearance.languageEn'),
+          fr: t('settings.appearance.languageFr'),
+          pt: t('settings.appearance.languagePt'),
+        }[value] || value;
+        toast({
+          title: t('settings.toast.languageChanged'),
+          description: t('settings.toast.languageChangedDesc', { language: langLabel }),
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: t('settings.toast.saved'),
+          description: t('settings.toast.savedDesc', { field: getFieldDisplayName(field) }),
+          variant: "default"
+        });
+      }
       
     } catch (error) {
       console.error('Error updating settings:', error);
       setSettings(prev => ({ ...prev, [field]: previousValue }));
+      // Revertir locale si falla
+      if (field === 'app_language') {
+        i18n.setLocale(previousValue);
+      }
       toast({
-        title: "Error al guardar",
-        description: error.message || "No se pudo actualizar la configuración. Intenta de nuevo.",
+        title: t('settings.toast.error'),
+        description: error.message || t('settings.toast.errorDesc'),
         variant: "destructive"
       });
     } finally {
@@ -109,27 +134,13 @@ const SettingsPage = () => {
     }
   };
 
-  const getFieldDisplayName = (field) => {
-    const fieldNames = {
-      is_public: 'Privacidad de perfil',
-      allow_messages: 'Mensajes',
-      notifications_enabled: 'Notificaciones',
-      email_notifications: 'Notificaciones por email',
-      push_notifications: 'Notificaciones push',
-      dark_mode: 'Modo oscuro',
-      large_text: 'Texto grande',
-      video_quality: 'Calidad de video',
-      wifi_only: 'Solo WiFi',
-      battery_saver: 'Ahorro de batería'
-    };
-    return fieldNames[field] || field;
-  };
+  const getFieldDisplayName = (field) => t(`settings.fields.${field}`) || field;
 
   const handleLogout = () => {
     logout();
     toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión exitosamente",
+      title: t('settings.toast.loggedOut'),
+      description: t('settings.toast.loggedOutDesc'),
     });
     navigate('/');
   };
@@ -137,9 +148,14 @@ const SettingsPage = () => {
   const handleVoiceTypeChange = (voiceType) => {
     const updated = voiceService.setPreferredVoiceType(voiceType);
     setVoiceSettings(updated);
+    const typeLabel = voiceType === VOICE_TYPES.FEMALE
+      ? t('settings.voice.typeFemale')
+      : voiceType === VOICE_TYPES.MALE
+        ? t('settings.voice.typeMale')
+        : t('settings.voice.typeNeutral');
     toast({
-      title: "Voz actualizada",
-      description: `Tipo de voz cambiado a ${voiceType === VOICE_TYPES.FEMALE ? 'Femenina' : voiceType === VOICE_TYPES.MALE ? 'Masculina' : 'Neutral'}`,
+      title: t('settings.toast.voiceUpdated'),
+      description: t('settings.toast.voiceUpdatedDesc', { type: typeLabel }),
     });
   };
 
@@ -197,53 +213,81 @@ const SettingsPage = () => {
     </div>
   );
 
+  const videoQualityLabel = {
+    auto: t('settings.performance.videoQualityAuto'),
+    high: t('settings.performance.videoQualityHigh'),
+    medium: t('settings.performance.videoQualityMedium'),
+    low: t('settings.performance.videoQualityLow'),
+  }[settings.video_quality] || t('settings.performance.videoQualityAuto');
+
+  const languageLabel = {
+    es: t('settings.appearance.languageEs'),
+    en: t('settings.appearance.languageEn'),
+    fr: t('settings.appearance.languageFr'),
+    pt: t('settings.appearance.languagePt'),
+  }[settings.app_language] || t('settings.appearance.languageEs');
+
+  const voiceTypeLabel = {
+    [VOICE_TYPES.FEMALE]: t('settings.voice.typeFemale'),
+    [VOICE_TYPES.MALE]: t('settings.voice.typeMale'),
+    [VOICE_TYPES.NEUTRAL]: t('settings.voice.typeNeutral'),
+  }[voiceSettings.voiceType] || t('settings.voice.typeFemale');
+
+  const voiceRateLabel = {
+    '0.8': t('settings.voice.rateSlow'),
+    '1': t('settings.voice.rateNormal'),
+    '1.0': t('settings.voice.rateNormal'),
+    '1.1': t('settings.voice.rateFast'),
+    '1.3': t('settings.voice.rateVeryFast'),
+  }[String(voiceSettings.rate)] || t('settings.voice.rateNormal');
+
   return (
     <>
     <div className="min-h-screen bg-white">
-      {/* Contenedor estilo modal — rounded top, handle bar, título centrado */}
+      {/* Contenedor estilo modal */}
       <div className="max-w-md mx-auto bg-white rounded-t-3xl">
 
-        {/* Header — centrado con botón de volver (sticky para que no se deslice) */}
+        {/* Header */}
         <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <button
             onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+            data-testid="settings-back-btn"
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
           </button>
-          <h2 className="font-semibold text-gray-900 text-base">Configuración</h2>
+          <h2 className="font-semibold text-gray-900 text-base" data-testid="settings-title">{t('settings.title')}</h2>
           <div className="w-9" />
         </div>
 
-        {/* Contenido con padding */}
         <div className="px-4 pb-10">
 
           {/* Cuenta */}
-          <SectionTitle>Cuenta</SectionTitle>
+          <SectionTitle>{t('settings.sections.account')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={User}
-              title="Editar perfil"
-              description="Nombre, foto, biografía"
+              title={t('settings.account.editProfile')}
+              description={t('settings.account.editProfileDesc')}
               onClick={() => navigate('/edit-profile')}
               showChevron
             />
             <SettingsItem
               icon={Key}
-              title="Cambiar contraseña"
-              description="Actualizar contraseña"
+              title={t('settings.account.changePassword')}
+              description={t('settings.account.changePasswordDesc')}
               onClick={() => navigate('/change-password')}
               showChevron
             />
           </div>
 
           {/* Privacidad */}
-          <SectionTitle>Privacidad</SectionTitle>
+          <SectionTitle>{t('settings.sections.privacy')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Globe}
-              title="Perfil público"
-              description="Permitir que otros vean tu perfil"
+              title={t('settings.privacy.publicProfile')}
+              description={t('settings.privacy.publicProfileDesc')}
               rightElement={
                 <Switch
                   checked={settings.is_public}
@@ -255,8 +299,8 @@ const SettingsPage = () => {
             />
             <SettingsItem
               icon={MessageCircle}
-              title="Permitir mensajes"
-              description="Recibir mensajes directos"
+              title={t('settings.privacy.allowMessages')}
+              description={t('settings.privacy.allowMessagesDesc')}
               rightElement={
                 <Switch
                   checked={settings.allow_messages}
@@ -269,12 +313,12 @@ const SettingsPage = () => {
           </div>
 
           {/* Notificaciones */}
-          <SectionTitle>Notificaciones</SectionTitle>
+          <SectionTitle>{t('settings.sections.notifications')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Bell}
-              title="Notificaciones"
-              description="Activar todas las notificaciones"
+              title={t('settings.notifications.enable')}
+              description={t('settings.notifications.enableDesc')}
               rightElement={
                 <Switch
                   checked={settings.notifications_enabled}
@@ -288,8 +332,8 @@ const SettingsPage = () => {
               <>
                 <SettingsItem
                   icon={Mail}
-                  title="Notificaciones por email"
-                  description="Recibir por correo electrónico"
+                  title={t('settings.notifications.email')}
+                  description={t('settings.notifications.emailDesc')}
                   rightElement={
                     <Switch
                       checked={settings.email_notifications}
@@ -301,8 +345,8 @@ const SettingsPage = () => {
                 />
                 <SettingsItem
                   icon={Smartphone}
-                  title="Notificaciones push"
-                  description="Recibir en el dispositivo"
+                  title={t('settings.notifications.push')}
+                  description={t('settings.notifications.pushDesc')}
                   rightElement={
                     <Switch
                       checked={settings.push_notifications}
@@ -317,19 +361,19 @@ const SettingsPage = () => {
           </div>
 
           {/* Rendimiento */}
-          <SectionTitle>Rendimiento</SectionTitle>
+          <SectionTitle>{t('settings.sections.performance')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Monitor}
-              title="Calidad de video"
-              description={{ auto: 'Auto', high: 'Alta', medium: 'Media', low: 'Baja' }[settings.video_quality] || 'Auto'}
+              title={t('settings.performance.videoQuality')}
+              description={videoQualityLabel}
               onClick={() => setActiveSelectModal('video_quality')}
               showChevron
             />
             <SettingsItem
               icon={Wifi}
-              title="Solo WiFi"
-              description="Reproducir solo con WiFi"
+              title={t('settings.performance.wifiOnly')}
+              description={t('settings.performance.wifiOnlyDesc')}
               rightElement={
                 <Switch
                   checked={settings.wifi_only}
@@ -341,8 +385,8 @@ const SettingsPage = () => {
             />
             <SettingsItem
               icon={BatteryLow}
-              title="Ahorro de batería"
-              description="Reducir animaciones"
+              title={t('settings.performance.batterySaver')}
+              description={t('settings.performance.batterySaverDesc')}
               rightElement={
                 <Switch
                   checked={settings.battery_saver}
@@ -355,19 +399,19 @@ const SettingsPage = () => {
           </div>
 
           {/* Apariencia */}
-          <SectionTitle>Apariencia</SectionTitle>
+          <SectionTitle>{t('settings.sections.appearance')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Languages}
-              title="Idioma"
-              description={{ es: 'Español', en: 'English', fr: 'Français', pt: 'Português' }[settings.app_language] || 'Español'}
+              title={t('settings.appearance.language')}
+              description={languageLabel}
               onClick={() => setActiveSelectModal('app_language')}
               showChevron
             />
             <SettingsItem
               icon={settings.dark_mode ? Moon : Sun}
-              title="Modo oscuro"
-              description="Tema oscuro para la interfaz"
+              title={t('settings.appearance.darkMode')}
+              description={t('settings.appearance.darkModeDesc')}
               rightElement={
                 <Switch
                   checked={settings.dark_mode}
@@ -379,8 +423,8 @@ const SettingsPage = () => {
             />
             <SettingsItem
               icon={Type}
-              title="Texto grande"
-              description="Aumentar tamaño del texto"
+              title={t('settings.appearance.largeText')}
+              description={t('settings.appearance.largeTextDesc')}
               rightElement={
                 <Switch
                   checked={settings.large_text}
@@ -392,8 +436,8 @@ const SettingsPage = () => {
             />
             <SettingsItem
               icon={isBottomNav ? PanelBottom : PanelRight}
-              title="Barra de navegación"
-              description={isBottomNav ? "Inferior (estilo TikTok)" : "Lateral derecha"}
+              title={t('settings.appearance.navBar')}
+              description={isBottomNav ? t('settings.appearance.navBottom') : t('settings.appearance.navRight')}
               rightElement={
                 <div className="flex items-center gap-2">
                   <button
@@ -401,27 +445,27 @@ const SettingsPage = () => {
                       const newStyle = isBottomNav ? NAV_STYLES.RIGHT : NAV_STYLES.BOTTOM;
                       setNavStyle(newStyle);
                       toast({
-                        title: "Navegación actualizada",
-                        description: newStyle === NAV_STYLES.BOTTOM 
-                          ? "Barra inferior activada" 
-                          : "Barra lateral activada",
+                        title: t('settings.toast.navUpdated'),
+                        description: newStyle === NAV_STYLES.BOTTOM
+                          ? t('settings.toast.navBottomActive')
+                          : t('settings.toast.navRightActive'),
                       });
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      isBottomNav 
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                      isBottomNav
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
                         : 'bg-gray-100 text-gray-600 border border-gray-200'
                     }`}
                   >
                     {isBottomNav ? (
                       <>
                         <PanelBottom className="w-3.5 h-3.5" />
-                        Inferior
+                        {t('settings.appearance.navBottomShort')}
                       </>
                     ) : (
                       <>
                         <PanelRight className="w-3.5 h-3.5" />
-                        Lateral
+                        {t('settings.appearance.navRightShort')}
                       </>
                     )}
                   </button>
@@ -431,19 +475,19 @@ const SettingsPage = () => {
           </div>
 
           {/* Voz VS */}
-          <SectionTitle>Voz de VS</SectionTitle>
+          <SectionTitle>{t('settings.sections.voice')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Mic}
-              title="Tipo de voz"
-              description={{ [VOICE_TYPES.FEMALE]: 'Femenina', [VOICE_TYPES.MALE]: 'Masculina', [VOICE_TYPES.NEUTRAL]: 'Neutral' }[voiceSettings.voiceType] || 'Femenina'}
+              title={t('settings.voice.type')}
+              description={voiceTypeLabel}
               onClick={() => setActiveSelectModal('voice_type')}
               showChevron
             />
             <SettingsItem
               icon={Volume2}
-              title="Velocidad de voz"
-              description={{ '0.8': 'Lenta', '1': 'Normal', '1.0': 'Normal', '1.1': 'Rápida', '1.3': 'Muy rápida' }[String(voiceSettings.rate)] || 'Normal'}
+              title={t('settings.voice.rate')}
+              description={voiceRateLabel}
               onClick={() => setActiveSelectModal('voice_rate')}
               showChevron
             />
@@ -456,9 +500,9 @@ const SettingsPage = () => {
                 <Globe className="w-5 h-5 text-gray-500" strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm">Probar voz</p>
+                <p className="font-medium text-gray-900 text-sm">{t('settings.voice.test')}</p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {testingVoice ? 'Reproduciendo...' : 'Escuchar una muestra con detección de idioma'}
+                  {testingVoice ? t('settings.voice.testPlaying') : t('settings.voice.testDesc')}
                 </p>
               </div>
               {testingVoice ? (
@@ -470,12 +514,12 @@ const SettingsPage = () => {
           </div>
 
           {/* Seguridad */}
-          <SectionTitle>Seguridad</SectionTitle>
+          <SectionTitle>{t('settings.sections.security')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={Shield}
-              title="Autenticación de dos factores"
-              description="Seguridad adicional"
+              title={t('settings.security.twoFactor')}
+              description={t('settings.security.twoFactorDesc')}
               rightElement={
                 <Switch
                   checked={settings.two_factor_enabled}
@@ -488,34 +532,35 @@ const SettingsPage = () => {
           </div>
 
           {/* Soporte */}
-          <SectionTitle>Soporte</SectionTitle>
+          <SectionTitle>{t('settings.sections.support')}</SectionTitle>
           <div className="flex flex-col gap-2">
             <SettingsItem
               icon={HelpCircle}
-              title="Centro de ayuda"
-              description="Preguntas frecuentes y soporte"
+              title={t('settings.support.helpCenter')}
+              description={t('settings.support.helpCenterDesc')}
               showChevron
             />
             <SettingsItem
               icon={Info}
-              title="Acerca de"
-              description="Versión de la aplicación"
+              title={t('settings.support.about')}
+              description={t('settings.support.aboutDesc')}
               showChevron
             />
           </div>
 
-          {/* Cerrar sesión — card estilo modal */}
+          {/* Cerrar sesión */}
           <div className="mt-8">
             <button
               onClick={handleLogout}
+              data-testid="logout-btn"
               className="flex items-center gap-3 w-full p-4 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
                 <LogOut className="w-5 h-5 text-red-500" strokeWidth={1.5} />
               </div>
               <div>
-                <p className="font-medium text-red-600 text-sm">Cerrar sesión</p>
-                <p className="text-xs text-red-400">Salir de tu cuenta</p>
+                <p className="font-medium text-red-600 text-sm">{t('settings.logout')}</p>
+                <p className="text-xs text-red-400">{t('settings.logoutDesc')}</p>
               </div>
             </button>
           </div>
@@ -526,10 +571,11 @@ const SettingsPage = () => {
               <p>@{user?.username}</p>
               <p>{user?.email}</p>
               <p>
-                Miembro desde {user?.created_at ? new Date(user.created_at).toLocaleDateString('es-ES', { 
-                  year: 'numeric', 
-                  month: 'long'
-                }) : 'N/A'}
+                {t('settings.memberSince', {
+                  date: user?.created_at
+                    ? i18n.formatDate(user.created_at)
+                    : 'N/A'
+                })}
               </p>
             </div>
           </div>
@@ -543,21 +589,21 @@ const SettingsPage = () => {
       <SettingsSelectModal
         isOpen={activeSelectModal === 'video_quality'}
         onClose={() => setActiveSelectModal(null)}
-        title="Calidad de video"
+        title={t('settings.performance.videoQuality')}
         selectedValue={settings.video_quality}
         onSelect={(value) => handleSettingsChange('video_quality', value)}
         options={[
-          { value: 'auto', label: 'Auto', description: 'Se ajusta según tu conexión', icon: Monitor },
-          { value: 'high', label: 'Alta', description: 'Mejor calidad, más datos', icon: Monitor },
-          { value: 'medium', label: 'Media', description: 'Balance entre calidad y datos', icon: Monitor },
-          { value: 'low', label: 'Baja', description: 'Ahorra datos', icon: Monitor },
+          { value: 'auto', label: t('settings.performance.videoQualityAuto'), description: t('settings.performance.videoQualityAutoDesc'), icon: Monitor },
+          { value: 'high', label: t('settings.performance.videoQualityHigh'), description: t('settings.performance.videoQualityHighDesc'), icon: Monitor },
+          { value: 'medium', label: t('settings.performance.videoQualityMedium'), description: t('settings.performance.videoQualityMediumDesc'), icon: Monitor },
+          { value: 'low', label: t('settings.performance.videoQualityLow'), description: t('settings.performance.videoQualityLowDesc'), icon: Monitor },
         ]}
       />
 
       <SettingsSelectModal
         isOpen={activeSelectModal === 'app_language'}
         onClose={() => setActiveSelectModal(null)}
-        title="Idioma"
+        title={t('settings.appearance.language')}
         selectedValue={settings.app_language}
         onSelect={(value) => handleSettingsChange('app_language', value)}
         options={[
@@ -571,27 +617,27 @@ const SettingsPage = () => {
       <SettingsSelectModal
         isOpen={activeSelectModal === 'voice_type'}
         onClose={() => setActiveSelectModal(null)}
-        title="Tipo de voz"
+        title={t('settings.voice.type')}
         selectedValue={voiceSettings.voiceType}
         onSelect={(value) => handleVoiceTypeChange(value)}
         options={[
-          { value: VOICE_TYPES.FEMALE, label: 'Femenina', description: 'Voz femenina suave', icon: Mic },
-          { value: VOICE_TYPES.MALE, label: 'Masculina', description: 'Voz masculina clara', icon: Mic },
-          { value: VOICE_TYPES.NEUTRAL, label: 'Neutral', description: 'Voz neutra equilibrada', icon: Mic },
+          { value: VOICE_TYPES.FEMALE, label: t('settings.voice.typeFemale'), description: t('settings.voice.typeFemaleDesc'), icon: Mic },
+          { value: VOICE_TYPES.MALE, label: t('settings.voice.typeMale'), description: t('settings.voice.typeMaleDesc'), icon: Mic },
+          { value: VOICE_TYPES.NEUTRAL, label: t('settings.voice.typeNeutral'), description: t('settings.voice.typeNeutralDesc'), icon: Mic },
         ]}
       />
 
       <SettingsSelectModal
         isOpen={activeSelectModal === 'voice_rate'}
         onClose={() => setActiveSelectModal(null)}
-        title="Velocidad de voz"
+        title={t('settings.voice.rate')}
         selectedValue={String(voiceSettings.rate)}
         onSelect={(value) => handleVoiceRateChange(value)}
         options={[
-          { value: '0.8', label: 'Lenta', description: 'Para escuchar con calma', icon: Volume2 },
-          { value: '1.0', label: 'Normal', description: 'Velocidad estándar', icon: Volume2 },
-          { value: '1.1', label: 'Rápida', description: 'Un poco más rápido', icon: Volume2 },
-          { value: '1.3', label: 'Muy rápida', description: 'Para los que van con prisa', icon: Volume2 },
+          { value: '0.8', label: t('settings.voice.rateSlow'), description: t('settings.voice.rateSlowDesc'), icon: Volume2 },
+          { value: '1.0', label: t('settings.voice.rateNormal'), description: t('settings.voice.rateNormalDesc'), icon: Volume2 },
+          { value: '1.1', label: t('settings.voice.rateFast'), description: t('settings.voice.rateFastDesc'), icon: Volume2 },
+          { value: '1.3', label: t('settings.voice.rateVeryFast'), description: t('settings.voice.rateVeryFastDesc'), icon: Volume2 },
         ]}
       />
     </>

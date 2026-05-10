@@ -32,6 +32,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFollow } from '../contexts/FollowContext';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { cn } from '../lib/utils';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import config from '../config/config';
@@ -79,6 +80,7 @@ const formatNumber = (num) => {
 };
 
 const ProfilePage = () => {
+  const { t } = useTranslation();
   const { activeUploads } = useUpload();
   const [activeTab, setActiveTab] = useState("polls");
   const [polls, setPolls] = useState([]);
@@ -2137,7 +2139,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(displayUser?.totalVotes || 0)}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Votos</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{t('profile.stats.votes')}</p>
                     </div>
                   </div>
                 </div>
@@ -2150,7 +2152,7 @@ const ProfilePage = () => {
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? (displayUser?.totalLikes || 0) : (displayUser?.likes || 0))}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Me gusta</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{t('profile.stats.likes')}</p>
                     </div>
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-pink-50 flex items-center justify-center flex-shrink-0 order-2">
                       <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" strokeWidth={1.5} />
@@ -2225,7 +2227,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? followersCount : (displayUser?.followers || 0))}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Seguidores</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{t('profile.stats.followers')}</p>
                     </div>
                   </div>
                 </button>
@@ -2242,7 +2244,7 @@ const ProfilePage = () => {
                   <div className="flex items-center gap-2 justify-end">
                     <div className="min-w-0 text-right order-1">
                       <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{formatNumber(isOwnProfile ? followingCount : (displayUser?.following || 0))}</p>
-                      <p className="text-xs sm:text-sm text-gray-600">Seguidos</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{t('profile.stats.following')}</p>
                     </div>
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0 order-2">
                       <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" strokeWidth={1.5} />
@@ -2256,7 +2258,7 @@ const ProfilePage = () => {
             <div ref={profileInfoRef} className="text-center space-y-2 max-w-sm mx-auto">
               <div className="space-y-2">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                  {displayUser?.displayName || displayUser?.username || 'Usuario'}
+                  {displayUser?.displayName || displayUser?.username || t('profile.defaultUsername')}
                 </h2>
                 
                 {displayUser?.occupation && (
@@ -2282,14 +2284,14 @@ const ProfilePage = () => {
                     className="h-11 sm:h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 font-medium text-sm text-gray-900"
                     onClick={() => navigate('/edit-profile')}
                   >
-                    Editar perfil
+                    {t('profile.actions.editProfile')}
                   </Button>
                   <Button 
                     variant="ghost" 
                     className="h-11 sm:h-12 rounded-2xl bg-gray-50 hover:bg-gray-100 font-medium text-sm text-gray-900"
                     onClick={() => setStatisticsModalOpen(true)}
                   >
-                    Estadísticas
+                    {t('profile.actions.statistics')}
                   </Button>
                 </>
               ) : (
@@ -2308,21 +2310,21 @@ const ProfilePage = () => {
                           await unfollowUser(targetUserId);
                           setNotificationsEnabled(false);
                           toast({
-                            title: "Dejaste de seguir",
-                            description: `Ya no sigues a @${viewedUser?.username || userId}`,
+                            title: t('profile.toast.unfollowed'),
+                            description: t('profile.toast.unfollowedDesc', { username: viewedUser?.username || userId }),
                           });
                         } else {
                           await followUser(targetUserId);
                           toast({
-                            title: "Siguiendo",
-                            description: `Ahora sigues a @${viewedUser?.username || userId}`,
+                            title: t('profile.toast.followed'),
+                            description: t('profile.toast.followedDesc', { username: viewedUser?.username || userId }),
                           });
                         }
                       } catch (error) {
                         console.error('Error toggling follow status:', error);
                         toast({
-                          title: "Error",
-                          description: "No se pudo actualizar el estado de seguimiento",
+                          title: t('common.error'),
+                          description: t('profile.toast.followError'),
                           variant: "destructive",
                         });
                       }
@@ -2331,12 +2333,12 @@ const ProfilePage = () => {
                     {isFollowing(viewedUser?.id || userId) ? (
                       <>
                         <UserCheck className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        Siguiendo
+                        {t('profile.actions.unfollow')}
                       </>
                     ) : (
                       <>
                         <UserPlus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        {followsMe(viewedUser?.id || userId) ? 'Seguir también' : 'Seguir'}
+                        {followsMe(viewedUser?.id || userId) ? t('profile.actions.followBack') : t('profile.actions.follow')}
                       </>
                     )}
                   </Button>
@@ -2349,8 +2351,8 @@ const ProfilePage = () => {
                       // Si es perfil propio, error inmediato
                       if (isOwnProfile) {
                         toast({
-                          title: "Error",
-                          description: "No puedes enviarte mensajes a ti mismo",
+                          title: t('common.error'),
+                          description: t('profile.toast.cantSelfMessage'),
                           variant: "destructive"
                         });
                         return;
@@ -2370,14 +2372,14 @@ const ProfilePage = () => {
                       
                       // Error: no hay información suficiente
                       toast({
-                        title: "Error",
-                        description: "No se pudo identificar el usuario. Recarga la página.",
+                        title: t('common.error'),
+                        description: t('profile.toast.cantIdentifyUser'),
                         variant: "destructive"
                       });
                     }}
                   >
                     <MessageCircle className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                    Mensaje
+                    {t('profile.actions.message')}
                   </Button>
                 </>
               )}
@@ -2391,9 +2393,9 @@ const ProfilePage = () => {
           {followRequestPending && !isOwnProfile && (
             <div className="px-4 py-8">
               <div className="max-w-sm mx-auto p-6 rounded-2xl bg-gray-50 text-center space-y-2">
-                <h2 className="text-base font-semibold text-gray-900">Invitación enviada</h2>
+                <h2 className="text-base font-semibold text-gray-900">{t('profile.pendingRequest.title')}</h2>
                 <p className="text-sm text-gray-400 leading-relaxed">
-                  Podrás enviar más mensajes cuando se acepte tu invitación.
+                  {t('profile.pendingRequest.desc')}
                 </p>
               </div>
             </div>
