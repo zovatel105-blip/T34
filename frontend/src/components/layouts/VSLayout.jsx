@@ -1110,6 +1110,69 @@ const VSLayout = ({
   // Estructura: { [question_id]: { total_votes, options: [{ id, votes, percentage }] } }
   const [questionStats, setQuestionStats] = useState({});
 
+  // 🔄 SYNC al montar: traer el estado fresco desde /api/vs/{vs_id}
+  //   1) Votos previos del usuario (selectedOptions + showResults)
+  //   2) Conteos actuales por pregunta/opcion (questionStats con porcentajes exactos)
+  // Sin esto, después de recargar el feed el voto aparece como "no votado"
+  // (aunque está guardado en `vs_votes`) y los porcentajes muestran el snapshot
+  // estancado de `polls.vs_questions` que nunca se actualiza al votar.
+  useEffect(() => {
+    if (isThumbnail) return;
+    const vsId = poll?.vs_id;
+    if (!vsId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const backendUrl = process.env.REACT_APP_BACKEND_URL;
+        const res = await fetch(`${backendUrl}/api/vs/${vsId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+
+        // 1) Pre-seleccionar votos previos del usuario
+        const userVotes = data?.user_votes || {};
+        if (userVotes && Object.keys(userVotes).length > 0) {
+          setSelectedOptions(prev => ({ ...userVotes, ...prev }));
+          // Mostrar resultados de las preguntas ya votadas
+          const showMap = {};
+          Object.keys(userVotes).forEach(qid => { showMap[qid] = true; });
+          setShowResults(prev => ({ ...showMap, ...prev }));
+        }
+
+        // 2) Construir questionStats frescos con porcentajes exactos
+        const questions = Array.isArray(data?.questions) ? data.questions : [];
+        if (questions.length > 0) {
+          setQuestionStats(prev => {
+            const next = { ...prev };
+            questions.forEach(q => {
+              const opts = Array.isArray(q?.options) ? q.options : [];
+              const total = opts.reduce((s, o) => s + (Number(o?.votes) || 0), 0);
+              // No sobreescribir stats locales más recientes (post-voto optimista)
+              if (next[q.id]) return;
+              next[q.id] = {
+                question_id: q.id,
+                total_votes: total,
+                options: opts.map(o => ({
+                  id: o.id,
+                  votes: Number(o?.votes) || 0,
+                  percentage: total > 0 ? Math.round(((Number(o?.votes) || 0) / total) * 100) : 0,
+                })),
+              };
+            });
+            return next;
+          });
+        }
+      } catch (e) {
+        // silent: si falla, se usa el snapshot local del poll
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poll?.vs_id, isThumbnail]);
+
   const currentQuestion = allQuestions[currentIndex];
   const currentQuestionId = currentQuestion?.id;
   const hasVoted = !!selectedOptions[currentQuestionId];
@@ -1285,6 +1348,36 @@ const VSLayout = ({
       ...prev,
       [currentQuestionId]: true
     }));
+
+    // 📊 OPTIMISTA: incrementar stats locales para que los porcentajes se vean
+    // bien al instante (antes de la respuesta del backend). Si stats no existe
+    // aún (no se llegó a prefetch), se inicializa a partir de allQuestions.
+    setQuestionStats(prev => {
+      const existing = prev[currentQuestionId];
+      const baseOptions = existing?.options
+        ? existing.options
+        : (currentQuestion?.options || []).map(o => ({
+            id: o.id,
+            votes: Number(o?.votes) || 0,
+            percentage: 0,
+          }));
+      const updatedOptions = baseOptions.map(o =>
+        o.id === optionId ? { ...o, votes: (o.votes || 0) + 1 } : o
+      );
+      const newTotal = updatedOptions.reduce((s, o) => s + (o.votes || 0), 0);
+      const withPerc = updatedOptions.map(o => ({
+        ...o,
+        percentage: newTotal > 0 ? Math.round(((o.votes || 0) / newTotal) * 100) : 0,
+      }));
+      return {
+        ...prev,
+        [currentQuestionId]: {
+          question_id: currentQuestionId,
+          total_votes: newTotal,
+          options: withPerc,
+        },
+      };
+    });
 
     // 🔇 Voz al votar desactivada por petición del usuario.
 
