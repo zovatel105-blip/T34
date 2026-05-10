@@ -802,15 +802,17 @@ const QuestionSlide = ({
               isSelected && "vs-cinema-text-float"
             )}
           >
-            <h2
-              className="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-none"
-              style={{
-                textShadow: '2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)',
-                WebkitTextStroke: '0.5px rgba(0,0,0,0.4)',
-              }}
-            >
-              {option.text || `Opción ${index + 1}`}
-            </h2>
+            {option.text ? (
+              <h2
+                className="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-none"
+                style={{
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)',
+                  WebkitTextStroke: '0.5px rgba(0,0,0,0.4)',
+                }}
+              >
+                {option.text}
+              </h2>
+            ) : null}
 
             {/* Status pill — debajo del nombre (estilo referencia) */}
             {status && (

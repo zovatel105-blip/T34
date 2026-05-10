@@ -1572,7 +1572,7 @@ const ContentCreationPage = () => {
             }
             uploadedOptions.push({
               id: letter,
-              text: (opt.text || `Opción ${letter.toUpperCase()}`),
+              text: opt.text || '',
               image: imageUrl
             });
           }

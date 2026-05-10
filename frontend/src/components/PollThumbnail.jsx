@@ -328,9 +328,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                       <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-blue-500/40' : 'bg-black/30'}`} />
                       <div className="relative h-full flex flex-col justify-between p-3">
                         <div className="flex-1 flex items-center justify-center">
-                          <span className="text-white text-lg font-bold drop-shadow-lg text-center">
-                            {option.text || `Opción ${index + 1}`}
-                          </span>
+                          {option.text && (
+                            <span className="text-white text-lg font-bold drop-shadow-lg text-center">
+                              {option.text}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -589,9 +591,11 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
                     <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-blue-500/40' : 'bg-black/30'}`} />
                     <div className="relative h-full flex flex-col justify-between p-2">
                       <div className="flex-1 flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold drop-shadow-lg text-center">
-                          {option.text || `Opción ${index + 1}`}
-                        </span>
+                        {option.text && (
+                          <span className="text-white text-sm font-semibold drop-shadow-lg text-center">
+                            {option.text}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">

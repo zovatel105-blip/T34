@@ -396,7 +396,7 @@ const VotersModal = ({ isOpen, onClose, pollId, poll = null, onExpandChange = nu
                         <div key={o.id || i}>
                           <div className="flex justify-between mb-0.5">
                             <span className={cn("text-[11px] font-medium truncate max-w-[70%]", darkText ? "text-gray-700" : "text-white/80")}>
-                              {o.text || `Opción ${i + 1}`}
+                              {o.text || ''}
                             </span>
                             <span
                               className="text-[11px] font-black tabular-nums"
