@@ -79,8 +79,11 @@ const BottomNavigation = () => {
   return (
     <nav 
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl",
-        hideBottomNav && commentInputConfig ? "bg-white" : "bg-black"
+        "fixed bottom-0 left-0 right-0 z-50",
+        // 🛠️ Cuando el modal de comentarios está activo, NO redondeamos el
+        // tope del nav. Así el modal blanco (que tiene rounded-t-3xl) y el
+        // nav blanco se ven como UN ÚNICO marco continuo que se expande.
+        hideBottomNav && commentInputConfig ? "bg-white" : "bg-black rounded-t-3xl"
       )}
       style={{
         // EDGE-TO-EDGE: respetar la barra de navegación del sistema
