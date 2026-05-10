@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { cn } from '../lib/utils';
 
-const QUICK_EMOJIS = ['❤️', '🔥', '😂', '😮', '😢', '👏'];
+const QUICK_EMOJIS = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'];
 
 const CommentForm = ({ 
   onSubmit, 
@@ -277,24 +277,28 @@ const Comment = ({
                 {comment.content}
               </p>
 
-              {/* Emoji reaction picker (long-press) */}
+              {/* Emoji reaction picker (long-press) — fijo encima del input */}
               <AnimatePresence>
                 {showReactionPicker && (
                   <>
                     <div
-                      className="fixed inset-0 z-40"
+                      className="fixed inset-0 z-[150]"
                       onClick={() => setShowReactionPicker(false)}
                     />
                     <motion.div
                       data-testid="comment-reaction-picker"
-                      initial={{ opacity: 0, y: 8, scale: 0.85 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.85 }}
-                      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 28 }}
                       className={cn(
-                        "absolute -top-12 left-0 z-50 flex items-center gap-1 px-2 py-1.5 rounded-full shadow-xl",
-                        bottomSheetMode ? "bg-white border border-gray-200" : "bg-zinc-800 border border-white/10"
+                        "fixed left-0 right-0 z-[160] flex items-center justify-around px-4 py-3 border-t",
+                        bottomSheetMode ? "bg-white border-gray-100" : "bg-zinc-900 border-white/10"
                       )}
+                      style={{
+                        // Justo encima del input "Add comment" del bottom nav
+                        bottom: 'calc(56px + max(var(--safe-area-inset-bottom, 0px), 8px))'
+                      }}
                     >
                       {QUICK_EMOJIS.map((emoji) => (
                         <button
@@ -302,8 +306,8 @@ const Comment = ({
                           data-testid={`react-emoji-${emoji}`}
                           onClick={(e) => { e.stopPropagation(); handleReact(emoji); }}
                           className={cn(
-                            "text-xl leading-none px-1.5 py-0.5 rounded-full transition-transform active:scale-90 hover:scale-125",
-                            comment.user_reaction === emoji && (bottomSheetMode ? "bg-blue-50" : "bg-white/10")
+                            "text-[28px] leading-none transition-transform active:scale-90 hover:scale-125",
+                            comment.user_reaction === emoji && "scale-125"
                           )}
                         >
                           {emoji}
