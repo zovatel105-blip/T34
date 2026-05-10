@@ -246,6 +246,68 @@ const CommentSection = ({
     }
   };
 
+  // Manejar reacción rápida (emoji) sobre un comentario
+  const handleCommentReact = async (commentId, emoji) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Inicia sesión",
+        description: "Necesitas iniciar sesión para reaccionar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optimistic: aplicar el cambio en el árbol localmente
+    const applyReaction = (list) => list.map(c => {
+      const update = (node) => {
+        if (node.id !== commentId) {
+          return { ...node, replies: node.replies ? node.replies.map(update) : [] };
+        }
+        const prev = node.user_reaction || null;
+        const reactions = { ...(node.reactions || {}) };
+        // remove previous
+        if (prev) {
+          reactions[prev] = Math.max(0, (reactions[prev] || 1) - 1);
+          if (reactions[prev] === 0) delete reactions[prev];
+        }
+        let next;
+        if (prev === emoji) {
+          next = null; // toggle off
+        } else {
+          reactions[emoji] = (reactions[emoji] || 0) + 1;
+          next = emoji;
+        }
+        return { ...node, replies: node.replies ? node.replies.map(update) : [], user_reaction: next, reactions };
+      };
+      return update(c);
+    });
+
+    setComments(prev => applyReaction(prev));
+
+    try {
+      const result = await commentService.toggleReaction(commentId, emoji);
+      // Sincronizar con la respuesta del servidor (datos canónicos)
+      setComments(prev => prev.map(c => {
+        const sync = (node) => {
+          if (node.id === commentId) {
+            return { ...node, replies: node.replies ? node.replies.map(sync) : [], user_reaction: result.user_reaction, reactions: result.reactions };
+          }
+          return { ...node, replies: node.replies ? node.replies.map(sync) : [] };
+        };
+        return sync(c);
+      }));
+    } catch (err) {
+      console.error('Error reacting to comment:', err);
+      toast({
+        title: "Error",
+        description: err.message || "No se pudo enviar la reacción",
+        variant: "destructive",
+      });
+      // Refresco para volver al estado consistente
+      loadComments(0, false);
+    }
+  };
+
   // Responder a comentario
   const handleReplyToComment = async (parentCommentId, content) => {
     return await handleAddComment(content, parentCommentId);
@@ -452,6 +514,7 @@ const CommentSection = ({
                   onEdit={handleEditComment}
                   onDelete={handleDeleteComment}
                   onLike={handleCommentLike}
+                  onReact={handleCommentReact}
                   onReplyClick={handleReplyClick}
                   depth={0}
                   maxDepth={3}

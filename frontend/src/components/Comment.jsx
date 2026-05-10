@@ -10,6 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { cn } from '../lib/utils';
 
+const QUICK_EMOJIS = ['❤️', '🔥', '😂', '😮', '😢', '👏'];
+
 const CommentForm = ({ 
   onSubmit, 
   onCancel, 
@@ -82,6 +84,7 @@ const Comment = ({
   onEdit, 
   onDelete, 
   onLike, 
+  onReact,
   onReplyClick,
   depth = 0, 
   maxDepth = 3,
@@ -94,10 +97,41 @@ const Comment = ({
   const [showMenu, setShowMenu] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isDisliking, setIsDisliking] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const longPressTimer = useRef(null);
+  const longPressFiredRef = useRef(false);
 
   const isAuthor = currentUser && currentUser.id === comment.user.id;
   const canReply = depth < maxDepth;
   const hasReplies = comment.replies && comment.replies.length > 0;
+
+  // ⏱️ Long-press para abrir picker de reacciones rápidas
+  const startLongPress = () => {
+    longPressFiredRef.current = false;
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      if (navigator.vibrate) navigator.vibrate(15);
+      setShowReactionPicker(true);
+    }, 450);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleReact = async (emoji) => {
+    setShowReactionPicker(false);
+    if (onReact) {
+      try {
+        await onReact(comment.id, emoji);
+      } catch (e) {
+        console.error('Error reacting:', e);
+      }
+    }
+  };
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -224,12 +258,93 @@ const Comment = ({
               />
             </div>
           ) : (
-            <p className={cn(
-              "text-[13px] leading-snug mt-0.5",
-              bottomSheetMode ? "text-gray-900 font-medium" : "text-white/90"
-            )}>
-              {comment.content}
-            </p>
+            <div className="relative">
+              <p
+                className={cn(
+                  "text-[13px] leading-snug mt-0.5 select-none",
+                  bottomSheetMode ? "text-gray-900 font-medium" : "text-white/90"
+                )}
+                style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+                onTouchStart={startLongPress}
+                onTouchEnd={cancelLongPress}
+                onTouchMove={cancelLongPress}
+                onTouchCancel={cancelLongPress}
+                onMouseDown={startLongPress}
+                onMouseUp={cancelLongPress}
+                onMouseLeave={cancelLongPress}
+                onContextMenu={(e) => { e.preventDefault(); setShowReactionPicker(true); }}
+              >
+                {comment.content}
+              </p>
+
+              {/* Emoji reaction picker (long-press) */}
+              <AnimatePresence>
+                {showReactionPicker && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowReactionPicker(false)}
+                    />
+                    <motion.div
+                      data-testid="comment-reaction-picker"
+                      initial={{ opacity: 0, y: 8, scale: 0.85 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.85 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                      className={cn(
+                        "absolute -top-12 left-0 z-50 flex items-center gap-1 px-2 py-1.5 rounded-full shadow-xl",
+                        bottomSheetMode ? "bg-white border border-gray-200" : "bg-zinc-800 border border-white/10"
+                      )}
+                    >
+                      {QUICK_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          data-testid={`react-emoji-${emoji}`}
+                          onClick={(e) => { e.stopPropagation(); handleReact(emoji); }}
+                          className={cn(
+                            "text-xl leading-none px-1.5 py-0.5 rounded-full transition-transform active:scale-90 hover:scale-125",
+                            comment.user_reaction === emoji && (bottomSheetMode ? "bg-blue-50" : "bg-white/10")
+                          )}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
+              {/* Reaction chips (debajo del texto) */}
+              {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 mt-1">
+                  {Object.entries(comment.reactions)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([emoji, count]) => {
+                      const isMine = comment.user_reaction === emoji;
+                      return (
+                        <button
+                          key={emoji}
+                          data-testid={`reaction-chip-${emoji}`}
+                          onClick={() => handleReact(emoji)}
+                          className={cn(
+                            "flex items-center gap-1 px-2 h-6 rounded-full text-[11px] font-medium border transition-all active:scale-95",
+                            bottomSheetMode
+                              ? (isMine
+                                  ? "bg-blue-50 border-blue-300 text-blue-700"
+                                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100")
+                              : (isMine
+                                  ? "bg-blue-500/20 border-blue-400/40 text-blue-100"
+                                  : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10")
+                          )}
+                        >
+                          <span className="text-sm leading-none">{emoji}</span>
+                          <span>{count}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
           )}
           
           {/* Acciones */}
@@ -401,6 +516,7 @@ const Comment = ({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onLike={onLike}
+                onReact={onReact}
                 onReplyClick={onReplyClick}
                 depth={depth + 1}
                 maxDepth={maxDepth}

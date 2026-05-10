@@ -57,6 +57,7 @@ from models import (
     Message, MessageCreate, Conversation, ConversationResponse,
     UserUpdate, PasswordChange, UserSettings,
     Comment, CommentCreate, CommentUpdate, CommentResponse, CommentLike,
+    CommentReaction, ReactionRequest,
     Story, StoryCreate, StoryView, StoryResponse, StoriesGroupResponse,
     Follow, FollowCreate, FollowResponse, FollowStatus, FollowingList, FollowersList,
     LoginAttempt, UserDevice, UserSession, SecurityNotification,
@@ -5085,6 +5086,25 @@ async def get_poll_comments(
     }).to_list(len(comment_ids))
     
     liked_comments = set(like["comment_id"] for like in user_likes)
+
+    # Reacciones rápidas: agregamos por comment_id → {emoji: count}
+    reactions_by_comment: dict = {}
+    if comment_ids:
+        agg = db.comment_reactions.aggregate([
+            {"$match": {"comment_id": {"$in": comment_ids}}},
+            {"$group": {"_id": {"comment_id": "$comment_id", "emoji": "$emoji"}, "count": {"$sum": 1}}}
+        ])
+        async for row in agg:
+            cid = row["_id"]["comment_id"]
+            emoji = row["_id"]["emoji"]
+            reactions_by_comment.setdefault(cid, {})[emoji] = row["count"]
+
+    # Reacción del usuario actual por comentario
+    user_reactions = await db.comment_reactions.find({
+        "comment_id": {"$in": comment_ids},
+        "user_id": current_user.id
+    }).to_list(len(comment_ids))
+    user_reaction_map = {r["comment_id"]: r["emoji"] for r in user_reactions}
     
     # Crear diccionario de comentarios
     comments_dict = {}
@@ -5093,13 +5113,15 @@ async def get_poll_comments(
     # Construir estructura anidada
     for comment_data in all_comments:
         # Eliminar campos que se pasan explícitamente para evitar duplicados
-        clean_data = {k: v for k, v in comment_data.items() if k not in ('user', 'replies', 'reply_count', 'user_liked', '_id')}
+        clean_data = {k: v for k, v in comment_data.items() if k not in ('user', 'replies', 'reply_count', 'user_liked', 'reactions', 'user_reaction', '_id')}
         comment_resp = CommentResponse(
             **clean_data,
             user=users_dict.get(comment_data["user_id"]),
             replies=[],
             reply_count=0,
-            user_liked=comment_data["id"] in liked_comments
+            user_liked=comment_data["id"] in liked_comments,
+            reactions=reactions_by_comment.get(comment_data["id"], {}),
+            user_reaction=user_reaction_map.get(comment_data["id"])
         )
         
         comments_dict[comment_data["id"]] = comment_resp
@@ -5222,6 +5244,9 @@ async def delete_comment_recursive(comment_id: str) -> int:
     
     # Eliminar likes del comentario
     await db.comment_likes.delete_many({"comment_id": comment_id})
+
+    # Eliminar reacciones rápidas del comentario
+    await db.comment_reactions.delete_many({"comment_id": comment_id})
     
     # Eliminar el comentario principal
     await db.comments.delete_one({"id": comment_id})
@@ -5289,13 +5314,74 @@ async def toggle_comment_like(
             "likes": updated_comment["likes"]
         }
 
+@api_router.post("/comments/{comment_id}/reaction")
+async def toggle_comment_reaction(
+    comment_id: str,
+    payload: ReactionRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Toggle/set una reacción rápida (emoji) sobre un comentario.
+
+    Reglas:
+    - Un usuario solo tiene UNA reacción activa por comentario.
+    - Si manda el MISMO emoji que ya tiene → se elimina (toggle off).
+    - Si manda un emoji DIFERENTE → reemplaza el anterior.
+    - Si no tenía ninguna → la agrega.
+    """
+    emoji = (payload.emoji or "").strip()
+    if not emoji or len(emoji) > 16:
+        raise HTTPException(status_code=400, detail="Invalid emoji")
+
+    comment = await db.comments.find_one({"id": comment_id})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    existing = await db.comment_reactions.find_one({
+        "comment_id": comment_id,
+        "user_id": current_user.id
+    })
+
+    if existing and existing.get("emoji") == emoji:
+        # Toggle off
+        await db.comment_reactions.delete_one({
+            "comment_id": comment_id,
+            "user_id": current_user.id
+        })
+        user_reaction = None
+    else:
+        if existing:
+            await db.comment_reactions.delete_one({
+                "comment_id": comment_id,
+                "user_id": current_user.id
+            })
+        reaction = CommentReaction(
+            comment_id=comment_id,
+            user_id=current_user.id,
+            emoji=emoji
+        )
+        await db.comment_reactions.insert_one(reaction.dict())
+        user_reaction = emoji
+
+    # Recalcular contadores agregados de este comentario
+    agg = db.comment_reactions.aggregate([
+        {"$match": {"comment_id": comment_id}},
+        {"$group": {"_id": "$emoji", "count": {"$sum": 1}}}
+    ])
+    reactions: dict = {}
+    async for row in agg:
+        reactions[row["_id"]] = row["count"]
+
+    return {
+        "user_reaction": user_reaction,
+        "reactions": reactions,
+    }
+
 @api_router.get("/comments/{comment_id}")
 async def get_comment(
     comment_id: str,
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Get a specific comment with its replies"""
-    
     comment = await db.comments.find_one({"id": comment_id})
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")

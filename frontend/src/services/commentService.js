@@ -176,6 +176,23 @@ class CommentService {
     };
     return this.createComment(pollId, commentData);
   }
+
+  // Toggle / set / change reacción rápida (emoji) sobre un comentario.
+  // Backend: POST /api/comments/{commentId}/reaction { emoji }
+  // Devuelve { user_reaction: string|null, reactions: {emoji: count} }
+  async toggleReaction(commentId, emoji) {
+    const response = await fetch(`${this.baseURL}/comments/${commentId}/reaction`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ emoji })
+    });
+    if (!response.ok) {
+      let msg = `HTTP error! status: ${response.status}`;
+      try { const e = await response.json(); msg = e.detail || e.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await response.json();
+  }
 }
 
 export default new CommentService();

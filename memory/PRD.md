@@ -59,6 +59,9 @@
 ✅ Bug submit comentarios (typo `addCommentForFrontend`) en `BottomNavigation.jsx` arreglado.
 ✅ **CommentsModal portalizado a `document.body`** — antes el modal aparecía completamente negro al abrirse desde la barra inferior porque un ancestro con CSS `transform` (TikTokScrollView) rompía `position: fixed` y posicionaba el modal en `top: -915px`. Fix: `createPortal(..., document.body)`.
 ✅ **Sin solapamiento post/modal en medio-abierto**: el post miniatura usaba `height: 59vh` y se solapaba ~110px con el modal half-open (46vh + 56px input). Cambiado a `calc(100vh - 46vh - 56px - 16px)` para que el post termine justo donde empieza el modal. El modal solo se superpone al post cuando está completamente expandido.
+✅ **Viewport units `vh` → `dvh`** en `CommentsModal` y `TikTokScrollView` para evitar solapamientos en móviles reales con barra de URL visible.
+✅ **Marco unificado**: bottom nav sin `rounded-t-3xl` cuando hay comentarios activos → modal + input se ven como un único marco blanco continuo que se expande.
+✅ **Reacciones rápidas con emoji**: long-press sobre un comentario abre picker con ❤️🔥😂😮😢👏. Backend: `POST /api/comments/{id}/reaction` (toggle/replace), nueva colección `comment_reactions`. Frontend: chips clickeables debajo del texto con conteo y estado del usuario actual; optimistic UI; fallback a refresh ante error.
 
 ## Backlog / Próximas mejoras (P2)
 - **Borradores autoguardados por modo en localStorage** (texto/posición/menciones/layout/música por `publicar` y `vs`). Permitiría sobrevivir refreshes.
