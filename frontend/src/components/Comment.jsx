@@ -100,26 +100,40 @@ const Comment = ({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const longPressTimer = useRef(null);
   const longPressFiredRef = useRef(false);
+  const longPressStartRef = useRef({ x: 0, y: 0 });
 
   const isAuthor = currentUser && currentUser.id === comment.user.id;
   const canReply = depth < maxDepth;
   const hasReplies = comment.replies && comment.replies.length > 0;
 
   // ⏱️ Long-press para abrir picker de reacciones rápidas
-  const startLongPress = () => {
+  const startLongPress = (e) => {
     longPressFiredRef.current = false;
+    if (e?.touches?.[0]) {
+      longPressStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (typeof e?.clientX === 'number') {
+      longPressStartRef.current = { x: e.clientX, y: e.clientY };
+    }
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
       longPressFiredRef.current = true;
       if (navigator.vibrate) navigator.vibrate(15);
       setShowReactionPicker(true);
-    }, 450);
+    }, 350);
   };
   const cancelLongPress = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+  };
+  const handleLongPressMove = (e) => {
+    if (!longPressTimer.current) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    const dx = t.clientX - longPressStartRef.current.x;
+    const dy = t.clientY - longPressStartRef.current.y;
+    if (Math.hypot(dx, dy) > 10) cancelLongPress();
   };
 
   const handleReact = async (emoji) => {
@@ -264,10 +278,10 @@ const Comment = ({
                   "text-[13px] leading-snug mt-0.5 select-none",
                   bottomSheetMode ? "text-gray-900 font-medium" : "text-white/90"
                 )}
-                style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+                style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
                 onTouchStart={startLongPress}
                 onTouchEnd={cancelLongPress}
-                onTouchMove={cancelLongPress}
+                onTouchMove={handleLongPressMove}
                 onTouchCancel={cancelLongPress}
                 onMouseDown={startLongPress}
                 onMouseUp={cancelLongPress}
