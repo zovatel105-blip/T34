@@ -2,35 +2,22 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomLogo from './CustomLogo';
 import QuickActionsMenu from './QuickActionsMenu';
-import useLongPress from '../hooks/useLongPress';
-import { useToast } from '../hooks/use-toast';
 
 const LogoWithQuickActions = ({ size = 32, className = "" }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleLongPress = useCallback(() => {
-    setShowQuickActions(true);
-    setIsPressed(false);
-    
+  // Abrir/cerrar el menú con un simple click
+  const handleClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowQuickActions((prev) => !prev);
+
     // Haptic feedback si está disponible
     if (navigator.vibrate) {
-      navigator.vibrate(50);
+      navigator.vibrate(30);
     }
-    
-    toast({
-      title: "🚀 Menú de acciones rápidas",
-      description: "Selecciona una acción",
-      duration: 2000,
-    });
-  }, [toast]);
-
-  const handleShortPress = useCallback(() => {
-    console.log('👆 Short press detected - no action (regular click)');
-    // Para un click corto, no hacemos nada especial
-    // Esto permite que el logo siga siendo clickeable para otras funcionalidades si se necesitan
   }, []);
 
   const handleCloseMenu = useCallback(() => {
@@ -55,43 +42,20 @@ const LogoWithQuickActions = ({ size = 32, className = "" }) => {
     }
   }, [navigate]);
 
-  const longPressProps = useLongPress(
-    handleLongPress,
-    handleShortPress,
-    600 // 600ms para activar long press
-  );
-
-
-
   return (
     <>
       <div
-        {...longPressProps}
+        onClick={handleClick}
         className={`${className} flex items-center justify-center cursor-pointer select-none transition-all duration-300 ${
           isPressed 
             ? 'scale-110' 
             : 'hover:scale-105'
         }`}
-        onMouseDown={(e) => {
-          longPressProps.onMouseDown(e);
-          setIsPressed(true);
-        }}
-        onMouseUp={(e) => {
-          longPressProps.onMouseUp(e);
-          setIsPressed(false);
-        }}
-        onMouseLeave={(e) => {
-          longPressProps.onMouseLeave(e);
-          setIsPressed(false);
-        }}
-        onTouchStart={(e) => {
-          longPressProps.onTouchStart(e);
-          setIsPressed(true);
-        }}
-        onTouchEnd={(e) => {
-          longPressProps.onTouchEnd(e);
-          setIsPressed(false);
-        }}
+        onMouseDown={() => setIsPressed(true)}
+        onMouseUp={() => setIsPressed(false)}
+        onMouseLeave={() => setIsPressed(false)}
+        onTouchStart={() => setIsPressed(true)}
+        onTouchEnd={() => setIsPressed(false)}
         style={{ 
           width: `${size}px`, 
           height: `${size}px`,
@@ -124,7 +88,7 @@ const LogoWithQuickActions = ({ size = 32, className = "" }) => {
             border: 'none !important'
           }
         }}
-        title="Mantén presionado para acciones rápidas"
+        title="Toca para ver acciones rápidas"
       >
         {/* Efectos eliminados para quitar cualquier anillo visual */}
         
