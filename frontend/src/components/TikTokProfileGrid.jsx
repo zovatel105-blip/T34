@@ -42,6 +42,14 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
 
   // Get thumbnail for the poll
   const getPostThumbnail = (poll) => {
+    // 🎯 VS POSTS: nunca usar un thumbnail plano de una sola imagen.
+    // Devolvemos null para forzar el fallback que renderiza el layout
+    // completo (ambas opciones lado a lado) usando LayoutRenderer.
+    const isVS = poll?.layout === 'vs' || !!poll?.vs_id;
+    if (isVS) {
+      return null;
+    }
+
     // First, check if we have a dedicated thumbnail
     if (poll.thumbnail_url) {
       return poll.thumbnail_url;
@@ -170,6 +178,7 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
             {/* Thumbnail or static image representation */}
             <div className="w-full h-full relative bg-gray-100 rounded-lg z-0">
               {(() => {
+                const isVS = poll?.layout === 'vs' || !!poll?.vs_id;
                 const thumbnail = getPostThumbnail(poll);
                 const isVideo = hasVideoContent(poll);
                 const videoUrl = isVideo ? getFirstVideoUrl(poll) : null;
@@ -209,7 +218,9 @@ const TikTokProfileGrid = ({ polls, onPollClick, onUpdatePoll, onDeletePoll, cur
                 // fiable con pseudo-elementos CSS). Mostramos un fondo oscuro
                 // con nuestro propio icono de play — consistente con el diseño
                 // del grid y sin el placeholder nativo feo.
-                if (videoUrl || isVideo) {
+                // 🎯 Excepción: posts VS — siempre deben mostrar el layout
+                // completo (ambas opciones lado a lado), aunque tengan vídeo.
+                if (!isVS && (videoUrl || isVideo)) {
                   return (
                     <div className="w-full h-full bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 flex items-center justify-center rounded-lg">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/15 backdrop-blur-sm border border-white/40 flex items-center justify-center shadow-lg">
