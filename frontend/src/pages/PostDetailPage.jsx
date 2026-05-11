@@ -107,7 +107,7 @@ const PostDetailPage = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Logo fijo */}
       <div className="fixed top-4 right-4 z-50">
-        <LogoWithQuickActions size={75} />
+        <LogoWithQuickActions size={95} />
       </div>
 
       {/* Header */}

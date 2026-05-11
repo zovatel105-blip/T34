@@ -970,7 +970,7 @@ const FeedPage = () => {
             zIndex: 9999,
           }}
         >
-          <LogoWithQuickActions size={75} />
+          <LogoWithQuickActions size={95} />
         </div>
 
         {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
@@ -1002,7 +1002,7 @@ const FeedPage = () => {
             zIndex: 9999,
           }}
         >
-          <LogoWithQuickActions size={75} />
+          <LogoWithQuickActions size={95} />
         </div>
 
         {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
@@ -1060,7 +1060,7 @@ const FeedPage = () => {
             zIndex: 9999,
           }}
         >
-          <LogoWithQuickActions size={75} />
+          <LogoWithQuickActions size={95} />
         </div>
 
         {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
@@ -1113,7 +1113,7 @@ const FeedPage = () => {
             zIndex: 9999,
           }}
         >
-          <LogoWithQuickActions size={75} />
+          <LogoWithQuickActions size={95} />
         </div>
 
         {/* 🛜 Toast "Sin conexión" — sólo en Feed (Para Ti) */}
@@ -1173,7 +1173,7 @@ const FeedPage = () => {
             zIndex: 9999,
           }}
         >
-          <LogoWithQuickActions size={75} />
+          <LogoWithQuickActions size={95} />
         </div>
 
         {/* Stories overlay - REMOVED (Stories feature disabled) */}
@@ -1213,7 +1213,7 @@ const FeedPage = () => {
           zIndex: 9999,
         }}
       >
-        <LogoWithQuickActions size={32} />
+        <LogoWithQuickActions size={42} />
       </div>
       
       <div className="min-h-screen bg-gray-50 pt-6 relative">
