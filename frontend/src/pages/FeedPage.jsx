@@ -962,7 +962,7 @@ const FeedPage = () => {
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Loading */}
         <div 
-          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
           style={{ 
             position: 'fixed',
             top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
@@ -994,7 +994,7 @@ const FeedPage = () => {
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Error State */}
         <div 
-          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
           style={{ 
             position: 'fixed',
             top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
@@ -1052,7 +1052,7 @@ const FeedPage = () => {
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Auth Required */}
         <div 
-          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
           style={{ 
             position: 'fixed',
             top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
@@ -1105,7 +1105,7 @@ const FeedPage = () => {
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Empty State */}
         <div 
-          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
           style={{ 
             position: 'fixed',
             top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
@@ -1165,7 +1165,7 @@ const FeedPage = () => {
       <>
         {/* Logo fijo SIEMPRE VISIBLE - Mobile TikTok Mode */}
         <div 
-          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+          className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
           style={{ 
             position: 'fixed',
             top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
@@ -1205,7 +1205,7 @@ const FeedPage = () => {
     <>
       {/* Logo fijo SIEMPRE VISIBLE - Desktop Mode */}
       <div 
-        className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10 rounded-full bg-white/95 backdrop-blur-md border border-gray-200/60 shadow-lg"
+        className="fixed top-4 right-4 z-[9999] flex items-center justify-center w-10 h-10"
         style={{ 
           position: 'fixed',
           top: '16px',
