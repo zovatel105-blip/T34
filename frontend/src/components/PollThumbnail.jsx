@@ -118,9 +118,15 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
 
   const options = result.options || [];
   const layout = result.layout || 'vertical';
+  // 🎯 VS: orientación del split (vertical=lado a lado, horizontal=arriba-abajo)
+  const vsOrientation = result.vs_orientation || 'vertical';
 
   const getGridClasses = () => {
     switch (layout) {
+      case 'vs':
+        return vsOrientation === 'horizontal'
+          ? 'grid grid-cols-1 grid-rows-2 gap-0.5'
+          : 'grid grid-cols-2 gap-0.5';
       case 'vertical':           return 'grid grid-cols-2 gap-0.5';
       case 'horizontal':         return 'grid grid-cols-1 grid-rows-2 gap-0.5';
       case 'triptych-vertical':  return 'grid grid-cols-3 gap-0.5';
@@ -136,6 +142,7 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
 
   const getMaxOptions = () => {
     switch (layout) {
+      case 'vs':                  return 2;  // 🎯 VS: muestra las 2 opciones de la primera pregunta
       case 'vertical':            return 2;
       case 'horizontal':          return 2;
       case 'triptych-vertical':   return 3;
