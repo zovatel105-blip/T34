@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://pod-hostname-viewer.preview.emergentagent.com/api"
+BACKEND_URL = "https://container-identity.preview.emergentagent.com/api"
 
 class HealthTester:
     def __init__(self):
