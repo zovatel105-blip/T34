@@ -555,15 +555,18 @@ const QuestionSlide = ({
   // ⏱️ Countdown "SIGUIENTE DUELO EN Xs" — se activa cuando aparecen los resultados
   const [nextDuelCountdown, setNextDuelCountdown] = useState(null);
   // 🏆 Winner card — aparece 1.5s después del voto/resultados (no en empates)
+  //    SOLO se muestra para el slide activo. Como VSWinnerCard se portaliza a
+  //    document.body, sin este gate verías cards de publicaciones anteriores
+  //    todavía montadas en el "tape" del scroller.
   const [showWinnerCard, setShowWinnerCard] = useState(false);
   useEffect(() => {
-    if (!showResults) {
+    if (!showResults || !isActive) {
       setShowWinnerCard(false);
       return;
     }
     const t = setTimeout(() => setShowWinnerCard(true), 1500);
     return () => clearTimeout(t);
-  }, [showResults]);
+  }, [showResults, isActive]);
   useEffect(() => {
     if (!showResults) {
       setNextDuelCountdown(null);
@@ -999,7 +1002,9 @@ const QuestionSlide = ({
       />
 
       {/* 🏆 Winner Card overlay — aparece 1.5s después de votar (no en empates) */}
-      {showResults && showWinnerCard && !isTie && (() => {
+      {/*    Gate de isActive además del showWinnerCard para no portalizar cards
+            de slides inactivos. */}
+      {isActive && showResults && showWinnerCard && !isTie && (() => {
         const winnerOpt = winnerIsA ? optionA : optionB;
         const loserOpt = winnerIsA ? optionB : optionA;
         const winnerName = (winnerOpt?.participant_username || winnerOpt?.text || 'Ganador').toString();
