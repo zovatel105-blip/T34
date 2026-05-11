@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Flame, Zap, Trophy, Hourglass, Share2, ChevronsUp } from 'lucide-react';
+import { Heart, Flame, Zap, Trophy, Hourglass, Share2, ChevronsUp, Scale } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
@@ -642,13 +642,13 @@ const QuestionSlide = ({
   const getStatusLabel = (isOptionA) => {
     const isSelected = (isOptionA && optionA && selectedOption === optionA.id)
       || (!isOptionA && optionB && selectedOption === optionB.id);
-    if (isSelected) return { icon: '💜', text: t('vs.tuVoto'), color: '#fff' };
+    if (isSelected) return { Icon: Heart, iconProps: { fill: 'currentColor' }, text: t('vs.tuVoto'), color: '#fff' };
     if (!showResults) return null;
     const myPerc = isOptionA ? percA : percB;
     const otherPerc = isOptionA ? percB : percA;
-    if (myPerc > otherPerc) return { icon: '🔥', text: t('vs.vaGanando'), color: '#fff' };
-    if (myPerc < otherPerc) return { icon: '⚡', text: t('vs.remontando'), color: '#fff' };
-    return { icon: '⚖️', text: t('vs.empate'), color: '#fff' };
+    if (myPerc > otherPerc) return { Icon: Flame, iconProps: { fill: 'currentColor' }, text: t('vs.vaGanando'), color: '#fff' };
+    if (myPerc < otherPerc) return { Icon: Zap, iconProps: { fill: 'currentColor' }, text: t('vs.remontando'), color: '#fff' };
+    return { Icon: Scale, iconProps: {}, text: t('vs.empate'), color: '#fff' };
   };
 
   const renderCard = (option, index) => {
