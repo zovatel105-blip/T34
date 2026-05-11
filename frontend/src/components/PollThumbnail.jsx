@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Check, Play } from 'lucide-react';
 import AppConfig from '../config/config';
+import LayoutRenderer from './layouts/LayoutRenderer';
 
 // Resuelve URLs relativas a absolutas para APK nativa Android
 const resolveUrl = (url) => {
@@ -277,6 +278,33 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
           <div className="text-lg font-bold mb-1">📊</div>
           <div className="text-xs">Poll</div>
         </div>
+      </div>
+    );
+  }
+
+  // ─── Layout: VS (mismo diseño que la vista completa) ──────────────────────
+  // 🎯 Para posts VS renderizamos el VSLayout real en modo thumbnail (isThumbnail=true,
+  //    isActive=false). Así el preview en grids/búsqueda se ve EXACTAMENTE igual
+  //    que la vista completa, sin reinventar el layout con un grid simple.
+  if (layout === 'vs') {
+    return (
+      <div
+        ref={containerRef}
+        className={`relative aspect-[6/11] bg-black cursor-pointer rounded-xl overflow-hidden ${className}`}
+        onClick={onClick}
+      >
+        <LayoutRenderer
+          poll={result}
+          onVote={() => {}}
+          isActive={false}
+          isThumbnail={true}
+          isBottomNavVisible={false}
+        />
+        {!hideBadge && (
+          <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/80 text-white backdrop-blur-sm pointer-events-none">
+            VS
+          </div>
+        )}
       </div>
     );
   }
