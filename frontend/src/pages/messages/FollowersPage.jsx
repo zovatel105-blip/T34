@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 import useLivePoll from '../../hooks/useLivePoll';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const FollowersPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followingStatus, setFollowingStatus] = useState({});
@@ -146,7 +148,7 @@ const FollowersPage = () => {
             className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-800" />
           </button>
-          <h1 className="text-xl font-normal text-black">Nuevos Seguidores</h1>
+          <h1 className="text-xl font-normal text-black">{t('inbox.followers.title')}</h1>
         </div>
       </div>
 
@@ -161,15 +163,15 @@ const FollowersPage = () => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Users className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Sin nuevos seguidores</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('inbox.followers.empty')}</h3>
             <p className="text-gray-500 text-sm">
-              Cuando alguien nuevo te siga, aparecerá aquí
+              {t('inbox.followers.emptyDesc')}
             </p>
           </div>
         ) : (
           <div className="px-2 py-2 flex flex-col gap-2">
             {followers.map(follower => {
-              const username = follower.username || follower.display_name || 'Usuario';
+              const username = follower.username || follower.display_name || t('profile.defaultUsername');
               const time = formatTime(follower.followed_at);
               const isFollowing = followingStatus[follower.id];
 
@@ -183,7 +185,7 @@ const FollowersPage = () => {
                       {username}
                     </p>
                     <p className="text-xs text-gray-500">
-                      empezó a seguirte · <span className="text-gray-400">{time}</span>
+                      {t('inbox.followers.startedFollowing')} · <span className="text-gray-400">{time}</span>
                     </p>
                   </div>
                   <button
@@ -195,7 +197,7 @@ const FollowersPage = () => {
                     }`}
                     style={!isFollowing ? { backgroundColor: '#B061FF' } : {}}
                   >
-                    {isFollowing ? 'Siguiendo' : 'Seguir también'}
+                    {isFollowing ? t('inbox.followers.following') : t('inbox.followers.followBack')}
                   </button>
                 </div>
               );

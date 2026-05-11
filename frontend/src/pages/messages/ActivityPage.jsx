@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 import useLivePoll from '../../hooks/useLivePoll';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const ActivityPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -103,11 +105,11 @@ const ActivityPage = () => {
   const counts = getCounts();
 
   const tabs = [
-    { key: 'all', label: 'All activity', count: activities.length > 0 ? activities.length : null },
-    { key: 'votes', label: 'Votes', count: counts.votes },
-    { key: 'likes', label: 'Likes', count: counts.likes },
-    { key: 'comments', label: 'Comments', count: counts.comments },
-    { key: 'mentions', label: 'Mentions', count: counts.mentions },
+    { key: 'all', label: t('inbox.activity.all'), count: activities.length > 0 ? activities.length : null },
+    { key: 'votes', label: t('inbox.activity.votes'), count: counts.votes },
+    { key: 'likes', label: t('inbox.activity.likes'), count: counts.likes },
+    { key: 'comments', label: t('inbox.activity.comments'), count: counts.comments },
+    { key: 'mentions', label: t('inbox.activity.mentions'), count: counts.mentions },
   ];
 
   const Avatar = ({ avatarUrl, name }) => (
@@ -130,11 +132,11 @@ const ActivityPage = () => {
   );
 
   const renderItem = (item) => {
-    const username = item.user?.username || item.user?.display_name || 'Usuario';
+    const username = item.user?.username || item.user?.display_name || t('profile.defaultUsername');
     const time = formatTime(item.created_at);
 
     if (item.type === 'comment') {
-      const commentText = item.comment_preview || 'Comentó tu publicación';
+      const commentText = item.comment_preview || t('inbox.activity.commentedDefault');
       return (
         <div key={item.id} className="flex items-start gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
           <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
@@ -145,7 +147,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Comentó: {commentText} · <span className="text-gray-400">{time}</span>
+              {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
             </p>
             <div className="flex items-center gap-3 mt-2">
               <Heart className="w-5 h-5 text-gray-400 cursor-pointer hover:text-red-500 transition-colors" strokeWidth={1.5} />
@@ -172,7 +174,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-xs text-gray-500">
-              le gustó tu publicación · <span className="text-gray-400">{time}</span>
+              {t('inbox.activity.liked')} · <span className="text-gray-400">{time}</span>
             </p>
           </div>
           {item.poll_thumbnail && (
@@ -195,7 +197,7 @@ const ActivityPage = () => {
               {username}
             </p>
             <p className="text-xs text-gray-500">
-              votó en tu encuesta{item.vote_option ? `: "${item.vote_option}"` : ''} · <span className="text-gray-400">{time}</span>
+              {t('inbox.activity.votedPrefix')}{item.vote_option ? `: "${item.vote_option}"` : ''} · <span className="text-gray-400">{time}</span>
             </p>
           </div>
         </div>
@@ -213,7 +215,7 @@ const ActivityPage = () => {
             {username}
           </p>
           <p className="text-xs text-gray-500">
-            te mencionó en una publicación · <span className="text-gray-400">{time}</span>
+            {t('inbox.activity.mentioned')} · <span className="text-gray-400">{time}</span>
           </p>
         </div>
         {item.poll_thumbnail && (
@@ -234,7 +236,7 @@ const ActivityPage = () => {
             className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft className="h-5 w-5 text-gray-800" />
           </button>
-          <h1 className="text-xl font-normal text-black">Activity</h1>
+          <h1 className="text-xl font-normal text-black">{t('inbox.activity.title')}</h1>
         </div>
 
         {/* Filter Tabs */}
@@ -268,9 +270,9 @@ const ActivityPage = () => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Heart className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Sin actividad</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('inbox.activity.empty')}</h3>
             <p className="text-gray-500 text-sm">
-              Los likes, comentarios, votos y menciones aparecerán aquí
+              {t('inbox.activity.emptyDesc')}
             </p>
           </div>
         ) : (

@@ -2576,7 +2576,7 @@ const ProfilePage = () => {
                     <div className="px-4 pt-2 pb-6">
                       {/* Header del Panel */}
                       <div className="text-center mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Enlaces</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('profile.socialLinks.title')}</h3>
                       </div>
                       
                       {/* Lista de Enlaces Agregados */}
@@ -2587,7 +2587,7 @@ const ProfilePage = () => {
                           className="w-full flex items-center justify-center gap-2 py-4 px-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors"
                         >
                           <Plus className="w-5 h-5" />
-                          Agregar enlace
+                          {t('profile.socialLinks.addLink')}
                         </button>
 
                         {/* Enlaces Guardados - Como tarjetas coloridas similar a la referencia */}
@@ -2654,7 +2654,7 @@ const ProfilePage = () => {
                           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowAddSocialModal(false)}>
                             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center justify-between mb-6">
-                                <h4 className="text-xl font-semibold text-gray-900">Agregar enlace</h4>
+                                <h4 className="text-xl font-semibold text-gray-900">{t('profile.socialLinks.modalTitle')}</h4>
                                 <button
                                   onClick={() => setShowAddSocialModal(false)}
                                   className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
@@ -2699,7 +2699,7 @@ const ProfilePage = () => {
                                   onClick={() => setShowAddSocialModal(false)}
                                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
-                                  Cancelar
+                                  {t('profile.socialLinks.cancel')}
                                 </button>
                                 <button
                                   onClick={handleAddCustomSocialLink}
@@ -2710,7 +2710,7 @@ const ProfilePage = () => {
                                       : 'bg-black text-white hover:bg-gray-800'
                                   }`}
                                 >
-                                  Agregar
+                                  {t('profile.socialLinks.add')}
                                 </button>
                               </div>
                             </div>
@@ -2722,7 +2722,7 @@ const ProfilePage = () => {
                       {/* Información adicional */}
                       <div className="mt-8 text-center">
                         <p className="text-xs text-gray-500">
-                          Agrega cualquier plataforma: redes sociales, tu sitio web, portfolio, etc.
+                          {t('profile.socialLinks.info')}
                         </p>
                       </div>
                     </div>

@@ -7,10 +7,12 @@ import AppConfig from '../config/config';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import challengeService from '../services/challengeService';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { useTranslation } from '../hooks/useTranslation';
 
 const ActiveChallengesPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, token } = useAuth();
+  const { t } = useTranslation();
   const [battles, setBattles] = useState([]);
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [challengePolls, setChallengePolls] = useState({});
@@ -38,9 +40,9 @@ const ActiveChallengesPage = () => {
           <div className="w-20 h-20 mb-5 rounded-full bg-zinc-800 flex items-center justify-center">
             <Trophy className="w-10 h-10 text-zinc-500" strokeWidth={1.5} />
           </div>
-          <h2 className="font-bold text-white text-2xl">Próximamente</h2>
+          <h2 className="font-bold text-white text-2xl">{t('inbox.comingSoon.title')}</h2>
           <p className="text-sm text-zinc-400 mt-2 max-w-xs">
-            Esta sección está en construcción.
+            {t('inbox.comingSoon.desc')}
           </p>
         </div>
       </div>

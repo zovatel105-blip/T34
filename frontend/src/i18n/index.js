@@ -13,10 +13,9 @@ import translations from './translations';
  * fuera del MVP. Ej: '/live' cubre '/live/broadcast/123' y '/live/:roomId'.
  */
 // Rutas EXACTAS o prefijos que se consideran fuera del MVP.
-// Nota: '/explore' (exacto) SÍ es MVP — solo las sub-rutas internas están ocultas.
+// Nota: las páginas accesibles desde el flujo del usuario (explore + sub-rutas)
+// se mantienen como MVP para que el idioma seleccionado se aplique también ahí.
 const NON_MVP_ROUTE_PREFIXES = [
-  '/explore/completed',  // CompletedBattlesPage (oculta en MVP)
-  '/explore/active',     // ActiveChallengesPage (oculta en MVP)
   '/moment-create',      // MomentCreationPage
   '/story-creation',     // StoryCapturePage
   '/story-edit',         // StoryEditPage
