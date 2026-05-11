@@ -160,6 +160,7 @@ const TikTokPollCard = ({
   const [audioContextActivated, setAudioContextActivated] = useState(false);
   const { isBottomNav } = useNavPreference();
   const { hideRightNavigation } = useTikTok();
+  const { t } = useTranslation();
   // 🎯 LAYOUT MODE: refleja la preferencia del usuario (botones sociales a un lado vs abajo).
   // Debe permanecer constante aunque la barra inferior se oculte (vista inmersiva en
   // Profile/Audio/PostViewer/etc.) — los botones sociales laterales deben seguir visibles
@@ -1437,7 +1438,7 @@ const TikTokPollCard = ({
                 }}
                 className="inline-flex items-center px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm text-white/90 font-semibold text-sm hover:text-white transition-colors cursor-pointer"
               >
-                {formatNumber(getDisplayedTotalVotes(poll))} votos
+                {formatNumber(getDisplayedTotalVotes(poll))} {t('vs.votos')}
               </button>
             )}
           </div>
@@ -1608,7 +1609,7 @@ const TikTokPollCard = ({
             <ChevronDown className="w-8 h-8 text-white/80" />
           </div>
           <div className="text-white/80 text-sm font-medium bg-black/60 px-4 py-2 rounded-full backdrop-blur-sm border border-white/20">
-            Desliza para ver más
+            {t('vs.deslizaParaVer')}
           </div>
         </div>
       )}

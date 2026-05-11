@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Trophy, MessageCircle, ChevronsDown, Flame } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import SafeImage from '../common/SafeImage';
+import { useTranslation } from '../../hooks/useTranslation';
 
 /**
  * VSWinnerCard
@@ -26,7 +27,7 @@ import SafeImage from '../common/SafeImage';
  * - visible: boolean
  */
 const VSWinnerCard = ({
-  winnerName = 'GANADOR',
+  winnerName = null,
   winnerPercentage = 0,
   winnerImage = null,
   loserName = '',
@@ -40,7 +41,10 @@ const VSWinnerCard = ({
   onClose,
   visible = true,
 }) => {
+  const { t } = useTranslation();
   const showRoundLabel = totalRounds > 1;
+  // Si no se proporciona nombre, usa la traducción de "GANADOR"
+  const displayWinnerName = winnerName || t('vs.ganador');
 
   // 👆 Detección de swipe vertical para avanzar al siguiente duelo.
   // Como la card está portalizada con z muy alto, los gestos del feed no
@@ -174,7 +178,7 @@ const VSWinnerCard = ({
                   textShadow: '0 2px 8px rgba(0,0,0,0.8)',
                 }}
               >
-                DUELO
+                {t('vs.duelo')}
               </span>
               <Flame className="w-5 h-5 text-orange-400" fill="currentColor" />
             </div>
@@ -185,7 +189,7 @@ const VSWinnerCard = ({
                 className="text-[10px] font-bold tracking-[0.4em] text-white/70 uppercase"
                 style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
               >
-                Ronda {currentRound}/{totalRounds}
+                {t('vs.ronda', { current: currentRound, total: totalRounds })}
               </span>
             )}
 
@@ -205,7 +209,7 @@ const VSWinnerCard = ({
                   fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
                 }}
               >
-                GANADOR
+                {t('vs.ganador')}
               </span>
               <Trophy className="w-4 h-4 text-yellow-400" fill="currentColor" />
             </div>
@@ -231,7 +235,7 @@ const VSWinnerCard = ({
                   textShadow: '0 4px 14px rgba(0,0,0,0.9), 0 2px 0 rgba(0,0,0,0.6)',
                 }}
               >
-                {winnerName}
+                {displayWinnerName}
               </span>
             </div>
 
@@ -255,7 +259,7 @@ const VSWinnerCard = ({
               className="text-[14px] font-medium text-white/85 mt-1"
               style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
             >
-              {totalVotes.toLocaleString()} votos
+              {totalVotes.toLocaleString()} {t('vs.votos')}
             </span>
 
             {/* Loser stat */}
@@ -291,7 +295,7 @@ const VSWinnerCard = ({
                   className="text-[12px] font-black tracking-[0.18em] text-white uppercase"
                   style={{ fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif' }}
                 >
-                  Compartir
+                  {t('vs.compartir')}
                 </span>
               </button>
 
@@ -314,7 +318,7 @@ const VSWinnerCard = ({
                   className="text-[12px] font-black tracking-[0.18em] text-white uppercase"
                   style={{ fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif' }}
                 >
-                  Comentarios
+                  {t('vs.comentarios')}
                 </span>
               </button>
             </div>
@@ -334,7 +338,7 @@ const VSWinnerCard = ({
                   textShadow: '0 2px 6px rgba(0,0,0,0.8)',
                 }}
               >
-                Siguiente duelo
+                {t('vs.siguienteDuelo')}
               </span>
               <ChevronsDown
                 className="w-7 h-7 text-white -mt-0.5 vs-arrow-bounce"

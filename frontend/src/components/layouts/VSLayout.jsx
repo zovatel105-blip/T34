@@ -6,6 +6,7 @@ import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
 import VSWinnerCard from './VSWinnerCard';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
 // Top card (Player A) → lila, Bottom card (Player B) → azul.
@@ -554,6 +555,7 @@ const QuestionSlide = ({
 
   // ⏱️ Countdown "SIGUIENTE DUELO EN Xs" — se activa cuando aparecen los resultados
   const [nextDuelCountdown, setNextDuelCountdown] = useState(null);
+  const { t } = useTranslation();
   // 🏆 Winner card — aparece 1.5s después del voto/resultados (no en empates)
   //    SOLO se muestra para el slide activo. Como VSWinnerCard se portaliza a
   //    document.body, sin este gate verías cards de publicaciones anteriores
@@ -640,13 +642,13 @@ const QuestionSlide = ({
   const getStatusLabel = (isOptionA) => {
     const isSelected = (isOptionA && optionA && selectedOption === optionA.id)
       || (!isOptionA && optionB && selectedOption === optionB.id);
-    if (isSelected) return { icon: '💜', text: '¡TU VOTO!', color: '#fff' };
+    if (isSelected) return { icon: '💜', text: t('vs.tuVoto'), color: '#fff' };
     if (!showResults) return null;
     const myPerc = isOptionA ? percA : percB;
     const otherPerc = isOptionA ? percB : percA;
-    if (myPerc > otherPerc) return { icon: '🔥', text: 'VA GANANDO', color: '#fff' };
-    if (myPerc < otherPerc) return { icon: '⚡', text: 'REMONTANDO', color: '#fff' };
-    return { icon: '⚖️', text: 'EMPATE', color: '#fff' };
+    if (myPerc > otherPerc) return { icon: '🔥', text: t('vs.vaGanando'), color: '#fff' };
+    if (myPerc < otherPerc) return { icon: '⚡', text: t('vs.remontando'), color: '#fff' };
+    return { icon: '⚖️', text: t('vs.empate'), color: '#fff' };
   };
 
   const renderCard = (option, index) => {
@@ -787,7 +789,7 @@ const QuestionSlide = ({
               )}
             >
               <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-              <span className="text-[10px] font-black uppercase tracking-wider text-white">GANADOR</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">{t('vs.ganador')}</span>
             </div>
           )}
 
@@ -956,7 +958,7 @@ const QuestionSlide = ({
             >
               <Flame className="w-3 h-3 text-white" fill="#fff" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white">
-                +{recentVotes} votos · últimos 5s
+                {t('vs.votosUltimos', { count: recentVotes, seconds: 5 })}
               </span>
             </div>
           )}
@@ -970,13 +972,13 @@ const QuestionSlide = ({
             <div className="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 flex items-center gap-1.5">
               <Hourglass className="w-3 h-3 text-amber-300" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white tabular-nums">
-                QUEDAN 00:{String(timeLeft).padStart(2, '0')}
+                {t('vs.quedan')} 00:{String(timeLeft).padStart(2, '0')}
               </span>
             </div>
             <div className="px-2.5 py-1 rounded-full bg-emerald-500/80 backdrop-blur-md border border-white/20 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white">
-                DUELO ACTIVO
+                {t('vs.dueloActivo')}
               </span>
             </div>
           </div>
@@ -1007,7 +1009,7 @@ const QuestionSlide = ({
       {isActive && showResults && showWinnerCard && !isTie && (() => {
         const winnerOpt = winnerIsA ? optionA : optionB;
         const loserOpt = winnerIsA ? optionB : optionA;
-        const winnerName = (winnerOpt?.participant_username || winnerOpt?.text || 'Ganador').toString();
+        const winnerName = (winnerOpt?.participant_username || winnerOpt?.text || t('vs.ganadorDefault')).toString();
         const loserName = (loserOpt?.participant_username || loserOpt?.text || '').toString();
         const winnerPerc = winnerIsA ? percA : percB;
         const loserPerc = winnerIsA ? percB : percA;

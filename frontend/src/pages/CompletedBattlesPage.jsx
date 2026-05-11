@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard } from 'swiper/modules';
 import 'swiper/css';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Datos de ejemplo para retos completados
 const mockCompletedBattles = [
@@ -381,6 +382,7 @@ const CompletedBattleCard = ({ battle, isActive, onUserClick }) => {
 const CompletedBattlesPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [battles, setBattles] = useState(mockCompletedBattles);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -399,14 +401,14 @@ const CompletedBattlesPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-white text-lg font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
-            Retos Completados
+            {t('explore.title')}
           </h1>
           <button 
             onClick={() => navigate('/explore')}
             className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-full text-white text-sm font-medium transition-colors flex items-center gap-1"
           >
             <Swords className="w-4 h-4" />
-            Ver Activos
+            {t('explore.seeActive')}
           </button>
         </div>
       </div>
