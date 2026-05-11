@@ -1,5 +1,12 @@
 # Test Credentials
 
+## Active Test User (i18n testing - works as of 2026-05-11)
+- Email: i18ntest@test.com
+- Password: test1234
+- Username: i18ntest
+- Display Name: i18n Tester
+- Auth: JWT — POST /api/auth/login with `{email, password}` → returns access_token
+
 ## Demo User (Google social login only - use Google sign-in)
 - Email: demo@example.com
 - Uses Google OAuth (no password login)
