@@ -6,8 +6,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 import useLivePoll from '../../hooks/useLivePoll';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const MessagesMainPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -1150,7 +1152,7 @@ const MessagesMainPage = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Inbox className="h-6 w-6 text-blue-500 mr-2" />
-                <h1 className="text-xl font-semibold text-gray-900">Inbox</h1>
+                <h1 className="text-xl font-semibold text-gray-900">{t('inbox.title')}</h1>
               </div>
               <button 
                 onClick={() => setShowNewChatModal(true)}
@@ -1170,7 +1172,7 @@ const MessagesMainPage = () => {
                 className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <Users className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Nuevos</span>
+                <span className="text-sm font-medium text-gray-700">{t('inbox.newTab')}</span>
                 {getSegmentBadgeCount('followers') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
@@ -1181,7 +1183,7 @@ const MessagesMainPage = () => {
                 className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <Bell className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Actividad</span>
+                <span className="text-sm font-medium text-gray-700">{t('inbox.activityTab')}</span>
                 {getSegmentBadgeCount('activity') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
@@ -1192,7 +1194,7 @@ const MessagesMainPage = () => {
                 className="px-4 py-2.5 rounded-full flex items-center gap-2 transition-colors relative flex-1 justify-center hover:bg-gray-50"
               >
                 <MessageCircle className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-gray-700">Solicitudes</span>
+                <span className="text-sm font-medium text-gray-700">{t('inbox.requestsTab')}</span>
                 {getSegmentBadgeCount('messages') && (
                   <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
                 )}
@@ -1406,7 +1408,7 @@ const MessagesMainPage = () => {
                   
                   // Mostrar loading o datos por defecto mientras cargan
                   console.log('🎯 Mostrando loading... otherUser presente:', !!otherUser);
-                  return <span>Cargando estadísticas...</span>;
+                  return <span>{t('inbox.loadingStats')}</span>;
                 })()}
               </div>
             </div>
@@ -1584,21 +1586,21 @@ const MessagesMainPage = () => {
                     onClick={() => handleChatRequestAction('reject')}
                     className="flex-1 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-700">Rechazar</span>
+                    <span className="text-sm font-medium text-gray-700">{t('inbox.reject')}</span>
                   </button>
                   <button
                     onClick={() => handleChatRequestAction('accept')}
                     className="flex-1 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
                   >
-                    <span className="text-sm font-medium text-gray-700">Aceptar</span>
+                    <span className="text-sm font-medium text-gray-700">{t('inbox.accept')}</span>
                   </button>
                 </div>
               </div>
             ) : selectedConversation?.is_chat_request && selectedConversation?.is_request_sender ? (
               <div className="space-y-3 py-2">
                 <div className="text-center space-y-1">
-                  <h2 className="text-sm font-semibold text-gray-900">Invitación enviada</h2>
-                  <p className="text-xs text-gray-400">Podrás enviar más mensajes cuando se acepte tu invitación.</p>
+                  <h2 className="text-sm font-semibold text-gray-900">{t('inbox.invitationSent')}</h2>
+                  <p className="text-xs text-gray-400">{t('inbox.invitationSentDesc')}</p>
                 </div>
                 <button
                   onClick={() => handleCancelChatRequest()}
@@ -1613,7 +1615,7 @@ const MessagesMainPage = () => {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Escribe un mensaje..."
+                  placeholder={t('inbox.typeMessage')}
                   className="flex-1 px-4 py-2.5 bg-gray-50 rounded-2xl text-sm focus:outline-none focus:ring-1 focus:ring-gray-200 placeholder-gray-400"
                   onKeyPress={handleKeyPress}
                 />
@@ -1646,7 +1648,7 @@ const MessagesMainPage = () => {
             </div>
             <div className="flex items-center justify-between px-5 py-3">
               <div className="w-9" />
-              <h3 className="font-semibold text-gray-900 text-base">Nueva conversación</h3>
+              <h3 className="font-semibold text-gray-900 text-base">{t('inbox.newConversation')}</h3>
               <button
                 onClick={closeNewChatModal}
                 className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
@@ -1659,7 +1661,7 @@ const MessagesMainPage = () => {
             <div className="relative mb-4">
               <input
                 type="text"
-                placeholder="Buscar usuarios..."
+                placeholder={t('inbox.searchUsers')}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -1675,7 +1677,7 @@ const MessagesMainPage = () => {
               {searchLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                  <span className="ml-2 text-sm text-gray-400">Buscando...</span>
+                  <span className="ml-2 text-sm text-gray-400">{t('inbox.searching')}</span>
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="flex flex-col gap-2">
@@ -1719,11 +1721,11 @@ const MessagesMainPage = () => {
                 </div>
               ) : searchQuery.trim() ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-400">No se encontraron usuarios</p>
+                  <p className="text-sm text-gray-400">{t('inbox.noUsersFound')}</p>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-sm text-gray-400">Escribe para buscar usuarios</p>
+                  <p className="text-sm text-gray-400">{t('inbox.searchPrompt')}</p>
                 </div>
               )}
             </div>

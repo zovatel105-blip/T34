@@ -20,8 +20,10 @@ import { useTikTok } from '../contexts/TikTokContext';
 import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, ArrowLeft, Users, User, Eye, PlusCircle, X } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const FollowingPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [polls, setPolls] = useState([]);
@@ -100,8 +102,8 @@ const FollowingPage = () => {
             console.error('Error loading following polls:', err);
             setError(err.message);
             toast({
-              title: "Error al cargar Following",
-              description: "No se pudieron cargar las publicaciones de usuarios seguidos. Intenta recargar la página.",
+              title: t('following.toast.errorLoad'),
+              description: t('following.toast.errorLoadDesc'),
               variant: "destructive",
             });
           } else {
@@ -373,8 +375,8 @@ const FollowingPage = () => {
   const handleVote = async (pollId, optionId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para votar",
+        title: t('following.toast.loginRequired'),
+        description: t('following.toast.loginToVote'),
         variant: "destructive",
       });
       return;
@@ -407,8 +409,8 @@ const FollowingPage = () => {
       await trackAction('vote');
       
       toast({
-        title: "¡Voto registrado!",
-        description: "Tu voto ha sido contabilizado exitosamente",
+        title: t('following.toast.voteRegistered'),
+        description: t('following.toast.voteRegisteredDesc'),
       });
       
       // Refresh poll data to get accurate counts
@@ -438,7 +440,7 @@ const FollowingPage = () => {
       }));
       
       toast({
-        title: "Error al votar",
+        title: t('following.toast.errorVote'),
         description: error.message || "No se pudo registrar tu voto. Intenta de nuevo.",
         variant: "destructive",
       });
@@ -448,8 +450,8 @@ const FollowingPage = () => {
   const handleLike = async (pollId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para dar like",
+        title: t('following.toast.loginRequired'),
+        description: t('following.toast.loginToLike'),
         variant: "destructive",
       });
       return;
@@ -499,8 +501,8 @@ const FollowingPage = () => {
         });
       } else {
         toast({
-          title: result.liked ? "¡Te gusta!" : "Like removido",
-          description: result.liked ? "Has dado like a esta votación" : "Ya no te gusta esta votación",
+          title: result.liked ? t('feed.toast.liked') : t('feed.toast.unliked'),
+          description: result.liked ? t('feed.toast.likedDesc') : t('feed.toast.unlikedDesc'),
         });
       }
     } catch (error) {
@@ -519,7 +521,7 @@ const FollowingPage = () => {
       }));
       
       toast({
-        title: "Error",
+        title: t('following.toast.error'),
         description: error.message || "No se pudo procesar el like. Intenta de nuevo.",
         variant: "destructive",
       });
@@ -529,8 +531,8 @@ const FollowingPage = () => {
   const handleShare = async (pollId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para compartir",
+        title: t('following.toast.loginRequired'),
+        description: t('following.toast.loginToShare'),
         variant: "destructive",
       });
       return;
@@ -551,8 +553,8 @@ const FollowingPage = () => {
         });
         
         toast({
-          title: "¡Compartido!",
-          description: "La votación ha sido compartida exitosamente",
+          title: t('following.toast.shared'),
+          description: t('following.toast.sharedDesc'),
         });
       } else {
         // Si Web Share API no está disponible, usar modal
@@ -561,7 +563,7 @@ const FollowingPage = () => {
     } catch (error) {
       console.error('Error sharing poll:', error);
       toast({
-        title: "Error al compartir",
+        title: t('following.toast.errorShare'),
         description: error.message || "No se pudo compartir la votación. Intenta de nuevo.",
         variant: "destructive",
       });
@@ -615,14 +617,14 @@ const FollowingPage = () => {
       
       if (result.saved) {
         toast({
-          title: "¡Publicación guardada!",
-          description: "La publicación ha sido guardada en tu colección",
+          title: t('following.toast.saved'),
+          description: t('following.toast.savedDesc'),
           duration: 3000,
         });
       } else {
         toast({
-          title: "Publicación eliminada",
-          description: "La publicación ha sido eliminada de tu colección",
+          title: t('following.toast.unsaved'),
+          description: t('following.toast.unsavedDesc'),
           duration: 3000,
         });
       }
@@ -662,8 +664,8 @@ const FollowingPage = () => {
       });
       
       toast({
-        title: "Error",
-        description: "No se pudo guardar la publicación. Inténtalo de nuevo.",
+        title: t('following.toast.error'),
+        description: t('following.toast.saveError'),
         variant: "destructive",
         duration: 3000,
       });
@@ -678,8 +680,8 @@ const FollowingPage = () => {
   const handleCreatePoll = async (newPoll) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para crear votaciones",
+        title: t('following.toast.loginRequired'),
+        description: t('following.toast.loginToCreate'),
         variant: "destructive",
       });
       return;
@@ -697,8 +699,8 @@ const FollowingPage = () => {
     } catch (error) {
       console.error('Error handling new poll:', error);
       toast({
-        title: "Error al agregar votación",
-        description: error.message || "No se pudo agregar la votación a la lista.",
+        title: t('following.toast.addError'),
+        description: error.message || t('following.toast.addErrorDesc'),
         variant: "destructive",
       });
     }
@@ -711,8 +713,8 @@ const FollowingPage = () => {
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-white">Cargando Following...</h2>
-            <p className="text-white/70 mt-2">Obteniendo publicaciones de usuarios seguidos</p>
+            <h2 className="text-xl font-semibold text-white">{t('following.loadingTitle')}</h2>
+            <p className="text-white/70 mt-2">{t('following.loadingDesc')}</p>
           </div>
         </div>
       </>
@@ -731,20 +733,20 @@ const FollowingPage = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h3 className="text-3xl font-bold text-white mb-4">Error al cargar</h3>
+          <h3 className="text-3xl font-bold text-white mb-4">{t('following.errorTitle')}</h3>
           <p className="text-white/70 text-lg mb-6">{error}</p>
           <div className="space-y-3">
             <button 
               onClick={() => window.location.reload()}
               className="block w-full px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
             >
-              Reintentar
+              {t('following.retry')}
             </button>
             <button
               onClick={() => navigate('/feed')}
               className="block w-full px-6 py-3 bg-gray-600 text-white rounded-full font-medium hover:bg-gray-700 transition-colors"
             >
-              Volver al Feed
+              {t('following.backToFeed')}
             </button>
           </div>
         </div>
@@ -763,20 +765,20 @@ const FollowingPage = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h3 className="text-3xl font-bold text-white mb-4">Inicia sesión</h3>
-          <p className="text-white/70 text-lg mb-6">Necesitas iniciar sesión para ver Following</p>
+          <h3 className="text-3xl font-bold text-white mb-4">{t('following.loginTitle')}</h3>
+          <p className="text-white/70 text-lg mb-6">{t('following.loginToView')}</p>
           <div className="space-y-3">
             <button 
               onClick={() => window.location.href = '/auth'}
               className="block w-full px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
             >
-              Ir a Login
+              {t('following.goToLogin')}
             </button>
             <button
               onClick={() => navigate('/feed')}
               className="block w-full px-6 py-3 bg-gray-600 text-white rounded-full font-medium hover:bg-gray-700 transition-colors"
             >
-              Volver al Feed
+              {t('following.backToFeed')}
             </button>
           </div>
         </div>
@@ -791,20 +793,20 @@ const FollowingPage = () => {
           <div className="w-32 h-32 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-8">
             <Users className="w-16 h-16 text-purple-400" />
           </div>
-          <h3 className="text-3xl font-bold text-white mb-4">Sin publicaciones</h3>
-          <p className="text-white/70 text-lg mb-6">No tienes publicaciones de usuarios que sigues. ¡Sigue a más personas para ver su contenido aquí!</p>
+          <h3 className="text-3xl font-bold text-white mb-4">{t('following.emptyTitle')}</h3>
+          <p className="text-white/70 text-lg mb-6">{t('following.emptyDesc')}</p>
           <div className="space-y-3">
             <button
               onClick={() => navigate('/explore')}
               className="block w-full px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
             >
-              Explorar usuarios
+              {t('following.exploreUsers')}
             </button>
             <button
               onClick={() => navigate('/feed')}
               className="block w-full px-6 py-3 bg-gray-600 text-white rounded-full font-medium hover:bg-gray-700 transition-colors"
             >
-              Volver al Feed
+              {t('following.backToFeed')}
             </button>
           </div>
         </div>
@@ -942,7 +944,7 @@ const FollowingPage = () => {
 
                 {/* Header */}
                 <div className="px-4 py-3 flex items-center justify-center">
-                  <h2 className="font-semibold text-white text-base">Tu historia</h2>
+                  <h2 className="font-semibold text-white text-base">{t('following.yourStory')}</h2>
                 </div>
 
                 {/* Opciones */}
@@ -965,8 +967,8 @@ const FollowingPage = () => {
                       <Eye className="w-5 h-5 text-indigo-400" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-white text-sm">Ver historia</p>
-                      <p className="text-xs text-zinc-400">Ver tu historia actual</p>
+                      <p className="font-semibold text-white text-sm">{t('following.viewStory')}</p>
+                      <p className="text-xs text-zinc-400">{t('following.viewYourStory')}</p>
                     </div>
                   </button>
 
@@ -982,8 +984,8 @@ const FollowingPage = () => {
                       <PlusCircle className="w-5 h-5 text-purple-400" />
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-white text-sm">Crear historia</p>
-                      <p className="text-xs text-zinc-400">Añadir nueva historia</p>
+                      <p className="font-semibold text-white text-sm">{t('following.createStory')}</p>
+                      <p className="text-xs text-zinc-400">{t('following.addNewStory')}</p>
                     </div>
                   </button>
                 </div>
@@ -1132,9 +1134,9 @@ const FollowingPage = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center space-x-3 mb-2">
             <Users className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Following</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('following.title')}</h1>
           </div>
-          <p className="text-gray-600">Publicaciones de usuarios que sigues</p>
+          <p className="text-gray-600">{t('following.subtitle')}</p>
         </div>
 
         {/* Stories Section */}
@@ -1148,7 +1150,7 @@ const FollowingPage = () => {
               <div className="absolute top-3 left-3 z-10 px-2 py-1 bg-purple-500/90 backdrop-blur-sm rounded-full border border-purple-400/30">
                 <div className="flex items-center space-x-1">
                   <Users className="w-3 h-3 text-white" />
-                  <span className="text-white text-xs font-medium">Siguiendo</span>
+                  <span className="text-white text-xs font-medium">{t('following.followingBadge')}</span>
                 </div>
               </div>
               
@@ -1196,7 +1198,7 @@ const FollowingPage = () => {
         <button
           onClick={() => setShowCreateModal(true)}
           className={`fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40 ${isMobile ? 'bottom-20' : 'bottom-6'}`}
-          aria-label="Crear nueva votación"
+          aria-label={t('following.createPollAria')}
         >
           <Plus className="w-7 h-7" />
         </button>

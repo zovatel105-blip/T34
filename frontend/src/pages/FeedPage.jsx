@@ -28,8 +28,10 @@ import {
 } from '../lib/feedSnapshot';
 import { Plus } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTranslation } from '../hooks/useTranslation';
 
 const FeedPage = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
@@ -276,8 +278,8 @@ const FeedPage = () => {
             } catch (err) {
               console.error('Error loading specific post:', err);
               toast({
-                title: "Post no encontrado",
-                description: "El post que buscas no está disponible.",
+                title: t('feed.toast.notFoundTitle'),
+                description: t('feed.toast.notFoundDesc'),
                 variant: "destructive",
               });
             }
@@ -302,8 +304,8 @@ const FeedPage = () => {
         }
         setError(err.message);
         toast({
-          title: "Error al cargar votaciones",
-          description: "No se pudieron cargar las votaciones. Intenta recargar la página.",
+          title: t('feed.toast.errorLoadTitle'),
+          description: t('feed.toast.loadErrorDesc'),
           variant: "destructive",
         });
       } finally {
@@ -556,8 +558,8 @@ const FeedPage = () => {
   const handleVote = async (pollId, optionId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para votar",
+        title: t('feed.toast.loginRequired'),
+        description: t('feed.toast.loginToVote'),
         variant: "destructive",
       });
       return;
@@ -640,7 +642,7 @@ const FeedPage = () => {
       }));
       
       toast({
-        title: "Error al votar",
+        title: t('feed.toast.errorVote'),
         description: error.message || "No se pudo registrar tu voto. Intenta de nuevo.",
         variant: "destructive",
       });
@@ -650,8 +652,8 @@ const FeedPage = () => {
   const handleLike = async (pollId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para dar like",
+        title: t('feed.toast.loginRequired'),
+        description: t('feed.toast.loginToLike'),
         variant: "destructive",
       });
       return;
@@ -698,13 +700,13 @@ const FeedPage = () => {
 
       if (result.queued) {
         toast({
-          title: 'Sin conexión',
-          description: 'Tu like se sincronizará cuando vuelvas a estar online.',
+          title: t('feed.likeOfflineTitle') || t('feed.toast.likeOfflineTitle'),
+          description: t('feed.toast.likeOfflineDesc'),
         });
       } else {
         toast({
-          title: result.liked ? "¡Te gusta!" : "Like removido",
-          description: result.liked ? "Has dado like a esta votación" : "Ya no te gusta esta votación",
+          title: result.liked ? t('feed.toast.liked') : t('feed.toast.unliked'),
+          description: result.liked ? t('feed.toast.likedDesc') : t('feed.toast.unlikedDesc'),
         });
       }
     } catch (error) {
@@ -723,7 +725,7 @@ const FeedPage = () => {
       }));
       
       toast({
-        title: "Error",
+        title: t('feed.toast.error'),
         description: error.message || "No se pudo procesar el like. Intenta de nuevo.",
         variant: "destructive",
       });
@@ -733,8 +735,8 @@ const FeedPage = () => {
   const handleShare = async (pollId) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para compartir",
+        title: t('feed.toast.loginRequired'),
+        description: t('feed.toast.loginToShare'),
         variant: "destructive",
       });
       return;
@@ -766,12 +768,12 @@ const FeedPage = () => {
         try {
           await navigator.share({
             title: poll.title || 'Vota en esta encuesta',
-            text: 'Mira esta increíble votación',
+            text: t('feed.shareText'),
             url: `${window.location.origin}/poll/${pollId}`,
           });
           toast({
-            title: "¡Compartido exitosamente!",
-            description: "La votación ha sido compartida",
+            title: t('feed.toast.shared'),
+            description: t('feed.toast.sharedDesc'),
           });
           return;
         } catch (err) {
@@ -789,8 +791,8 @@ const FeedPage = () => {
     } catch (error) {
       console.error('Error sharing poll:', error);
       toast({
-        title: "Error al compartir",
-        description: error.message || "No se pudo compartir la votación. Intenta de nuevo.",
+        title: t('feed.toast.errorShare'),
+        description: error.message || t('feed.toast.shareError'),
         variant: "destructive",
       });
     }
@@ -901,7 +903,7 @@ const FeedPage = () => {
       });
       
       toast({
-        title: "Error",
+        title: t('feed.toast.error'),
         description: `No se pudo guardar: ${error.message}`,
         variant: "destructive",
         duration: 5000,  
@@ -918,8 +920,8 @@ const FeedPage = () => {
   const handleCreatePoll = async (newPoll) => {
     if (!isAuthenticated) {
       toast({
-        title: "Inicia sesión",
-        description: "Necesitas iniciar sesión para crear votaciones",
+        title: t('feed.toast.loginRequired'),
+        description: t('feed.toast.loginToCreate'),
         variant: "destructive",
       });
       return;
@@ -937,8 +939,8 @@ const FeedPage = () => {
     } catch (error) {
       console.error('Error handling new poll:', error);
       toast({
-        title: "Error al agregar votación",
-        description: error.message || "No se pudo agregar la votación a la lista.",
+        title: t('feed.toast.addError'),
+        description: error.message || t('feed.toast.addErrorDesc'),
         variant: "destructive",
       });
     }
@@ -977,8 +979,8 @@ const FeedPage = () => {
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-white">Cargando tu feed...</h2>
-            <p className="text-white/70 mt-2">Obteniendo las votaciones más recientes</p>
+            <h2 className="text-xl font-semibold text-white">{t('feed.loadingTitle')}</h2>
+            <p className="text-white/70 mt-2">{t('feed.loadingDesc')}</p>
           </div>
         </div>
       </>
@@ -1025,18 +1027,18 @@ const FeedPage = () => {
               )}
             </div>
             <h3 className="text-3xl font-bold text-white mb-4">
-              {offlineMode ? 'Sin conexión' : 'Error al cargar'}
+              {offlineMode ? t('feed.offlineTitle') : t('feed.errorTitle')}
             </h3>
             <p className="text-white/70 text-base mb-6">
               {offlineMode
-                ? 'Conéctate a internet para ver las votaciones más recientes. Tu última sesión sigue disponible.'
+                ? t('feed.offlineDesc')
                 : error}
             </p>
             <button 
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
             >
-              Reintentar
+              {t('feed.retry')}
             </button>
           </div>
         </div>
@@ -1071,13 +1073,13 @@ const FeedPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h3 className="text-3xl font-bold text-white mb-4">Inicia sesión</h3>
-            <p className="text-white/70 text-lg mb-6">Necesitas iniciar sesión para ver el feed</p>
+            <h3 className="text-3xl font-bold text-white mb-4">{t('feed.loginTitle')}</h3>
+            <p className="text-white/70 text-lg mb-6">{t('feed.loginToViewFeed')}</p>
             <button 
               onClick={() => window.location.href = '/auth'}
               className="px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
             >
-              Ir a Login
+              {t('feed.goToLogin')}
             </button>
           </div>
         </div>
@@ -1136,19 +1138,19 @@ const FeedPage = () => {
               )}
             </div>
             <h3 className="text-3xl font-bold text-white mb-4">
-              {offlineMode ? 'Sin conexión' : 'Tu feed está vacío'}
+              {offlineMode ? t('feed.offlineTitle') : t('feed.emptyTitle')}
             </h3>
             <p className="text-white/70 text-base mb-6">
               {offlineMode
-                ? 'Conéctate a internet para descubrir las votaciones más recientes.'
-                : '¡Sigue a más usuarios para ver sus votaciones aquí!'}
+                ? t('feed.offlineEmptyDesc')
+                : t('feed.emptyDesc')}
             </p>
             {offlineMode && (
               <button 
                 onClick={() => window.location.reload()}
                 className="px-6 py-3 bg-purple-500 text-white rounded-full font-medium hover:bg-purple-600 transition-colors"
               >
-                Reintentar
+                {t('feed.retry')}
               </button>
             )}
           </div>
@@ -1217,8 +1219,8 @@ const FeedPage = () => {
       <div className="min-h-screen bg-gray-50 pt-6 relative">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Para ti</h1>
-          <p className="text-gray-600">Descubre las votaciones más populares</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('feed.title')}</h1>
+          <p className="text-gray-600">{t('feed.subtitle')}</p>
         </div>
 
         {/* Stories Section - REMOVED (Stories feature disabled) */}
@@ -1243,7 +1245,7 @@ const FeedPage = () => {
         {/* Load More Button */}
         <div className="text-center mt-12 mb-8">
           <button className="px-8 py-3 bg-pink-500 text-white rounded-full font-medium hover:bg-pink-600 transition-colors">
-            Cargar más votaciones
+            {t('feed.loadMore')}
           </button>
         </div>
       </div>
@@ -1271,7 +1273,7 @@ const FeedPage = () => {
         <button
           onClick={() => setShowCreateModal(true)}
           className={`fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40 ${isMobile ? 'bottom-20' : 'bottom-6'}`}
-          aria-label="Crear nueva votación"
+          aria-label={t('feed.createPollAria')}
         >
           <Plus className="w-7 h-7" />
         </button>

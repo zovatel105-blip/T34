@@ -23,6 +23,7 @@ import {
   DialogFooter 
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Swiper imports for carousel
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -164,6 +165,7 @@ const LAYOUT_OPTIONS = [
 ];
 
 const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUpload, onImageRemove, onOptionTextChange, onMentionSelect, onCropFromPreview, cropActiveSlot, onInlineCropSave, onInlineCropCancel, mentionInputValues, onMentionInputChange, fullscreen = false, onOpenDescriptionDialog, onOpenMentionsDialog, creationMode = 'publicar' }) => {
+  const { t } = useTranslation();
   const isVSMode = creationMode === 'vs' && (layout.id === 'vertical' || layout.id === 'horizontal');
 
   // Slot al que el usuario hizo tap para mostrar los botones de descripción
@@ -300,8 +302,8 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
       return (
         <div className="w-full h-full flex items-center justify-center bg-black">
           <div className="text-center text-white">
-            <h3 className="text-2xl font-bold mb-2">Agrega imágenes para preview</h3>
-            <p className="text-gray-400">Sube imágenes a las opciones para ver el preview fullscreen</p>
+            <h3 className="text-2xl font-bold mb-2">{t('contentCreation.addImagesPreview')}</h3>
+            <p className="text-gray-400">{t('contentCreation.uploadImagesDesc')}</p>
           </div>
         </div>
       );
@@ -419,7 +421,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                                 if (textInput) textInput.focus();
                               }}
                               className="w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors"
-                              title="Editar descripción"
+                              title={t('contentCreation.editDescription')}
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
@@ -429,7 +431,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                                 onImageRemove(slotIndex);
                               }}
                               className="w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors"
-                              title="Cambiar imagen/video"
+                              title={t('contentCreation.changeImageVideo')}
                             >
                               <Upload className="w-4 h-4" />
                             </button>
@@ -509,7 +511,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                 {layout.id === 'off' && (
                   <div className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded-lg text-xs font-medium z-10 flex items-center gap-1">
                     <span>📱</span>
-                    <span>Pantalla Completa</span>
+                    <span>{t('contentCreation.fullScreen')}</span>
                   </div>
                 )}
                 
@@ -603,7 +605,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                               if (textInput) textInput.focus();
                             }}
                             className="w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors"
-                            title="Editar descripción"
+                            title={t('contentCreation.editDescription')}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -613,7 +615,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                               onImageRemove(slotIndex);
                             }}
                             className="w-8 h-8 bg-black/30 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-colors"
-                            title="Cambiar imagen/video"
+                            title={t('contentCreation.changeImageVideo')}
                           >
                             <Upload className="w-4 h-4" />
                           </button>
@@ -684,7 +686,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
-                        placeholder="Agregar descripción..."
+                        placeholder={t('contentCreation.addDescription')}
                         data-option-index={slotIndex}
                         className="w-full bg-black/60 backdrop-blur-sm text-white text-xs sm:text-sm placeholder-white/40 border border-white/20 rounded-full px-3 py-1.5 focus:outline-none focus:border-white/60"
                       />
@@ -704,7 +706,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                             onOpenDescriptionDialog && onOpenDescriptionDialog(slotIndex);
                           }}
                           className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                          title="Descripción"
+                          title={t('contentCreation.description')}
                         >
                           <Edit3 className="w-5 h-5" />
                         </button>
@@ -716,7 +718,7 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                             onOpenMentionsDialog && onOpenMentionsDialog(slotIndex);
                           }}
                           className="flex items-center justify-center w-10 h-10 bg-black/50 backdrop-blur-sm text-white rounded-full border border-white/20 hover:border-white/50 hover:bg-black/70 transition-all"
-                          title="Mencionar"
+                          title={t('contentCreation.mention')}
                         >
                           <AtSign className="w-5 h-5" />
                         </button>
@@ -866,6 +868,7 @@ const MusicBottomSheet = ({ onClose, children }) => {
 
 
 const ContentCreationPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -974,7 +977,7 @@ const ContentCreationPage = () => {
       console.log('🎯 Creando contenido para challenge:', challengeId);
       toast({
         title: `🏆 ${challengeTitle || 'Challenge'}`,
-        description: "Crea tu contenido para el challenge",
+        description: t('contentCreation.toast.challengeDesc'),
       });
     }
   }, [location.state, toast]);
@@ -1085,7 +1088,7 @@ const ContentCreationPage = () => {
       setMentionInputValues(prev => ({...prev, [index]: ''}));
       
       toast({
-        title: "Usuario mencionado",
+        title: t('contentCreation.toast.userMentioned'),
         description: `@${user.username} será notificado en la opción ${String.fromCharCode(65 + index)}`,
       });
     }
@@ -1162,7 +1165,7 @@ const ContentCreationPage = () => {
       setOptions(newOptions);
       
       toast({
-        title: "Slot añadido",
+        title: t('contentCreation.toast.slotAdded'),
         description: `Slot ${String.fromCharCode(65 + newOptions.length - 1)} añadido al carrusel`,
       });
     }
@@ -1177,8 +1180,8 @@ const ContentCreationPage = () => {
     
     if (!isImage && !isVideo) {
       toast({
-        title: "Error",
-        description: "Solo se permiten archivos de imagen o video (JPG, PNG, GIF, WEBP, MP4, MOV, AVI)",
+        title: t('contentCreation.toast.error'),
+        description: t('contentCreation.toast.invalidFile'),
         variant: "destructive"
       });
       return;
@@ -1188,7 +1191,7 @@ const ContentCreationPage = () => {
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024; // 50MB for video, 10MB for image
     if (file.size > maxSize) {
       toast({
-        title: "Error",
+        title: t('contentCreation.toast.error'),
         description: `El archivo es muy grande. Máximo ${isVideo ? '50MB' : '10MB'} permitido.`,
         variant: "destructive"
       });
@@ -1249,7 +1252,7 @@ const ContentCreationPage = () => {
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
-        title: "Error",
+        title: t('contentCreation.toast.error'),
         description: error.message || "No se pudo procesar la imagen. Intenta con otra.",
         variant: "destructive"
       });
@@ -1321,7 +1324,7 @@ const ContentCreationPage = () => {
     } catch (error) {
       console.error('❌ Video processing error:', error);
       toast({
-        title: "Error",
+        title: t('contentCreation.toast.error'),
         description: error.message || "No se pudo procesar el video. Intenta con otro.",
         variant: "destructive"
       });
@@ -1466,8 +1469,8 @@ const ContentCreationPage = () => {
     // Validate authentication
     if (!isAuthenticated) {
       toast({
-        title: "Error de autenticación",
-        description: "Necesitas iniciar sesión para crear contenido",
+        title: t('contentCreation.toast.authError'),
+        description: t('contentCreation.toast.authErrorDesc'),
         variant: "destructive"
       });
       navigate('/');
@@ -1477,8 +1480,8 @@ const ContentCreationPage = () => {
     const validOptions = options.filter(opt => opt && opt.media);
     if (validOptions.length === 0) {
       toast({
-        title: "Error", 
-        description: "Necesitas agregar al menos una imagen o video",
+        title: t('contentCreation.toast.error'), 
+        description: t('contentCreation.toast.needMedia'),
         variant: "destructive"
       });
       return;
@@ -1492,8 +1495,8 @@ const ContentCreationPage = () => {
       // Validar pares completos (cada pareja debe tener ambas imágenes)
       if (validOptions.length < 2) {
         toast({
-          title: "Error",
-          description: "Necesitas al menos 2 imágenes para una comparación VS",
+          title: t('contentCreation.toast.error'),
+          description: t('contentCreation.toast.needTwoImages'),
           variant: "destructive"
         });
         return;
@@ -1508,7 +1511,7 @@ const ContentCreationPage = () => {
         if (aFilled || bFilled) {
           if (!(aFilled && bFilled)) {
             toast({
-              title: "Pareja VS incompleta",
+              title: t('contentCreation.toast.vsIncomplete'),
               description: `La pareja ${(i / 2) + 1} necesita 2 imágenes (A y B)`,
               variant: "destructive"
             });
@@ -1608,14 +1611,14 @@ const ContentCreationPage = () => {
         }
 
         toast({
-          title: "VS publicado",
-          description: "Tu comparación VS se publicó correctamente",
+          title: t('contentCreation.toast.vsPublished'),
+          description: t('contentCreation.toast.vsPublishedDesc'),
         });
         navigate('/feed');
       } catch (error) {
         console.error('Error publicando VS:', error);
         toast({
-          title: "Error al publicar VS",
+          title: t('contentCreation.toast.vsPublishError'),
           description: error.message || 'Hubo un problema al publicar la comparación',
           variant: "destructive"
         });
@@ -1631,7 +1634,7 @@ const ContentCreationPage = () => {
       const minRequired = (isChallengeMode || joiningChallengeId) ? 1 : 2;
       if (validOptions.length < minRequired) {
         toast({
-          title: "Error",
+          title: t('contentCreation.toast.error'),
           description: (isChallengeMode || joiningChallengeId) ? "Requiere al menos 1 imagen o video" : "Requiere al menos 2 imágenes",
           variant: "destructive"
         });
@@ -1642,8 +1645,8 @@ const ContentCreationPage = () => {
       const hasVideos = validOptions.some(opt => opt.media.type.startsWith('video/'));
       if (hasVideos && !isChallengeMode && !joiningChallengeId) {
         toast({
-          title: "Recomendación",
-          description: "Para mejor experiencia en pantalla completa, se recomienda usar solo imágenes",
+          title: t('contentCreation.toast.recommendation'),
+          description: t('contentCreation.toast.recommendationDesc'),
           variant: "default"
         });
       }
@@ -1652,7 +1655,7 @@ const ContentCreationPage = () => {
       const minRequired = (isChallengeMode || joiningChallengeId) ? 1 : 2;
       if (validOptions.length < minRequired) {
         toast({
-          title: "Error",
+          title: t('contentCreation.toast.error'),
           description: (isChallengeMode || joiningChallengeId) ? "Necesitas al menos 1 contenido para el challenge" : "Necesitas al menos 2 opciones para crear una votación",
           variant: "destructive"
         });
@@ -1731,8 +1734,8 @@ const ContentCreationPage = () => {
     } catch (error) {
       console.error('❌ Error al aplicar recortes:', error);
       toast({
-        title: "Error al procesar imágenes",
-        description: "Hubo un problema al aplicar los ajustes a las imágenes. Inténtalo de nuevo.",
+        title: t('contentCreation.toast.processError'),
+        description: t('contentCreation.toast.processErrorDesc'),
         variant: "destructive"
       });
       return;
@@ -1787,7 +1790,7 @@ const ContentCreationPage = () => {
       <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Verificando autenticación...</p>
+          <p>{t('contentCreation.verifyingAuth')}</p>
         </div>
       </div>
     );
@@ -2125,7 +2128,7 @@ const ContentCreationPage = () => {
       <Dialog open={descriptionDialogOpen} onOpenChange={setDescriptionDialogOpen}>
         <DialogContent className="sm:max-w-md bg-gray-900 text-white border-gray-700 fixed left-[50%] translate-x-[-50%] bottom-0 top-auto translate-y-0 data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom rounded-t-xl rounded-b-none sm:rounded-b-none border-b-0">
           <DialogHeader>
-            <DialogTitle>Agregar Descripción</DialogTitle>
+            <DialogTitle>{t('contentCreation.addDescriptionDialog')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <textarea
@@ -2135,7 +2138,7 @@ const ContentCreationPage = () => {
                   handleOptionTextChange(activeSlotForDialog, e.target.value);
                 }
               }}
-              placeholder="Escribe una descripción..."
+              placeholder={t('contentCreation.writeDescription')}
               className="w-full min-h-[120px] bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none placeholder-gray-500 resize-none"
               maxLength={500}
             />
@@ -2145,7 +2148,7 @@ const ContentCreationPage = () => {
             
             {/* Text Position Controls */}
             <div className="space-y-2">
-              <p className="text-sm text-gray-400">Posición del texto:</p>
+              <p className="text-sm text-gray-400">{t('contentCreation.textPosition')}</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => {
@@ -2207,7 +2210,7 @@ const ContentCreationPage = () => {
       <Dialog open={mentionsDialogOpen} onOpenChange={setMentionsDialogOpen}>
         <DialogContent className="sm:max-w-md bg-gray-900 text-white border-gray-700 fixed left-[50%] translate-x-[-50%] top-0 bottom-auto translate-y-0 data-[state=open]:slide-in-from-top data-[state=closed]:slide-out-to-top rounded-b-xl rounded-t-none sm:rounded-t-none border-t-0">
           <DialogHeader>
-            <DialogTitle>Mencionar Usuarios</DialogTitle>
+            <DialogTitle>{t('contentCreation.mentionUsers')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <UserMentionInput 
@@ -2222,14 +2225,14 @@ const ContentCreationPage = () => {
                   handleMentionSelect(activeSlotForDialog, user);
                 }
               }}
-              placeholder="Buscar usuarios para mencionar..."
+              placeholder={t('contentCreation.searchUsersToMention')}
               size="md"
             />
             
             {/* Display mentioned users */}
             {activeSlotForDialog !== null && options[activeSlotForDialog]?.mentionedUsers && options[activeSlotForDialog].mentionedUsers.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Usuarios mencionados:</p>
+                <p className="text-sm text-gray-400 mb-2">{t('contentCreation.mentionedUsers')}</p>
                 <div className="flex flex-wrap gap-2">
                   {options[activeSlotForDialog].mentionedUsers.map((user) => (
                     <span 

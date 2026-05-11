@@ -10,6 +10,7 @@ import challengeService from '../services/challengeService';  // ⚡ Import chal
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import AppConfig from '../config/config';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Bottom Sheet Modal with swipe-to-close
 const BottomSheetModal = ({ title, onClose, options, selectedValue, onSelect }) => {
@@ -114,6 +115,7 @@ const scrollableOptionsStyle = `
 `;
 
 const ContentPublishPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -245,8 +247,8 @@ const ContentPublishPage = () => {
     // Máximo 5 invitados (6 total con creador)
     if (selectedUsers.length >= 5) {
       toast({
-        title: "Límite alcanzado",
-        description: "Máximo 5 usuarios invitados (6 total con creador)",
+        title: t('contentPublish.toast.limitReached'),
+        description: t('contentPublish.toast.limitReachedDesc'),
         variant: "destructive"
       });
       return;
@@ -296,8 +298,8 @@ const ContentPublishPage = () => {
     // Para participantes de challenge, no requerir título
     if (!joiningChallengeId && !title.trim()) {
       toast({
-        title: "Error",
-        description: "Necesitas escribir un título para tu publicación",
+        title: t('contentPublish.toast.error'),
+        description: t('contentPublish.toast.needTitle'),
         variant: "destructive"
       });
       return;
@@ -305,8 +307,8 @@ const ContentPublishPage = () => {
 
     if (!contentData) {
       toast({
-        title: "Error",
-        description: "No hay contenido para publicar",
+        title: t('contentPublish.toast.error'),
+        description: t('contentPublish.toast.noContent'),
         variant: "destructive"
       });
       return;
@@ -316,16 +318,16 @@ const ContentPublishPage = () => {
     if (isChallengeMode && !joiningChallengeId) {
       if (!title.trim()) {
         toast({
-          title: "Error",
-          description: "Necesitas escribir una descripción para la publicación",
+          title: t('contentPublish.toast.error'),
+          description: t('contentPublish.toast.needDescription'),
           variant: "destructive"
         });
         return;
       }
       if (selectedUsers.length < 1) {
         toast({
-          title: "Error",
-          description: "Debes invitar al menos 1 participante al challenge",
+          title: t('contentPublish.toast.error'),
+          description: t('contentPublish.toast.needParticipant'),
           variant: "destructive"
         });
         return;
@@ -363,7 +365,7 @@ const ContentPublishPage = () => {
       <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg">Cargando...</p>
+          <p className="text-lg">{t('contentPublish.loading')}</p>
         </div>
       </div>
     );
@@ -383,7 +385,7 @@ const ContentPublishPage = () => {
           </button>
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
-            <span className="text-yellow-500 font-semibold">Challenge</span>
+            <span className="text-yellow-500 font-semibold">{t('contentPublish.challenge')}</span>
           </div>
           <div className="w-9"></div>
         </div>
@@ -397,7 +399,7 @@ const ContentPublishPage = () => {
                 {contentData.options[0]?.media_type?.startsWith('image') ? (
                   <img
                     src={contentData.options[0].media}
-                    alt="Tu contenido"
+                    alt={t('contentPublish.yourContent')}
                     className="w-full h-full object-cover"
                   />
                 ) : contentData.options[0]?.media_type?.startsWith('video') ? (
@@ -420,7 +422,7 @@ const ContentPublishPage = () => {
 
           {/* Mensaje informativo */}
           <div className="text-center mb-6 px-4">
-            <p className="text-white text-lg font-medium mb-2">¿Listo para enviar?</p>
+            <p className="text-white text-lg font-medium mb-2">{t('contentPublish.readyToSend')}</p>
             <p className="text-gray-400 text-sm">
               Tu contenido se añadirá al challenge. Cuando todos los participantes suban su contenido, el challenge se publicará automáticamente.
             </p>
@@ -442,7 +444,7 @@ const ContentPublishPage = () => {
             ) : (
               <>
                 <Trophy className="w-5 h-5" />
-                <span>Enviar al Challenge</span>
+                <span>{t('contentPublish.sendToChallenge')}</span>
               </>
             )}
           </button>
@@ -496,7 +498,7 @@ const ContentPublishPage = () => {
                           <img 
                             key={key}
                             src={resolveAssetUrl(option.media_url)} 
-                            alt="Preview"
+                            alt={t('contentPublish.preview')}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -636,7 +638,7 @@ const ContentPublishPage = () => {
                     
                     {/* Edit cover overlay */}
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-                      <p className="text-white text-[10px] sm:text-xs text-center font-medium">Preview</p>
+                      <p className="text-white text-[10px] sm:text-xs text-center font-medium">{t('contentPublish.preview')}</p>
                     </div>
                   </div>
                 ) : (
@@ -653,14 +655,14 @@ const ContentPublishPage = () => {
                 <button
                   onClick={handleAddHashtagSymbol}
                   className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-lg transition-colors touch-manipulation"
-                  title="Add hashtag"
+                  title={t('contentPublish.addHashtag')}
                 >
                   <Hash className="w-4 h-4 text-gray-300" />
                 </button>
                 <button
                   onClick={handleAddMentionSymbol}
                   className="flex-1 flex items-center justify-center py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-lg transition-colors touch-manipulation"
-                  title="Add mention"
+                  title={t('contentPublish.addMention')}
                 >
                   <AtSign className="w-4 h-4 text-gray-300" />
                 </button>
@@ -672,7 +674,7 @@ const ContentPublishPage = () => {
             <div className="pb-2">
               <textarea
                 id="title-input"
-                placeholder="Add description..."
+                placeholder={t('contentPublish.addDescription')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full text-white text-sm sm:text-base placeholder-gray-500 bg-transparent border-none outline-none resize-none leading-relaxed"
@@ -706,7 +708,7 @@ const ContentPublishPage = () => {
                   <div className="rounded-2xl bg-zinc-800 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Trophy className="w-5 h-5 text-yellow-500" />
-                      <span className="text-yellow-500 font-semibold text-sm">Participando en Challenge</span>
+                      <span className="text-yellow-500 font-semibold text-sm">{t('contentPublish.participatingChallenge')}</span>
                     </div>
                     <p className="text-zinc-400 text-sm">
                       Tu contenido será enviado al challenge. Una vez que todos los participantes suban su contenido, el challenge se publicará automáticamente.
@@ -721,7 +723,7 @@ const ContentPublishPage = () => {
                   {/* Challenge Header */}
                   <div className="flex items-center gap-2 mb-1 px-5 md:px-2">
                     <Trophy className="w-5 h-5 text-yellow-500" />
-                    <span className="text-yellow-500 font-semibold text-sm">Configuración del Challenge</span>
+                    <span className="text-yellow-500 font-semibold text-sm">{t('contentPublish.challengeConfig')}</span>
                   </div>
 
                   {/* Challenge Category */}
@@ -755,7 +757,7 @@ const ContentPublishPage = () => {
                         Invitar Participantes * ({selectedUsers.length}/5)
                       </span>
                       {selectedUsers.length >= 5 && (
-                        <span className="text-yellow-500 text-xs">Límite</span>
+                        <span className="text-yellow-500 text-xs">{t('contentPublish.limit')}</span>
                       )}
                     </label>
 
@@ -800,7 +802,7 @@ const ContentPublishPage = () => {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Escribe al menos 2 caracteres..."
+                            placeholder={t('contentPublish.writeMinChars')}
                             className="flex-1 bg-transparent text-white placeholder-zinc-500 focus:outline-none text-sm"
                           />
                           {searching && (
@@ -809,7 +811,7 @@ const ContentPublishPage = () => {
                         </div>
                         
                         {searchQuery.trim().length > 0 && searchQuery.trim().length < 2 && (
-                          <p className="text-zinc-500 text-xs mt-2">Escribe al menos 2 caracteres para buscar</p>
+                          <p className="text-zinc-500 text-xs mt-2">{t('contentPublish.writeMinCharsHint')}</p>
                         )}
 
                         {/* Search Results */}
@@ -818,7 +820,7 @@ const ContentPublishPage = () => {
                             {searching ? (
                               <div className="p-3 text-center text-zinc-400">
                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-500 mx-auto mb-2" />
-                                <span className="text-sm">Buscando...</span>
+                                <span className="text-sm">{t('contentPublish.searching')}</span>
                               </div>
                             ) : searchResults.length > 0 ? (
                               searchResults.map((searchUser) => (
@@ -879,7 +881,7 @@ const ContentPublishPage = () => {
                       </svg>
                     </div>
                     <div className="flex flex-col items-start min-w-0 flex-1">
-                      <span className="text-zinc-300 text-sm font-medium">Público objetivo</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.targetAudience')}</span>
                       <span className="text-zinc-500 text-xs truncate w-full">{audienceTarget}</span>
                     </div>
                   </div>
@@ -900,7 +902,7 @@ const ContentPublishPage = () => {
                       </svg>
                     </div>
                     <div className="flex flex-col items-start min-w-0 flex-1">
-                      <span className="text-zinc-300 text-sm font-medium">Autenticidad del contenido</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.contentAuthenticity')}</span>
                       <span className="text-zinc-500 text-xs truncate w-full">{sourceAuthenticity}</span>
                     </div>
                   </div>
@@ -921,7 +923,7 @@ const ContentPublishPage = () => {
                       </svg>
                     </div>
                     <div className="flex flex-col items-start min-w-0 flex-1">
-                      <span className="text-zinc-300 text-sm font-medium">Privacidad de votos</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.votePrivacy')}</span>
                       <span className="text-zinc-500 text-xs truncate w-full">{votingPrivacy}</span>
                     </div>
                   </div>
@@ -937,7 +939,7 @@ const ContentPublishPage = () => {
                       <MessageCircle className="w-5 h-5 text-cyan-400" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-zinc-300 text-sm font-medium">Allow comments</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.allowComments')}</span>
                       <span className="text-zinc-500 text-xs">
                         {commentsEnabled ? 'Puede comentar y ver comentarios' : 'No puede comentar; comentarios ocultos'}
                       </span>
@@ -968,7 +970,7 @@ const ContentPublishPage = () => {
                       </svg>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-zinc-300 text-sm font-medium">Show vote count</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.showVoteCount')}</span>
                       <span className="text-zinc-500 text-xs">
                         {showVoteCount ? 'Ve números de votos' : 'No ve números'}
                       </span>
@@ -1001,7 +1003,7 @@ const ContentPublishPage = () => {
                     </svg>
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-zinc-300 text-sm font-medium">Mature content (Sensitive media)</span>
+                    <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.matureContent')}</span>
                     <span className="text-zinc-500 text-xs">
                       {matureContent === 'none' ? 'None' : matureContent === 'mild' ? 'Mild' : 'Strong'}
                     </span>
@@ -1022,8 +1024,8 @@ const ContentPublishPage = () => {
                       </svg>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-zinc-300 text-sm font-medium">Allow downloads</span>
-                      <span className="text-zinc-500 text-xs">Let others download the image or video</span>
+                      <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.allowDownloads')}</span>
+                      <span className="text-zinc-500 text-xs">{t('contentPublish.allowDownloadsDesc')}</span>
                     </div>
                   </div>
                   <button
@@ -1050,7 +1052,7 @@ const ContentPublishPage = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                       </svg>
                     </div>
-                    <span className="text-zinc-300 text-sm font-medium">Share to</span>
+                    <span className="text-zinc-300 text-sm font-medium">{t('contentPublish.shareTo')}</span>
                   </div>
                   <div className="flex gap-2">
                     <button className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-700 active:bg-zinc-600 flex items-center justify-center transition-colors touch-manipulation">

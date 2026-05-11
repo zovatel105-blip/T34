@@ -7,8 +7,10 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import useLivePoll from '../hooks/useLivePoll';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { useTranslation } from '../hooks/useTranslation';
 
 const MessagesPage = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -77,8 +79,8 @@ const MessagesPage = () => {
         console.log('ℹ️ No conversations endpoint available yet');
       } else {
         toast({
-          title: "Error al cargar conversaciones",
-          description: "No se pudieron cargar las conversaciones",
+          title: t('chat.toast.errorLoadConvos'),
+          description: t('chat.toast.errorLoadConvosDesc'),
           variant: "destructive",
         });
       }
@@ -137,8 +139,8 @@ const MessagesPage = () => {
       
       if (!error.message.includes('404')) {
         toast({
-          title: "Error al cargar mensajes",
-          description: "No se pudieron cargar los mensajes",
+          title: t('chat.toast.errorLoadMessages'),
+          description: t('chat.toast.errorLoadMessagesDesc'),
           variant: "destructive",
         });
       }
@@ -217,8 +219,8 @@ const MessagesPage = () => {
     } catch (error) {
       console.error('❌ Error starting new conversation:', error);
       toast({
-        title: "Error",
-        description: "No se pudo iniciar la conversación",
+        title: t('chat.toast.error'),
+        description: t('chat.toast.cantStartConvo'),
         variant: "destructive",
       });
     }
@@ -231,8 +233,8 @@ const MessagesPage = () => {
     // Check if this is a pending chat request and user is the sender
     if (selectedConversation.is_chat_request && selectedConversation.is_request_sender) {
       toast({
-        title: "Solicitud pendiente",
-        description: "Espera a que el usuario acepte tu solicitud para enviar más mensajes",
+        title: t('chat.toast.pendingRequest'),
+        description: t('chat.toast.pendingRequestDesc'),
         variant: "default",
       });
       return;
@@ -368,8 +370,8 @@ const MessagesPage = () => {
         setMessages(prevMessages => [...prevMessages, existingRequestMessage]);
         
         toast({
-          title: "Solicitud pendiente",
-          description: "Ya enviaste una solicitud de chat a este usuario",
+          title: t('chat.toast.alreadyRequested'),
+          description: t('chat.toast.alreadyRequestedDesc'),
           variant: "default",
         });
       } else if (error.message.includes('403')) {
@@ -384,13 +386,13 @@ const MessagesPage = () => {
         setMessages(prevMessages => [...prevMessages, permissionMessage]);
         
         toast({
-          title: "Sin permisos",
-          description: "No puedes enviar mensajes a este usuario",
+          title: t('chat.toast.noPermissions'),
+          description: t('chat.toast.noPermissionsDesc'),
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Error al enviar mensaje",
+          title: t('chat.toast.errorSend'),
           description: error.message || "No se pudo enviar el mensaje",
           variant: "destructive",
         });
@@ -414,8 +416,8 @@ const MessagesPage = () => {
       console.log('✅ Request cancelled:', response);
       
       toast({
-        title: "Solicitud cancelada",
-        description: "La solicitud de chat ha sido cancelada",
+        title: t('chat.toast.cancelled'),
+        description: t('chat.toast.cancelledDesc'),
       });
       
       // Close the conversation and reload
@@ -425,8 +427,8 @@ const MessagesPage = () => {
     } catch (error) {
       console.error('❌ Error cancelling chat request:', error);
       toast({
-        title: "Error",
-        description: "No se pudo cancelar la solicitud",
+        title: t('chat.toast.error'),
+        description: t('chat.toast.cantCancel'),
         variant: "destructive",
       });
     }
@@ -448,10 +450,10 @@ const MessagesPage = () => {
 
       if (response.success) {
         toast({
-          title: action === 'accept' ? "✅ Solicitud aceptada" : "❌ Solicitud rechazada",
+          title: action === 'accept' ? t('chat.toast.requestAccepted') : t('chat.toast.requestRejected'),
           description: action === 'accept' 
-            ? "Ahora puedes enviar mensajes libremente" 
-            : "La solicitud ha sido rechazada",
+            ? t('chat.toast.requestAcceptedDesc')
+            : t('chat.toast.requestRejectedDesc'),
         });
 
         // Reload conversations
@@ -473,8 +475,8 @@ const MessagesPage = () => {
     } catch (error) {
       console.error('❌ Error handling chat request:', error);
       toast({
-        title: "Error",
-        description: "No se pudo procesar la solicitud",
+        title: t('chat.toast.error'),
+        description: t('chat.toast.cantProcess'),
         variant: "destructive"
       });
     }
@@ -585,7 +587,7 @@ const MessagesPage = () => {
         {/* Header */}
         <div className="h-16 border-b flex items-center justify-between px-4 bg-white">
           <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-bold text-gray-900">Mensajes</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('chat.title')}</h1>
           </div>
           <button
             onClick={() => setShowNewChat(true)}
@@ -601,7 +603,7 @@ const MessagesPage = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Buscar conversaciones..."
+              placeholder={t('chat.searchConversations')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -619,8 +621,8 @@ const MessagesPage = () => {
           ) : conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-              <p>No tienes conversaciones aún</p>
-              <p className="text-sm">Inicia una nueva conversación</p>
+              <p>{t('chat.noConversations')}</p>
+              <p className="text-sm">{t('chat.startNewConversation')}</p>
             </div>
           ) : (
             <div className="space-y-0">
@@ -669,7 +671,7 @@ const MessagesPage = () => {
                               "text-xs px-2 py-0.5 rounded-full font-medium",
                               isSender ? "bg-gray-100 text-gray-700" : "bg-blue-100 text-blue-700"
                             )}>
-                              {isSender ? "Pendiente" : "Nueva"}
+                              {isSender ? t('chat.pendingBadge') : t('chat.newBadge')}
                             </span>
                           )}
                         </div>
@@ -681,7 +683,7 @@ const MessagesPage = () => {
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm text-gray-600 truncate flex-1">
-                          {conversation.last_message || 'Nueva conversación'}
+                          {conversation.last_message || t('chat.newConversation')}
                         </p>
                         {isChatRequest && (
                           <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -820,7 +822,7 @@ const MessagesPage = () => {
                               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                             )}
                             {message.status === 'failed' && (
-                              <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer" title="Error al enviar"></div>
+                              <div className="w-3 h-3 bg-red-500 rounded-full cursor-pointer" title={t('chat.sendError')}></div>
                             )}
                           </div>
                         )}
@@ -857,15 +859,15 @@ const MessagesPage = () => {
               /* Sender: Show waiting message - Diseño minimalista */
               <div className="border-t border-gray-200 p-6 bg-white">
                 <div className="text-center space-y-3 max-w-md mx-auto">
-                  <h2 className="text-2xl font-bold text-gray-900">Invitación enviada</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('chat.invitationSent')}</h2>
                   <p className="text-base text-gray-600 leading-relaxed">
-                    Podrás enviar más mensajes cuando se acepte tu invitación.
+                    {t('chat.invitationSentDesc')}
                   </p>
                   <button
                     onClick={() => handleCancelRequest(selectedConversation.chat_request_id)}
                     className="w-full mt-4 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
                   >
-                    Cancelar solicitud
+                    {t('chat.cancelRequest')}
                   </button>
                 </div>
               </div>
@@ -887,7 +889,7 @@ const MessagesPage = () => {
                           sendMessage();
                         }
                       }}
-                      placeholder="Escribe un mensaje..."
+                      placeholder={t('chat.typeMessage')}
                       className="flex-1 bg-transparent outline-none text-sm"
                       disabled={sendingMessage}
                     />
@@ -937,7 +939,7 @@ const MessagesPage = () => {
             {/* Modal Header */}
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Nuevo chat</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('chat.newChat')}</h2>
                 <button
                   onClick={() => {
                     setShowNewChat(false);
@@ -957,7 +959,7 @@ const MessagesPage = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar usuarios..."
+                  placeholder={t('chat.searchUsers')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -999,13 +1001,13 @@ const MessagesPage = () => {
               ) : searchQuery ? (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>No se encontraron usuarios</p>
-                  <p className="text-sm">Intenta con otro término de búsqueda</p>
+                  <p>{t('chat.noUsersFound')}</p>
+                  <p className="text-sm">{t('chat.tryOtherSearch')}</p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Search className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>Busca usuarios para iniciar una conversación</p>
+                  <p>{t('chat.searchToStart')}</p>
                 </div>
               )}
             </div>
