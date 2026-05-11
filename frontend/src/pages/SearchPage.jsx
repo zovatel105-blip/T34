@@ -19,11 +19,13 @@ import {
   RecentSearchesSkeleton 
 } from '../components/search/SearchSkeletons';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
+import { useTranslation } from '../hooks/useTranslation';
 
 import PostsIcon from '../components/icons/PostsIcon';
 import SEARCH_CONFIG from '../config/searchConfig';
 
 const SearchPage = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [autocompleteResults, setAutocompleteResults] = useState([]);
@@ -185,11 +187,11 @@ const SearchPage = () => {
   };
 
   const tabs = [
-    { id: SEARCH_CONFIG.FILTERS.ALL, label: 'Top', icon: Sparkles, description: 'Buscar en todo' },
-    { id: SEARCH_CONFIG.FILTERS.USERS, label: 'Usuarios', icon: User, description: 'Encuentra personas' },
-    { id: SEARCH_CONFIG.FILTERS.POSTS, label: 'Posts', icon: PostsIcon, description: 'Descubre contenido' },
-    { id: SEARCH_CONFIG.FILTERS.HASHTAGS, label: 'Hashtags', icon: Hash, description: 'Trending topics' },
-    { id: SEARCH_CONFIG.FILTERS.SOUNDS, label: 'Sonidos', icon: Music, description: 'Audio popular' },
+    { id: SEARCH_CONFIG.FILTERS.ALL, label: t('search.tabs.top'), icon: Sparkles, description: t('search.tabsDesc.top') },
+    { id: SEARCH_CONFIG.FILTERS.USERS, label: t('search.tabs.users'), icon: User, description: t('search.tabsDesc.users') },
+    { id: SEARCH_CONFIG.FILTERS.POSTS, label: t('search.tabs.posts'), icon: PostsIcon, description: t('search.tabsDesc.posts') },
+    { id: SEARCH_CONFIG.FILTERS.HASHTAGS, label: t('search.tabs.hashtags'), icon: Hash, description: t('search.tabsDesc.hashtags') },
+    { id: SEARCH_CONFIG.FILTERS.SOUNDS, label: t('search.tabs.sounds'), icon: Music, description: t('search.tabsDesc.sounds') },
   ];
 
   const updateURLParams = (query, filter) => {
@@ -1012,7 +1014,7 @@ const SearchPage = () => {
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Buscar"
+                  placeholder={t('search.placeholder')}
                   value={searchQuery}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}
@@ -1086,7 +1088,7 @@ const SearchPage = () => {
             <div className="flex items-start gap-2">
               <div className="text-red-500 text-lg flex-shrink-0">⚠️</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-red-800">No se pudo cargar el contenido</p>
+                <p className="text-sm font-semibold text-red-800">{t('search.loadError')}</p>
                 <p className="text-xs text-red-700 mt-0.5 break-all">
                   {networkError.message}
                 </p>
@@ -1101,7 +1103,7 @@ const SearchPage = () => {
                   }}
                   className="mt-2 px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors"
                 >
-                  🔄 Reintentar
+                  {t('search.retry')}
                 </button>
               </div>
             </div>
@@ -1115,7 +1117,7 @@ const SearchPage = () => {
             {isAuthenticated && (
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between px-4">
-                <h3 className="text-lg font-semibold text-gray-900">Búsquedas recientes</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t('search.recentSearches')}</h3>
               </div>
               
               {loadingStates.recentSearches ? (
@@ -1153,7 +1155,7 @@ const SearchPage = () => {
                       onClick={() => setShowAllRecentSearches(!showAllRecentSearches)}
                       className="w-full py-3 text-center text-gray-500 text-sm hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
                     >
-                      <span>{showAllRecentSearches ? 'See less' : 'See more'}</span>
+                      <span>{showAllRecentSearches ? t('search.seeLess') : t('search.seeMore')}</span>
                       {showAllRecentSearches ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                   )}
@@ -1161,7 +1163,7 @@ const SearchPage = () => {
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <Clock size={24} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No hay búsquedas recientes</p>
+                  <p className="text-sm">{t('search.noRecentSearches')}</p>
                 </div>
               )}
             </div>
@@ -1170,7 +1172,7 @@ const SearchPage = () => {
           {/* Stories Section - Real Data */}
           {isAuthenticated && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 px-4">Stories</h3>
+              <h3 className="text-lg font-semibold text-gray-900 px-4">{t('search.stories')}</h3>
               
               {loadingStates.stories ? (
                 <StoriesSectionSkeleton count={5} />
@@ -1267,8 +1269,8 @@ const SearchPage = () => {
                   <div className="flex justify-center mb-2">
                     <BookOpen size={48} className="text-gray-400" strokeWidth={2} />
                   </div>
-                  <p className="text-sm">No hay stories disponibles</p>
-                  <p className="text-xs text-gray-400 mt-1">Sigue a más usuarios para ver sus stories</p>
+                  <p className="text-sm">{t('search.noStories')}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('search.noStoriesDesc')}</p>
                 </div>
               )}
             </div>
@@ -1277,7 +1279,7 @@ const SearchPage = () => {
           {/* You may like Section - Real Data */}
           {isAuthenticated && (
             <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 px-4">You may like</h3>
+              <h3 className="text-lg font-semibold text-gray-900 px-4">{t('search.youMayLike')}</h3>
               
               {loadingStates.recommendations ? (
                 <RecommendationsSectionSkeleton count={6} />
@@ -1380,8 +1382,8 @@ const SearchPage = () => {
                   <div className="flex justify-center mb-2">
                     <Target size={40} className="text-gray-400" strokeWidth={2} />
                   </div>
-                  <p className="text-sm">No hay recomendaciones disponibles</p>
-                  <p className="text-xs text-gray-400 mt-1">Interactúa más para obtener mejores sugerencias</p>
+                  <p className="text-sm">{t('search.noRecommendations')}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('search.noRecommendationsDesc')}</p>
                 </div>
               )}
             </div>
@@ -1502,12 +1504,12 @@ const SearchPage = () => {
                             {isFollowing ? (
                               <>
                                 <Check size={16} />
-                                <span>Siguiendo</span>
+                                <span>{t('search.following')}</span>
                               </>
                             ) : (
                               <>
                                 <UserPlus size={16} />
-                                <span>Seguir</span>
+                                <span>{t('search.follow')}</span>
                               </>
                             )}
                           </button>
@@ -1587,12 +1589,12 @@ const SearchPage = () => {
                           {isFollowing ? (
                             <>
                               <Check size={12} />
-                              <span>Siguiendo</span>
+                              <span>{t('search.following')}</span>
                             </>
                           ) : (
                             <>
                               <UserPlus size={12} />
-                              <span>Seguir</span>
+                              <span>{t('search.follow')}</span>
                             </>
                           )}
                         </button>
@@ -1673,7 +1675,7 @@ const SearchPage = () => {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
               <Search size={24} className="text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron resultados</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('search.noResults')}</h3>
             <p className="text-gray-500 text-sm">
               Intenta buscar algo diferente o revisa la ortografía
             </p>

@@ -18,6 +18,7 @@ import MediaPrefetcher from './MediaPrefetcher';
 import { useFollow } from '../contexts/FollowContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useShare } from '../hooks/useShare';
+import { useTranslation } from '../hooks/useTranslation';
 import { useViewTracking } from '../hooks/useViewTracking';
 import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
@@ -1738,6 +1739,7 @@ const TikTokScrollView = ({
   const { isMetered } = useNetworkStatus();
   const isHighBandwidth = !isMetered;
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const controls = useAnimation();
 
   // ─── VIRTUAL 3-SLOT POOL ─────────────────────────────────────────────────
@@ -2198,7 +2200,7 @@ const TikTokScrollView = ({
         {showActiveChallengesButton && (
           <div className="fixed z-50" style={{ top: 'max(1rem, var(--safe-area-inset-top))', right: 'max(1rem, var(--safe-area-inset-right))' }}>
             <Button onClick={() => navigate('/explore/active')} className="bg-red-500 text-white hover:bg-red-600 backdrop-blur-md border-none px-3 py-2 h-10 rounded-full flex items-center gap-1.5" size="sm">
-              <Swords className="w-4 h-4" /><span className="text-sm font-medium">Activos</span>
+              <Swords className="w-4 h-4" /><span className="text-sm font-medium">{t('explore.activeButton')}</span>
             </Button>
           </div>
         )}
@@ -2253,7 +2255,7 @@ const TikTokScrollView = ({
       {showActiveChallengesButton && (
         <div className="fixed z-50" style={{ top: 'max(1rem, var(--safe-area-inset-top))', right: 'max(1rem, var(--safe-area-inset-right))' }}>
           <Button onClick={() => navigate('/explore/active')} className="bg-red-500 text-white hover:bg-red-600 backdrop-blur-md border-none px-3 py-2 h-10 rounded-full flex items-center gap-1.5" size="sm">
-            <Swords className="w-4 h-4" /><span className="text-sm font-medium">Activos</span>
+            <Swords className="w-4 h-4" /><span className="text-sm font-medium">{t('explore.activeButton')}</span>
           </Button>
         </div>
       )}
