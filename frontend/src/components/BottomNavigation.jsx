@@ -54,6 +54,40 @@ const BottomNavigation = () => {
     setIsLongPressing(false);
   }, []);
 
+  // 🏠 Doble click en Home → refresca el feed
+  const homeClickCount = useRef(0);
+  const homeClickTimer = useRef(null);
+  const handleHomeClick = useCallback(() => {
+    if (isLongPressing) return;
+
+    homeClickCount.current += 1;
+
+    if (homeClickCount.current === 1) {
+      // Esperamos por si llega un segundo click
+      homeClickTimer.current = setTimeout(() => {
+        homeClickCount.current = 0;
+        homeClickTimer.current = null;
+        // Single click → navegación normal
+        navigate(currentMode === 'following' ? '/following' : '/feed');
+      }, 260);
+    } else if (homeClickCount.current >= 2) {
+      // Doble click → solicitar refresh al feed
+      if (homeClickTimer.current) {
+        clearTimeout(homeClickTimer.current);
+        homeClickTimer.current = null;
+      }
+      homeClickCount.current = 0;
+      if (navigator.vibrate) navigator.vibrate(30);
+      // Si no estamos en el feed, navegar primero y luego disparar el refresh
+      const inFeed = location.pathname === '/feed' || location.pathname === '/following';
+      if (!inFeed) {
+        navigate(currentMode === 'following' ? '/following' : '/feed');
+      }
+      // Disparar evento global para que FeedPage refresque
+      window.dispatchEvent(new CustomEvent('feed:doubleTapRefresh'));
+    }
+  }, [isLongPressing, navigate, currentMode, location.pathname]);
+
   const isActive = (path) => {
     if (path === '/feed') return location.pathname === '/feed' || location.pathname === '/following';
     if (path === '/profile') return location.pathname === '/profile' || location.pathname.startsWith('/profile/');
@@ -160,7 +194,7 @@ const BottomNavigation = () => {
           onMouseDown={handleTouchStart}
           onMouseUp={handleTouchEnd}
           onMouseLeave={handleTouchEnd}
-          onClick={() => !isLongPressing && navigate(currentMode === 'following' ? '/following' : '/feed')}
+          onClick={handleHomeClick}
           className={cn(
             "flex items-center justify-center w-9 h-9 transition-all duration-200 active:scale-90",
             isLongPressing && "scale-110 opacity-70"

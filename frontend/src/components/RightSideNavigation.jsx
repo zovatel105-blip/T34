@@ -60,6 +60,34 @@ const RightSideNavigation = () => {
     handleTouchEnd();
   }, [handleTouchEnd]);
 
+  // 🏠 Doble click en Home → refresca el feed
+  const homeClickCount = useRef(0);
+  const homeClickTimer = useRef(null);
+  const handleHomeClick = useCallback(() => {
+    if (isLongPressing) return;
+    homeClickCount.current += 1;
+
+    if (homeClickCount.current === 1) {
+      homeClickTimer.current = setTimeout(() => {
+        homeClickCount.current = 0;
+        homeClickTimer.current = null;
+        navigate(currentMode === 'following' ? '/following' : '/feed');
+      }, 260);
+    } else if (homeClickCount.current >= 2) {
+      if (homeClickTimer.current) {
+        clearTimeout(homeClickTimer.current);
+        homeClickTimer.current = null;
+      }
+      homeClickCount.current = 0;
+      if (navigator.vibrate) navigator.vibrate(30);
+      const inFeed = location.pathname === '/feed' || location.pathname === '/following';
+      if (!inFeed) {
+        navigate(currentMode === 'following' ? '/following' : '/feed');
+      }
+      window.dispatchEvent(new CustomEvent('feed:doubleTapRefresh'));
+    }
+  }, [isLongPressing, navigate, currentMode, location.pathname]);
+
   const getModeStyles = () => {
     if (currentMode === 'following') {
       return {
@@ -92,7 +120,7 @@ const RightSideNavigation = () => {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          onClick={() => !isLongPressing && navigate(currentMode === 'following' ? '/following' : '/feed')}
+          onClick={handleHomeClick}
           className={cn(
             "rounded-full transition-all duration-300 backdrop-blur-sm border border-white/10",
             modeStyles.bgColor,

@@ -353,6 +353,22 @@ const FeedPage = () => {
     }
   }, [toast]);
 
+  // 🏠 Listener: doble click en Home dispara este evento global → refresh + scroll arriba
+  useEffect(() => {
+    const onDoubleTapRefresh = () => {
+      console.log('🏠 [FeedPage] doubleTapRefresh recibido — refrescando feed y volviendo al inicio');
+      setInitialIndex(0);
+      activeIndexRef.current = 0;
+      handleRefresh();
+      toast({
+        title: '🔄 Actualizando feed…',
+        duration: 1500,
+      });
+    };
+    window.addEventListener('feed:doubleTapRefresh', onDoubleTapRefresh);
+    return () => window.removeEventListener('feed:doubleTapRefresh', onDoubleTapRefresh);
+  }, [handleRefresh, toast]);
+
   // 📸 Guardar snapshot del feed (polls + pagination + savedPolls) para poder
   // restaurar la posición cuando el usuario navega a otra página y vuelve.
   useEffect(() => {
