@@ -1972,7 +1972,7 @@ const ContentCreationPage = () => {
               className="flex items-center gap-2 bg-gray-900/80 hover:bg-gray-800/80 disabled:bg-gray-900/40 disabled:cursor-not-allowed backdrop-blur-sm rounded-full px-4 py-2 transition-all"
             >
               <span className="text-white font-medium text-sm">
-                {isCreating ? 'Creando...' : 'Siguiente'}
+                {isCreating ? t('common.creating') : t('common.next')}
               </span>
               {isCreating && (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

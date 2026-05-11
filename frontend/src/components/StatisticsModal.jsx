@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown, Users, Heart, Eye, MessageCircle, Vote, BarChart3, Activity, Target, Zap } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followingCount }) => {
   const [activeTab, setActiveTab] = useState('contenido');
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
@@ -92,9 +94,9 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
   );
 
   const tabs = [
-    { id: 'contenido', label: 'Contenido' },
-    { id: 'audiencia', label: 'Audiencia' },
-    { id: 'actividad', label: 'Actividad' }
+    { id: 'contenido', label: t('profile.statistics.tabs.content') },
+    { id: 'audiencia', label: t('profile.statistics.tabs.audience') },
+    { id: 'actividad', label: t('profile.statistics.tabs.activity') }
   ];
 
   return (
@@ -108,7 +110,7 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
         >
           <ArrowLeft className="w-5 h-5 text-gray-700" strokeWidth={1.5} />
         </button>
-        <h1 className="font-semibold text-gray-900 text-base">Tu impacto</h1>
+        <h1 className="font-semibold text-gray-900 text-base">{t('profile.statistics.header')}</h1>
         <div className="w-9" />
       </div>
 
@@ -140,29 +142,29 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tu contenido</h2>
+                  <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.yourContent')}</h2>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard icon={BarChart3} title="Publicaciones" value={totalPolls} subtitle="Posts creados" trend={getTrend(totalPolls, 0)} growth={calculateGrowth(totalPolls)} color="blue" />
-                  <MetricCard icon={Eye} title="Alcance total" value={totalInteractions} subtitle="Interacciones recibidas" trend={getTrend(totalInteractions, totalPolls * 5)} growth={calculateGrowth(totalInteractions, 0.05)} color="purple" />
+                  <MetricCard icon={BarChart3} title={t('profile.statistics.metrics.posts')} value={totalPolls} subtitle={t('profile.statistics.metrics.postsSubtitle')} trend={getTrend(totalPolls, 0)} growth={calculateGrowth(totalPolls)} color="blue" />
+                  <MetricCard icon={Eye} title={t('profile.statistics.metrics.totalReach')} value={totalInteractions} subtitle={t('profile.statistics.metrics.totalReachSubtitle')} trend={getTrend(totalInteractions, totalPolls * 5)} growth={calculateGrowth(totalInteractions, 0.05)} color="purple" />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Participación</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.participation')}</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard icon={Vote} title="Votos" value={totalVotes} subtitle="Personas que votaron" trend={getTrend(totalVotes, totalPolls * 3)} growth={calculateGrowth(totalVotes, 0.08)} color="green" />
-                  <MetricCard icon={Heart} title="Me gusta" value={totalLikes} subtitle="Corazones recibidos" trend={getTrend(totalLikes, totalPolls * 2)} growth={calculateGrowth(totalLikes, 0.12)} color="pink" />
+                  <MetricCard icon={Vote} title={t('profile.statistics.metrics.votes')} value={totalVotes} subtitle={t('profile.statistics.metrics.votesSubtitle')} trend={getTrend(totalVotes, totalPolls * 3)} growth={calculateGrowth(totalVotes, 0.08)} color="green" />
+                  <MetricCard icon={Heart} title={t('profile.statistics.metrics.likes')} value={totalLikes} subtitle={t('profile.statistics.metrics.likesSubtitle')} trend={getTrend(totalLikes, totalPolls * 2)} growth={calculateGrowth(totalLikes, 0.12)} color="pink" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard icon={MessageCircle} title="Comentarios" value={totalComments} subtitle="Conversaciones" trend={getTrend(totalComments, totalPolls)} growth={calculateGrowth(totalComments, 0.15)} color="green" />
-                  <MetricCard icon={Target} title="Promedio/Post" value={avgInteractionsPerPost} subtitle="Por publicación" color="purple" />
+                  <MetricCard icon={MessageCircle} title={t('profile.statistics.metrics.comments')} value={totalComments} subtitle={t('profile.statistics.metrics.commentsSubtitle')} trend={getTrend(totalComments, totalPolls)} growth={calculateGrowth(totalComments, 0.15)} color="green" />
+                  <MetricCard icon={Target} title={t('profile.statistics.metrics.avgPerPost')} value={avgInteractionsPerPost} subtitle={t('profile.statistics.metrics.avgPerPostSubtitle')} color="purple" />
                 </div>
               </div>
 
               {/* Rendimiento */}
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tu mejor rendimiento</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.bestPerformance')}</h2>
                 <div className="flex flex-col gap-2">
                   {totalPolls > 0 ? (
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
@@ -170,8 +172,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                         <Target className="w-5 h-5 text-orange-500" strokeWidth={1.5} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{avgVotesPerPost} votos promedio</p>
-                        <p className="text-xs text-gray-400">Por cada publicación</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.performance.avgVotes', { count: avgVotesPerPost })}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.performance.perPost')}</p>
                       </div>
                     </div>
                   ) : (
@@ -180,8 +182,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                         <Zap className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">¡Crea tu primera publicación!</p>
-                        <p className="text-xs text-gray-400">Empieza a construir tu impacto</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.performance.createFirst')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.performance.startBuilding')}</p>
                       </div>
                     </div>
                   )}
@@ -193,7 +195,7 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{topPost.title}</p>
-                        <p className="text-xs text-gray-400">{topPostScore} interacciones totales</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.performance.totalInteractions', { count: topPostScore })}</p>
                       </div>
                     </div>
                   )}
@@ -206,20 +208,20 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
           {activeTab === 'audiencia' && (
             <>
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tu comunidad</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.yourCommunity')}</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard icon={Users} title="Seguidores" value={followersCount || 0} subtitle="Te siguen" trend={getTrend(followersCount || 0, 0)} growth={calculateGrowth(followersCount || 0, 0.1)} color="blue" />
-                  <MetricCard icon={Users} title="Siguiendo" value={followingCount || 0} subtitle="Personas que sigues" color="green" />
+                  <MetricCard icon={Users} title={t('profile.statistics.metrics.followers')} value={followersCount || 0} subtitle={t('profile.statistics.metrics.followersSubtitle')} trend={getTrend(followersCount || 0, 0)} growth={calculateGrowth(followersCount || 0, 0.1)} color="blue" />
+                  <MetricCard icon={Users} title={t('profile.statistics.metrics.following')} value={followingCount || 0} subtitle={t('profile.statistics.metrics.followingSubtitle')} color="green" />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Engagement</h2>
-                <MetricCard icon={Zap} title="Tasa de participación" value={`${engagementRate}%`} subtitle="Interacciones vs seguidores" trend={getTrend(parseFloat(engagementRate), 5)} growth={Math.max(1, Math.floor(parseFloat(engagementRate) * 0.2))} color="purple" />
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.engagement')}</h2>
+                <MetricCard icon={Zap} title={t('profile.statistics.metrics.engagementRate')} value={`${engagementRate}%`} subtitle={t('profile.statistics.metrics.engagementRateSubtitle')} trend={getTrend(parseFloat(engagementRate), 5)} growth={Math.max(1, Math.floor(parseFloat(engagementRate) * 0.2))} color="purple" />
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Análisis</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.analysis')}</h2>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
@@ -227,12 +229,16 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">
-                        Ratio {(followersCount || 0) > 0 && (followingCount || 0) > 0 
-                          ? ((followersCount || 0) / (followingCount || 0)).toFixed(1) 
-                          : 'N/A'}
+                        {t('profile.statistics.analysis.ratio', {
+                          value: (followersCount || 0) > 0 && (followingCount || 0) > 0
+                            ? ((followersCount || 0) / (followingCount || 0)).toFixed(1)
+                            : 'N/A'
+                        })}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {(followersCount || 0) >= (followingCount || 0) ? 'Más personas te siguen' : 'Sigues a más personas'}
+                        {(followersCount || 0) >= (followingCount || 0)
+                          ? t('profile.statistics.analysis.moreFollowers')
+                          : t('profile.statistics.analysis.moreFollowing')}
                       </p>
                     </div>
                   </div>
@@ -242,13 +248,13 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                       <Activity className="w-5 h-5 text-green-500" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Potencial de crecimiento</p>
+                      <p className="text-sm font-medium text-gray-900">{t('profile.statistics.analysis.growthPotential')}</p>
                       <p className="text-xs text-gray-400">
                         {totalPolls === 0 
-                          ? 'Crea contenido para empezar a crecer' 
+                          ? t('profile.statistics.analysis.growthCreate')
                           : totalInteractions > (followersCount || 0) * 0.1
-                            ? 'Excelente engagement, sigue así'
-                            : 'Interactúa más con tu audiencia'}
+                            ? t('profile.statistics.analysis.growthExcellent')
+                            : t('profile.statistics.analysis.growthInteract')}
                       </p>
                     </div>
                   </div>
@@ -261,30 +267,38 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
           {activeTab === 'actividad' && (
             <>
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tu actividad</h2>
-                <MetricCard icon={Activity} title="Índice de actividad" value={Math.min(100, Math.floor((totalPolls * 15 + totalInteractions * 0.3)))} subtitle="Basado en tu participación" trend={getTrend(totalInteractions, totalPolls * 2)} growth={calculateGrowth(totalInteractions, 0.1)} color="purple" />
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.yourActivity')}</h2>
+                <MetricCard icon={Activity} title={t('profile.statistics.metrics.activityIndex')} value={Math.min(100, Math.floor((totalPolls * 15 + totalInteractions * 0.3)))} subtitle={t('profile.statistics.metrics.activityIndexSubtitle')} trend={getTrend(totalInteractions, totalPolls * 2)} growth={calculateGrowth(totalInteractions, 0.1)} color="purple" />
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Desglose</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.breakdown')}</h2>
                 <div className="grid grid-cols-2 gap-3">
-                  <MetricCard icon={Vote} title="Votos totales" value={totalVotes} subtitle="En tus posts" color="green" />
-                  <MetricCard icon={BarChart3} title="Posts activos" value={totalPolls} subtitle="Publicaciones" color="blue" />
+                  <MetricCard icon={Vote} title={t('profile.statistics.metrics.totalVotes')} value={totalVotes} subtitle={t('profile.statistics.metrics.totalVotesSubtitle')} color="green" />
+                  <MetricCard icon={BarChart3} title={t('profile.statistics.metrics.activePosts')} value={totalPolls} subtitle={t('profile.statistics.metrics.activePostsSubtitle')} color="blue" />
                 </div>
               </div>
 
               {/* Estado actual */}
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tu rendimiento</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.yourPerformance')}</h2>
                 <div className="p-6 rounded-2xl bg-gray-50 text-center space-y-2">
                   <div className="text-4xl">
                     {totalPolls === 0 ? '🌟' : totalInteractions > 50 ? '🔥' : totalInteractions > 10 ? '⚡' : '🌱'}
                   </div>
                   <p className="text-base font-semibold text-gray-900">
-                    {totalPolls === 0 ? 'Empieza tu historia' : totalInteractions > 50 ? '¡En racha!' : totalInteractions > 10 ? 'Buen ritmo' : 'Construyendo'}
+                    {totalPolls === 0
+                      ? t('profile.statistics.status.startStory')
+                      : totalInteractions > 50
+                        ? t('profile.statistics.status.onFire')
+                        : totalInteractions > 10
+                          ? t('profile.statistics.status.goodPace')
+                          : t('profile.statistics.status.building')}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {totalPolls === 0 ? 'Crea tu primera publicación' : `${totalInteractions} interacciones totales`}
+                    {totalPolls === 0
+                      ? t('profile.statistics.status.createFirst')
+                      : t('profile.statistics.performance.totalInteractions', { count: totalInteractions })}
                   </p>
                 </div>
               </div>
@@ -292,18 +306,18 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
               {/* Distribución */}
               {totalInteractions > 0 && (
                 <div className="space-y-3">
-                  <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Distribución</h2>
+                  <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.distribution')}</h2>
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50">
-                      <span className="text-sm text-gray-500">Votos</span>
+                      <span className="text-sm text-gray-500">{t('profile.statistics.distribution.votes')}</span>
                       <span className="text-sm font-medium text-gray-900">{totalVotes} ({Math.round((totalVotes / totalInteractions) * 100)}%)</span>
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50">
-                      <span className="text-sm text-gray-500">Me gusta</span>
+                      <span className="text-sm text-gray-500">{t('profile.statistics.distribution.likes')}</span>
                       <span className="text-sm font-medium text-gray-900">{totalLikes} ({Math.round((totalLikes / totalInteractions) * 100)}%)</span>
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50">
-                      <span className="text-sm text-gray-500">Comentarios</span>
+                      <span className="text-sm text-gray-500">{t('profile.statistics.distribution.comments')}</span>
                       <span className="text-sm font-medium text-gray-900">{totalComments} ({Math.round((totalComments / totalInteractions) * 100)}%)</span>
                     </div>
                   </div>
@@ -312,14 +326,14 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
 
               {/* Logros */}
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tus logros</h2>
+                <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('profile.statistics.sections.yourAchievements')}</h2>
                 <div className="flex flex-col gap-2">
                   {totalPolls > 0 && (
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                       <span className="text-xl">🎯</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Primera publicación creada</p>
-                        <p className="text-xs text-gray-400">Has comenzado tu journey</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.achievements.firstPost')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.achievements.firstPostDesc')}</p>
                       </div>
                     </div>
                   )}
@@ -327,8 +341,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                       <span className="text-xl">🗳️</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">10+ votos recibidos</p>
-                        <p className="text-xs text-gray-400">La gente participa en tu contenido</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.achievements.tenVotes')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.achievements.tenVotesDesc')}</p>
                       </div>
                     </div>
                   )}
@@ -336,8 +350,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                       <span className="text-xl">❤️</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">5+ me gusta recibidos</p>
-                        <p className="text-xs text-gray-400">Tu contenido está gustando</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.achievements.fiveLikes')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.achievements.fiveLikesDesc')}</p>
                       </div>
                     </div>
                   )}
@@ -345,8 +359,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                       <span className="text-xl">👥</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Primeros seguidores</p>
-                        <p className="text-xs text-gray-400">{followersCount} personas te siguen</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.achievements.firstFollowers')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.achievements.firstFollowersDesc', { count: followersCount })}</p>
                       </div>
                     </div>
                   )}
@@ -354,8 +368,8 @@ const StatisticsModal = ({ isOpen, onClose, user, polls, followersCount, followi
                     <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50">
                       <span className="text-xl">🚀</span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">¡Listo para empezar!</p>
-                        <p className="text-xs text-gray-400">Crea tu primera publicación</p>
+                        <p className="text-sm font-medium text-gray-900">{t('profile.statistics.achievements.readyStart')}</p>
+                        <p className="text-xs text-gray-400">{t('profile.statistics.achievements.readyStartDesc')}</p>
                       </div>
                     </div>
                   )}

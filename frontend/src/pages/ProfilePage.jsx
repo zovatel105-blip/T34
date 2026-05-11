@@ -2466,9 +2466,9 @@ const ProfilePage = () => {
                         <LayoutDashboard className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="text-base font-semibold text-gray-900">Sin publicaciones aún</h3>
+                        <h3 className="text-base font-semibold text-gray-900">{t('profile.empty.noPosts')}</h3>
                         <p className="text-gray-400 text-sm">
-                          Empieza a crear contenido
+                          {t('profile.empty.noPostsDesc')}
                         </p>
                       </div>
                     </div>
@@ -2489,7 +2489,7 @@ const ProfilePage = () => {
                     {likedPollsLoading ? (
                       <div className="flex justify-center items-center py-16">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="ml-3 text-gray-600">Cargando likes...</span>
+                        <span className="ml-3 text-gray-600">{t('profile.empty.loadingLikes')}</span>
                       </div>
                     ) : likedPolls.length === 0 ? (
                       <div className="text-center py-16 space-y-4 px-4">
@@ -2497,9 +2497,9 @@ const ProfilePage = () => {
                           <Heart className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-1">
-                          <h3 className="text-base font-semibold text-gray-900">Sin favoritos aún</h3>
+                          <h3 className="text-base font-semibold text-gray-900">{t('profile.empty.noLiked')}</h3>
                           <p className="text-gray-400 text-sm">
-                            Las publicaciones que ames aparecerán aquí
+                            {t('profile.empty.noLikedDesc')}
                           </p>
                         </div>
                       </div>
@@ -2520,7 +2520,7 @@ const ProfilePage = () => {
                   {mentionedPollsLoading ? (
                     <div className="flex justify-center items-center py-16">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      <span className="ml-3 text-gray-600">Cargando menciones...</span>
+                      <span className="ml-3 text-gray-600">{t('profile.empty.loadingMentions')}</span>
                     </div>
                   ) : mentionedPolls.length === 0 ? (
                     <div className="text-center py-16 space-y-4 px-4">
@@ -2528,7 +2528,7 @@ const ProfilePage = () => {
                         <UserCircle className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="text-base font-semibold text-gray-900">Sin menciones</h3>
+                        <h3 className="text-base font-semibold text-gray-900">{t('profile.empty.noMentions')}</h3>
                       </div>
                     </div>
                   ) : (
@@ -2551,9 +2551,9 @@ const ProfilePage = () => {
                           <Bookmark className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold text-gray-900">Guardados para después</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{t('profile.empty.noSaved')}</h3>
                           <p className="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
-                            Los posts que guardes aparecerán aquí
+                            {t('profile.empty.noSavedDesc')}
                           </p>
                         </div>
                       </div>

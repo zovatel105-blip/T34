@@ -1,6 +1,29 @@
 // Sistema de internacionalización dinámico
 import translations from './translations';
 
+/**
+ * 🎯 MVP VS-ONLY: Rutas que NO forman parte del MVP visible.
+ * Cuando el usuario está navegando por una de estas rutas, las
+ * traducciones se forzan al idioma fallback (español), ignorando
+ * el idioma seleccionado por el usuario en Ajustes.
+ *
+ * El resto de rutas (las del MVP) sí respetan el idioma elegido.
+ *
+ * Cualquier ruta que empiece con uno de estos prefijos se considera
+ * fuera del MVP. Ej: '/live' cubre '/live/broadcast/123' y '/live/:roomId'.
+ */
+// Rutas EXACTAS o prefijos que se consideran fuera del MVP.
+// Nota: '/explore' (exacto) SÍ es MVP — solo las sub-rutas internas están ocultas.
+const NON_MVP_ROUTE_PREFIXES = [
+  '/explore/completed',  // CompletedBattlesPage (oculta en MVP)
+  '/explore/active',     // ActiveChallengesPage (oculta en MVP)
+  '/moment-create',      // MomentCreationPage
+  '/story-creation',     // StoryCapturePage
+  '/story-edit',         // StoryEditPage
+  '/challenges',         // ChallengeCreationPage (/challenges/create)
+  '/live',               // LivePage, LiveBroadcastPage, LiveViewerPage
+];
+
 class I18n {
   constructor() {
     this.locale = this.getStoredLocale() || this.detectBrowserLanguage();
@@ -32,31 +55,63 @@ class I18n {
     }
   }
 
-  t(key, variables = {}) {
+  /**
+   * Determina si una ruta forma parte del MVP visible.
+   * Devuelve true si la ruta NO está en la lista de rutas fuera del MVP.
+   */
+  isMvpRoute(path) {
+    if (!path || typeof path !== 'string') return true;
+    // Normaliza: quita trailing slash (excepto para '/')
+    const cleanPath = path.length > 1 ? path.replace(/\/+$/, '') : path;
+    return !NON_MVP_ROUTE_PREFIXES.some((prefix) => {
+      return cleanPath === prefix || cleanPath.startsWith(prefix + '/');
+    });
+  }
+
+  /**
+   * Resuelve una traducción usando un locale específico (interno).
+   */
+  _translateWith(localeToUse, key, variables = {}) {
     const keys = key.split('.');
-    let translation = translations[this.locale];
-    
+    let translation = translations[localeToUse];
+
     // Navigate through nested keys
     for (const k of keys) {
       translation = translation?.[k];
     }
-    
-    // Fallback to default locale
-    if (!translation && this.locale !== this.fallbackLocale) {
+
+    // Fallback al fallback locale si no encontramos en el locale elegido
+    if (!translation && localeToUse !== this.fallbackLocale) {
       translation = translations[this.fallbackLocale];
       for (const k of keys) {
         translation = translation?.[k];
       }
     }
-    
-    // Return key if translation not found
+
     if (!translation) {
-      console.warn(`Translation missing for key: ${key} in locale: ${this.locale}`);
+      console.warn(`Translation missing for key: ${key} in locale: ${localeToUse}`);
       return key;
     }
-    
-    // Replace variables in translation
+
     return this.replaceVariables(translation, variables);
+  }
+
+  /**
+   * Traducción consciente de la ruta.
+   * - Si la ruta forma parte del MVP, usa el idioma seleccionado por el usuario.
+   * - Si NO forma parte del MVP, usa siempre el idioma fallback (español).
+   */
+  tForRoute(path, key, variables = {}) {
+    const localeToUse = this.isMvpRoute(path) ? this.locale : this.fallbackLocale;
+    return this._translateWith(localeToUse, key, variables);
+  }
+
+  /**
+   * Traducción "clásica" sin contexto de ruta. Mantenida para
+   * compatibilidad con llamadas existentes (siempre usa el locale actual).
+   */
+  t(key, variables = {}) {
+    return this._translateWith(this.locale, key, variables);
   }
 
   replaceVariables(text, variables) {
