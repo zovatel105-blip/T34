@@ -9038,6 +9038,14 @@ async def get_poll_by_id(
         category=poll.get("category"),
         mentioned_users=poll.get("mentioned_users", []),  # Include mentioned users
         layout=poll.get("layout"),  # ✅ CRITICAL FIX: Include layout field for LayoutRenderer
+        # VS Experience fields - for multi-question VS polls. Sin esto, al
+        # abrir un poll VS desde la pantalla de Activity, el frontend no
+        # recibía vs_questions/vs_orientation y mostraba el layout por
+        # defecto (arriba-abajo) sin imágenes en vez de izq-der.
+        vs_id=poll.get("vs_id"),
+        vs_questions=poll.get("vs_questions", []),
+        creator_country=poll.get("creator_country"),
+        vs_orientation=poll.get("vs_orientation", "horizontal"),
         created_at=poll["created_at"],
         time_ago=calculate_time_ago(poll["created_at"]),
         # Post settings
