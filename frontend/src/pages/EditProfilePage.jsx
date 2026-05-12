@@ -50,8 +50,10 @@ const EditProfilePage = () => {
 
   useEffect(() => {
     // Enfoque robusto: medimos la posición real del hero con getBoundingClientRect.
-    // No depende de qué elemento scrolea (window, body o contenedor interno),
+    // No depende de qué elemento scrolea (window, body, contenedor interno o cualquier ancestro),
     // siempre detecta cuánto del hero queda visible.
+    let rafId = null;
+    let lastP = -1;
     const computeProgress = () => {
       const hero = heroRef.current;
       if (!hero) return;
@@ -61,27 +63,45 @@ const EditProfilePage = () => {
       const hiddenAmount = Math.max(0, -rect.top);
       // Progreso normalizado: 0 = hero visible completo, 1 = hero totalmente fuera (arriba)
       const p = Math.min(1, hiddenAmount / heroHeight);
-      setScrollProgress(p);
+      // Evitar re-renders si no hubo cambio significativo
+      if (Math.abs(p - lastP) > 0.005 || (p === 0 && lastP !== 0) || (p === 1 && lastP !== 1)) {
+        lastP = p;
+        setScrollProgress(p);
+      }
+    };
+
+    // Schedule sobre rAF para fluidez + coalescing
+    const scheduleCompute = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        computeProgress();
+      });
     };
 
     // Ejecutar al montar
     computeProgress();
 
-    const scrollContainer = scrollContainerRef.current;
-    const handler = () => computeProgress();
+    // 🆕 Escuchar scroll en CAPTURE PHASE sobre document para atrapar cualquier
+    // elemento descendente que scrolee (scroll events no bubblean).
+    document.addEventListener('scroll', scheduleCompute, { capture: true, passive: true });
+    window.addEventListener('resize', scheduleCompute, { passive: true });
 
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handler, { passive: true });
-    }
-    window.addEventListener('scroll', handler, { passive: true });
-    window.addEventListener('resize', handler, { passive: true });
+    // 🆕 Polling de respaldo con rAF durante interacciones por si algún elemento
+    // exótico no dispara 'scroll' (raro pero pasa con custom scrollers).
+    let pollAlive = true;
+    const poll = () => {
+      if (!pollAlive) return;
+      computeProgress();
+      requestAnimationFrame(poll);
+    };
+    requestAnimationFrame(poll);
 
     return () => {
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handler);
-      }
-      window.removeEventListener('scroll', handler);
-      window.removeEventListener('resize', handler);
+      pollAlive = false;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      document.removeEventListener('scroll', scheduleCompute, { capture: true });
+      window.removeEventListener('resize', scheduleCompute);
     };
   }, []);
 
