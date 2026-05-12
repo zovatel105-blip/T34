@@ -56,6 +56,10 @@ const ActivityPage = () => {
       const activitiesData = await apiRequest('/api/users/activity/recent').catch(() => []);
       setActivities(activitiesData || []);
       await apiRequest('/api/users/activity/mark-read', { method: 'POST' }).catch(() => {});
+      // Actualizar estado local: marcar todas las actividades como leídas para que
+      // los puntos rojos de los tabs (Todo, Votos, Likes, Comentarios, Menciones)
+      // desaparezcan inmediatamente sin esperar al siguiente poll.
+      setActivities(prev => (prev || []).map(a => ({ ...a, unread: false })));
     } catch (error) {
       console.error('Error loading activity:', error);
     } finally {
@@ -96,6 +100,7 @@ const ActivityPage = () => {
   };
 
   const getCounts = () => ({
+    all: activities.filter(i => i.unread).length,
     votes: activities.filter(i => i.type === 'vote' && i.unread).length,
     likes: activities.filter(i => i.type === 'like' && i.unread).length,
     comments: activities.filter(i => i.type === 'comment' && i.unread).length,
@@ -106,7 +111,7 @@ const ActivityPage = () => {
   const counts = getCounts();
 
   const tabs = [
-    { key: 'all', label: t('inbox.activity.all'), count: activities.length > 0 ? activities.length : null },
+    { key: 'all', label: t('inbox.activity.all'), count: counts.all },
     { key: 'votes', label: t('inbox.activity.votes'), count: counts.votes },
     { key: 'likes', label: t('inbox.activity.likes'), count: counts.likes },
     { key: 'comments', label: t('inbox.activity.comments'), count: counts.comments },
