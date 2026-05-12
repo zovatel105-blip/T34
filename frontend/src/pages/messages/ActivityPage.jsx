@@ -138,8 +138,8 @@ const ActivityPage = () => {
   );
 
   // Helper: renderiza la miniatura del poll. Para layout VS muestra los dos
-  // lados (las dos opciones) lado-a-lado igual que en la vista completa.
-  // Para el resto muestra una sola imagen.
+  // lados (las dos opciones) lado-a-lado igual que en la vista completa,
+  // con la línea central y el badge "VS" superpuesto en estilo Twyk.
   const PollThumb = ({ item, onClick }) => {
     const isVS = item.poll_layout === 'vs' && Array.isArray(item.poll_vs_thumbnails) && item.poll_vs_thumbnails.length >= 2;
     if (isVS) {
@@ -147,14 +147,52 @@ const ActivityPage = () => {
       return (
         <div
           onClick={onClick}
-          className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer flex bg-black"
+          className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer flex bg-black"
         >
           <div className="relative w-1/2 h-full overflow-hidden">
             <img src={left} alt="" className="absolute inset-0 w-full h-full object-cover" />
           </div>
-          <div className="w-px h-full bg-white/80" />
+          {/* Línea central blanca, mismo look que la vista completa */}
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-white z-10 shadow-[0_0_2px_rgba(255,255,255,0.9)]" />
           <div className="relative w-1/2 h-full overflow-hidden">
             <img src={right} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+          {/* VS central — letras blancas con bordes lila (V) y azul (S),
+              italic, escala reducida para encajar en la miniatura */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <span
+              className="inline-flex items-baseline font-black select-none"
+              style={{
+                fontSize: '20px',
+                lineHeight: 1,
+                letterSpacing: '-0.14em',
+                fontStyle: 'italic',
+                fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
+                fontWeight: 900,
+              }}
+            >
+              <span
+                style={{
+                  color: '#fff',
+                  WebkitTextStroke: '1.2px #A855F7',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 1px 0 rgba(0,0,0,0.6), 1px 2px 3px rgba(0,0,0,0.7)',
+                  transform: 'skewX(-6deg) translateY(-0.14em)',
+                  display: 'inline-block',
+                  marginRight: '0.02em',
+                }}
+              >V</span>
+              <span
+                style={{
+                  color: '#fff',
+                  WebkitTextStroke: '1.2px #3B82F6',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 1px 0 rgba(0,0,0,0.6), 1px 2px 3px rgba(0,0,0,0.7)',
+                  transform: 'skewX(-6deg) translateY(0.14em)',
+                  display: 'inline-block',
+                }}
+              >S</span>
+            </span>
           </div>
         </div>
       );
