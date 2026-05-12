@@ -4939,6 +4939,20 @@ async def mark_activities_as_read(current_user: UserResponse = Depends(get_curre
         for vote in votes:
             activity_ids.append(f"vote-{vote['id']}")
         
+        # 🆕 Get VS votes on user's VS polls (stored in vs_votes collection).
+        # Si no se incluyen aquí, /activity/recent los seguirá devolviendo como
+        # unread=True después de marcar como leído, y el punto rojo persistirá
+        # en los tabs "Todo" y "Votos".
+        user_vs_ids = [poll["id"] for poll in user_polls if poll.get("layout") == "vs"]
+        if user_vs_ids:
+            vs_votes_recent = await db.vs_votes.find({
+                "vs_id": {"$in": user_vs_ids},
+                "user_id": {"$ne": current_user.id},
+                "created_at": {"$gte": seven_days_ago}
+            }).to_list(1000)
+            for vs_vote in vs_votes_recent:
+                activity_ids.append(f"vs-vote-{vs_vote['id']}")
+        
         # Get general mentions
         polls_with_mentions = await db.polls.find({
             "mentioned_users": current_user.id,
