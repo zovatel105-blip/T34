@@ -411,6 +411,10 @@ class CommentResponse(BaseModel):
     # Reacciones rápidas (emoji): {emoji: count}
     reactions: Dict[str, int] = Field(default_factory=dict)
     user_reaction: Optional[str] = None  # Emoji con el que el usuario actual reaccionó
+    # 🆕 Badge "liked by creator" (estilo TikTok/Instagram)
+    liked_by_author: bool = False  # Si el autor del poll le dio like a este comentario
+    post_author_id: Optional[str] = None  # ID del autor del poll (para detectar si current_user es autor)
+    post_author_avatar_url: Optional[str] = None  # Avatar del autor (para mostrar el badge)
 
 class CommentLike(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

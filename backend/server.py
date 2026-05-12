@@ -5245,13 +5245,28 @@ async def create_comment(
             {"$inc": {"comments_count": 1}}
         )
     
+    # 🆕 Resolver autor del poll para devolver post_author_* en el response
+    _post_author_id_create: Optional[str] = None
+    _post_author_avatar_url_create: Optional[str] = None
+    if is_challenge:
+        _post_author_id_create = (challenge or {}).get("author_id") or (challenge or {}).get("creator_id") or (challenge or {}).get("user_id")
+    else:
+        _post_author_id_create = (poll or {}).get("author_id")
+    if _post_author_id_create:
+        _author_doc_create = await db.users.find_one({"id": _post_author_id_create})
+        if _author_doc_create:
+            _post_author_avatar_url_create = _author_doc_create.get("avatar_url")
+    
     # Retornar el comentario creado con información del usuario
     return CommentResponse(
         **comment.dict(),
         user=current_user,
         replies=[],
         reply_count=0,
-        user_liked=False
+        user_liked=False,
+        liked_by_author=False,
+        post_author_id=_post_author_id_create,
+        post_author_avatar_url=_post_author_avatar_url_create
     )
 
 @api_router.get("/polls/{poll_id}/comments")
@@ -5262,6 +5277,24 @@ async def get_poll_comments(
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Get comments for a specific poll with nested structure"""
+    
+    # 🆕 Obtener info del autor del poll (para el badge "liked by creator")
+    _post_author_id: Optional[str] = None
+    _post_author_avatar_url: Optional[str] = None
+    is_challenge = poll_id.startswith("challenge_")
+    if is_challenge:
+        _real_challenge_id = poll_id.replace("challenge_", "", 1)
+        _challenge = await db.challenges.find_one({"id": _real_challenge_id})
+        if _challenge:
+            _post_author_id = _challenge.get("author_id") or _challenge.get("creator_id") or _challenge.get("user_id")
+    else:
+        _poll_doc = await db.polls.find_one({"id": poll_id})
+        if _poll_doc:
+            _post_author_id = _poll_doc.get("author_id")
+    if _post_author_id:
+        _author_doc = await db.users.find_one({"id": _post_author_id})
+        if _author_doc:
+            _post_author_avatar_url = _author_doc.get("avatar_url")
     
     # Obtener todos los comentarios del poll
     comments_cursor = db.comments.find({
@@ -5287,6 +5320,19 @@ async def get_poll_comments(
     }).to_list(len(comment_ids))
     
     liked_comments = set(like["comment_id"] for like in user_likes)
+    
+    # 🆕 Likes del autor del poll sobre estos comentarios
+    author_liked_comments: set = set()
+    if _post_author_id and comment_ids:
+        # Si el usuario actual ES el autor, reutilizamos el set ya consultado
+        if _post_author_id == current_user.id:
+            author_liked_comments = set(liked_comments)
+        else:
+            _author_likes = await db.comment_likes.find({
+                "comment_id": {"$in": comment_ids},
+                "user_id": _post_author_id
+            }).to_list(len(comment_ids))
+            author_liked_comments = {row["comment_id"] for row in _author_likes}
 
     # Reacciones rápidas: agregamos por comment_id → {emoji: count}
     reactions_by_comment: dict = {}
@@ -5314,7 +5360,7 @@ async def get_poll_comments(
     # Construir estructura anidada
     for comment_data in all_comments:
         # Eliminar campos que se pasan explícitamente para evitar duplicados
-        clean_data = {k: v for k, v in comment_data.items() if k not in ('user', 'replies', 'reply_count', 'user_liked', 'reactions', 'user_reaction', '_id')}
+        clean_data = {k: v for k, v in comment_data.items() if k not in ('user', 'replies', 'reply_count', 'user_liked', 'reactions', 'user_reaction', 'liked_by_author', 'post_author_id', 'post_author_avatar_url', '_id')}
         comment_resp = CommentResponse(
             **clean_data,
             user=users_dict.get(comment_data["user_id"]),
@@ -5322,7 +5368,10 @@ async def get_poll_comments(
             reply_count=0,
             user_liked=comment_data["id"] in liked_comments,
             reactions=reactions_by_comment.get(comment_data["id"], {}),
-            user_reaction=user_reaction_map.get(comment_data["id"])
+            user_reaction=user_reaction_map.get(comment_data["id"]),
+            liked_by_author=comment_data["id"] in author_liked_comments,
+            post_author_id=_post_author_id,
+            post_author_avatar_url=_post_author_avatar_url
         )
         
         comments_dict[comment_data["id"]] = comment_resp

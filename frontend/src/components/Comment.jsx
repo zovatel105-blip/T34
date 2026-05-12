@@ -259,6 +259,27 @@ const Comment = ({
             {comment.is_edited && (
               <span className={cn("text-[11px]", bottomSheetMode ? "text-gray-300" : "text-white/30")}>(editado)</span>
             )}
+            {/* 🆕 Badge "liked by creator" (estilo TikTok/Instagram): mini avatar del autor con un corazón rojo encima */}
+            {comment.liked_by_author && (
+              <span
+                className="relative inline-flex items-center justify-center flex-shrink-0 ml-0.5"
+                title="Le gustó al autor"
+                aria-label="Le gustó al autor"
+              >
+                <Avatar className="w-4 h-4 ring-1 ring-white shadow-sm">
+                  <AvatarImage src={resolveAssetUrl(comment.post_author_avatar_url)} />
+                  <AvatarFallback className="bg-gray-200">
+                    <User className="w-2.5 h-2.5 text-gray-400" />
+                  </AvatarFallback>
+                </Avatar>
+                <Heart
+                  className="absolute -bottom-1 -right-1 w-2.5 h-2.5 text-red-500"
+                  fill="currentColor"
+                  strokeWidth={1}
+                  style={{ filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.95))' }}
+                />
+              </span>
+            )}
           </div>
           
           {/* Texto del comentario */}

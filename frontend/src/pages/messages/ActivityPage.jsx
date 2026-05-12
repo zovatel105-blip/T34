@@ -297,8 +297,37 @@ const ActivityPage = () => {
               <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
                 {username}
               </p>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
+              <p className="text-xs text-gray-500 leading-relaxed flex items-center gap-1 flex-wrap">
+                <span>
+                  {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
+                </span>
+                {/* 🆕 Mini avatar del creador con corazón cuando ya le diste like al comentario (estilo TikTok/Instagram) */}
+                {item.comment_liked && (
+                  <span
+                    className="relative inline-flex items-center justify-center flex-shrink-0 ml-0.5 align-middle"
+                    title="Te gustó este comentario"
+                    aria-label="Te gustó este comentario"
+                  >
+                    <span className="block w-4 h-4 rounded-full overflow-hidden ring-1 ring-white shadow-sm bg-gray-200">
+                      {user?.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <DefaultAvatarSvg className="w-full h-full" />
+                      )}
+                    </span>
+                    <Heart
+                      className="absolute -bottom-1 -right-1 w-2.5 h-2.5 text-red-500"
+                      fill="currentColor"
+                      strokeWidth={1}
+                      style={{ filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.95))' }}
+                    />
+                  </span>
+                )}
               </p>
               <div className="flex items-center gap-3 mt-2">
                 <button

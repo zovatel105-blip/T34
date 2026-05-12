@@ -215,20 +215,30 @@ const CommentSection = ({
       // Actualizar el estado local
       setComments(prev => prev.map(comment => {
         if (comment.id === commentId) {
+          // 🆕 Si el usuario actual ES el autor del poll, refleja el badge "liked by creator"
+          const isAuthor = comment.post_author_id && user && comment.post_author_id === user.id;
           return {
             ...comment,
             userLiked: result.liked,
-            likes: result.likes
+            user_liked: result.liked,
+            likes: result.likes,
+            ...(isAuthor ? { liked_by_author: result.liked } : {})
           };
         }
         // También actualizar en replies
         return {
           ...comment,
-          replies: comment.replies.map(reply => 
-            reply.id === commentId 
-              ? { ...reply, userLiked: result.liked, likes: result.likes }
-              : reply
-          )
+          replies: comment.replies.map(reply => {
+            if (reply.id !== commentId) return reply;
+            const isAuthor = reply.post_author_id && user && reply.post_author_id === user.id;
+            return {
+              ...reply,
+              userLiked: result.liked,
+              user_liked: result.liked,
+              likes: result.likes,
+              ...(isAuthor ? { liked_by_author: result.liked } : {})
+            };
+          })
         };
       }));
       
