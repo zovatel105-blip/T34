@@ -43,8 +43,16 @@ const VSWinnerCard = ({
 }) => {
   const { t } = useTranslation();
   const showRoundLabel = totalRounds > 1;
-  // Si no se proporciona nombre, usa la traducción de "GANADOR"
-  const displayWinnerName = winnerName || t('vs.ganador');
+  // 🚫 Si no hay nombre real del ganador (o coincide con el label genérico
+  // "GANADOR" que ya aparece en el badge amarillo de arriba), NO mostramos
+  // el bloque blanco grande para evitar la duplicación "GANADOR / GANADOR".
+  const genericLabels = [
+    (t('vs.ganador') || '').toString().trim().toUpperCase(),
+    (t('vs.ganadorDefault') || '').toString().trim().toUpperCase(),
+  ].filter(Boolean);
+  const normalizedName = (winnerName || '').toString().trim().toUpperCase();
+  const isGenericName = !normalizedName || genericLabels.includes(normalizedName);
+  const displayWinnerName = isGenericName ? '' : winnerName;
 
   // 👆 Detección de swipe vertical para avanzar al siguiente duelo.
   // Como la card está portalizada con z muy alto, los gestos del feed no
@@ -217,27 +225,31 @@ const VSWinnerCard = ({
 
           {/* Middle section: nombre + porcentaje */}
           <div className="w-full flex-1 flex flex-col items-center justify-center gap-1 -my-2 overflow-hidden">
-            {/* Nombre del ganador — grande y permitiendo overflow horizontal estilo referencia */}
-            <div
-              className="w-full text-center select-none"
-              style={{
-                whiteSpace: 'nowrap',
-                overflow: 'visible',
-              }}
-            >
-              <span
-                className="font-black uppercase text-white inline-block"
+            {/* Nombre del ganador — solo si hay un nombre real (no genérico
+                "GANADOR"). Si no hay nombre, mostramos solo el porcentaje y
+                votos para evitar el "GANADOR" blanco duplicado. */}
+            {displayWinnerName && (
+              <div
+                className="w-full text-center select-none"
                 style={{
-                  fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
-                  fontSize: 'clamp(3rem, 14vw, 5.5rem)',
-                  lineHeight: 0.95,
-                  letterSpacing: '-0.01em',
-                  textShadow: '0 4px 14px rgba(0,0,0,0.9), 0 2px 0 rgba(0,0,0,0.6)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'visible',
                 }}
               >
-                {displayWinnerName}
-              </span>
-            </div>
+                <span
+                  className="font-black uppercase text-white inline-block"
+                  style={{
+                    fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
+                    fontSize: 'clamp(3rem, 14vw, 5.5rem)',
+                    lineHeight: 0.95,
+                    letterSpacing: '-0.01em',
+                    textShadow: '0 4px 14px rgba(0,0,0,0.9), 0 2px 0 rgba(0,0,0,0.6)',
+                  }}
+                >
+                  {displayWinnerName}
+                </span>
+              </div>
+            )}
 
             {/* Porcentaje del ganador (grande, rojo) */}
             <div
