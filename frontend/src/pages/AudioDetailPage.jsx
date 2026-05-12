@@ -627,8 +627,17 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info — sin marco/tarjeta: se muestra directamente sobre el fondo de la página. */}
-        <div className="w-full overflow-hidden transition-all duration-500 border-0">
+        {/* Audio Info — mantiene el gradiente de color dominante pero SIN marco:
+            sin bordes redondeados ni sombra, y se extiende edge-to-edge (-mx-3 anula
+            el padding del wrapper) para que se vea como una banda de color y no
+            como una tarjeta. */}
+        <div
+          className="w-full overflow-hidden transition-all duration-500 border-0 -mx-3"
+          style={{
+            width: 'calc(100% + 1.5rem)',
+            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`
+          }}
+        >
           <div className="flex items-center gap-4 p-4">
             {/* Album Art */}
             <div 
