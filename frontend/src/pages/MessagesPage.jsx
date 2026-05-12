@@ -922,10 +922,10 @@ const MessagesPage = () => {
                 <MessageCircle className="h-8 w-8 text-blue-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Mensajes
+                {t('chat.title')}
               </h3>
               <p className="text-gray-500">
-                Tus conversaciones aparecerán aquí. Busca usuarios para iniciar nuevos chats
+                {t('chat.emptyDescription')}
               </p>
             </div>
           </div>
