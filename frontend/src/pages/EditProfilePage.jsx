@@ -19,6 +19,7 @@ const EditProfilePage = () => {
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
   const [scrollProgress, setScrollProgress] = useState(0); // 0 = top, 1 = past hero
   const scrollContainerRef = useRef(null);
+  const heroRef = useRef(null); // Referencia al hero (zona lila) para medir su posición real
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
@@ -48,31 +49,39 @@ const EditProfilePage = () => {
   }, []);
 
   useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    // Distancia sobre la que el header se interpola de lila a blanco.
-    // Sincroniza con el gradiente del hero.
-    const FADE_END = 220;
-    const handleScroll = () => {
-      // Probar todas las fuentes posibles de scroll: contenedor interno,
-      // window y document. La mayor distancia gana (cubre layout APK + web).
-      const internal = scrollContainer ? scrollContainer.scrollTop : 0;
-      const windowTop = typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0;
-      const docTop = typeof document !== 'undefined' && document.documentElement ? (document.documentElement.scrollTop || 0) : 0;
-      const top = Math.max(internal, windowTop, docTop);
-      const p = Math.max(0, Math.min(1, top / FADE_END));
+    // Enfoque robusto: medimos la posición real del hero con getBoundingClientRect.
+    // No depende de qué elemento scrolea (window, body o contenedor interno),
+    // siempre detecta cuánto del hero queda visible.
+    const computeProgress = () => {
+      const hero = heroRef.current;
+      if (!hero) return;
+      const rect = hero.getBoundingClientRect();
+      const heroHeight = rect.height || 1;
+      // Cuántos pixeles del hero ya pasaron por arriba del viewport
+      const hiddenAmount = Math.max(0, -rect.top);
+      // Progreso normalizado: 0 = hero visible completo, 1 = hero totalmente fuera (arriba)
+      const p = Math.min(1, hiddenAmount / heroHeight);
       setScrollProgress(p);
     };
-    // Listener inicial
-    handleScroll();
+
+    // Ejecutar al montar
+    computeProgress();
+
+    const scrollContainer = scrollContainerRef.current;
+    const handler = () => computeProgress();
+
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+      scrollContainer.addEventListener('scroll', handler, { passive: true });
     }
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handler, { passive: true });
+    window.addEventListener('resize', handler, { passive: true });
+
     return () => {
       if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
+        scrollContainer.removeEventListener('scroll', handler);
       }
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handler);
+      window.removeEventListener('resize', handler);
     };
   }, []);
 
@@ -173,8 +182,8 @@ const EditProfilePage = () => {
         <form id="edit-profile-form" onSubmit={handleSubmit} className="min-h-full">
 
           {/* Foto de perfil hero section — color sólido al inicio idéntico al header,
-              luego desvanece a blanco. */}
-          <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, #F7EFFF, #ffffff)'}}>
+              luego desvanece a blanco. Marcado con heroRef para medir su scroll real. */}
+          <div ref={heroRef} className="px-6 py-12" style={{background: 'linear-gradient(to bottom, #F7EFFF, #ffffff)'}}>
             <div className="flex flex-col items-center">
               <div className="relative group mb-6">
                 <button
