@@ -37,7 +37,7 @@ const DefaultAvatarSvg = ({ className = '', bg = '#E5E7EB', fg = '#9CA3AF' }) =>
 
     {/* Hombros (elipse desplazada hacia abajo, mitad inferior fuera del
         viewBox). rx reducido a 34 → hombros más estrechos. */}
-    <ellipse cx="50" cy="105" rx="34" ry="38" fill={fg} />
+    <ellipse cx="50" cy="105" rx="37" ry="38" fill={fg} />
   </svg>
 );
 

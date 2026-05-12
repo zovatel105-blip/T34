@@ -6,5 +6,5 @@
   <!-- Hombros: elipse cuya mitad inferior queda fuera del viewBox.
        El overflow del SVG + el rounded-full del Avatar la recortan en curva.
        rx reducido de 40 → 34 para hacer los hombros más estrechos. -->
-  <ellipse cx="50" cy="105" rx="34" ry="38" fill="#9CA3AF"/>
+  <ellipse cx="50" cy="105" rx="37" ry="38" fill="#9CA3AF"/>
 </svg>
