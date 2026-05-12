@@ -627,15 +627,8 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info Card - gradiente de color dominante + sombra
-            del MISMO color del gradiente (sin bordes visibles). */}
-        <div
-          className="w-full rounded-2xl overflow-hidden transition-all duration-500 border-0"
-          style={{
-            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`,
-            boxShadow: `0 10px 30px -6px ${dominantColor.replace('0.2', '0.55')}, 0 4px 14px -2px ${dominantColor.replace('0.2', '0.35')}`
-          }}
-        >
+        {/* Audio Info — sin marco/tarjeta: se muestra directamente sobre el fondo de la página. */}
+        <div className="w-full overflow-hidden transition-all duration-500 border-0">
           <div className="flex items-center gap-4 p-4">
             {/* Album Art */}
             <div 
@@ -693,7 +686,7 @@ const AudioDetailPage = () => {
             <Button
               onClick={handleSaveAudio}
               size="icon"
-              className="w-10 h-10 rounded-full bg-white/60 hover:bg-white/80 border-0 shadow-sm flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 border-0 shadow-sm flex-shrink-0"
               variant="ghost"
             >
               <Bookmark className="w-5 h-5 text-gray-700" />
