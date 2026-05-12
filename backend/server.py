@@ -4668,6 +4668,40 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                 return first["url"]
         return None
     
+    def _extract_vs_thumbnails(poll: dict) -> list:
+        """Para polls tipo VS, devuelve la lista de miniaturas de cada lado
+        (típicamente 2). Así el frontend puede renderizar el VS lado-a-lado
+        en la notificación, igual que en la vista completa."""
+        if not poll or poll.get("layout") != "vs":
+            return []
+        urls = []
+        # 1) Primero buscar en vs_questions[].options[] (estructura más nueva)
+        for q in (poll.get("vs_questions") or []):
+            for option in (q.get("options") or []):
+                u = None
+                if option.get("media_type") == "video" and option.get("thumbnail_url"):
+                    u = option["thumbnail_url"]
+                elif option.get("media_url"):
+                    u = option["media_url"]
+                elif option.get("thumbnail_url"):
+                    u = option["thumbnail_url"]
+                if u:
+                    urls.append(u)
+        # 2) Fallback a options[] de nivel superior si vs_questions está vacío
+        if not urls:
+            for option in (poll.get("options") or []):
+                u = None
+                if option.get("media_type") == "video" and option.get("thumbnail_url"):
+                    u = option["thumbnail_url"]
+                elif option.get("media_url"):
+                    u = option["media_url"]
+                elif option.get("thumbnail_url"):
+                    u = option["thumbnail_url"]
+                if u:
+                    urls.append(u)
+        # Limitar a 2 (los dos lados del VS)
+        return urls[:2]
+    
     try:
         # Get recent activity from last 7 days
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
@@ -4708,7 +4742,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_type": "poll",
                     "content_preview": poll.get("question", "")[:50],
                     "poll_id": poll["id"],
+                    "poll_layout": poll.get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
+                    "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                     "created_at": like["created_at"],
                     "unread": True
                 })
@@ -4741,7 +4777,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "comment_preview": comment.get("content", "")[:100],
                     "comment_id": comment.get("id"),
                     "poll_id": comment.get("poll_id"),
+                    "poll_layout": (poll or {}).get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
+                    "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                     "created_at": comment["created_at"],
                     "unread": True
                 })
@@ -4783,7 +4821,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_preview": poll.get("title", "")[:50],
                     "vote_option": option.get("text", ""),
                     "poll_id": poll["id"],
+                    "poll_layout": poll.get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
+                    "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                     "created_at": vote["created_at"],
                     "unread": True
                 })
@@ -4837,7 +4877,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                         "content_preview": (poll.get("title") or "VS")[:50],
                         "vote_option": option_text,
                         "poll_id": poll["id"],
+                        "poll_layout": poll.get("layout"),
                         "poll_thumbnail": _extract_poll_thumbnail(poll),
+                        "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                         "created_at": vs_vote["created_at"],
                         "unread": True
                     })
@@ -4870,7 +4912,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_preview": poll.get("title", "")[:50],
                     "mention_type": "general",
                     "poll_id": poll["id"],
+                    "poll_layout": poll.get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
+                    "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                     "created_at": poll["created_at"],
                     "unread": True
                 })
@@ -4911,7 +4955,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "mention_type": "option",
                     "mention_option": mentioned_option,
                     "poll_id": poll["id"],
+                    "poll_layout": poll.get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
+                    "poll_vs_thumbnails": _extract_vs_thumbnails(poll),
                     "created_at": poll["created_at"],
                     "unread": True
                 })

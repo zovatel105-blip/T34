@@ -137,6 +137,39 @@ const ActivityPage = () => {
     </div>
   );
 
+  // Helper: renderiza la miniatura del poll. Para layout VS muestra los dos
+  // lados (las dos opciones) lado-a-lado igual que en la vista completa.
+  // Para el resto muestra una sola imagen.
+  const PollThumb = ({ item, onClick }) => {
+    const isVS = item.poll_layout === 'vs' && Array.isArray(item.poll_vs_thumbnails) && item.poll_vs_thumbnails.length >= 2;
+    if (isVS) {
+      const [left, right] = item.poll_vs_thumbnails;
+      return (
+        <div
+          onClick={onClick}
+          className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer flex bg-black"
+        >
+          <div className="relative w-1/2 h-full overflow-hidden">
+            <img src={left} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+          <div className="w-px h-full bg-white/80" />
+          <div className="relative w-1/2 h-full overflow-hidden">
+            <img src={right} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+        </div>
+      );
+    }
+    if (!item.poll_thumbnail) return null;
+    return (
+      <div
+        onClick={onClick}
+        className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+      >
+        <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
+      </div>
+    );
+  };
+
   const handleLikeComment = useCallback(async (commentId, itemId) => {
     if (!commentId) return;
     try {
@@ -197,12 +230,7 @@ const ActivityPage = () => {
             </div>
           </div>
           {item.poll_thumbnail && (
-            <div
-              onClick={goToPost}
-              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-            >
-              <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
-            </div>
+            <PollThumb item={item} onClick={goToPost} />
           )}
         </div>
       );
@@ -223,12 +251,7 @@ const ActivityPage = () => {
             </p>
           </div>
           {item.poll_thumbnail && (
-            <div
-              onClick={goToPost}
-              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-            >
-              <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
-            </div>
+            <PollThumb item={item} onClick={goToPost} />
           )}
         </div>
       );
@@ -249,12 +272,7 @@ const ActivityPage = () => {
             </p>
           </div>
           {item.poll_thumbnail && (
-            <div
-              onClick={goToPost}
-              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-            >
-              <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
-            </div>
+            <PollThumb item={item} onClick={goToPost} />
           )}
         </div>
       );
@@ -275,11 +293,8 @@ const ActivityPage = () => {
           </p>
         </div>
         {item.poll_thumbnail && (
-          <div
-            onClick={goToPost}
-            className="ml-3 w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-          >
-            <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
+          <div className="ml-3">
+            <PollThumb item={item} onClick={goToPost} />
           </div>
         )}
       </div>
