@@ -3472,7 +3472,8 @@ if (response.ok) {
 
 ## test_plan:
   current_focus:
-    - "Enhanced save button with visual state changes in TikTokScrollView"
+    - "VS posts notifications in inbox (vs_votes → activity feed)"
+    - "VS posts appearing in user profile's liked/saved sections"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

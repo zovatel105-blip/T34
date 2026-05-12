@@ -4745,6 +4745,59 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "unread": True
                 })
         
+        # 🆕 Get recent VS votes on user's VS polls (stored in vs_votes, NOT votes).
+        # Sin esto, el inbox del autor nunca recibe notificaciones cuando alguien
+        # vota su publicación tipo VS (los votos VS van a otra colección).
+        user_vs_ids = [poll["id"] for poll in user_polls if poll.get("layout") == "vs"]
+        if user_vs_ids:
+            vs_votes_recent = await db.vs_votes.find({
+                "vs_id": {"$in": user_vs_ids},
+                "user_id": {"$ne": current_user.id},
+                "created_at": {"$gte": seven_days_ago}
+            }).sort("created_at", -1).limit(30).to_list(30)
+            
+            print(f"DEBUG Activity: Found {len(vs_votes_recent)} VS votes on user's VS polls")
+            
+            # Map de polls VS por id para lookup rápido
+            vs_polls_by_id = {p["id"]: p for p in user_polls if p.get("layout") == "vs"}
+            
+            for vs_vote in vs_votes_recent:
+                voter = await db.users.find_one({"id": vs_vote["user_id"]})
+                poll = vs_polls_by_id.get(vs_vote["vs_id"])
+                option_text = ""
+                # Buscar el texto de la opción votada dentro de vs_questions
+                if poll:
+                    for q in poll.get("vs_questions", []):
+                        if q.get("id") == vs_vote.get("question_id"):
+                            for opt in q.get("options", []):
+                                if opt.get("id") == vs_vote.get("option_id"):
+                                    option_text = opt.get("text", "") or ""
+                                    break
+                            break
+                    # Fallback: buscar en options de nivel superior (primera pregunta)
+                    if not option_text:
+                        for opt in poll.get("options", []):
+                            if opt.get("id") == vs_vote.get("option_id"):
+                                option_text = opt.get("text", "") or ""
+                                break
+                if voter and poll:
+                    activities.append({
+                        "id": f"vs-vote-{vs_vote['id']}",
+                        "type": "vote",
+                        "user": {
+                            "id": voter["id"],
+                            "username": voter["username"],
+                            "display_name": voter.get("display_name", voter["username"]),
+                            "avatar_url": voter.get("avatar_url")
+                        },
+                        "content_type": "poll",
+                        "content_preview": (poll.get("title") or "VS")[:50],
+                        "vote_option": option_text,
+                        "poll_id": poll["id"],
+                        "created_at": vs_vote["created_at"],
+                        "unread": True
+                    })
+        
         # Get recent mentions - find polls where user is mentioned
         print(f"DEBUG Activity: Looking for mentions of user {current_user.id}")
         
@@ -4967,6 +5020,17 @@ async def get_unread_activity_count(current_user: UserResponse = Depends(get_cur
         }).to_list(1000)
         for vote in votes:
             activity_ids.append(f"vote-{vote['id']}")
+        
+        # 🆕 Count VS votes (stored in vs_votes collection)
+        user_vs_ids = [poll["id"] for poll in user_polls if poll.get("layout") == "vs"]
+        if user_vs_ids:
+            vs_votes_recent = await db.vs_votes.find({
+                "vs_id": {"$in": user_vs_ids},
+                "user_id": {"$ne": current_user.id},
+                "created_at": {"$gte": seven_days_ago}
+            }).to_list(1000)
+            for vs_vote in vs_votes_recent:
+                activity_ids.append(f"vs-vote-{vs_vote['id']}")
         
         # Count mentions
         polls_with_mentions = await db.polls.find({
@@ -10753,9 +10817,11 @@ async def get_saved_polls(
             for record in saved_records:
                 if record["poll_id"] in polls_dict:
                     poll_data = polls_dict[record["poll_id"]]
+                    is_vs_poll = poll_data.get("layout") == "vs"
+                    poll_author = authors_dict.get(poll_data.get("author_id"))
                     
                     # Get option users
-                    option_user_ids = [option["user_id"] for option in poll_data.get("options", [])]
+                    option_user_ids = [option["user_id"] for option in poll_data.get("options", []) if option.get("user_id")]
                     if option_user_ids:
                         option_users_cursor = db.users.find({"id": {"$in": option_user_ids}})
                         option_users_list = await option_users_cursor.to_list(len(option_user_ids))
@@ -10766,7 +10832,15 @@ async def get_saved_polls(
                     # Process options with complete user data
                     options = []
                     for option in poll_data.get("options", []):
-                        option_user = option_users_dict.get(option["user_id"])
+                        option_user = option_users_dict.get(option.get("user_id"))
+                        # 🆕 VS posts: opciones no tienen user_id propio; usar el autor del poll
+                        if not option_user and is_vs_poll and poll_author:
+                            option_user = {
+                                "username": poll_author.username,
+                                "display_name": poll_author.display_name,
+                                "avatar_url": poll_author.avatar_url,
+                                "is_verified": getattr(poll_author, "is_verified", False),
+                            }
                         if option_user:
                             # Keep media_url as relative path for frontend to handle
                             media_url = option.get("media_url")
@@ -10798,8 +10872,11 @@ async def get_saved_polls(
                             }
                             options.append(option_dict)
                     
-                    # Skip polls without valid options or without title
-                    if not options or not poll_data.get("title"):
+                    # Skip polls without valid options. 🆕 VS posts pueden tener título vacío,
+                    # así que sólo exigimos título para polls no-VS.
+                    if not options:
+                        continue
+                    if not is_vs_poll and not poll_data.get("title"):
                         continue
                     
                     # Get music info if available
@@ -10809,7 +10886,7 @@ async def get_saved_polls(
                     enriched_poll = {
                         "id": poll_data["id"],
                         "title": poll_data["title"],
-                        "author": authors_dict.get(poll_data["author_id"]),
+                        "author": poll_author,
                         "description": poll_data.get("description"),
                         "options": options,
                         "total_votes": poll_data["total_votes"],
@@ -10824,6 +10901,11 @@ async def get_saved_polls(
                         "category": poll_data.get("category"),
                         "mentioned_users": poll_data.get("mentioned_users", []),
                         "layout": poll_data.get("layout"),
+                        # 🆕 VS Experience fields — necesarios para renderizar el layout VS en el perfil
+                        "vs_id": poll_data.get("vs_id"),
+                        "vs_questions": poll_data.get("vs_questions", []),
+                        "creator_country": poll_data.get("creator_country"),
+                        "vs_orientation": poll_data.get("vs_orientation", "horizontal"),
                         "created_at": poll_data["created_at"],
                         "time_ago": calculate_time_ago(poll_data["created_at"]),
                         "saved_at": record["saved_at"]
@@ -10914,9 +10996,11 @@ async def get_liked_polls(
             for record in liked_records:
                 if record["poll_id"] in polls_dict:
                     poll_data = polls_dict[record["poll_id"]]
+                    is_vs_poll = poll_data.get("layout") == "vs"
+                    poll_author = authors_dict.get(poll_data.get("author_id"))
                     
                     # Get option users
-                    option_user_ids = [option["user_id"] for option in poll_data.get("options", [])]
+                    option_user_ids = [option["user_id"] for option in poll_data.get("options", []) if option.get("user_id")]
                     if option_user_ids:
                         option_users_cursor = db.users.find({"id": {"$in": option_user_ids}})
                         option_users_list = await option_users_cursor.to_list(len(option_user_ids))
@@ -10927,7 +11011,15 @@ async def get_liked_polls(
                     # Process options with complete user data
                     options = []
                     for option in poll_data.get("options", []):
-                        option_user = option_users_dict.get(option["user_id"])
+                        option_user = option_users_dict.get(option.get("user_id"))
+                        # 🆕 VS posts: opciones no tienen user_id propio; usar el autor del poll
+                        if not option_user and is_vs_poll and poll_author:
+                            option_user = {
+                                "username": poll_author.username,
+                                "display_name": poll_author.display_name,
+                                "avatar_url": poll_author.avatar_url,
+                                "is_verified": getattr(poll_author, "is_verified", False),
+                            }
                         if option_user:
                             # Keep media_url as relative path for frontend to handle
                             media_url = option.get("media_url")
@@ -10959,8 +11051,10 @@ async def get_liked_polls(
                             }
                             options.append(option_dict)
                     
-                    # Skip polls without valid options or without title
-                    if not options or not poll_data.get("title"):
+                    # Skip polls without valid options. 🆕 VS posts pueden tener título vacío.
+                    if not options:
+                        continue
+                    if not is_vs_poll and not poll_data.get("title"):
                         continue
                     
                     # Get music info if available
@@ -10970,7 +11064,7 @@ async def get_liked_polls(
                     enriched_poll = {
                         "id": poll_data["id"],
                         "title": poll_data["title"],
-                        "author": authors_dict.get(poll_data["author_id"]),
+                        "author": poll_author,
                         "description": poll_data.get("description"),
                         "options": options,
                         "total_votes": poll_data["total_votes"],
@@ -10985,6 +11079,11 @@ async def get_liked_polls(
                         "category": poll_data.get("category"),
                         "mentioned_users": poll_data.get("mentioned_users", []),
                         "layout": poll_data.get("layout"),
+                        # 🆕 VS Experience fields — necesarios para renderizar el layout VS en el perfil
+                        "vs_id": poll_data.get("vs_id"),
+                        "vs_questions": poll_data.get("vs_questions", []),
+                        "creator_country": poll_data.get("creator_country"),
+                        "vs_orientation": poll_data.get("vs_orientation", "horizontal"),
                         "created_at": poll_data["created_at"],
                         "time_ago": calculate_time_ago(poll_data["created_at"]),
                         "liked_at": record.get("created_at")
