@@ -121,10 +121,12 @@ const EditProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header (sticky) */}
+      {/* Header (sticky) — usamos color sólido (#F7EFFF) en vez de rgba semitransparente
+          para evitar que el contenido lila del hero, al hacer scroll por debajo del header
+          sticky, se "sume" y cree una franja más oscura visible. */}
       <div
         className="sticky top-0 z-20 relative w-full flex items-center justify-center px-4 py-4 transition-colors duration-300"
-        style={{backgroundColor: isScrolled ? 'white' : 'rgba(176, 97, 255, 0.1)'}}
+        style={{backgroundColor: isScrolled ? '#ffffff' : '#F7EFFF'}}
       >
         <button
           type="button"
@@ -142,8 +144,9 @@ const EditProfilePage = () => {
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <form id="edit-profile-form" onSubmit={handleSubmit} className="min-h-full">
 
-          {/* Foto de perfil hero section */}
-          <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, rgba(176, 97, 255, 0.1), white)'}}>
+          {/* Foto de perfil hero section — color sólido al inicio idéntico al header,
+              luego desvanece a blanco. */}
+          <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, #F7EFFF, #ffffff)'}}>
             <div className="flex flex-col items-center">
               <div className="relative group mb-6">
                 <button
