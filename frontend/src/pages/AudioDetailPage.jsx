@@ -627,17 +627,21 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info — gradiente de color dominante + sombra del mismo color.
-            Bordes redondeados removidos para quitar el "marco" visible, manteniendo
-            colores y sombra para conservar la profundidad visual. */}
-        <div
-          className="w-full overflow-hidden transition-all duration-500 border-0"
-          style={{
-            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`,
-            boxShadow: `0 10px 30px -6px ${dominantColor.replace('0.2', '0.55')}, 0 4px 14px -2px ${dominantColor.replace('0.2', '0.35')}`
-          }}
-        >
-          <div className="flex items-center gap-4 p-4">
+        {/* Audio Info — el color y la sombra ahora vienen de un GLOW RADIAL difuminado
+            que se desvanece hacia los bordes, eliminando el contorno rectangular pero
+            manteniendo la sensación de color y profundidad. */}
+        <div className="relative w-full">
+          {/* Capa de glow (fondo) — radial fading to transparent + blur extra para evitar bordes. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none transition-all duration-500"
+            style={{
+              background: `radial-gradient(ellipse 75% 90% at center, ${dominantColor.replace('0.2', '0.55')} 0%, ${dominantColor.replace('0.2', '0.25')} 45%, transparent 80%)`,
+              filter: 'blur(14px)',
+            }}
+          />
+          {/* Contenido del audio por encima del glow */}
+          <div className="relative flex items-center gap-4 p-4">
             {/* Album Art */}
             <div 
               className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer relative overflow-hidden shadow-md"
