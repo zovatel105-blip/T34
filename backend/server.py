@@ -8952,8 +8952,17 @@ async def get_poll_by_id(
         raise HTTPException(status_code=404, detail="Author not found")
     author = UserResponse(**author_data)
     
-    # Get option users
-    option_user_ids = [option["user_id"] for option in poll.get("options", [])]
+    # Get option users.
+    # NOTA: las polls tipo VS pueden tener options sin `user_id` (las opciones
+    # son simples imágenes/videos sin autor asociado). Usamos .get() y
+    # filtramos None para no romper con KeyError. Antes este endpoint
+    # devolvía 500 al pedir un poll VS desde /post/:id, mostrando
+    # "Post no disponible" en el frontend.
+    option_user_ids = [
+        option.get("user_id")
+        for option in poll.get("options", [])
+        if option.get("user_id")
+    ]
     option_users_dict = {}
     if option_user_ids:
         option_users_cursor = db.users.find({"id": {"$in": option_user_ids}})
@@ -8974,7 +8983,8 @@ async def get_poll_by_id(
     # Process options
     options = []
     for option in poll.get("options", []):
-        option_user = option_users_dict.get(option["user_id"])
+        # Igual que arriba: usar .get() para no romper en opciones VS sin user_id
+        option_user = option_users_dict.get(option.get("user_id")) if option.get("user_id") else None
         if option_user:
             media_url = option.get("media_url")
             
