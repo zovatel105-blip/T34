@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, User, Users } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
+import DefaultAvatarSvg from '../../components/common/DefaultAvatarSvg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
@@ -126,14 +127,14 @@ const FollowersPage = () => {
         <>
           <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
             onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
-          <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400"
+          <div className="w-full h-full items-center justify-center overflow-hidden"
             style={{ display: 'none' }}>
-            <User className="w-6 h-6" />
+            <DefaultAvatarSvg className="w-full h-full" />
           </div>
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
-          <User className="w-6 h-6" />
+        <div className="w-full h-full flex items-center justify-center overflow-hidden">
+          <DefaultAvatarSvg className="w-full h-full" />
         </div>
       )}
     </div>
