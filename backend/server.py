@@ -4635,6 +4635,39 @@ async def get_unread_followers_count(current_user: UserResponse = Depends(get_cu
 @api_router.get("/users/activity/recent")
 async def get_recent_activity(current_user: UserResponse = Depends(get_current_user)):
     """Get recent activity (likes, comments, mentions on user's content)"""
+    
+    def _extract_poll_thumbnail(poll: dict) -> str | None:
+        """Extrae la URL de miniatura de un poll para mostrar en notificaciones.
+        Busca en options[].media_url / thumbnail_url y cae a campos legacy."""
+        if not poll:
+            return None
+        # 1) Primera opción con media o thumbnail
+        for option in (poll.get("options") or []):
+            if option.get("media_type") == "video" and option.get("thumbnail_url"):
+                return option["thumbnail_url"]
+            if option.get("media_url"):
+                return option["media_url"]
+            if option.get("thumbnail_url"):
+                return option["thumbnail_url"]
+        # 2) vs_questions[].options[].media_url para polls tipo VS
+        for q in (poll.get("vs_questions") or []):
+            for option in (q.get("options") or []):
+                if option.get("media_url"):
+                    return option["media_url"]
+                if option.get("thumbnail_url"):
+                    return option["thumbnail_url"]
+        # 3) Campos legacy a nivel de poll
+        if poll.get("thumbnail_url"):
+            return poll["thumbnail_url"]
+        if poll.get("image_url"):
+            return poll["image_url"]
+        images = poll.get("images") or []
+        if images and isinstance(images, list):
+            first = images[0]
+            if isinstance(first, dict) and first.get("url"):
+                return first["url"]
+        return None
+    
     try:
         # Get recent activity from last 7 days
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
@@ -4646,6 +4679,8 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
         }).to_list(1000)
         
         user_poll_ids = [poll["id"] for poll in user_polls]
+        # Map de polls del usuario por id para lookup rápido de miniaturas
+        user_polls_by_id = {p["id"]: p for p in user_polls}
         print(f"DEBUG Activity: User has {len(user_poll_ids)} polls")
         
         # Get recent likes on user's polls using poll_id
@@ -4672,6 +4707,8 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     },
                     "content_type": "poll",
                     "content_preview": poll.get("question", "")[:50],
+                    "poll_id": poll["id"],
+                    "poll_thumbnail": _extract_poll_thumbnail(poll),
                     "created_at": like["created_at"],
                     "unread": True
                 })
@@ -4689,6 +4726,7 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
         
         for comment in comments:
             user = await db.users.find_one({"id": comment["user_id"]})  # Using correct field name
+            poll = user_polls_by_id.get(comment.get("poll_id"))
             if user:
                 activities.append({
                     "id": f"comment-{comment['id']}",
@@ -4701,6 +4739,9 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     },
                     "content_type": "poll",
                     "comment_preview": comment.get("content", "")[:100],
+                    "comment_id": comment.get("id"),
+                    "poll_id": comment.get("poll_id"),
+                    "poll_thumbnail": _extract_poll_thumbnail(poll),
                     "created_at": comment["created_at"],
                     "unread": True
                 })
@@ -4741,6 +4782,8 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_type": "poll",
                     "content_preview": poll.get("title", "")[:50],
                     "vote_option": option.get("text", ""),
+                    "poll_id": poll["id"],
+                    "poll_thumbnail": _extract_poll_thumbnail(poll),
                     "created_at": vote["created_at"],
                     "unread": True
                 })
@@ -4794,6 +4837,7 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                         "content_preview": (poll.get("title") or "VS")[:50],
                         "vote_option": option_text,
                         "poll_id": poll["id"],
+                        "poll_thumbnail": _extract_poll_thumbnail(poll),
                         "created_at": vs_vote["created_at"],
                         "unread": True
                     })
@@ -4825,6 +4869,8 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_type": "poll",
                     "content_preview": poll.get("title", "")[:50],
                     "mention_type": "general",
+                    "poll_id": poll["id"],
+                    "poll_thumbnail": _extract_poll_thumbnail(poll),
                     "created_at": poll["created_at"],
                     "unread": True
                 })
@@ -4864,6 +4910,8 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_preview": poll.get("title", "")[:50],
                     "mention_type": "option",
                     "mention_option": mentioned_option,
+                    "poll_id": poll["id"],
+                    "poll_thumbnail": _extract_poll_thumbnail(poll),
                     "created_at": poll["created_at"],
                     "unread": True
                 })

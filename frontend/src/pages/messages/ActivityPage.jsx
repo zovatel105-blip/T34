@@ -137,9 +137,27 @@ const ActivityPage = () => {
     </div>
   );
 
+  const handleLikeComment = useCallback(async (commentId, itemId) => {
+    if (!commentId) return;
+    try {
+      const res = await apiRequest(`/api/comments/${commentId}/like`, { method: 'POST' });
+      // Marca visual local del corazón
+      setActivities(prev => prev.map(a => a.id === itemId ? { ...a, comment_liked: !!res?.liked } : a));
+    } catch (e) {
+      console.error('Error liking comment:', e);
+    }
+  }, [apiRequest]);
+
   const renderItem = (item) => {
     const username = item.user?.username || item.user?.display_name || t('profile.defaultUsername');
     const time = formatTime(item.created_at);
+    const goToPost = () => {
+      if (item.poll_id) navigate(`/post/${item.poll_id}`);
+    };
+    const goToPostAndOpenComments = (e) => {
+      e?.stopPropagation?.();
+      if (item.poll_id) navigate(`/post/${item.poll_id}?openComments=1`);
+    };
 
     if (item.type === 'comment') {
       const commentText = item.comment_preview || t('inbox.activity.commentedDefault');
@@ -156,12 +174,33 @@ const ActivityPage = () => {
               {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
             </p>
             <div className="flex items-center gap-3 mt-2">
-              <Heart className="w-5 h-5 text-gray-400 cursor-pointer hover:text-red-500 transition-colors" strokeWidth={1.5} />
-              <MessageCircle className="w-5 h-5 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" strokeWidth={1.5} />
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleLikeComment(item.comment_id, item.id); }}
+                className="p-0 bg-transparent border-0"
+                aria-label="Like comment"
+              >
+                <Heart
+                  className={`w-5 h-5 cursor-pointer transition-colors ${item.comment_liked ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                  strokeWidth={1.5}
+                  fill={item.comment_liked ? 'currentColor' : 'none'}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={goToPostAndOpenComments}
+                className="p-0 bg-transparent border-0"
+                aria-label="Reply to comment"
+              >
+                <MessageCircle className="w-5 h-5 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" strokeWidth={1.5} />
+              </button>
             </div>
           </div>
           {item.poll_thumbnail && (
-            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+            <div
+              onClick={goToPost}
+              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+            >
               <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
             </div>
           )}
@@ -184,7 +223,10 @@ const ActivityPage = () => {
             </p>
           </div>
           {item.poll_thumbnail && (
-            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+            <div
+              onClick={goToPost}
+              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+            >
               <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
             </div>
           )}
@@ -206,6 +248,14 @@ const ActivityPage = () => {
               {t('inbox.activity.votedPrefix')}{item.vote_option ? `: "${item.vote_option}"` : ''} · <span className="text-gray-400">{time}</span>
             </p>
           </div>
+          {item.poll_thumbnail && (
+            <div
+              onClick={goToPost}
+              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+            >
+              <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
         </div>
       );
     }
@@ -225,7 +275,10 @@ const ActivityPage = () => {
           </p>
         </div>
         {item.poll_thumbnail && (
-          <div className="ml-3 w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+          <div
+            onClick={goToPost}
+            className="ml-3 w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+          >
             <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
           </div>
         )}

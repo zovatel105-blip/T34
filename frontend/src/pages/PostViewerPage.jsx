@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import TikTokScrollView from '../components/TikTokScrollView';
 import CommentsModal from '../components/CommentsModal';
 import pollService from '../services/pollService';
@@ -18,6 +18,7 @@ import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
 const PostViewerPage = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
   const { sharePoll } = useShare();
@@ -67,6 +68,23 @@ const PostViewerPage = () => {
     load();
     return () => { cancelled = true; };
   }, [postId, toast]);
+
+  // 🆕 Si llegamos con ?openComments=1 (p.ej. desde la página de Activity
+  // al pulsar el icono "responder" de una notificación de comentario),
+  // abrimos automáticamente la modal de comentarios cuando el post ya está
+  // cargado.
+  useEffect(() => {
+    if (loading) return;
+    if (!polls || polls.length === 0) return;
+    const shouldOpen = searchParams.get('openComments') === '1';
+    if (shouldOpen && !showCommentsModal) {
+      const poll = polls[0];
+      setSelectedPollId(poll.id);
+      setSelectedPollTitle(poll.title);
+      setSelectedPollAuthor(poll.author?.username || '');
+      setShowCommentsModal(true);
+    }
+  }, [loading, polls, searchParams, showCommentsModal]);
 
   const handleVote = useCallback(async (pollId, optionId) => {
     try {
