@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, X, ArrowLeft, Users, Bell, Send, Plus, Inbox, User } from 'lucide-react';
+import { MessageCircle, X, ArrowLeft, Users, Bell, Send, Plus, Inbox } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
 import useLivePoll from '../../hooks/useLivePoll';
 import { useTranslation } from '../../hooks/useTranslation';
+import DefaultAvatarSvg from '../../components/common/DefaultAvatarSvg';
 
 const MessagesMainPage = () => {
   const { t } = useTranslation();
@@ -84,9 +85,6 @@ const MessagesMainPage = () => {
 
   // Helper function for avatar rendering with error handling
   const renderAvatar = (avatarUrl, displayName, username, size = 'w-8 h-8') => {
-    // Determinar el tamaño del icono basado en el tamaño del avatar
-    const iconSize = size.includes('w-12') ? 'w-6 h-6' : size.includes('w-10') ? 'w-5 h-5' : 'w-4 h-4';
-    
     return (
       <div className={`${size} rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 relative overflow-hidden`}>
         {avatarUrl ? (
@@ -102,13 +100,13 @@ const MessagesMainPage = () => {
                 if (fallback) fallback.style.display = 'flex';
               }}
             />
-            <div className="avatar-fallback w-full h-full rounded-full flex items-center justify-center" style={{ display: 'none' }}>
-              <User className={`${iconSize} text-gray-600`} />
+            <div className="avatar-fallback w-full h-full rounded-full overflow-hidden items-center justify-center" style={{ display: 'none' }}>
+              <DefaultAvatarSvg className="w-full h-full" />
             </div>
           </>
         ) : (
-          <div className="w-full h-full rounded-full flex items-center justify-center">
-            <User className={`${iconSize} text-gray-600`} />
+          <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+            <DefaultAvatarSvg className="w-full h-full" />
           </div>
         )}
       </div>
