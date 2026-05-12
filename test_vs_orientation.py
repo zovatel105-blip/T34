@@ -21,7 +21,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 # Test configuration
-BACKEND_URL = "https://pod-hostname-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://pod-identifier.preview.emergentagent.com/api"
 
 # Test credentials from /app/memory/test_credentials.md
 TEST_EMAIL = "apktest2@test.com"
