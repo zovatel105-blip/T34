@@ -1492,7 +1492,7 @@ const VSLayout = ({
   if (isThumbnail) {
     const thumbOptions = initialOptions.slice(0, 2);
     return (
-      <div className="w-full h-full relative">
+      <div className="w-full h-full relative" style={{ containerType: 'inline-size' }}>
         <div className={cn("absolute inset-0 flex", isRow ? "flex-row" : "flex-col")}>
           {thumbOptions.map((option, index) => {
             const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
@@ -1512,9 +1512,66 @@ const VSLayout = ({
             );
           })}
         </div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-          <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center border-2 border-white">
-            <span className="text-white font-bold text-xs">VS</span>
+        {/* Línea divisora con gradiente Twyk (lila → azul) — igual que la vista completa */}
+        <div
+          className={cn(
+            "absolute z-10 pointer-events-none",
+            isRow
+              ? "top-0 bottom-0 left-1/2 w-0.5 transform -translate-x-1/2"
+              : "left-0 right-0 top-1/2 h-0.5 transform -translate-y-1/2"
+          )}
+          style={{
+            background: isRow
+              ? `linear-gradient(180deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`
+              : `linear-gradient(90deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`,
+          }}
+        />
+        {/* VS central — mismo diseño que la vista completa (italic, bold, V lila + S azul)
+            Escalado al tamaño de la miniatura usando container queries (cqw).
+            Sin animación bounce para no distraer en grids con muchos thumbnails. */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none w-full">
+          <div className="relative flex items-center justify-center w-full">
+            <span
+              className="relative font-black select-none inline-flex items-baseline"
+              style={{
+                fontSize: 'clamp(1.25rem, 32cqw, 5rem)',
+                fontStyle: 'italic',
+                lineHeight: 1,
+                letterSpacing: '-0.14em',
+                fontFamily: '"Impact", "Bebas Neue", "Arial Black", sans-serif',
+                fontWeight: 900,
+              }}
+            >
+              {/* V — fill blanco, borde LILA Twyk */}
+              <span
+                className="relative"
+                style={{
+                  color: '#fff',
+                  WebkitTextStroke: `1.5px ${TWYK_COLORS.top.primary}`,
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 2px 0 rgba(0,0,0,0.6), 1px 2px 6px rgba(0,0,0,0.75)',
+                  transform: 'skewX(-6deg) translateY(-0.16em)',
+                  display: 'inline-block',
+                  marginRight: '0.02em',
+                }}
+              >
+                V
+              </span>
+              {/* S — fill blanco, borde AZUL Twyk */}
+              <span
+                className="relative"
+                style={{
+                  color: '#fff',
+                  WebkitTextStroke: `1.5px ${TWYK_COLORS.bottom.primary}`,
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 2px 0 rgba(0,0,0,0.6), 1px 2px 6px rgba(0,0,0,0.75)',
+                  transform: 'skewX(-6deg) translateY(0.16em)',
+                  display: 'inline-block',
+                }}
+              >
+                S
+              </span>
+            </span>
           </div>
         </div>
       </div>
