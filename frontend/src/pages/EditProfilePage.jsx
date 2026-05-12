@@ -49,17 +49,31 @@ const EditProfilePage = () => {
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
     // Distancia sobre la que el header se interpola de lila a blanco.
-    // Sincroniza con el gradiente del hero (≈ alto del hero hasta llegar al blanco).
-    const FADE_END = 180;
+    // Sincroniza con el gradiente del hero.
+    const FADE_END = 220;
     const handleScroll = () => {
-      const top = scrollContainer.scrollTop;
+      // Probar todas las fuentes posibles de scroll: contenedor interno,
+      // window y document. La mayor distancia gana (cubre layout APK + web).
+      const internal = scrollContainer ? scrollContainer.scrollTop : 0;
+      const windowTop = typeof window !== 'undefined' ? (window.scrollY || window.pageYOffset || 0) : 0;
+      const docTop = typeof document !== 'undefined' && document.documentElement ? (document.documentElement.scrollTop || 0) : 0;
+      const top = Math.max(internal, windowTop, docTop);
       const p = Math.max(0, Math.min(1, top / FADE_END));
       setScrollProgress(p);
     };
-    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    // Listener inicial
+    handleScroll();
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Color del header interpolado entre #F7EFFF (lila original) y #FFFFFF según scrollProgress.
