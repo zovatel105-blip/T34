@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Camera, Loader2, ArrowLeft } from 'lucide-react';
+import { Camera, Loader2, ArrowLeft } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import CircularCrop from '../components/CircularCrop';
+import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
 import uploadService from '../services/uploadService';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import { useTranslation } from '../hooks/useTranslation';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,16 @@ const EditProfilePage = () => {
       });
     }
   }, [user]);
+
+  // 🆕 Refrescar datos del usuario al entrar para evitar avatar/datos desactualizados
+  // si cambiaron desde otro lugar (otro dispositivo, otro flujo, etc.)
+  useEffect(() => {
+    if (typeof refreshUser === 'function') {
+      refreshUser().catch(() => {});
+    }
+    // Solo al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -143,8 +154,8 @@ const EditProfilePage = () => {
                   {formData.avatar_url ? (
                     <img src={resolveAssetUrl(formData.avatar_url)} alt={t('editProfile.profilePhotoAlt')} className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-75" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <User className="w-16 h-16 text-gray-400" />
+                    <div className="w-full h-full overflow-hidden transition-all duration-300 group-hover:brightness-75">
+                      <DefaultAvatarSvg className="w-full h-full" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full">
