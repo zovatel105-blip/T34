@@ -62,12 +62,11 @@ const EditProfilePage = () => {
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Color del header interpolado entre lila visible (#E5D3FF) y blanco según scrollProgress.
-  // #E5D3FF = rgb(229, 211, 255). Blanco = rgb(255, 255, 255).
-  // Se eligió un lila más saturado que el rgba(176,97,255,0.1) original para que sea bien visible.
+  // Color del header interpolado entre #F7EFFF (lila original) y #FFFFFF según scrollProgress.
+  // #F7EFFF = rgb(247, 239, 255) — equivalente sólido a rgba(176,97,255,0.1) sobre blanco.
   const headerBgColor = (() => {
-    const r = Math.round(229 + (255 - 229) * scrollProgress);
-    const g = Math.round(211 + (255 - 211) * scrollProgress);
+    const r = Math.round(247 + (255 - 247) * scrollProgress);
+    const g = Math.round(239 + (255 - 239) * scrollProgress);
     const b = 255;
     return `rgb(${r}, ${g}, ${b})`;
   })();
@@ -161,7 +160,7 @@ const EditProfilePage = () => {
 
           {/* Foto de perfil hero section — color sólido al inicio idéntico al header,
               luego desvanece a blanco. */}
-          <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, #E5D3FF, #ffffff)'}}>
+          <div className="px-6 py-12" style={{background: 'linear-gradient(to bottom, #F7EFFF, #ffffff)'}}>
             <div className="flex flex-col items-center">
               <div className="relative group mb-6">
                 <button
