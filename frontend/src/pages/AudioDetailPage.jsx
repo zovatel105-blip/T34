@@ -627,21 +627,16 @@ const AudioDetailPage = () => {
 
       <div className="w-full px-3 pt-4 pb-2 space-y-3">
         
-        {/* Audio Info — el color y la sombra ahora vienen de un GLOW RADIAL difuminado
-            que se desvanece hacia los bordes, eliminando el contorno rectangular pero
-            manteniendo la sensación de color y profundidad. */}
-        <div className="relative w-full">
-          {/* Capa de glow (fondo) — radial fading to transparent + blur extra para evitar bordes. */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none transition-all duration-500"
-            style={{
-              background: `radial-gradient(ellipse 75% 90% at center, ${dominantColor.replace('0.2', '0.55')} 0%, ${dominantColor.replace('0.2', '0.25')} 45%, transparent 80%)`,
-              filter: 'blur(14px)',
-            }}
-          />
-          {/* Contenido del audio por encima del glow */}
-          <div className="relative flex items-center gap-4 p-4">
+        {/* Audio Info Card - gradiente de color dominante + sombra
+            del MISMO color del gradiente (sin bordes visibles). */}
+        <div
+          className="w-full rounded-2xl overflow-hidden transition-all duration-500 border-0"
+          style={{
+            background: `linear-gradient(135deg, ${dominantColor} 0%, ${dominantColor.replace('0.2', '0.08')} 100%)`,
+            boxShadow: `0 10px 30px -6px ${dominantColor.replace('0.2', '0.55')}, 0 4px 14px -2px ${dominantColor.replace('0.2', '0.35')}`
+          }}
+        >
+          <div className="flex items-center gap-4 p-4">
             {/* Album Art */}
             <div 
               className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer relative overflow-hidden shadow-md"
@@ -698,7 +693,7 @@ const AudioDetailPage = () => {
             <Button
               onClick={handleSaveAudio}
               size="icon"
-              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 border-0 shadow-sm flex-shrink-0"
+              className="w-10 h-10 rounded-full bg-white/60 hover:bg-white/80 border-0 shadow-sm flex-shrink-0"
               variant="ghost"
             >
               <Bookmark className="w-5 h-5 text-gray-700" />
