@@ -17,7 +17,7 @@ const EditProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [tempImageForCrop, setTempImageForCrop] = useState(null);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0); // 0 = top, 1 = past hero
   const scrollContainerRef = useRef(null);
   const [formData, setFormData] = useState({
     display_name: '',
@@ -50,12 +50,26 @@ const EditProfilePage = () => {
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
+    // Distancia sobre la que el header se interpola de lila a blanco.
+    // Sincroniza con el gradiente del hero (≈ alto del hero hasta llegar al blanco).
+    const FADE_END = 180;
     const handleScroll = () => {
-      setIsScrolled(scrollContainer.scrollTop > 150);
+      const top = scrollContainer.scrollTop;
+      const p = Math.max(0, Math.min(1, top / FADE_END));
+      setScrollProgress(p);
     };
-    scrollContainer.addEventListener('scroll', handleScroll);
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Color del header interpolado entre #F7EFFF (lila claro) y #FFFFFF según scrollProgress.
+  // #F7EFFF = rgb(247, 239, 255). Blanco = rgb(255, 255, 255).
+  const headerBgColor = (() => {
+    const r = Math.round(247 + (255 - 247) * scrollProgress);
+    const g = Math.round(239 + (255 - 239) * scrollProgress);
+    const b = 255;
+    return `rgb(${r}, ${g}, ${b})`;
+  })();
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -121,12 +135,12 @@ const EditProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header (sticky) — usamos color sólido (#F7EFFF) en vez de rgba semitransparente
-          para evitar que el contenido lila del hero, al hacer scroll por debajo del header
-          sticky, se "sume" y cree una franja más oscura visible. */}
+      {/* Header (sticky) — color interpolado proporcionalmente con el scroll
+          para que el degradé del hero (lila→blanco) y el header viajen juntos
+          y nunca quede una franja lila sobre fondo blanco. */}
       <div
-        className="sticky top-0 z-20 relative w-full flex items-center justify-center px-4 py-4 transition-colors duration-300"
-        style={{backgroundColor: isScrolled ? '#ffffff' : '#F7EFFF'}}
+        className="sticky top-0 z-20 relative w-full flex items-center justify-center px-4 py-4"
+        style={{backgroundColor: headerBgColor}}
       >
         <button
           type="button"
