@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Heart, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Heart, MessageCircle, Send, X, Check } from 'lucide-react';
 import DefaultAvatarSvg from '../../components/common/DefaultAvatarSvg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +14,12 @@ const ActivityPage = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  // Inline reply state: which activity id is currently being replied to
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [replySentFor, setReplySentFor] = useState(null); // item.id with recent "sent" feedback
+  const replyInputRef = useRef(null);
 
   const apiRequest = useCallback(async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
@@ -219,56 +225,173 @@ const ActivityPage = () => {
     }
   }, [apiRequest]);
 
+  const openReply = useCallback((item) => {
+    setReplyingTo(item.id);
+    const username = item.user?.username || item.user?.display_name || '';
+    // Prefill with @username (Instagram/TikTok-like behavior)
+    setReplyText(username ? `@${username} ` : '');
+    setReplySentFor(null);
+    // Focus the input on next tick
+    setTimeout(() => {
+      try { replyInputRef.current?.focus(); } catch (_) {}
+    }, 50);
+  }, []);
+
+  const cancelReply = useCallback(() => {
+    setReplyingTo(null);
+    setReplyText('');
+  }, []);
+
+  const submitReply = useCallback(async (item) => {
+    const content = (replyText || '').trim();
+    if (!content || !item?.poll_id || !item?.comment_id) return;
+    try {
+      setReplySubmitting(true);
+      await apiRequest(`/api/polls/${item.poll_id}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({
+          poll_id: item.poll_id,
+          content,
+          parent_comment_id: item.comment_id,
+        }),
+      });
+      // Reset + show transient confirmation
+      setReplyText('');
+      setReplyingTo(null);
+      setReplySentFor(item.id);
+      // Hide the confirmation badge after 2.5s
+      setTimeout(() => {
+        setReplySentFor(curr => (curr === item.id ? null : curr));
+      }, 2500);
+    } catch (e) {
+      console.error('Error sending reply:', e);
+      // Use translation if available, fallback to default
+      try {
+        alert(t('inbox.activity.replyError'));
+      } catch (_) {
+        alert('No se pudo enviar la respuesta');
+      }
+    } finally {
+      setReplySubmitting(false);
+    }
+  }, [replyText, apiRequest, t]);
+
   const renderItem = (item) => {
     const username = item.user?.username || item.user?.display_name || t('profile.defaultUsername');
     const time = formatTime(item.created_at);
     const goToPost = () => {
       if (item.poll_id) navigate(`/post/${item.poll_id}`);
     };
-    const goToPostAndOpenComments = (e) => {
-      e?.stopPropagation?.();
-      if (item.poll_id) navigate(`/post/${item.poll_id}?openComments=1`);
-    };
 
     if (item.type === 'comment') {
       const commentText = item.comment_preview || t('inbox.activity.commentedDefault');
+      const isReplying = replyingTo === item.id;
+      const wasSent = replySentFor === item.id;
       return (
-        <div key={item.id} className="flex items-start gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
-          <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
-            <Avatar avatarUrl={item.user?.avatar_url} name={username} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
-              {username}
-            </p>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
-            </p>
-            <div className="flex items-center gap-3 mt-2">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleLikeComment(item.comment_id, item.id); }}
-                className="p-0 bg-transparent border-0"
-                aria-label="Like comment"
-              >
-                <Heart
-                  className={`w-5 h-5 cursor-pointer transition-colors ${item.comment_liked ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                  strokeWidth={1.5}
-                  fill={item.comment_liked ? 'currentColor' : 'none'}
-                />
-              </button>
-              <button
-                type="button"
-                onClick={goToPostAndOpenComments}
-                className="p-0 bg-transparent border-0"
-                aria-label="Reply to comment"
-              >
-                <MessageCircle className="w-5 h-5 text-gray-400 cursor-pointer hover:text-blue-500 transition-colors" strokeWidth={1.5} />
-              </button>
+        <div key={item.id} className="flex flex-col gap-2 p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-colors">
+          <div className="flex items-start gap-3">
+            <div onClick={() => navigate(`/profile/${item.user?.id}`)} className="cursor-pointer flex-shrink-0">
+              <Avatar avatarUrl={item.user?.avatar_url} name={username} />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 cursor-pointer truncate" onClick={() => navigate(`/profile/${item.user?.id}`)}>
+                {username}
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {t('inbox.activity.commentedPrefix')}: {commentText} · <span className="text-gray-400">{time}</span>
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleLikeComment(item.comment_id, item.id); }}
+                  className="p-0 bg-transparent border-0"
+                  aria-label="Like comment"
+                >
+                  <Heart
+                    className={`w-5 h-5 cursor-pointer transition-colors ${item.comment_liked ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                    strokeWidth={1.5}
+                    fill={item.comment_liked ? 'currentColor' : 'none'}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (replyingTo === item.id) {
+                      cancelReply();
+                    } else {
+                      openReply(item);
+                    }
+                  }}
+                  className="p-0 bg-transparent border-0"
+                  aria-label="Reply to comment"
+                >
+                  <MessageCircle className={`w-5 h-5 cursor-pointer transition-colors ${isReplying ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`} strokeWidth={1.5} />
+                </button>
+                {wasSent && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600">
+                    <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    {t('inbox.activity.replySent')}
+                  </span>
+                )}
+              </div>
+            </div>
+            {item.poll_thumbnail && (
+              <PollThumb item={item} onClick={goToPost} />
+            )}
           </div>
-          {item.poll_thumbnail && (
-            <PollThumb item={item} onClick={goToPost} />
+          {isReplying && (
+            <div
+              className="ml-15 pl-15 mt-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-end gap-2 bg-white border border-gray-200 rounded-2xl px-3 py-2 shadow-sm">
+                <textarea
+                  ref={replyInputRef}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitReply(item);
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelReply();
+                    }
+                  }}
+                  rows={1}
+                  placeholder={t('inbox.activity.replyPlaceholder')}
+                  className="flex-1 resize-none bg-transparent outline-none text-sm text-gray-900 placeholder-gray-400 max-h-28 py-1"
+                  disabled={replySubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={cancelReply}
+                  disabled={replySubmitting}
+                  className="p-1.5 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  aria-label={t('inbox.activity.cancel')}
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitReply(item)}
+                  disabled={replySubmitting || !replyText.trim()}
+                  className={`p-1.5 rounded-full transition-colors ${
+                    replyText.trim() && !replySubmitting
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                  aria-label={t('inbox.activity.send')}
+                >
+                  {replySubmitting ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" strokeWidth={2} />
+                  )}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       );

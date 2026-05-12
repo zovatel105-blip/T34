@@ -4760,6 +4760,18 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
         
         print(f"DEBUG Activity: Found {len(comments)} comments on user's polls")
         
+        # Batch-fetch likes by current user (creator) on these comments to set
+        # the initial heart state on the activity inbox.
+        _comment_ids_list = [c["id"] for c in comments]
+        _liked_by_creator = set()
+        if _comment_ids_list:
+            _creator_likes_cursor = db.comment_likes.find({
+                "comment_id": {"$in": _comment_ids_list},
+                "user_id": current_user.id
+            })
+            _creator_likes = await _creator_likes_cursor.to_list(len(_comment_ids_list))
+            _liked_by_creator = {row["comment_id"] for row in _creator_likes}
+        
         for comment in comments:
             user = await db.users.find_one({"id": comment["user_id"]})  # Using correct field name
             poll = user_polls_by_id.get(comment.get("poll_id"))
@@ -4776,6 +4788,7 @@ async def get_recent_activity(current_user: UserResponse = Depends(get_current_u
                     "content_type": "poll",
                     "comment_preview": comment.get("content", "")[:100],
                     "comment_id": comment.get("id"),
+                    "comment_liked": comment.get("id") in _liked_by_creator,
                     "poll_id": comment.get("poll_id"),
                     "poll_layout": (poll or {}).get("layout"),
                     "poll_thumbnail": _extract_poll_thumbnail(poll),
