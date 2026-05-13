@@ -987,19 +987,21 @@ const QuestionSlide = ({
 
       {/* Footer post-voto: la barra de progreso vive ahora en el modal "Votos y reproducciones" y los % en la WinnerCard */}
 
-      {/* Línea divisora con gradiente Twyk (lila → azul) — horizontal o vertical según orientación */}
+      {/* Línea divisora con gradiente Twyk (lila → azul) — horizontal o vertical según orientación.
+          Grosor 4px (1px en Tailwind = 0.25rem) para que cada mitad (lila 2px + azul 2px)
+          coincida visualmente con el borde lateral inset de 2px de cada tarjeta. */}
       <div
         className={cn(
           "absolute z-10 pointer-events-none",
           isRow
-            ? "top-0 bottom-0 left-1/2 w-1.5 transform -translate-x-1/2"
-            : "left-0 right-0 top-1/2 h-1.5 transform -translate-y-1/2"
+            ? "top-0 bottom-0 left-1/2 w-1 transform -translate-x-1/2"
+            : "left-0 right-0 top-1/2 h-1 transform -translate-y-1/2"
         )}
         style={{
           background: isRow
             ? `linear-gradient(180deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`
             : `linear-gradient(90deg, ${TWYK_COLORS.top.primary} 0%, ${TWYK_COLORS.top.secondary} 50%, ${TWYK_COLORS.bottom.secondary} 50%, ${TWYK_COLORS.bottom.primary} 100%)`,
-          boxShadow: `0 0 12px ${TWYK_COLORS.top.glow}, 0 0 12px ${TWYK_COLORS.bottom.glow}`,
+          boxShadow: `0 0 8px ${TWYK_COLORS.top.glow}, 0 0 8px ${TWYK_COLORS.bottom.glow}`,
         }}
       />
 
