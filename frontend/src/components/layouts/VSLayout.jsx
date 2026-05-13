@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
+import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import VSWinnerCard from './VSWinnerCard';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -928,7 +929,7 @@ const QuestionSlide = ({
             }}
           >
             <img
-              src={votedImg}
+              src={resolveAssetUrl(votedImg)}
               alt=""
               draggable={false}
               className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
