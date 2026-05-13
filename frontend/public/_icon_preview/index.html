@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Preview de iconos nativos</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff;
+      min-height: 100vh;
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    .subtitle { color: #b8b8d4; margin-bottom: 32px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 1100px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .card h3 { margin: 0 0 4px; font-size: 18px; }
+    .card .meta { color: #9ca3c4; font-size: 13px; margin-bottom: 18px; }
+    .icon-wrap {
+      display: inline-block;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 24px;
+      margin-bottom: 12px;
+    }
+    .icon-wrap.dark { background: #000; }
+    .icon-wrap img {
+      width: 180px;
+      height: 180px;
+      display: block;
+    }
+    .icon-wrap.rounded img { border-radius: 50%; }
+    .icon-wrap.squircle img { border-radius: 24%; }
+    .label { font-size: 13px; color: #b8b8d4; }
+    .android-preview {
+      background: linear-gradient(180deg, #2c3e50 0%, #4a6741 100%);
+      border-radius: 20px;
+      padding: 20px;
+      display: inline-flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .android-icon { text-align: center; }
+    .android-icon img {
+      width: 96px;
+      height: 96px;
+      border-radius: 22%;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .android-icon img.round { border-radius: 50%; }
+    .android-icon span { font-size: 11px; color: rgba(255,255,255,0.9); }
+    .path { font-family: 'SF Mono', Monaco, monospace; font-size: 12px; color: #7fb3d5; word-break: break-all; }
+    .section-title { font-size: 20px; margin: 40px 0 16px; }
+  </style>
+</head>
+<body>
+  <h1>🎨 Iconos nativos actualizados</h1>
+  <div class="subtitle">Logo con halo púrpura/azul aplicado en Android e iOS, manteniendo los tamaños originales.</div>
+
+  <div class="section-title">📱 Simulación: cómo se verá en el launcher de Android</div>
+  <div class="android-preview">
+    <div class="android-icon">
+      <img src="/_icon_preview/launcher.png" />
+      <span>Launcher cuadrado<br/>(squircle)</span>
+    </div>
+    <div class="android-icon">
+      <img src="/_icon_preview/launcher_round.png" class="round" />
+      <span>Launcher redondo</span>
+    </div>
+    <div class="android-icon">
+      <img src="/_icon_preview/launcher_foreground.png" class="round" style="background:#000" />
+      <span>Adaptive (fg sobre bg negro)</span>
+    </div>
+  </div>
+
+  <div class="section-title">🗂️ Archivos individuales reemplazados</div>
+  <div class="grid">
+    <div class="card">
+      <h3>ic_launcher.png</h3>
+      <div class="meta">Icono legacy cuadrado (todas las densidades)</div>
+      <div class="icon-wrap dark squircle">
+        <img src="/_icon_preview/launcher.png" />
+      </div>
+      <div class="label">192×192 (xxxhdpi)</div>
+      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher.png</div>
+    </div>
+
+    <div class="card">
+      <h3>ic_launcher_round.png</h3>
+      <div class="meta">Icono legacy redondo (todas las densidades)</div>
+      <div class="icon-wrap dark rounded">
+        <img src="/_icon_preview/launcher_round.png" />
+      </div>
+      <div class="label">192×192 (xxxhdpi)</div>
+      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher_round.png</div>
+    </div>
+
+    <div class="card">
+      <h3>ic_launcher_foreground.png</h3>
+      <div class="meta">Foreground del Adaptive Icon (Android 8+)</div>
+      <div class="icon-wrap dark">
+        <img src="/_icon_preview/launcher_foreground.png" />
+      </div>
+      <div class="label">432×432 (xxxhdpi)</div>
+      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher_foreground.png</div>
+    </div>
+
+    <div class="card">
+      <h3>AppIcon-512@2x.png</h3>
+      <div class="meta">Icono nativo iOS</div>
+      <div class="icon-wrap dark squircle">
+        <img src="/_icon_preview/ios_appicon.png" />
+      </div>
+      <div class="label">1024×1024</div>
+      <div class="path">ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png</div>
+    </div>
+  </div>
+
+  <div class="section-title">🎨 Cambio adicional: fondo del adaptive icon</div>
+  <div class="card" style="max-width:600px">
+    <div style="display:flex; gap:24px; align-items:center; justify-content:center;">
+      <div>
+        <div style="width:80px;height:80px;background:#FFFFFF;border:1px solid #999;border-radius:8px;margin:0 auto"></div>
+        <div class="label" style="margin-top:8px">Antes: #FFFFFF</div>
+      </div>
+      <div style="font-size:24px">→</div>
+      <div>
+        <div style="width:80px;height:80px;background:#000000;border:1px solid #444;border-radius:8px;margin:0 auto"></div>
+        <div class="label" style="margin-top:8px">Ahora: #000000</div>
+      </div>
+    </div>
+    <div class="path" style="margin-top:16px">android/app/src/main/res/values/ic_launcher_background.xml</div>
+  </div>
+</body>
+</html>
