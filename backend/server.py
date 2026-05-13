@@ -2761,6 +2761,8 @@ async def search_posts_optimized(query: str, current_user_id: str, limit: int):
                     "content": 1,
                     "options": 1,  # Include options to extract media_url and thumbnail_url
                     "layout": 1,   # Include layout for frontend grid rendering
+                    "vs_orientation": 1,  # 🎯 VS: orientación del split (vertical=lado a lado, horizontal=arriba-abajo)
+                    "vs_questions": 1,    # 🎯 VS: lista de preguntas para polls VS multi-pregunta
                     "images": 1,
                     "image_url": 1,
                     "thumbnail_url": 1,
@@ -2858,6 +2860,8 @@ async def search_posts_optimized(query: str, current_user_id: str, limit: int):
                 "media_url": media_url or image_url,  # Add media_url field for frontend compatibility
                 "images": images_array,  # Add images array for frontend compatibility (result.images?.[0]?.url)
                 "layout": post.get("layout", "vertical"),  # Include layout for frontend grid rendering
+                "vs_orientation": post.get("vs_orientation", "horizontal"),  # 🎯 VS: orientación para que el thumbnail coincida con la vista completa
+                "vs_questions": post.get("vs_questions", []),  # 🎯 VS: preguntas multi-pregunta
                 "options": processed_options,  # Include all options with thumbnails for complete poll rendering
                 "video_url": post.get("video_url"),
                 "author_id": post.get("author_id"),  # Add author_id for follow functionality
@@ -3393,6 +3397,8 @@ async def search_posts_advanced(query: str, current_user_id: str, limit: int):
             "thumbnail_url": main_thumbnail_url,
             "images": images_array,  # Add images array for frontend compatibility (result.images?.[0]?.url)
             "layout": post.get("layout", "vertical"),  # Include layout for frontend grid rendering
+            "vs_orientation": post.get("vs_orientation", "horizontal"),  # 🎯 VS: orientación para que el thumbnail coincida con la vista completa
+            "vs_questions": post.get("vs_questions", []),  # 🎯 VS: preguntas multi-pregunta
             "options": options,  # Include all options for complete poll rendering
             "hashtags": hashtags[:5],  # Limit to first 5 hashtags
             "tags": post.get("tags", []),
