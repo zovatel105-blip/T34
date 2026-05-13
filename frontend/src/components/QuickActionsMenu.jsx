@@ -300,7 +300,8 @@ const QuickActionsMenu = ({ isVisible, onClose, onActionSelect }) => {
       className="fixed top-4 right-4 z-[10001]"
       style={{ 
         position: 'fixed',
-        top: '16px',
+        // Mismo offset que el logo en FeedPage para que coincida en APK nativo (safe-area)
+        top: 'max(16px, calc(var(--safe-area-inset-top) + 8px))',
         right: '16px',
         zIndex: 10001,
       }}
