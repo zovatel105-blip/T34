@@ -291,18 +291,92 @@ const PollThumbnail = ({ result, className = "", onClick, hideBadge = false, onQ
       <div
         ref={containerRef}
         className={`relative aspect-[6/11] bg-black cursor-pointer rounded-xl overflow-hidden ${className}`}
-        onClick={onClick}
+        onMouseDown={handlePressStart}
+        onMouseMove={handlePressMove}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressCancel}
+        onTouchStart={handlePressStart}
+        onTouchMove={handlePressMove}
+        onTouchEnd={handlePressEnd}
+        onTouchCancel={handlePressCancel}
       >
-        <LayoutRenderer
-          poll={result}
-          onVote={() => {}}
-          isActive={false}
-          isThumbnail={true}
-          isBottomNavVisible={false}
-        />
-        {!hideBadge && (
+        {/* Vista normal — VSLayout en modo thumbnail. Se oculta cuando aparece
+            el overlay de voto rápido para liberar memoria/eventos. */}
+        {!showQuickVote && (
+          <LayoutRenderer
+            poll={result}
+            onVote={() => {}}
+            isActive={false}
+            isThumbnail={true}
+            isBottomNavVisible={false}
+          />
+        )}
+        {!hideBadge && !showQuickVote && (
           <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/80 text-white backdrop-blur-sm pointer-events-none">
             VS
+          </div>
+        )}
+
+        {/* Overlay de voto rápido — respeta la orientación del VS */}
+        {showQuickVote && (
+          <div
+            className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
+            style={{ touchAction: 'none' }}
+          >
+            <div className="w-full h-full flex flex-col">
+              <div className="text-white text-center mb-2 text-xs font-medium">
+                Mantén presionado para votar
+              </div>
+              <div className={`flex-1 gap-1 ${vsOrientation === 'horizontal' ? 'grid grid-cols-1 grid-rows-2' : 'grid grid-cols-2'}`}>
+                {options.slice(0, 2).map((option, index) => {
+                  const isSelected = selectedOption === index;
+                  const isVoted = result.user_vote === index;
+                  const votePercentage = result.total_votes > 0
+                    ? Math.round((option.votes / result.total_votes) * 100) : 0;
+                  const mf = getMediaFields(option);
+                  const bgSrc = mf.type === 'video'
+                    ? resolveUrl(mf.thumbnail && !isVideoUrl(mf.thumbnail) ? mf.thumbnail : null)
+                    : resolveUrl(mf.url || mf.thumbnail);
+
+                  return (
+                    <div
+                      key={option.id || `vs-vote-opt-${index}`}
+                      data-option-index={index}
+                      className={`relative rounded-lg overflow-hidden transition-all duration-150 ${isSelected ? 'ring-4 ring-blue-400 scale-105' : 'scale-100'}`}
+                    >
+                      {bgSrc && (
+                        <img
+                          src={bgSrc}
+                          alt={option.text || `Option ${index + 1}`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      )}
+                      <div className={`absolute inset-0 transition-all duration-150 ${isSelected ? 'bg-blue-500/40' : 'bg-black/30'}`} />
+                      <div className="relative h-full flex flex-col justify-between p-2">
+                        <div className="flex-1 flex items-center justify-center">
+                          {option.text && (
+                            <span className="text-white text-sm font-semibold drop-shadow-lg text-center">
+                              {option.text}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            {isVoted && <div className="bg-white/90 rounded-full p-0.5"><Check size={12} className="text-blue-500" /></div>}
+                            {isSelected && <div className="bg-blue-500 rounded-full p-1 animate-pulse"><Check size={14} className="text-white" /></div>}
+                          </div>
+                          <span className="text-white text-xs font-bold bg-black/50 px-1.5 py-0.5 rounded-full">{votePercentage}%</span>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-500" style={{ width: `${votePercentage}%` }} />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="text-center text-white text-xs opacity-70 mt-2">
+                {selectedOption !== null ? '✓ Suelta para votar' : 'Desliza para seleccionar'}
+              </div>
+            </div>
           </div>
         )}
       </div>
