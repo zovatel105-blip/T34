@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AppConfig from '../../config/config.js';
 import useLivePoll from '../../hooks/useLivePoll';
 import { useTranslation } from '../../hooks/useTranslation';
+import resolveAssetUrl from '../../utils/resolveAssetUrl';
 
 const ActivityPage = () => {
   const navigate = useNavigate();
@@ -124,11 +125,13 @@ const ActivityPage = () => {
     { key: 'mentions', label: t('inbox.activity.mentions'), count: counts.mentions },
   ];
 
-  const Avatar = ({ avatarUrl, name }) => (
+  const Avatar = ({ avatarUrl, name }) => {
+    const resolvedAvatar = resolveAssetUrl(avatarUrl);
+    return (
     <div className="w-12 h-12 rounded-full overflow-hidden bg-white shadow-sm flex items-center justify-center flex-shrink-0">
-      {avatarUrl ? (
+      {resolvedAvatar ? (
         <>
-          <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+          <img src={resolvedAvatar} alt={name} className="w-full h-full object-cover"
             onError={(e) => { e.target.style.display = 'none'; if(e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }} />
           <div className="w-full h-full items-center justify-center overflow-hidden"
             style={{ display: 'none' }}>
@@ -141,7 +144,8 @@ const ActivityPage = () => {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // Helper: renderiza la miniatura del poll. Para layout VS muestra los dos
   // lados (las dos opciones) lado-a-lado igual que en la vista completa,
@@ -150,18 +154,20 @@ const ActivityPage = () => {
     const isVS = item.poll_layout === 'vs' && Array.isArray(item.poll_vs_thumbnails) && item.poll_vs_thumbnails.length >= 2;
     if (isVS) {
       const [left, right] = item.poll_vs_thumbnails;
+      const leftSrc = resolveAssetUrl(left);
+      const rightSrc = resolveAssetUrl(right);
       return (
         <div
           onClick={onClick}
           className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer flex bg-black"
         >
           <div className="relative w-1/2 h-full overflow-hidden">
-            <img src={left} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={leftSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />
           </div>
           {/* Línea central blanca, mismo look que la vista completa */}
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-white z-10 shadow-[0_0_2px_rgba(255,255,255,0.9)]" />
           <div className="relative w-1/2 h-full overflow-hidden">
-            <img src={right} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src={rightSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />
           </div>
           {/* VS central — letras blancas con bordes lila (V) y azul (S),
               italic, escala reducida para encajar en la miniatura */}
@@ -209,7 +215,7 @@ const ActivityPage = () => {
         onClick={onClick}
         className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
       >
-        <img src={item.poll_thumbnail} alt="" className="w-full h-full object-cover" />
+        <img src={resolveAssetUrl(item.poll_thumbnail)} alt="" className="w-full h-full object-cover" />
       </div>
     );
   };
@@ -311,7 +317,7 @@ const ActivityPage = () => {
                     <span className="block w-4 h-4 rounded-full overflow-hidden ring-1 ring-white shadow-sm bg-gray-200">
                       {user?.avatar_url ? (
                         <img
-                          src={user.avatar_url}
+                          src={resolveAssetUrl(user.avatar_url)}
                           alt=""
                           className="w-full h-full object-cover"
                           onError={(e) => { e.target.style.display = 'none'; }}
