@@ -2457,8 +2457,11 @@ const ProfilePage = () => {
                 </TabsList>
               </div>
 
-              {/* Contenido de tabs - Con padding lateral mínimo */}
-              <div className="mt-0 relative z-0 overflow-hidden">
+              {/* Contenido de tabs - Con padding lateral mínimo.
+                  min-h-[calc(100vh-52px)] garantiza que SIEMPRE haya altura
+                  suficiente para que el usuario pueda scrollear hasta el header,
+                  aunque el perfil tenga pocas publicaciones (o ninguna). */}
+              <div className="mt-0 relative z-0 overflow-hidden min-h-[calc(100vh-52px)]">
                 <TabsContent value="polls" className="mt-0">
                   {polls.length === 0 && (!isOwnProfile || activeUploads.length === 0) ? (
                     <div className="text-center py-16 space-y-4 px-4">
