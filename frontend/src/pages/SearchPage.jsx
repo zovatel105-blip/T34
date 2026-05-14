@@ -23,6 +23,7 @@ import { useTranslation } from '../hooks/useTranslation';
 
 import PostsIcon from '../components/icons/PostsIcon';
 import SEARCH_CONFIG from '../config/searchConfig';
+import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
 
 const SearchPage = () => {
   const { t } = useTranslation();
@@ -1422,13 +1423,13 @@ const SearchPage = () => {
                         {/* Avatar/Icon - Circular for users, Square with rounded corners for sounds */}
                         <div 
                           className={`w-12 h-12 ${result.type === 'user' ? 'rounded-full' : 'rounded-lg'} ${
-                            // Solo aplicar gradiente si hay imagen, de lo contrario usar fondo gris simple
+                            // Solo aplicar gradiente si hay imagen, de lo contrario usar fondo neutro
                             (result.type === 'user' && (result.avatar_url || result.image_url)) 
                               ? 'bg-transparent' 
                               : result.type === 'sound' && result.thumbnail_url
                                 ? 'bg-transparent'
                                 : result.type === 'user' 
-                                  ? 'bg-gray-200'
+                                  ? 'bg-transparent'
                                   : 'bg-gradient-to-br from-purple-400 to-pink-500'
                           } flex items-center justify-center overflow-hidden flex-shrink-0`}
                         >
@@ -1444,13 +1445,11 @@ const SearchPage = () => {
                               alt={result.title}
                               className="w-full h-full object-cover"
                             />
+                          ) : result.type === 'user' ? (
+                            <DefaultAvatarSvg className="w-full h-full" />
                           ) : (
-                            <div className={result.type === 'user' ? 'text-gray-600' : 'text-white'}>
-                              {result.type === 'user' ? (
-                                <User size={24} />
-                              ) : (
-                                <Music size={24} />
-                              )}
+                            <div className="text-white">
+                              <Music size={24} />
                             </div>
                           )}
                         </div>
@@ -1555,10 +1554,9 @@ const SearchPage = () => {
                             alt="Avatar"
                             className="w-full h-full object-cover"
                           />
-                        ) : null}
-                        <div className={`flex items-center justify-center text-gray-600 ${(result.avatar_url || result.author?.avatar_url || result.author_avatar_url) ? 'hidden' : ''}`}>
-                          <User className="w-3 h-3" />
-                        </div>
+                        ) : (
+                          <DefaultAvatarSvg className="w-full h-full" />
+                        )}
                       </div>
                       {/* Display Name */}
                       <span className="text-xs text-gray-400 truncate flex-1 min-w-0">
