@@ -142,42 +142,46 @@ const VSContentCard = ({
       }}
       onClick={onClose}
     >
-      {/* Card central — mismo aspecto que un post, bordes redondeados + glow Twyk */}
+      {/* Wrapper con el glow Twyk — el glow vive aquí (NO en la card con
+          overflow-hidden) para que sea SIEMPRE visible hacia fuera. */}
       <div
-        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl overflow-hidden bg-black transition-all duration-300"
+        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl transition-colors duration-300"
         style={{
-          border: `2px solid ${activeColor.primary}`,
-          boxShadow: `0 0 28px ${activeColor.glow}, 0 0 60px ${activeColor.glow}`,
+          boxShadow: `0 0 0 2px ${activeColor.primary}, 0 0 32px ${activeColor.glow}, 0 0 80px ${activeColor.glow}`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Carrusel horizontal con snap */}
-        <div
-          ref={scrollerRef}
-          onScroll={handleScroll}
-          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
-        >
-          {slides.map((opt, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 w-full h-full relative bg-black snap-center"
-            >
-              {renderMedia(opt)}
-            </div>
-          ))}
-        </div>
+        {/* Card interior — overflow-hidden aquí para recortar el contenido,
+            sin afectar al glow del wrapper. */}
+        <div className="absolute inset-0 rounded-3xl overflow-hidden bg-black">
+          {/* Carrusel horizontal con snap */}
+          <div
+            ref={scrollerRef}
+            onScroll={handleScroll}
+            className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          >
+            {slides.map((opt, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 w-full h-full relative bg-black snap-center"
+              >
+                {renderMedia(opt)}
+              </div>
+            ))}
+          </div>
 
-        {/* Indicadores de slide (puntitos) */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 pointer-events-none">
-          {slides.map((_, i) => (
-            <span
-              key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                i === activeIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
-              }`}
-            />
-          ))}
+          {/* Indicadores de slide (puntitos) */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 pointer-events-none">
+            {slides.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === activeIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
