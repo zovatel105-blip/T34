@@ -2,148 +2,175 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Preview de iconos nativos</title>
+  <title>Iconos nativos – Antes vs Después</title>
   <style>
     body {
       margin: 0;
-      padding: 32px;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 28px;
+      background: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: #fff;
+      color: #e5e7eb;
       min-height: 100vh;
     }
-    h1 { font-size: 28px; margin: 0 0 8px; }
-    .subtitle { color: #b8b8d4; margin-bottom: 32px; }
-    .grid {
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .subtitle { color: #94a3b8; margin-bottom: 28px; font-size: 14px; }
+    .section-title { font-size: 18px; margin: 28px 0 14px; color: #cbd5e1; }
+    .compare {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: center;
       max-width: 1100px;
+      margin-bottom: 18px;
     }
-    .card {
+    .side {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 18px;
+    }
+    .side h3 { margin: 0 0 14px; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .row { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .icon-card {
       text-align: center;
     }
-    .card h3 { margin: 0 0 4px; font-size: 18px; }
-    .card .meta { color: #9ca3c4; font-size: 13px; margin-bottom: 18px; }
-    .icon-wrap {
-      display: inline-block;
-      padding: 24px;
-      background: #ffffff;
-      border-radius: 24px;
-      margin-bottom: 12px;
+    .icon-card .frame {
+      width: 130px;
+      height: 130px;
+      display: flex; align-items: center; justify-content: center;
+      background: #1e293b;
+      border-radius: 14px;
+      overflow: hidden;
     }
-    .icon-wrap.dark { background: #000; }
-    .icon-wrap img {
-      width: 180px;
-      height: 180px;
+    .icon-card .frame img {
+      width: 110px;
+      height: 110px;
       display: block;
     }
-    .icon-wrap.rounded img { border-radius: 50%; }
-    .icon-wrap.squircle img { border-radius: 24%; }
-    .label { font-size: 13px; color: #b8b8d4; }
-    .android-preview {
-      background: linear-gradient(180deg, #2c3e50 0%, #4a6741 100%);
-      border-radius: 20px;
-      padding: 20px;
-      display: inline-flex;
-      gap: 24px;
+    .icon-card.squircle .frame img { border-radius: 22%; }
+    .icon-card.round .frame img { border-radius: 50%; }
+    .icon-card .label { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    .arrow { font-size: 32px; color: #a78bfa; text-align: center; }
+
+    .android-sim {
+      background: linear-gradient(135deg, #1e3a8a 0%, #4c1d95 100%);
+      padding: 22px;
+      border-radius: 18px;
+      display: flex;
+      gap: 28px;
       align-items: center;
+      justify-content: center;
     }
-    .android-icon { text-align: center; }
-    .android-icon img {
-      width: 96px;
-      height: 96px;
-      border-radius: 22%;
-      display: block;
-      margin-bottom: 8px;
+    .android-sim .icon-card .frame {
+      background: transparent;
+      width: 88px; height: 88px;
     }
-    .android-icon img.round { border-radius: 50%; }
-    .android-icon span { font-size: 11px; color: rgba(255,255,255,0.9); }
-    .path { font-family: 'SF Mono', Monaco, monospace; font-size: 12px; color: #7fb3d5; word-break: break-all; }
-    .section-title { font-size: 20px; margin: 40px 0 16px; }
+    .android-sim .icon-card .frame img { width: 80px; height: 80px; }
+    .android-sim .icon-card .label { color: rgba(255,255,255,0.9); }
+
+    .meta {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 6px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge.old { background: #7f1d1d; color: #fecaca; }
+    .badge.new { background: #14532d; color: #bbf7d0; }
   </style>
 </head>
 <body>
-  <h1>🎨 Iconos nativos actualizados</h1>
-  <div class="subtitle">Logo con halo púrpura/azul aplicado en Android e iOS, manteniendo los tamaños originales.</div>
+  <h1>🎨 Iconos nativos – Antes vs Después</h1>
+  <div class="subtitle">Comparación lado a lado · Tamaños del icono y proporción del logo conservados · Fondo blanco · xxxhdpi (192×192)</div>
 
-  <div class="section-title">📱 Simulación: cómo se verá en el launcher de Android</div>
-  <div class="android-preview">
-    <div class="android-icon">
-      <img src="/_icon_preview/launcher.png" />
-      <span>Launcher cuadrado<br/>(squircle)</span>
+  <div class="section-title">📱 Simulación en el launcher</div>
+  <div class="compare">
+    <div class="side">
+      <h3>ANTES <span class="badge old">Logo anterior</span></h3>
+      <div class="android-sim">
+        <div class="icon-card squircle">
+          <div class="frame"><img src="/_icon_preview/old/launcher.png" /></div>
+          <div class="label">Cuadrado</div>
+        </div>
+        <div class="icon-card round">
+          <div class="frame"><img src="/_icon_preview/old/launcher_round.png" /></div>
+          <div class="label">Redondo</div>
+        </div>
+      </div>
     </div>
-    <div class="android-icon">
-      <img src="/_icon_preview/launcher_round.png" class="round" />
-      <span>Launcher redondo</span>
-    </div>
-    <div class="android-icon">
-      <img src="/_icon_preview/launcher_foreground.png" class="round" style="background:#000" />
-      <span>Adaptive (fg sobre bg negro)</span>
+    <div class="arrow">→</div>
+    <div class="side">
+      <h3>DESPUÉS <span class="badge new">Logo nuevo</span></h3>
+      <div class="android-sim">
+        <div class="icon-card squircle">
+          <div class="frame"><img src="/_icon_preview/new/launcher.png" /></div>
+          <div class="label">Cuadrado</div>
+        </div>
+        <div class="icon-card round">
+          <div class="frame"><img src="/_icon_preview/new/launcher_round.png" /></div>
+          <div class="label">Redondo</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="section-title">🗂️ Archivos individuales reemplazados</div>
-  <div class="grid">
-    <div class="card">
-      <h3>ic_launcher.png</h3>
-      <div class="meta">Icono legacy cuadrado (todas las densidades)</div>
-      <div class="icon-wrap dark squircle">
-        <img src="/_icon_preview/launcher.png" />
+  <div class="section-title">🗂️ Archivos individuales (xxxhdpi 192×192 / 432×432)</div>
+  <div class="compare">
+    <div class="side">
+      <h3>ANTES</h3>
+      <div class="row">
+        <div class="icon-card">
+          <div class="frame"><img src="/_icon_preview/old/launcher.png" /></div>
+          <div class="label">ic_launcher.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame"><img src="/_icon_preview/old/launcher_round.png" /></div>
+          <div class="label">ic_launcher_round.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame" style="background:#fff"><img src="/_icon_preview/old/launcher_foreground.png" /></div>
+          <div class="label">ic_launcher_foreground.png</div>
+        </div>
       </div>
-      <div class="label">192×192 (xxxhdpi)</div>
-      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher.png</div>
     </div>
-
-    <div class="card">
-      <h3>ic_launcher_round.png</h3>
-      <div class="meta">Icono legacy redondo (todas las densidades)</div>
-      <div class="icon-wrap dark rounded">
-        <img src="/_icon_preview/launcher_round.png" />
+    <div class="arrow">→</div>
+    <div class="side">
+      <h3>DESPUÉS</h3>
+      <div class="row">
+        <div class="icon-card">
+          <div class="frame"><img src="/_icon_preview/new/launcher.png" /></div>
+          <div class="label">ic_launcher.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame"><img src="/_icon_preview/new/launcher_round.png" /></div>
+          <div class="label">ic_launcher_round.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame" style="background:#fff"><img src="/_icon_preview/new/launcher_foreground.png" /></div>
+          <div class="label">ic_launcher_foreground.png</div>
+        </div>
       </div>
-      <div class="label">192×192 (xxxhdpi)</div>
-      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher_round.png</div>
-    </div>
-
-    <div class="card">
-      <h3>ic_launcher_foreground.png</h3>
-      <div class="meta">Foreground del Adaptive Icon (Android 8+)</div>
-      <div class="icon-wrap dark">
-        <img src="/_icon_preview/launcher_foreground.png" />
-      </div>
-      <div class="label">432×432 (xxxhdpi)</div>
-      <div class="path">android/app/src/main/res/mipmap-*/ic_launcher_foreground.png</div>
-    </div>
-
-    <div class="card">
-      <h3>AppIcon-512@2x.png</h3>
-      <div class="meta">Icono nativo iOS</div>
-      <div class="icon-wrap dark squircle">
-        <img src="/_icon_preview/ios_appicon.png" />
-      </div>
-      <div class="label">1024×1024</div>
-      <div class="path">ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png</div>
     </div>
   </div>
 
-  <div class="section-title">🎨 Cambio adicional: fondo del adaptive icon</div>
-  <div class="card" style="max-width:600px">
-    <div style="display:flex; gap:24px; align-items:center; justify-content:center;">
-      <div>
-        <div style="width:80px;height:80px;background:#FFFFFF;border:1px solid #999;border-radius:8px;margin:0 auto"></div>
-        <div class="label" style="margin-top:8px">Antes: #FFFFFF</div>
-      </div>
-      <div style="font-size:24px">→</div>
-      <div>
-        <div style="width:80px;height:80px;background:#000000;border:1px solid #444;border-radius:8px;margin:0 auto"></div>
-        <div class="label" style="margin-top:8px">Ahora: #000000</div>
-      </div>
-    </div>
-    <div class="path" style="margin-top:16px">android/app/src/main/res/values/ic_launcher_background.xml</div>
+  <div class="section-title">📋 Resumen de cambios aplicados</div>
+  <div class="side" style="max-width:1100px">
+    <ul style="margin:0; padding-left:20px; line-height:1.8;">
+      <li><strong>Fondo:</strong> Blanco (#FFFFFF) ✅ (igual que el original)</li>
+      <li><strong>Proporción del logo dentro del icono:</strong> ~72% (igual que el original)</li>
+      <li><strong>Dimensiones del icono:</strong> mantenidas (48, 72, 96, 144, 192 / 108, 162, 216, 324, 432)</li>
+      <li><strong>Plataformas:</strong> Android (5 densidades, todos los launcher) + iOS (AppIcon-512@2x.png 1024×1024)</li>
+    </ul>
+    <div class="meta">/app/frontend/android/app/src/main/res/mipmap-*/ ic_launcher*.png</div>
+    <div class="meta">/app/frontend/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png</div>
+    <div class="meta">/app/frontend/android/app/src/main/res/values/ic_launcher_background.xml → #FFFFFF</div>
   </div>
 </body>
 </html>
