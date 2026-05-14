@@ -1034,7 +1034,7 @@ const SearchPage = () => {
                 
                 <AutocompleteDropdown
                   suggestions={autocompleteResults}
-                  isVisible={showAutocomplete}
+                  isVisible={false}
                   onSuggestionClick={handleSuggestionClick}
                   selectedIndex={selectedSuggestionIndex}
                   onClose={() => setShowAutocomplete(false)}
