@@ -7,6 +7,7 @@ import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import VSWinnerCard from './VSWinnerCard';
+import VSContentCard from './VSContentCard';
 import { useTranslation } from '../../hooks/useTranslation';
 
 // 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
@@ -562,6 +563,60 @@ const QuestionSlide = ({
   //    document.body, sin este gate verías cards de publicaciones anteriores
   //    todavía montadas en el "tape" del scroller.
   const [showWinnerCard, setShowWinnerCard] = useState(false);
+
+  // 🖼️ Content card — vista "solo contenido" del duelo. Se activa con long-press
+  //    y se cierra con el botón Atrás del dispositivo.
+  const [showContentCard, setShowContentCard] = useState(false);
+  const longPressTimerRef = useRef(null);
+  const longPressTriggeredRef = useRef(false);
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
+
+  const handleLongPressStart = (e) => {
+    if (!isActive) return;
+    longPressTriggeredRef.current = false;
+    const isTouch = e.type === 'touchstart';
+    if (isTouch) {
+      const t = e.touches?.[0];
+      if (!t) return;
+      touchStartPosRef.current = { x: t.clientX, y: t.clientY };
+    } else {
+      // Solo touch/mobile (no desktop click derecho)
+      return;
+    }
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setShowContentCard(true);
+    }, 550);
+  };
+
+  const handleLongPressMove = (e) => {
+    if (!longPressTimerRef.current) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    const dx = Math.abs(t.clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(t.clientY - touchStartPosRef.current.y);
+    if (dx > 10 || dy > 10) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleLongPressClickCapture = (e) => {
+    // Si el long-press se disparó, suprimimos el click hijo (voto)
+    if (longPressTriggeredRef.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      longPressTriggeredRef.current = false;
+    }
+  };
   useEffect(() => {
     if (!showResults || !isActive) {
       setShowWinnerCard(false);
@@ -881,6 +936,11 @@ const QuestionSlide = ({
         perspectiveOrigin: '50% 45%',
         transformStyle: 'preserve-3d',
       }}
+      onTouchStart={handleLongPressStart}
+      onTouchMove={handleLongPressMove}
+      onTouchEnd={handleLongPressEnd}
+      onTouchCancel={handleLongPressEnd}
+      onClickCapture={handleLongPressClickCapture}
     >
       {renderCard(optionA, 0)}
       {renderCard(optionB, 1)}
@@ -1069,6 +1129,17 @@ const QuestionSlide = ({
           />
         );
       })()}
+
+      {/* 🖼️ Content Card overlay — vista solo contenido (long-press) */}
+      {isActive && (
+        <VSContentCard
+          visible={showContentCard}
+          optionA={optionA}
+          optionB={optionB}
+          orientation={orientation}
+          onClose={() => setShowContentCard(false)}
+        />
+      )}
     </div>
   );
 };
