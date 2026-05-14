@@ -1071,10 +1071,8 @@ const SearchPage = () => {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                       style={isActive ? {
-                        backgroundImage: 'linear-gradient(#f3f4f6, #f3f4f6), linear-gradient(90deg, #3B82F6 0%, transparent 25%, transparent 75%, #3B82F6 100%)',
-                        backgroundOrigin: 'border-box',
-                        backgroundClip: 'padding-box, border-box',
-                        border: '2px solid transparent'
+                        backgroundColor: '#f3f4f6',
+                        border: '2px solid #3B82F6'
                       } : {}}
                     >
                       <span>{tab.label}</span>
