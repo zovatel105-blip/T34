@@ -500,7 +500,7 @@ const ActivityPage = () => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex-shrink-0 bg-white px-4 pt-3 pb-2">
+      <div className="flex-shrink-0 bg-white px-1 pt-3 pb-2">
         <div className="flex items-center justify-center relative mb-3">
           <button onClick={() => navigate('/messages')}
             className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
@@ -510,7 +510,7 @@ const ActivityPage = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 -mx-1 px-1">
           {tabs.map(tab => (
             <div key={tab.key} className="relative flex-shrink-0">
               {tab.count > 0 && (
