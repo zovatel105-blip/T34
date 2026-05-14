@@ -114,37 +114,47 @@ const VSContentCard = ({
   return createPortal(
     <div
       data-testid="vs-content-card"
-      className="fixed inset-0 z-[9999] bg-black"
-      style={{ touchAction: 'none' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+      style={{
+        background: 'rgba(0,0,0,0.85)',
+        touchAction: 'none',
+      }}
+      onClick={onClose}
     >
+      {/* Card central — mismo aspecto que un post VS, bordes redondeados */}
       <div
-        className={cn(
-          'w-full h-full flex',
-          isRow ? 'flex-row' : 'flex-col'
-        )}
+        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 bg-black"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex-1 relative overflow-hidden bg-black">
-          {renderMedia(optionA)}
+        <div
+          className={cn(
+            'w-full h-full flex',
+            isRow ? 'flex-row' : 'flex-col'
+          )}
+        >
+          <div className="flex-1 relative overflow-hidden bg-black">
+            {renderMedia(optionA)}
+          </div>
+          <div className="flex-1 relative overflow-hidden bg-black">
+            {renderMedia(optionB)}
+          </div>
         </div>
-        <div className="flex-1 relative overflow-hidden bg-black">
-          {renderMedia(optionB)}
-        </div>
-      </div>
 
-      {/* Botón Atrás visible en la esquina superior izquierda */}
-      <button
-        type="button"
-        data-testid="vs-content-card-back"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose?.();
-        }}
-        className="absolute top-4 left-4 w-11 h-11 rounded-full bg-black/55 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform"
-        style={{ zIndex: 10 }}
-        aria-label="Atrás"
-      >
-        <ArrowLeft className="w-6 h-6 text-white" strokeWidth={2.2} />
-      </button>
+        {/* Botón Atrás visible en la esquina superior izquierda DE LA CARD */}
+        <button
+          type="button"
+          data-testid="vs-content-card-back"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose?.();
+          }}
+          className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/55 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform"
+          style={{ zIndex: 10 }}
+          aria-label="Atrás"
+        >
+          <ArrowLeft className="w-5 h-5 text-white" strokeWidth={2.2} />
+        </button>
+      </div>
     </div>,
     document.body
   );
