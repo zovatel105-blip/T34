@@ -567,6 +567,7 @@ const QuestionSlide = ({
   // 🖼️ Content card — vista "solo contenido" del duelo. Se activa con long-press
   //    y se cierra con el botón Atrás del dispositivo.
   const [showContentCard, setShowContentCard] = useState(false);
+  const [contentCardInitial, setContentCardInitial] = useState(0);
   const longPressTimerRef = useRef(null);
   const longPressTriggeredRef = useRef(false);
   const touchStartPosRef = useRef({ x: 0, y: 0 });
@@ -580,12 +581,28 @@ const QuestionSlide = ({
       if (!t) return;
       touchStartPosRef.current = { x: t.clientX, y: t.clientY };
     } else {
-      // Solo touch/mobile (no desktop click derecho)
+      // Solo touch/mobile
       return;
     }
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    // Calculamos qué opción se está presionando según la posición del touch
+    // y la orientación del VS (vertical=lado a lado, horizontal=arriba-abajo)
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
+    const t = e.touches[0];
+    const localX = t.clientX - rect.left;
+    const localY = t.clientY - rect.top;
+    let initialIdx = 0;
+    if (isRow) {
+      // lado a lado: A=izq, B=der
+      initialIdx = localX < rect.width / 2 ? 0 : 1;
+    } else {
+      // arriba-abajo: A=arriba, B=abajo
+      initialIdx = localY < rect.height / 2 ? 0 : 1;
+    }
     longPressTimerRef.current = setTimeout(() => {
       longPressTriggeredRef.current = true;
+      setContentCardInitial(initialIdx);
       setShowContentCard(true);
     }, 550);
   };
@@ -1136,7 +1153,7 @@ const QuestionSlide = ({
           visible={showContentCard}
           optionA={optionA}
           optionB={optionB}
-          orientation={orientation}
+          initialIndex={contentCardInitial}
           onClose={() => setShowContentCard(false)}
         />
       )}

@@ -1,25 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
 import SafeImage from '../common/SafeImage';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
-import { cn } from '../../lib/utils';
 
 /**
  * VSContentCard
  * --------------
- * Vista "solo contenido" de un duelo VS: muestra únicamente los dos medios
- * (imágenes/vídeos) de las opciones A y B, sin overlays, textos, %,
- * trofeos, ni ningún elemento de UI.
+ * Tarjeta central que muestra "solo el contenido" de UNA opción del duelo
+ * (la que el usuario mantuvo presionada). Se puede deslizar lateralmente
+ * para ver la otra opción a modo de carrusel.
  *
- * Se activa con long-press sobre el duelo VS (en la vista full) y se cierra
- * con el botón "Atrás" del dispositivo (popstate) o con el botón de la
- * esquina superior izquierda.
+ * - Backdrop oscuro, card centrada con bordes redondeados (estilo WinnerCard).
+ * - Cierra con: botón Atrás del dispositivo, botón ← de la card, o tap fuera.
  *
  * Props:
  *  - visible: boolean
- *  - optionA, optionB: objetos con media_url / media.url / image / etc.
- *  - orientation: 'horizontal' (arriba-abajo) o 'vertical' (lado a lado)
+ *  - optionA, optionB: objetos de opción
+ *  - initialIndex: 0 (A) o 1 (B) — la que se mantuvo presionada
  *  - onClose: callback al cerrar
  */
 const getMediaSrc = (opt) => {
@@ -41,8 +39,7 @@ const getMediaType = (opt) => {
 
 const isVideoUrl = (url) => {
   if (!url) return false;
-  const lower = url.toLowerCase();
-  return /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(lower);
+  return /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(url);
 };
 
 const renderMedia = (option) => {
@@ -78,15 +75,16 @@ const VSContentCard = ({
   visible,
   optionA,
   optionB,
-  orientation = 'horizontal',
+  initialIndex = 0,
   onClose,
 }) => {
   const pushedRef = useRef(false);
+  const scrollerRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(initialIndex);
 
   // Soporte del botón "Atrás" del dispositivo / navegador
   useEffect(() => {
     if (!visible) return undefined;
-    // Empujamos un estado al history para capturar el back gesture
     try {
       window.history.pushState({ vsContentCard: true }, '');
       pushedRef.current = true;
@@ -99,7 +97,6 @@ const VSContentCard = ({
     window.addEventListener('popstate', onPop);
     return () => {
       window.removeEventListener('popstate', onPop);
-      // Si la card se cierra por otra vía (botón), retiramos el estado
       if (pushedRef.current) {
         try { window.history.back(); } catch (_) { /* noop */ }
         pushedRef.current = false;
@@ -107,9 +104,28 @@ const VSContentCard = ({
     };
   }, [visible, onClose]);
 
+  // Scroll inicial al slide correcto cuando se abre
+  useEffect(() => {
+    if (!visible) return;
+    setActiveIdx(initialIndex);
+    // esperamos a que el carrusel esté montado
+    requestAnimationFrame(() => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      el.scrollTo({ left: initialIndex * el.clientWidth, behavior: 'auto' });
+    });
+  }, [visible, initialIndex]);
+
+  const handleScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.clientWidth);
+    if (idx !== activeIdx) setActiveIdx(idx);
+  };
+
   if (typeof document === 'undefined' || !visible) return null;
 
-  const isRow = orientation === 'vertical'; // lado a lado
+  const slides = [optionA, optionB];
 
   return createPortal(
     <div
@@ -121,23 +137,38 @@ const VSContentCard = ({
       }}
       onClick={onClose}
     >
-      {/* Card central — mismo aspecto que un post VS, bordes redondeados */}
+      {/* Card central — mismo aspecto que un post, bordes redondeados */}
       <div
         className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 bg-black"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Carrusel horizontal con snap */}
         <div
-          className={cn(
-            'w-full h-full flex',
-            isRow ? 'flex-row' : 'flex-col'
-          )}
+          ref={scrollerRef}
+          onScroll={handleScroll}
+          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
         >
-          <div className="flex-1 relative overflow-hidden bg-black">
-            {renderMedia(optionA)}
-          </div>
-          <div className="flex-1 relative overflow-hidden bg-black">
-            {renderMedia(optionB)}
-          </div>
+          {slides.map((opt, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 w-full h-full relative bg-black snap-center"
+            >
+              {renderMedia(opt)}
+            </div>
+          ))}
+        </div>
+
+        {/* Indicadores de slide (puntitos) */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 pointer-events-none">
+          {slides.map((_, i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                i === activeIdx ? 'bg-white w-4' : 'bg-white/50'
+              }`}
+            />
+          ))}
         </div>
 
         {/* Botón Atrás visible en la esquina superior izquierda DE LA CARD */}
@@ -148,8 +179,7 @@ const VSContentCard = ({
             e.stopPropagation();
             onClose?.();
           }}
-          className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/55 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform"
-          style={{ zIndex: 10 }}
+          className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/55 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform z-10"
           aria-label="Atrás"
         >
           <ArrowLeft className="w-5 h-5 text-white" strokeWidth={2.2} />
