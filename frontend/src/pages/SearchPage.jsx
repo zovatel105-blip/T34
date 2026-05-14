@@ -1070,7 +1070,12 @@ const SearchPage = () => {
                           ? 'text-white shadow-md'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
-                      style={isActive ? { background: 'linear-gradient(90deg, #3B82F6 0%, #000000 25%, #000000 75%, #3B82F6 100%)' } : {}}
+                      style={isActive ? {
+                        backgroundImage: 'linear-gradient(#000, #000), linear-gradient(90deg, #3B82F6 0%, transparent 25%, transparent 75%, #3B82F6 100%)',
+                        backgroundOrigin: 'border-box',
+                        backgroundClip: 'padding-box, border-box',
+                        border: '2px solid transparent'
+                      } : {}}
                     >
                       <span>{tab.label}</span>
                     </button>
