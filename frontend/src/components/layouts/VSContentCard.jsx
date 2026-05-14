@@ -127,6 +127,11 @@ const VSContentCard = ({
 
   const slides = [optionA, optionB];
 
+  // 🎨 Colores Twyk según la opción activa (A=lila, B=azul)
+  const TWYK_TOP = { primary: '#A855F7', glow: 'rgba(168,85,247,0.65)' };
+  const TWYK_BOTTOM = { primary: '#3B82F6', glow: 'rgba(59,130,246,0.65)' };
+  const activeColor = activeIdx === 0 ? TWYK_TOP : TWYK_BOTTOM;
+
   return createPortal(
     <div
       data-testid="vs-content-card"
@@ -137,9 +142,13 @@ const VSContentCard = ({
       }}
       onClick={onClose}
     >
-      {/* Card central — mismo aspecto que un post, bordes redondeados */}
+      {/* Card central — mismo aspecto que un post, bordes redondeados + glow Twyk */}
       <div
-        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 bg-black"
+        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl overflow-hidden bg-black transition-all duration-300"
+        style={{
+          border: `2px solid ${activeColor.primary}`,
+          boxShadow: `0 0 28px ${activeColor.glow}, 0 0 60px ${activeColor.glow}`,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Carrusel horizontal con snap */}
@@ -164,27 +173,28 @@ const VSContentCard = ({
           {slides.map((_, i) => (
             <span
               key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                i === activeIdx ? 'bg-white w-4' : 'bg-white/50'
+              className={`h-1.5 rounded-full transition-all ${
+                i === activeIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
               }`}
             />
           ))}
         </div>
-
-        {/* Botón Atrás visible en la esquina superior izquierda DE LA CARD */}
-        <button
-          type="button"
-          data-testid="vs-content-card-back"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose?.();
-          }}
-          className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/55 backdrop-blur-md flex items-center justify-center active:scale-95 transition-transform z-10"
-          aria-label="Atrás"
-        >
-          <ArrowLeft className="w-5 h-5 text-white" strokeWidth={2.2} />
-        </button>
       </div>
+
+      {/* Botón Atrás flotante — sin marco, fuera de la card */}
+      <button
+        type="button"
+        data-testid="vs-content-card-back"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose?.();
+        }}
+        className="absolute top-6 left-4 z-10 active:scale-95 transition-transform"
+        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}
+        aria-label="Atrás"
+      >
+        <ArrowLeft className="w-7 h-7 text-white" strokeWidth={2.4} />
+      </button>
     </div>,
     document.body
   );
