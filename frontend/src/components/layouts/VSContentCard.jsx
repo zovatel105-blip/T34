@@ -80,7 +80,13 @@ const VSContentCard = ({
 }) => {
   const pushedRef = useRef(false);
   const scrollerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
   const [activeIdx, setActiveIdx] = useState(initialIndex);
+
+  // Mantenemos la última referencia de onClose sin re-disparar el effect
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Soporte del botón "Atrás" del dispositivo / navegador
   useEffect(() => {
@@ -92,7 +98,7 @@ const VSContentCard = ({
 
     const onPop = () => {
       pushedRef.current = false;
-      onClose?.();
+      onCloseRef.current?.();
     };
     window.addEventListener('popstate', onPop);
     return () => {
@@ -102,7 +108,7 @@ const VSContentCard = ({
         pushedRef.current = false;
       }
     };
-  }, [visible, onClose]);
+  }, [visible]);
 
   // Scroll inicial al slide correcto cuando se abre
   useEffect(() => {
