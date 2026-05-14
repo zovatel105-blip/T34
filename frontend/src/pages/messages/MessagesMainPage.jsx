@@ -1146,7 +1146,7 @@ const MessagesMainPage = () => {
       {!showChat ? (
         <>
           {/* Header */}
-          <div className="flex-shrink-0 bg-white px-4 py-3">
+          <div className="flex-shrink-0 bg-white px-1 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Inbox className="h-6 w-6 text-blue-500 mr-2" />

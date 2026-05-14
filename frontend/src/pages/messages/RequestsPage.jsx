@@ -124,7 +124,7 @@ const RequestsPage = () => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header - same style as Activity */}
-      <div className="flex-shrink-0 bg-white px-4 pt-3 pb-3">
+      <div className="flex-shrink-0 bg-white px-1 pt-3 pb-3">
         <div className="flex items-center justify-center relative">
           <button onClick={() => navigate('/messages')}
             className="absolute left-0 p-1 hover:bg-gray-100 rounded-full transition-colors">
