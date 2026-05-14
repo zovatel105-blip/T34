@@ -1067,11 +1067,11 @@ const SearchPage = () => {
                       onClick={() => handleTabChange(tab.id)}
                       className={`inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
                         isActive
-                          ? 'text-white shadow-md'
+                          ? 'text-gray-900 shadow-md'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                       style={isActive ? {
-                        backgroundImage: 'linear-gradient(#000, #000), linear-gradient(90deg, #3B82F6 0%, transparent 25%, transparent 75%, #3B82F6 100%)',
+                        backgroundImage: 'linear-gradient(#f3f4f6, #f3f4f6), linear-gradient(90deg, #3B82F6 0%, transparent 25%, transparent 75%, #3B82F6 100%)',
                         backgroundOrigin: 'border-box',
                         backgroundClip: 'padding-box, border-box',
                         border: '2px solid transparent'
