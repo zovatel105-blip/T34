@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Comparación 1:1</title>
+  <style>
+    body { margin:0; padding:30px; background:#f8fafc; font-family:-apple-system,Roboto,sans-serif; }
+    h1 { font-size:22px; margin:0 0 24px; color:#1e293b; }
+    .row { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; }
+    .card { background:#fff; border:2px solid #e2e8f0; border-radius:16px; padding:20px; }
+    .card h3 { margin:0 0 14px; font-size:13px; color:#64748b; text-transform:uppercase; letter-spacing:0.6px; }
+    .frame {
+      width: 256px; height: 256px; background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid #e2e8f0;
+    }
+    .frame img { width:256px; height:256px; object-fit:contain; display:block; }
+    .meta { font-size:11px; color:#94a3b8; margin-top:10px; font-family:'SF Mono',Monaco,monospace; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Comparación 1:1 — Login renderizado vs Icono nuevo</h1>
+  <div class="row">
+    <div class="card">
+      <h3>Login page (renderizado por el navegador)</h3>
+      <div class="frame">
+        <img src="/twyk-auth-logo.png" />
+      </div>
+      <div class="meta">PNG original 1024×1536 con object-contain sobre blanco</div>
+    </div>
+    <div class="card">
+      <h3>Nuevo icono iOS (1024×1024)</h3>
+      <div class="frame">
+        <img src="/_icon_preview/new/ios_1024.png" />
+      </div>
+      <div class="meta">AppIcon-512@2x.png — mismo método de render</div>
+    </div>
+    <div class="card">
+      <h3>Nuevo ic_launcher.png Android xxxhdpi (192×192)</h3>
+      <div class="frame" style="background:#fff">
+        <img src="/_icon_preview/new/launcher.png" />
+      </div>
+      <div class="meta">192×192 escalado a 256×256 para visualizar</div>
+    </div>
+  </div>
+</body>
+</html>
