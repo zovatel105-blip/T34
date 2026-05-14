@@ -1067,9 +1067,10 @@ const SearchPage = () => {
                       onClick={() => handleTabChange(tab.id)}
                       className={`inline-flex items-center px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
                         isActive
-                          ? 'bg-black text-white shadow-md'
+                          ? 'text-white shadow-md'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
+                      style={isActive ? { background: 'linear-gradient(90deg, #A855F7 0%, #3B82F6 100%)' } : {}}
                     >
                       <span>{tab.label}</span>
                     </button>
