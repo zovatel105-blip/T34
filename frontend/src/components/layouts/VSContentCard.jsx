@@ -180,23 +180,23 @@ const VSContentCard = ({
               />
             ))}
           </div>
+
+          {/* Botón Atrás — dentro de la tarjeta, sin marco */}
+          <button
+            type="button"
+            data-testid="vs-content-card-back"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose?.();
+            }}
+            className="absolute top-3 left-3 z-20 active:scale-95 transition-transform"
+            style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}
+            aria-label="Atrás"
+          >
+            <ArrowLeft className="w-7 h-7 text-white" strokeWidth={2.4} />
+          </button>
         </div>
       </div>
-
-      {/* Botón Atrás flotante — sin marco, fuera de la card */}
-      <button
-        type="button"
-        data-testid="vs-content-card-back"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose?.();
-        }}
-        className="absolute top-6 left-4 z-10 active:scale-95 transition-transform"
-        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.9))' }}
-        aria-label="Atrás"
-      >
-        <ArrowLeft className="w-7 h-7 text-white" strokeWidth={2.4} />
-      </button>
     </div>,
     document.body
   );
