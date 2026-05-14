@@ -2,47 +2,53 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Iconos: Login vs Nuevo Icono</title>
+  <title>Iconos – Antes vs Después</title>
   <style>
     body {
       margin: 0;
-      padding: 28px;
-      background: #f8fafc;
+      padding: 30px;
+      background: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: #1e293b;
+      color: #e5e7eb;
       min-height: 100vh;
     }
-    h1 { font-size: 24px; margin: 0 0 6px; }
-    .subtitle { color: #64748b; margin-bottom: 28px; font-size: 14px; }
-    .section-title { font-size: 16px; margin: 28px 0 12px; color: #334155; font-weight: 700; }
+    h1 { font-size: 26px; margin: 0 0 6px; }
+    .subtitle { color: #94a3b8; margin-bottom: 26px; font-size: 14px; }
+    .section-title { font-size: 18px; margin: 26px 0 14px; color: #cbd5e1; font-weight: 700; }
     .compare {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-      max-width: 1000px;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: stretch;
+      max-width: 1180px;
       margin-bottom: 14px;
     }
-    .card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 18px;
-      text-align: center;
+    .side {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 20px;
     }
-    .card h3 { margin: 0 0 12px; font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .side h3 { margin: 0 0 16px; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; }
+    .row { display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .icon-card { text-align: center; }
     .frame {
-      width: 220px;
-      height: 220px;
+      width: 160px; height: 160px;
       background: #fff;
-      margin: 0 auto;
       display: flex; align-items: center; justify-content: center;
-      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
     }
-    .frame img { display: block; }
-    .frame.squircle img { border-radius: 22%; width: 200px; height: 200px; }
-    .frame.round img { border-radius: 50%; width: 200px; height: 200px; }
-    .frame.contain img { width: 200px; height: 200px; object-fit: contain; }
-    .label { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+    .frame img { width: 140px; height: 140px; display: block; }
+    .icon-card.sq .frame img { border-radius: 22%; }
+    .icon-card.rd .frame img { border-radius: 50%; }
+    .icon-card .lbl { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+
+    .arrow {
+      font-size: 36px;
+      color: #a78bfa;
+      align-self: center;
+    }
 
     .android-sim {
       background: linear-gradient(135deg, #1e3a8a 0%, #4c1d95 100%);
@@ -52,76 +58,123 @@
       gap: 28px;
       align-items: center;
       justify-content: center;
-      max-width: 1000px;
     }
-    .icon-card {
-      text-align: center;
+    .android-sim .icon-card .frame {
+      background: transparent;
+      width: 88px; height: 88px;
+      border-radius: 0;
     }
-    .icon-card .frame { width: 96px; height: 96px; background: transparent; border: none; }
-    .icon-card .frame img { width: 96px; height: 96px; }
-    .icon-card.sq img { border-radius: 22%; }
-    .icon-card.rd img { border-radius: 50%; }
-    .icon-card .lbl { font-size: 11px; color: rgba(255,255,255,0.9); margin-top: 6px; }
+    .android-sim .icon-card .frame img { width: 84px; height: 84px; }
+    .android-sim .icon-card.sq .frame img { border-radius: 22%; }
+    .android-sim .icon-card.rd .frame img { border-radius: 50%; }
+    .android-sim .icon-card .lbl { color: rgba(255,255,255,0.9); }
 
-    .meta { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; color: #64748b; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge.old { background: #7f1d1d; color: #fecaca; }
+    .badge.new { background: #14532d; color: #bbf7d0; }
+
+    .meta {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body>
-  <h1>🎨 Iconos nativos – Comparación con el logo del login</h1>
-  <div class="subtitle">El icono ahora replica exactamente cómo el navegador renderiza el PNG en la página de login (object-contain + fondo blanco).</div>
+  <h1>🎨 Iconos nativos — Antes vs Después</h1>
+  <div class="subtitle">Logo del icono cambiado al nuevo M/W con halo púrpura/azul · fondo blanco · mismas dimensiones del icono original</div>
 
-  <div class="section-title">🔍 Comparación: Logo del login (referencia) vs Nuevo icono</div>
+  <div class="section-title">📱 Simulación en el launcher de Android</div>
   <div class="compare">
-    <div class="card">
-      <h3>Login page (referencia)</h3>
-      <div class="frame contain">
-        <img src="/twyk-auth-logo.png" alt="login logo" />
+    <div class="side">
+      <h3>ANTES <span class="badge old">Logo anterior (abeja)</span></h3>
+      <div class="android-sim">
+        <div class="icon-card sq">
+          <div class="frame"><img src="/_icon_preview/old/launcher.png" /></div>
+          <div class="lbl">Cuadrado</div>
+        </div>
+        <div class="icon-card rd">
+          <div class="frame"><img src="/_icon_preview/old/launcher_round.png" /></div>
+          <div class="lbl">Redondo</div>
+        </div>
       </div>
-      <div class="label">/twyk-auth-logo.png<br/>renderizado con object-contain</div>
     </div>
-    <div class="card">
-      <h3>Nuevo ic_launcher.png</h3>
-      <div class="frame">
-        <img src="/_icon_preview/new/launcher.png" style="width:200px;height:200px"/>
+    <div class="arrow">→</div>
+    <div class="side">
+      <h3>DESPUÉS <span class="badge new">Nuevo logo M/W</span></h3>
+      <div class="android-sim">
+        <div class="icon-card sq">
+          <div class="frame"><img src="/_icon_preview/new/launcher.png" /></div>
+          <div class="lbl">Cuadrado</div>
+        </div>
+        <div class="icon-card rd">
+          <div class="frame"><img src="/_icon_preview/new/launcher_round.png" /></div>
+          <div class="lbl">Redondo</div>
+        </div>
       </div>
-      <div class="label">192×192 (xxxhdpi)<br/>fondo blanco, mismo render</div>
-    </div>
-    <div class="card">
-      <h3>iOS AppIcon 1024×1024</h3>
-      <div class="frame">
-        <img src="/_icon_preview/new/ios_1024.png" style="width:200px;height:200px"/>
-      </div>
-      <div class="label">AppIcon-512@2x.png</div>
     </div>
   </div>
 
-  <div class="section-title">📱 Simulación: cómo se verá en el launcher de Android</div>
-  <div class="android-sim">
-    <div class="icon-card sq">
-      <div class="frame"><img src="/_icon_preview/new/launcher.png" /></div>
-      <div class="lbl">Cuadrado (squircle)</div>
+  <div class="section-title">🗂️ Archivos individuales (xxxhdpi 192×192 / 432×432)</div>
+  <div class="compare">
+    <div class="side">
+      <h3>ANTES</h3>
+      <div class="row">
+        <div class="icon-card sq">
+          <div class="frame"><img src="/_icon_preview/old/launcher.png" /></div>
+          <div class="lbl">ic_launcher.png</div>
+        </div>
+        <div class="icon-card rd">
+          <div class="frame"><img src="/_icon_preview/old/launcher_round.png" /></div>
+          <div class="lbl">ic_launcher_round.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame" style="background:#fff"><img src="/_icon_preview/old/launcher_foreground.png" style="border-radius:0" /></div>
+          <div class="lbl">ic_launcher_foreground.png</div>
+        </div>
+      </div>
     </div>
-    <div class="icon-card rd">
-      <div class="frame"><img src="/_icon_preview/new/launcher_round.png" /></div>
-      <div class="lbl">Redondo</div>
-    </div>
-    <div class="icon-card sq">
-      <div class="frame" style="background:#fff;border-radius:22%"><img src="/_icon_preview/new/launcher_foreground.png" style="border-radius:0" /></div>
-      <div class="lbl">Adaptive (fg + bg blanco)</div>
+    <div class="arrow">→</div>
+    <div class="side">
+      <h3>DESPUÉS</h3>
+      <div class="row">
+        <div class="icon-card sq">
+          <div class="frame"><img src="/_icon_preview/new/launcher.png" /></div>
+          <div class="lbl">ic_launcher.png</div>
+        </div>
+        <div class="icon-card rd">
+          <div class="frame"><img src="/_icon_preview/new/launcher_round.png" /></div>
+          <div class="lbl">ic_launcher_round.png</div>
+        </div>
+        <div class="icon-card">
+          <div class="frame" style="background:#fff"><img src="/_icon_preview/new/launcher_foreground.png" style="border-radius:0" /></div>
+          <div class="lbl">ic_launcher_foreground.png</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="section-title">📋 ¿Por qué ahora se ve igual que el login?</div>
-  <div class="card" style="max-width:1000px;text-align:left">
-    <p style="margin:0 0 8px"><strong>Causa raíz del problema anterior:</strong></p>
-    <p style="margin:0 0 8px;color:#475569">Yo estaba recortando el PNG alrededor de la forma M/W antes de redimensionar. Eso eliminaba la mayor parte del halo púrpura/azul (que se extiende mucho más allá de la M/W). Al componer sobre blanco, sólo quedaba una pequeña aureola tenue.</p>
-    <p style="margin:8px 0"><strong>Solución aplicada:</strong></p>
-    <ul style="margin:0;color:#475569">
-      <li>Uso el archivo <code>/twyk-auth-logo.png</code> tal cual (sin recortar)</li>
-      <li>Aplico el mismo principio <code>object-contain</code> que usa el navegador: redimensiono manteniendo aspect ratio, centrado dentro del cuadrado del icono</li>
-      <li>Composición sobre fondo blanco con alpha-blending correcto (mismo método que el navegador)</li>
+  <div class="section-title">📋 Resumen de cambios</div>
+  <div class="side" style="max-width:1180px">
+    <ul style="margin:0; padding-left:20px; line-height:1.9; color:#cbd5e1;">
+      <li>✅ <strong>Logo nuevo:</strong> M/W con halo púrpura/azul (mismo que se usa en la página de login)</li>
+      <li>✅ <strong>Fondo:</strong> Blanco (#FFFFFF) — igual que el original</li>
+      <li>✅ <strong>Mismas dimensiones:</strong> 48/72/96/144/192 (legacy) y 108/162/216/324/432 (adaptive fg)</li>
+      <li>✅ <strong>Render idéntico al login:</strong> el halo púrpura/azul se ve con la misma vibrancia</li>
+      <li>✅ <strong>iOS también:</strong> AppIcon-512@2x.png (1024×1024) actualizado</li>
     </ul>
-    <div class="meta" style="margin-top:12px">Resultado: el icono renderiza idéntico al logo del login, con el halo púrpura/azul perfectamente visible.</div>
+    <div class="meta">android/app/src/main/res/mipmap-*/ ic_launcher*.png</div>
+    <div class="meta">ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png</div>
+    <div class="meta">android/app/src/main/res/values/ic_launcher_background.xml → #FFFFFF</div>
   </div>
 </body>
 </html>
