@@ -510,7 +510,7 @@ const ActivityPage = () => {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 px-1">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 pt-2 -mx-4 px-4">
           {tabs.map(tab => (
             <div key={tab.key} className="relative flex-shrink-0">
               {tab.count > 0 && (
