@@ -619,10 +619,19 @@ const QuestionSlide = ({
     }
   };
 
-  const handleLongPressEnd = () => {
+  const handleLongPressEnd = (e) => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
+    }
+    // Si el long-press se disparó, evitamos el click sintético posterior
+    // que el WebView de Android genera al levantar el dedo (podría caer
+    // sobre la card recién montada y cerrarla).
+    if (longPressTriggeredRef.current) {
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+      } catch (_) { /* noop */ }
     }
   };
 

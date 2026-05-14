@@ -140,7 +140,6 @@ const VSContentCard = ({
         background: 'rgba(0,0,0,0.85)',
         touchAction: 'none',
       }}
-      onClick={onClose}
     >
       {/* Wrapper con el glow Twyk — el glow vive aquí (NO en la card con
           overflow-hidden) para que sea SIEMPRE visible hacia fuera. */}
@@ -149,7 +148,6 @@ const VSContentCard = ({
         style={{
           boxShadow: `0 0 0 2px ${activeColor.primary}, 0 0 32px ${activeColor.glow}, 0 0 80px ${activeColor.glow}`,
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Card interior — overflow-hidden aquí para recortar el contenido,
             sin afectar al glow del wrapper. */}
