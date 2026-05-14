@@ -5,16 +5,25 @@
 /* ====================================================
    NATIVE APP UX — Disable text selection / callout
    Behaves like Instagram/TikTok: no "Copy/Share" menu
-   on long-press of regular text. Re-enable for inputs,
-   textareas, contenteditable, and explicit opt-ins.
+   on long-press of regular text or buttons. Re-enable
+   for inputs, textareas, contenteditable, and explicit
+   opt-ins via the .allow-select class.
    ==================================================== */
-html, body {
+html, body, * {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Buttons and interactive elements: never selectable / no callout */
+button, a, [role="button"] {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 /* Allow selection where it is actually useful */
