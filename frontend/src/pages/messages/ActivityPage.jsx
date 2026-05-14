@@ -520,8 +520,12 @@ const ActivityPage = () => {
               )}
               <button onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === tab.key ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                  activeTab === tab.key ? 'text-gray-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                style={activeTab === tab.key ? {
+                  backgroundColor: '#f3f4f6',
+                  border: '2px solid #3B82F6'
+                } : {}}>
                 {tab.label}
               </button>
             </div>
