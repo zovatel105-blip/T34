@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Solid white background fills the entire screen -->
+    <item>
+        <color android:color="#FFFFFF" />
+    </item>
+    <!-- Logo centered without scaling/cropping; safe in central area -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash"
+            android:gravity="center"
+            android:tileMode="disabled" />
+    </item>
+</layer-list>
