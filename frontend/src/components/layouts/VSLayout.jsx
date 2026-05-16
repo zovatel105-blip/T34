@@ -863,7 +863,7 @@ const QuestionSlide = ({
           {isWinning && showResults && (
             <div
               className={cn(
-                "absolute z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
+                "absolute z-40 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
                 "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
                 isRow
                   ? cn(TROPHY_TOP, isOptionA ? "left-3" : "right-3")
@@ -881,7 +881,7 @@ const QuestionSlide = ({
               imagen de referencia. */}
           <div
             className={cn(
-              "absolute z-10 flex flex-col px-4",
+              "absolute z-40 flex flex-col px-4",
               isRow
                 ? cn("bottom-16 right-3 left-3 items-start")
                 : cn("left-0 right-16 items-start", isOptionA ? "bottom-16" : "top-16"),

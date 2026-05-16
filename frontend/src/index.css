@@ -195,15 +195,17 @@ textarea,
 
 /* Card perdedora — actúa como FONDO del que se LEVANTA el subject
    (estilo iOS Look Up). Se queda visible y nítida-ish, pero claramente
-   por DETRÁS de la card votada (translateZ negativo + leve blur). */
+   por DETRÁS de la card votada (translateZ negativo + leve oscurecimiento).
+   ⚠️ NO se encoge ni se oscurece demasiado para que el porcentaje,
+   votos, estado y trofeo sigan siendo legibles. */
 @keyframes vsCinemaRecede {
-  0%   { transform: translateZ(0) scale(1); }
-  100% { transform: translateZ(-25px) scale(0.96); }
+  0%   { transform: translateZ(0); }
+  100% { transform: translateZ(-15px); }
 }
 .vs-cinema-recede {
   animation: vsCinemaRecede 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  filter: grayscale(0.7) brightness(0.55) saturate(0.4) blur(1px);
-  opacity: 0.85;
+  filter: brightness(0.85) saturate(0.85);
+  opacity: 0.95;
   will-change: transform;
 }
 
