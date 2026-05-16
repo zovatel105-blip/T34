@@ -1002,12 +1002,14 @@ const SearchPage = () => {
         {/* Top Row - Back Button + Search Bar */}
         <div className="px-1 py-3">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-1"
-            >
-              <ArrowLeft size={24} className="text-gray-900" />
-            </button>
+            {!hasSearched && (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-1"
+              >
+                <ArrowLeft size={24} className="text-gray-900" />
+              </button>
+            )}
             
             <div className="flex-1 relative">
               {/* Search Input - Clean Design */}
