@@ -1117,278 +1117,65 @@ const SearchPage = () => {
 
         {/* Content Sections - Only show when NOT searching */}
         {!hasSearched && (
-          <div className="flex-1 py-1 space-y-6 sm:space-y-8 w-full">
-            {/* Recent Searches Section - Real Data */}
+          <div className="flex-1 py-1 w-full">
+            {/* Recent Searches Section - Instagram-style design */}
             {isAuthenticated && (
-            <div className="space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-between px-4">
-                <h3 className="text-lg font-semibold text-gray-900">{t('search.recentSearches')}</h3>
-              </div>
-              
+            <div>
               {loadingStates.recentSearches ? (
-                <RecentSearchesSkeleton count={5} />
+                <div className="px-4 pt-2">
+                  <RecentSearchesSkeleton count={5} />
+                </div>
               ) : recentSearches.length > 0 ? (
                 <>
-                  <div className="space-y-0">
-                    {(showAllRecentSearches ? recentSearches : recentSearches.slice(0, 3)).map((recentSearch, index) => {
-                      return (
-                        <div 
-                          key={recentSearch.id}
-                          onClick={() => handleRecentSearchClick(recentSearch)}
-                          className="flex items-center gap-3 py-3 px-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <div className="w-5 h-5 text-gray-400 flex-shrink-0">
-                            <Clock size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-semibold text-gray-900 truncate block">{recentSearch.query}</span>
-                          </div>
-                          <button 
-                            onClick={(e) => handleDeleteRecentSearch(recentSearch.id, e)}
-                            className="w-5 h-5 text-gray-400 hover:text-gray-600 flex-shrink-0"
-                          >
-                            <X size={20} />
-                          </button>
-                        </div>
-                      );
-                    })}
+                  {/* Header: "Recientes" + "Ver todo" */}
+                  <div className="flex items-center justify-between px-4 pt-2 pb-3">
+                    <h3 className="text-lg font-bold text-gray-900">{t('search.recentSearchesTitle')}</h3>
+                    {recentSearches.length > 3 && (
+                      <button
+                        onClick={() => setShowAllRecentSearches(!showAllRecentSearches)}
+                        className="text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                      >
+                        {showAllRecentSearches ? t('search.seeLess') : t('search.seeAll')}
+                      </button>
+                    )}
                   </div>
-                  
-                  {/* See more button */}
-                  {recentSearches.length > 3 && (
-                    <button
-                      onClick={() => setShowAllRecentSearches(!showAllRecentSearches)}
-                      className="w-full py-3 text-center text-gray-500 text-sm hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span>{showAllRecentSearches ? t('search.seeLess') : t('search.seeMore')}</span>
-                      {showAllRecentSearches ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
-                  )}
+
+                  {/* Rows */}
+                  <div className="flex flex-col">
+                    {(showAllRecentSearches ? recentSearches : recentSearches.slice(0, 3)).map((recentSearch) => (
+                      <div
+                        key={recentSearch.id}
+                        onClick={() => handleRecentSearchClick(recentSearch)}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
+                      >
+                        {/* Circular clock icon (bordered) */}
+                        <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          <Clock size={22} className="text-gray-900" strokeWidth={1.5} />
+                        </div>
+
+                        {/* Query text */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[15px] font-semibold text-gray-900 truncate">
+                            {recentSearch.query}
+                          </p>
+                        </div>
+
+                        {/* Delete button */}
+                        <button
+                          onClick={(e) => handleDeleteRecentSearch(recentSearch.id, e)}
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 flex-shrink-0"
+                          aria-label="Eliminar"
+                        >
+                          <X size={20} strokeWidth={2} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </>
               ) : (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-12 text-gray-400">
                   <Clock size={24} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">{t('search.noRecentSearches')}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Stories Section - Real Data */}
-          {isAuthenticated && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 px-4">{t('search.stories')}</h3>
-              
-              {loadingStates.stories ? (
-                <StoriesSectionSkeleton count={5} />
-              ) : stories.length > 0 ? (
-                /* Horizontal Scrolling Carousel with Real Data */
-                <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2 px-4">
-                  {stories.map((story, index) => {
-                    // Generate gradient colors based on story content or user
-                    const gradients = [
-                      'bg-gradient-to-br from-pink-400 via-pink-500 to-purple-600',
-                      'bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-800',
-                      'bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600',
-                      'bg-gradient-to-br from-orange-400 via-red-500 to-pink-600',
-                      'bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700',
-                      'bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600',
-                      'bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-700'
-                    ];
-                    
-                    const storyIcons = [Music, Heart, Palette, Star, Gamepad2, Camera, Sparkles];
-                    const StoryIcon = storyIcons[index % storyIcons.length];
-                    
-                    return (
-                      <div 
-                        key={story.id} 
-                        onClick={() => handleStoryClick(story)}
-                        className="flex-shrink-0 cursor-pointer group relative animate-slide-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        {/* Story Card - Small size carousel format */}
-                        <div 
-                          className={`relative rounded-2xl overflow-hidden shadow-lg group-hover:scale-105 transition-all duration-300 ${gradients[index % gradients.length]} flex items-center justify-center`}
-                          style={{
-                            width: '120px',
-                            height: '160px'
-                          }}
-                        >
-                          {/* Background image if available - with lazy loading */}
-                          {story.thumbnail_url && (
-                            <LazyImage 
-                              src={story.thumbnail_url}
-                              alt={story.user?.display_name || 'Story'}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          )}
-                          
-                          {/* Background pattern overlay */}
-                          <div className="absolute inset-0 bg-black/20"></div>
-                          
-                          {/* Decorative content in center (if no image) */}
-                          {!story.thumbnail_url && (
-                            <div className="opacity-80 drop-shadow-lg">
-                              <StoryIcon size={48} className="text-white" strokeWidth={2} />
-                            </div>
-                          )}
-                          
-                          {/* Bottom gradient for avatar area */}
-                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-                          
-                          {/* Story status indicator */}
-                          {!story.viewed && (
-                            <div className="absolute top-2 left-2 w-2 h-2 bg-blue-500 rounded-full"></div>
-                          )}
-                          
-                          {/* User avatar container */}
-                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                            <div className="relative mb-1">
-                              <div className="w-9 h-9 rounded-full bg-white p-0.5">
-                                <LazyImage 
-                                  src={story.user?.avatar_url || '/default-avatar.png'}
-                                  alt={story.user?.display_name || 'User'}
-                                  className="w-full h-full rounded-full object-cover"
-                                />
-                              </div>
-                              {/* Red plus icon for add story (first item if it's user's story) */}
-                              {index === 0 && story.is_own_story && (
-                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
-                                  <span className="text-white text-xs font-bold leading-none">+</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* User name */}
-                            <p className="text-white text-xs font-semibold drop-shadow-lg text-center leading-tight max-w-[100px] truncate">
-                              {story.user?.display_name || story.user?.username || 'Usuario'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 px-4">
-                  <div className="flex justify-center mb-2">
-                    <BookOpen size={48} className="text-gray-400" strokeWidth={2} />
-                  </div>
-                  <p className="text-sm">{t('search.noStories')}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t('search.noStoriesDesc')}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* You may like Section - Real Data */}
-          {isAuthenticated && (
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 px-4">{t('search.youMayLike')}</h3>
-              
-              {loadingStates.recommendations ? (
-                <RecommendationsSectionSkeleton count={6} />
-              ) : recommendedContent.length > 0 ? (
-                <div className="flex space-x-3 sm:space-x-4 overflow-x-auto scrollbar-hide pb-2 w-full px-4">
-                  {recommendedContent.map((content, index) => {
-                    // Dynamic gradient colors
-                    const gradients = [
-                      'bg-gradient-to-br from-pink-500 to-purple-600',
-                      'bg-gradient-to-br from-green-500 to-teal-600',
-                      'bg-gradient-to-br from-purple-500 to-pink-600',
-                      'bg-gradient-to-br from-orange-500 to-red-600',
-                      'bg-gradient-to-br from-blue-500 to-cyan-600',
-                      'bg-gradient-to-br from-yellow-500 to-orange-600',
-                      'bg-gradient-to-br from-indigo-500 to-purple-600',
-                      'bg-gradient-to-br from-teal-500 to-green-600'
-                    ];
-
-                    // Get appropriate icon based on content type
-                    const getContentIcon = (content) => {
-                      if (content.hashtag && content.hashtag.includes('baile')) return Heart;
-                      if (content.hashtag && content.hashtag.includes('música')) return Music;
-                      if (content.hashtag && content.hashtag.includes('arte')) return Palette;
-                      if (content.hashtag && content.hashtag.includes('gaming')) return Gamepad2;
-                      if (content.hashtag && content.hashtag.includes('viaje')) return Plane;
-                      if (content.hashtag && content.hashtag.includes('comida')) return Pizza;
-                      if (content.type === 'user') return User;
-                      if (content.type === 'hashtag') return Hash;
-                      if (content.type === 'poll') return BarChart3;
-                      const defaultIcons = [Star, Sparkles, Zap, Target, Flame, TrendingUp];
-                      return defaultIcons[index % defaultIcons.length];
-                    };
-                    
-                    const ContentIcon = getContentIcon(content);
-
-                    // Format view count or engagement metrics
-                    const formatViews = (num) => {
-                      if (!num) return '0';
-                      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-                      if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-                      return num.toString();
-                    };
-
-                    return (
-                      <div 
-                        key={content.id || index} 
-                        onClick={() => handleRecommendedContentClick(content)}
-                        className="flex-shrink-0 cursor-pointer group animate-slide-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div 
-                          className={`${gradients[index % gradients.length]} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 relative overflow-hidden`}
-                          style={{
-                            width: 'calc((100vw - 84px) / 2.8)', // Mobile responsive width
-                            height: 'calc(((100vw - 84px) / 2.8) * 1.77)', // Maintain aspect ratio
-                            minWidth: '100px',
-                            maxWidth: '129px',
-                            minHeight: '177px',
-                            maxHeight: '230px'
-                          }}
-                        >
-                          {/* Background image if available - with lazy loading */}
-                          {content.thumbnail_url && (
-                            <LazyImage 
-                              src={content.thumbnail_url}
-                              alt={content.title || content.hashtag}
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          )}
-                          
-                          <div className="absolute inset-0 bg-black/10"></div>
-                          <div className="relative z-10 drop-shadow-lg">
-                            <ContentIcon size={48} className="text-white" strokeWidth={2} />
-                          </div>
-                          
-                          {/* View count or engagement metrics */}
-                          <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 bg-black/60 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
-                            {formatViews(content.engagement_count || content.view_count || content.total_votes || Math.floor(Math.random() * 50000))}
-                          </div>
-                          
-                          {/* Trending indicator */}
-                          <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
-                            <div className="w-4 sm:w-5 h-4 sm:h-5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                              <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white rounded-full"></div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Content title */}
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-1 sm:mt-2 text-center leading-tight truncate" 
-                           style={{maxWidth: 'calc((100vw - 84px) / 2.8)', minWidth: '100px', maxWidth: '129px'}}>
-                          {content.title || content.hashtag || content.username || 'Contenido trending'}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-gray-500 px-3">
-                  <div className="flex justify-center mb-2">
-                    <Target size={40} className="text-gray-400" strokeWidth={2} />
-                  </div>
-                  <p className="text-sm">{t('search.noRecommendations')}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t('search.noRecommendationsDesc')}</p>
                 </div>
               )}
             </div>
