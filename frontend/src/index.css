@@ -151,10 +151,11 @@ textarea,
 }
 
 /* Texto y porcentajes flotan claramente DELANTE de la imagen
-   (3 capas de profundidad: imagen → marco → texto) */
+   y por encima del overlay "lift subject" (que llega a translateZ 140px).
+   Z muy alto para garantizar visibilidad sobre el sujeto levantado. */
 @keyframes vsCinemaTextFloat {
-  0%, 100% { transform: translateZ(55px); }
-  50%      { transform: translateZ(85px); }
+  0%, 100% { transform: translateZ(180px); }
+  50%      { transform: translateZ(215px); }
 }
 .vs-cinema-text-float {
   animation: vsCinemaTextFloat 4.8s ease-in-out infinite;
@@ -194,17 +195,16 @@ textarea,
 }
 
 /* Card perdedora — actúa como FONDO del que se LEVANTA el subject
-   (estilo iOS Look Up). Se queda visible y nítida-ish, pero claramente
-   por DETRÁS de la card votada (translateZ negativo + leve oscurecimiento).
-   ⚠️ NO se encoge ni se oscurece demasiado para que el porcentaje,
-   votos, estado y trofeo sigan siendo legibles. */
+   (estilo iOS Look Up). Se queda visible y en GRIS para indicar la
+   derrota, pero suficientemente legible para ver porcentaje, votos
+   y status. NO se encoge para mantener el tamaño consistente. */
 @keyframes vsCinemaRecede {
   0%   { transform: translateZ(0); }
   100% { transform: translateZ(-15px); }
 }
 .vs-cinema-recede {
   animation: vsCinemaRecede 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  filter: brightness(0.85) saturate(0.85);
+  filter: grayscale(0.85) brightness(0.8) saturate(0.3);
   opacity: 0.95;
   will-change: transform;
 }

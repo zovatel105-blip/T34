@@ -881,9 +881,9 @@ const QuestionSlide = ({
               imagen de referencia. */}
           <div
             className={cn(
-              "absolute z-40 flex flex-col px-4",
+              "absolute z-40 flex flex-col px-2",
               isRow
-                ? cn("bottom-16 right-3 left-3 items-start")
+                ? cn("bottom-16 right-2 left-1 items-start")
                 : cn("left-0 right-16 items-start", isOptionA ? "bottom-16" : "top-16"),
               // 🎬 Texto/porcentaje flota DELANTE de la imagen (3 capas de profundidad)
               isSelected && "vs-cinema-text-float"
