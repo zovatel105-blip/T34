@@ -119,7 +119,7 @@ const BottomNavigation = () => {
         // 🛠️ Cuando el modal de comentarios está activo, NO redondeamos el
         // tope del nav. Así el modal blanco (que tiene rounded-t-3xl) y el
         // nav blanco se ven como UN ÚNICO marco continuo que se expande.
-        hideBottomNav && commentInputConfig ? "bg-white" : "bg-black rounded-t-3xl"
+        hideBottomNav && commentInputConfig ? "bg-zinc-900" : "bg-black rounded-t-3xl"
       )}
       style={{
         // EDGE-TO-EDGE: respetar la barra de navegación del sistema
@@ -134,7 +134,7 @@ const BottomNavigation = () => {
               emoji en el campo de comentario. Estilo TikTok/Instagram. */}
           <div
             data-testid="quick-emoji-bar"
-            className="flex items-center justify-around px-4 py-3 border-t border-gray-100"
+            className="flex items-center justify-around px-4 py-3 border-t border-zinc-800"
           >
             {['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'].map((emoji) => (
               <button
@@ -155,12 +155,12 @@ const BottomNavigation = () => {
             ))}
           </div>
           <div className="px-4 py-2">
-            <form onSubmit={handleCommentSubmit} className="flex items-center bg-gray-100 rounded-full px-2.5 py-1.5">
+            <form onSubmit={handleCommentSubmit} className="flex items-center bg-zinc-800 rounded-full px-2.5 py-1.5">
               <Avatar className="w-7 h-7 flex-shrink-0">
                 {user?.avatar_url ? (
                   <AvatarImage src={resolveAssetUrl(user.avatar_url)} alt={user?.username} />
                 ) : null}
-                <AvatarFallback className="bg-gray-300 text-gray-500 flex items-center justify-center">
+                <AvatarFallback className="bg-zinc-700 text-zinc-400 flex items-center justify-center">
                   <User className="w-3.5 h-3.5" />
                 </AvatarFallback>
               </Avatar>
@@ -168,7 +168,7 @@ const BottomNavigation = () => {
                 ref={commentInputRef}
                 type="text"
                 placeholder={t('nav.addComment')}
-                className="flex-1 px-2.5 py-0 text-sm bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none"
+                className="flex-1 px-2.5 py-0 text-sm bg-transparent text-white placeholder-zinc-500 focus:outline-none"
                 maxLength={500}
                 disabled={submittingComment}
               />
@@ -177,7 +177,7 @@ const BottomNavigation = () => {
                 disabled={submittingComment}
                 className="flex-shrink-0 disabled:opacity-30"
               >
-                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
