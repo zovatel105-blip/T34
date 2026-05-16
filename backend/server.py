@@ -3003,6 +3003,8 @@ async def search_hashtags_optimized(query: str, current_user_id: str, limit: int
                     "content": 1,
                     "options": 1,
                     "layout": 1,
+                    "vs_orientation": 1,  # 🎯 VS: orientación del split (vertical=lado a lado, horizontal=arriba-abajo)
+                    "vs_questions": 1,    # 🎯 VS: preguntas multi-pregunta
                     "images": 1,
                     "image_url": 1,
                     "thumbnail_url": 1,
@@ -3099,6 +3101,8 @@ async def search_hashtags_optimized(query: str, current_user_id: str, limit: int
                 "media_url": media_url or image_url,
                 "images": images_array,
                 "layout": post.get("layout", "vertical"),
+                "vs_orientation": post.get("vs_orientation", "horizontal"),  # 🎯 VS: orientación para thumbnail
+                "vs_questions": post.get("vs_questions", []),                # 🎯 VS: preguntas multi-pregunta
                 "options": processed_options,
                 "video_url": post.get("video_url"),
                 "author_id": post.get("author_id"),
