@@ -1128,12 +1128,12 @@ const SearchPage = () => {
               ) : recentSearches.length > 0 ? (
                 <>
                   {/* Header: "Recientes" + "Ver todo" */}
-                  <div className="flex items-center justify-between px-2 pt-2 pb-3">
-                    <h3 className="text-xl font-bold text-gray-900">{t('search.recentSearchesTitle')}</h3>
+                  <div className="flex items-center justify-between px-2 pt-2 pb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{t('search.recentSearchesTitle')}</h3>
                     {recentSearches.length > 3 && (
                       <button
                         onClick={() => setShowAllRecentSearches(!showAllRecentSearches)}
-                        className="text-[15px] font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                        className="text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
                       >
                         {showAllRecentSearches ? t('search.seeLess') : t('search.seeAll')}
                       </button>
@@ -1149,13 +1149,13 @@ const SearchPage = () => {
                         className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
                       >
                         {/* Circular clock icon (bordered) */}
-                        <div className="w-14 h-14 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0">
-                          <Clock size={26} className="text-gray-900" strokeWidth={1.5} />
+                        <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          <Clock size={22} className="text-gray-900" strokeWidth={1.5} />
                         </div>
 
                         {/* Query text */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[17px] font-bold text-gray-900 truncate">
+                          <p className="text-[15px] font-semibold text-gray-900 truncate">
                             {recentSearch.query}
                           </p>
                         </div>
@@ -1163,10 +1163,10 @@ const SearchPage = () => {
                         {/* Delete button */}
                         <button
                           onClick={(e) => handleDeleteRecentSearch(recentSearch.id, e)}
-                          className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 flex-shrink-0"
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 flex-shrink-0"
                           aria-label="Eliminar"
                         >
-                          <X size={22} strokeWidth={2} />
+                          <X size={20} strokeWidth={2} />
                         </button>
                       </div>
                     ))}
