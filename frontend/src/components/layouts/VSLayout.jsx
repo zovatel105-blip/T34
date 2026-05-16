@@ -883,8 +883,8 @@ const QuestionSlide = ({
             className={cn(
               "absolute z-10 flex flex-col px-4",
               isRow
-                ? cn("bottom-6 right-3 left-3 items-start")
-                : cn("left-0 right-16 items-start", isOptionA ? "bottom-6" : "top-6"),
+                ? cn("bottom-12 right-3 left-3 items-start")
+                : cn("left-0 right-16 items-start", isOptionA ? "bottom-12" : "top-12"),
               // 🎬 Texto/porcentaje flota DELANTE de la imagen (3 capas de profundidad)
               isSelected && "vs-cinema-text-float"
             )}
