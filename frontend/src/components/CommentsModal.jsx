@@ -232,8 +232,8 @@ const CommentsModal = ({
               "relative overflow-hidden flex flex-col transition-all duration-300",
               isBottomSheet 
                 ? (isExpanded 
-                    ? "w-full h-[95dvh] rounded-t-3xl bg-white shadow-2xl"
-                    : "w-full h-[42dvh] rounded-t-3xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)]")
+                    ? "w-full h-[95dvh] rounded-t-3xl bg-zinc-900 shadow-2xl"
+                    : "w-full h-[42dvh] rounded-t-3xl bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]")
                 : isMobile 
                   ? "w-full h-[75dvh] max-h-[85dvh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900 shadow-2xl"
                   : "w-full max-w-2xl max-h-[92dvh] rounded-2xl bg-zinc-900 shadow-2xl"
@@ -252,12 +252,12 @@ const CommentsModal = ({
             {isBottomSheet ? (
               <button 
                 onClick={toggleExpand}
-                className="w-full py-2 flex justify-center flex-shrink-0 bg-white active:bg-gray-50"
+                className="w-full py-2 flex justify-center flex-shrink-0 bg-zinc-900 active:bg-zinc-800"
               >
                 {isExpanded ? (
-                  <ChevronDown className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                  <ChevronDown className="w-6 h-6 text-zinc-400" strokeWidth={2.5} />
                 ) : (
-                  <ChevronUp className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
+                  <ChevronUp className="w-6 h-6 text-zinc-400" strokeWidth={2.5} />
                 )}
               </button>
             ) : (
@@ -270,14 +270,14 @@ const CommentsModal = ({
             {/* Header */}
             <div className={cn(
               "z-10 px-4 sm:px-6 py-2 flex-shrink-0",
-              isBottomSheet ? "bg-white border-b border-gray-100" : "bg-zinc-900"
+              isBottomSheet ? "bg-zinc-900 border-b border-zinc-800" : "bg-zinc-900"
             )}
             >
               <div className="flex items-center justify-center">
                 <h2 className={cn(
                   "font-semibold text-center",
                   isMobile ? "text-sm" : "text-lg",
-                  isBottomSheet ? "text-gray-900" : "text-white"
+                  isBottomSheet ? "text-white" : "text-white"
                 )}>
                   Comentarios
                 </h2>
@@ -288,7 +288,7 @@ const CommentsModal = ({
             <div ref={scrollRef} className="flex-1 flex flex-col overflow-hidden overflow-y-auto">
               {!commentsEnabled ? (
                 <div className="flex-1 flex items-center justify-center p-8">
-                  <p className={cn("text-center text-base", isBottomSheet ? "text-gray-400" : "text-zinc-500")}>
+                  <p className={cn("text-center text-base", isBottomSheet ? "text-zinc-500" : "text-zinc-500")}>
                     Este creador desactivó los comentarios
                   </p>
                 </div>
@@ -298,7 +298,7 @@ const CommentsModal = ({
                   isVisible={isOpen}
                   maxHeight="100%"
                   showHeader={false}
-                  darkMode={!isBottomSheet}
+                  darkMode={true}
                   bottomSheetMode={isBottomSheet}
                 />
               )}

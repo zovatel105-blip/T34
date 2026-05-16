@@ -528,7 +528,7 @@ const CommentSection = ({
                   onReplyClick={handleReplyClick}
                   depth={0}
                   maxDepth={3}
-                  bottomSheetMode={bottomSheetMode}
+                  bottomSheetMode={false}
                 />
               ))}
             </AnimatePresence>
