@@ -1155,7 +1155,7 @@ const SearchPage = () => {
 
                         {/* Query text */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-semibold text-gray-900 truncate">
+                          <p className="text-[16px] font-bold text-gray-900 truncate">
                             {recentSearch.query}
                           </p>
                         </div>
@@ -1166,7 +1166,7 @@ const SearchPage = () => {
                           className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 flex-shrink-0"
                           aria-label="Eliminar"
                         >
-                          <X size={20} strokeWidth={2} />
+                          <X size={18} strokeWidth={1.75} />
                         </button>
                       </div>
                     ))}
