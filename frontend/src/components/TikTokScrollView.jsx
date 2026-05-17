@@ -1573,7 +1573,7 @@ const TikTokPollCard = ({
                     </span>
                   );
                 })()}
-                <span className={`text-[12px] font-medium whitespace-nowrap leading-none text-white`}>
+                <span className={`text-[7px] font-medium whitespace-nowrap leading-none text-white`}>
                   {(() => {
                     const total = Number(getDisplayedTotalVotes(poll)) || 0;
                     return total === 0 ? t('feed.actions.vote') : formatNumber(total);
