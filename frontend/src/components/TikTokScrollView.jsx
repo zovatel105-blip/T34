@@ -722,7 +722,7 @@ const TikTokPollCard = ({
             `${iconCls} flex-shrink-0 transition-all duration-200`,
             poll.userLiked && "fill-current scale-110 text-red-500"
           )} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.likes, 'be 1st')}</span>
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.likes, t('feed.actions.like0'))}</span>
         </Button>
 
         {/* Comment */}
@@ -756,7 +756,7 @@ const TikTokPollCard = ({
             (commentedPolls.has(poll.id) || poll.userCommented) && "fill-current text-blue-400"
           )} />
           {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.comments, 'add 1st')}</span>
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.comments, t('feed.actions.comment0'))}</span>
           )}
         </Button>
 
@@ -822,7 +822,7 @@ const TikTokPollCard = ({
             `${iconCls} flex-shrink-0`,
             (sharedPolls.has(poll.id) || poll.userShared) && "fill-current text-green-400"
           )} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.shares, 'share')}</span>
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.shares, t('feed.actions.share'))}</span>
         </Button>
 
         {/* Save */}
@@ -877,7 +877,7 @@ const TikTokPollCard = ({
               `${iconCls} flex-shrink-0`,
               (savedPolls.has(poll.id) || poll.isSaved) && "fill-current text-yellow-400"
             )} />
-            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.saves_count || 0, 'save')}</span>
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.saves_count || 0, t('feed.actions.save'))}</span>
           </Button>
         )}
 
@@ -1545,10 +1545,10 @@ const TikTokPollCard = ({
                       )}
                       <span className="text-[11px] font-semibold whitespace-nowrap text-center px-1 max-w-[72px] truncate">
                         {(() => {
-                          if (totalVotes === 0) return "Sé el primero";
-                          if (isTie) return "Empate";
-                          const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || "Participante";
-                          return `${winnerName} gana`;
+                          if (totalVotes === 0) return t('feed.actions.voteFirst');
+                          if (isTie) return t('feed.actions.tie');
+                          const winnerName = sortedOptions[0]?.participant_username || sortedOptions[0]?.text || t('feed.actions.participant');
+                          return t('feed.actions.winner', { name: winnerName });
                         })()}
                       </span>
                     </>
@@ -1573,10 +1573,10 @@ const TikTokPollCard = ({
                     </span>
                   );
                 })()}
-                <span className="text-[12px] font-medium whitespace-nowrap leading-none text-white">
+                <span className={`text-[12px] font-medium whitespace-nowrap leading-none text-white`}>
                   {(() => {
                     const total = Number(getDisplayedTotalVotes(poll)) || 0;
-                    return total === 0 ? 'vota' : formatNumber(total);
+                    return total === 0 ? t('feed.actions.vote') : formatNumber(total);
                   })()}
                 </span>
               </button>
