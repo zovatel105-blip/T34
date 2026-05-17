@@ -13313,12 +13313,45 @@ async def create_vs_experience(
         
         if first_question:
             for opt in first_question["options"]:
+                # 🛡️ Detectar el tipo real por extensión, no asumir "image".
+                # El campo `image` aquí en realidad guarda la URL del media,
+                # que puede ser video (.mp4/.mov/.webm) o imagen.
+                media_url = opt.get("image")
+                if media_url and re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", str(media_url), re.IGNORECASE):
+                    real_type = "video"
+                    # Generar miniatura con ffmpeg desde el archivo en disco.
+                    real_thumb = None
+                    try:
+                        if "/api/uploads/" in str(media_url):
+                            after = str(media_url).split("/api/uploads/", 1)[1]
+                            file_path = UPLOAD_DIR / after
+                            if file_path.exists() and file_path.is_file():
+                                category = after.split("/", 1)[0] if "/" in after else "general"
+                                upload_type_map = {
+                                    "avatars": UploadType.AVATAR,
+                                    "poll_options": UploadType.POLL_OPTION,
+                                    "poll_backgrounds": UploadType.POLL_BACKGROUND,
+                                    "general": UploadType.GENERAL,
+                                }
+                                ut = upload_type_map.get(category, UploadType.GENERAL)
+                                gen_thumb = get_video_thumbnail_url(str(file_path), ut)
+                                if gen_thumb and not re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", gen_thumb, re.IGNORECASE):
+                                    real_thumb = gen_thumb
+                    except Exception as e:
+                        logger.warning(f"VS poll thumb gen failed for {media_url}: {e}")
+                elif media_url and re.search(r"\.(jpg|jpeg|png|gif|webp|bmp|avif|heic|heif)(\?|$)", str(media_url), re.IGNORECASE):
+                    real_type = "image"
+                    real_thumb = media_url
+                else:
+                    real_type = "image" if media_url else None
+                    real_thumb = media_url
+
                 poll_options.append({
                     "id": str(opt["id"]),
                     "text": str(opt["text"]) if opt["text"] else "",
-                    "media_url": opt.get("image"),
-                    "media_type": "image" if opt.get("image") else None,
-                    "thumbnail_url": opt.get("image"),
+                    "media_url": media_url,
+                    "media_type": real_type,
+                    "thumbnail_url": real_thumb,
                     "votes": 0
                 })
         
