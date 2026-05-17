@@ -2085,7 +2085,7 @@ const ProfilePage = () => {
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0 mr-[-12px] sm:mr-[-16px]" onClick={handleSettingsClick}>
+                  <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0 pr-2 mr-[-16px] sm:mr-[-20px] justify-end" onClick={handleSettingsClick}>
                     <Menu className="text-gray-700" strokeWidth={2} style={{ width: '26px', height: '26px' }} />
                   </Button>
                 </div>
@@ -2412,7 +2412,14 @@ const ProfilePage = () => {
                     value="polls" 
                     className="rounded-xl py-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
                   >
-                    <LayoutDashboard className="w-4 h-4" strokeWidth={1.5} />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <rect x="2" y="4" width="6" height="7" rx="1" />
+                      <rect x="9" y="4" width="6" height="7" rx="1" />
+                      <rect x="16" y="4" width="6" height="7" rx="1" />
+                      <rect x="2" y="13" width="6" height="7" rx="1" />
+                      <rect x="9" y="13" width="6" height="7" rx="1" />
+                      <rect x="16" y="13" width="6" height="7" rx="1" />
+                    </svg>
                   </TabsTrigger>
                   {isOwnProfile && (
                     <TabsTrigger 
