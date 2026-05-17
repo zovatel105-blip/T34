@@ -8424,11 +8424,25 @@ async def create_poll(
             )
             sanitized_thumb = None
 
+        # 🛡️ media_type debe coincidir con la extensión real del archivo.
+        # Si el frontend mandó 'image' pero la URL es un .mp4 (bug histórico),
+        # lo corregimos a 'video' aquí, en el punto de entrada, para que la
+        # detección posterior funcione (resolve_video_thumbnail, etc).
+        declared_type = option_data.get("media_type")
+        url_for_type = option_data.get("media_url") or ""
+        if url_for_type and re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", url_for_type, re.IGNORECASE):
+            if declared_type != "video":
+                print(f"🛡️ [media_type-fix] option {i}: media_type={declared_type!r} pero la URL es video → corrigiendo a 'video'")
+                declared_type = "video"
+        elif url_for_type and re.search(r"\.(jpg|jpeg|png|gif|webp|bmp|avif|heic|heif)(\?|$)", url_for_type, re.IGNORECASE):
+            if declared_type != "image":
+                declared_type = "image"
+
         option = PollOption(
             user_id=current_user.id,  # For now, creator adds all options
             text=option_data["text"],
             text_position=option_data.get("text_position", "bottom"),  # ✅ Include text position
-            media_type=option_data.get("media_type"),
+            media_type=declared_type,
             media_url=option_data.get("media_url"),
             thumbnail_url=sanitized_thumb,
             media_transform=media_transform,  # ✅ Include transform data
