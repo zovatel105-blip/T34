@@ -2413,11 +2413,11 @@ const ProfilePage = () => {
                     className="rounded-xl py-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                      <line x1="4" y1="4" x2="4" y2="20" />
-                      <line x1="10" y1="4" x2="10" y2="20" />
-                      <line x1="16" y1="4" x2="16" y2="20" />
-                      <line x1="20" y1="4" x2="20" y2="20" />
-                      <line x1="2" y1="12" x2="22" y2="12" />
+                      <line x1="3" y1="4" x2="3" y2="20" />
+                      <line x1="9" y1="4" x2="9" y2="20" />
+                      <line x1="15" y1="4" x2="15" y2="20" />
+                      <line x1="21" y1="4" x2="21" y2="20" />
+                      <line x1="3" y1="12" x2="21" y2="12" />
                     </svg>
                   </TabsTrigger>
                   {isOwnProfile && (
@@ -2473,11 +2473,11 @@ const ProfilePage = () => {
                     <div className="text-center py-16 space-y-4 px-4">
                       <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-gray-400">
-                          <line x1="4" y1="4" x2="4" y2="20" />
-                          <line x1="10" y1="4" x2="10" y2="20" />
-                          <line x1="16" y1="4" x2="16" y2="20" />
-                          <line x1="20" y1="4" x2="20" y2="20" />
-                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <line x1="3" y1="4" x2="3" y2="20" />
+                          <line x1="9" y1="4" x2="9" y2="20" />
+                          <line x1="15" y1="4" x2="15" y2="20" />
+                          <line x1="21" y1="4" x2="21" y2="20" />
+                          <line x1="3" y1="12" x2="21" y2="12" />
                         </svg>
                       </div>
                       <div className="space-y-1">
