@@ -2085,7 +2085,7 @@ const ProfilePage = () => {
                       <Check className="w-4 h-4 text-blue-500" strokeWidth={2} />
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0 mr-[-8px]" onClick={handleSettingsClick}>
+                  <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0 mr-[-12px] sm:mr-[-16px]" onClick={handleSettingsClick}>
                     <Menu className="text-gray-700" strokeWidth={2} style={{ width: '26px', height: '26px' }} />
                   </Button>
                 </div>
