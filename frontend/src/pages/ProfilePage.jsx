@@ -2086,7 +2086,7 @@ const ProfilePage = () => {
                     )}
                   </div>
                   <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                    <Menu className="text-gray-700" strokeWidth={2} style={{ width: '32px', height: '32px' }} />
+                    <Menu className="text-gray-700" strokeWidth={2} style={{ width: '26px', height: '26px' }} />
                   </Button>
                 </div>
               ) : (
