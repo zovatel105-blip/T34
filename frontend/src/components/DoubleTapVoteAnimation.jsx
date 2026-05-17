@@ -1,17 +1,24 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const GRADIENTS = [
-  { id: 'red', colors: ['#FF3B3B', '#FF5A5A', '#FF7A7A'], glow: 'rgba(255,59,59,0.5)' },
-  { id: 'orange', colors: ['#FF5A1F', '#FF7A1A', '#FFA31A'], glow: 'rgba(255,90,31,0.5)' },
-  { id: 'yellow', colors: ['#FFD21A', '#FFE14D', '#FFF07A'], glow: 'rgba(255,210,26,0.5)' },
-  { id: 'green', colors: ['#1ED760', '#3BFF7A', '#7AFFA1'], glow: 'rgba(30,215,96,0.5)' },
-  { id: 'blue', colors: ['#1A8CFF', '#3BAAFF', '#7AC7FF'], glow: 'rgba(26,140,255,0.5)' },
-  { id: 'violet', colors: ['#8A2BE2', '#A64DFF', '#C27AFF'], glow: 'rgba(138,43,226,0.5)' },
-  { id: 'pink', colors: ['#FF2D8A', '#FF5FA2', '#FF8FC4'], glow: 'rgba(255,45,138,0.5)' },
-];
+// 🎨 Twyk brand gradients — únicos colores permitidos en la animación de voto.
+// Lila (opción A / top) y Azul (opción B / bottom) coinciden con los colores
+// usados en VSLayout (TWYK_COLORS).
+const TWYK_GRADIENTS = {
+  violet: {
+    id: 'twyk-violet',
+    colors: ['#A855F7', '#C084FC', '#E9D5FF'], // purple-500 → purple-400 → purple-200
+    glow: 'rgba(168,85,247,0.55)',
+  },
+  blue: {
+    id: 'twyk-blue',
+    colors: ['#3B82F6', '#60A5FA', '#BFDBFE'], // blue-500 → blue-400 → blue-200
+    glow: 'rgba(59,130,246,0.55)',
+  },
+};
 
-const getRandomGradient = () => GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
+// Fallback (sólo si no se pasa `gradient` por prop): alterna lila/azul.
+const getDefaultGradient = () => TWYK_GRADIENTS.violet;
 
 const VoteIconWithGradient = ({ gradientId, colors }) => (
   <svg
@@ -34,7 +41,7 @@ const VoteIconWithGradient = ({ gradientId, colors }) => (
   </svg>
 );
 
-const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => {
+const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false, gradient }) => {
   const [animations, setAnimations] = useState([]);
   const lastTapRef = useRef(0);
   const counterRef = useRef(0);
@@ -57,9 +64,11 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
 
       counterRef.current += 1;
       const id = `${now}-${counterRef.current}`;
-      const gradient = getRandomGradient();
+      // 🎨 Usa SOLO el gradient Twyk pasado por prop (lila para A, azul para B).
+      // Si por algún motivo no se pasa, cae al default (lila) — nunca random.
+      const chosenGradient = gradient || getDefaultGradient();
 
-      setAnimations(prev => [...prev, { id, x, y: y - 60, gradient }]);
+      setAnimations(prev => [...prev, { id, x, y: y - 60, gradient: chosenGradient }]);
 
       setTimeout(() => {
         setAnimations(prev => prev.filter(a => a.id !== id));
@@ -69,7 +78,7 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
         onDoubleTap?.();
       }
     }
-  }, [disabled, onDoubleTap]);
+  }, [disabled, onDoubleTap, gradient]);
 
   return (
     <div
@@ -149,4 +158,5 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false }) => 
   );
 };
 
+export { TWYK_GRADIENTS };
 export default DoubleTapVoteAnimation;

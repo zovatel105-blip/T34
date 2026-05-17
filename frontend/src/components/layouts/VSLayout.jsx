@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Flame, Zap, Trophy, Hourglass, Share2, ChevronsUp, Scale } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
-import DoubleTapVoteAnimation from '../DoubleTapVoteAnimation';
+import DoubleTapVoteAnimation, { TWYK_GRADIENTS } from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import VSWinnerCard from './VSWinnerCard';
@@ -790,6 +790,9 @@ const QuestionSlide = ({
         <DoubleTapVoteAnimation
           onDoubleTap={() => isActive && !showResults && onVote(option.id)}
           disabled={showResults}
+          // 🎨 Color Twyk fijo: lila para opción A (top), azul para opción B (bottom).
+          // Nunca usar colores aleatorios.
+          gradient={isOptionA ? TWYK_GRADIENTS.violet : TWYK_GRADIENTS.blue}
         >
           {/* Imagen de fondo (cacheable) — con paralaje 3D si está votada */}
           {imageUrl ? (
