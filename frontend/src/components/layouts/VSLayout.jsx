@@ -1824,15 +1824,47 @@ const VSLayout = ({
           {thumbOptions.map((option, index) => {
             const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
             const bgColor = getCountryColor(option.text, index);
+            const isVideo = isVideoOption(option);
+            // Para video: si existe miniatura (imagen) la preferimos (más
+            // ligera en grids con muchos thumbnails). Si NO hay, caemos al
+            // propio video y forzamos el primer frame con .load() + seek.
+            const thumbImg = isVideo
+              ? (option.media?.thumbnail || option.thumbnail_url || null)
+              : imageUrl;
+            const showVideoEl = isVideo && !thumbImg && imageUrl;
             return (
               <div key={option.id} className={cn("flex-1 relative overflow-hidden", !imageUrl && bgColor)}>
-                {imageUrl && (
+                {thumbImg && (
                   <SafeImage
-                    src={imageUrl}
+                    src={thumbImg}
                     alt=""
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                {showVideoEl && (
+                  <video
+                    src={imageUrl}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                    // No autoplay ni loop en thumbnails — sólo queremos el
+                    // primer frame como "portada". Tras loadedmetadata
+                    // hacemos un micro-seek para pintarlo.
+                    onLoadedMetadata={(e) => {
+                      try {
+                        const v = e.currentTarget;
+                        if (v.currentTime < 0.05) v.currentTime = 0.1;
+                        v.pause();
+                      } catch (_) { /* noop */ }
+                    }}
+                    // iOS Safari/WebKit hints
+                    // eslint-disable-next-line react/no-unknown-property
+                    webkit-playsinline="true"
+                    // eslint-disable-next-line react/no-unknown-property
+                    x5-playsinline="true"
                   />
                 )}
               </div>
