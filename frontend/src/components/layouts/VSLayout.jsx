@@ -938,19 +938,17 @@ const QuestionSlide = ({
           // Nunca usar colores aleatorios.
           gradient={isOptionA ? TWYK_GRADIENTS.violet : TWYK_GRADIENTS.blue}
         >
-          {/* Imagen o VIDEO de fondo (cacheable) — con paralaje 3D si está votada */}
+          {/* Imagen o VIDEO de fondo (cacheable) — con paralaje 3D si está votada.
+              🚫 El paralaje 3D (vs-cinema-image-depth) se aplica SOLO a imágenes:
+                  un video reproduciéndose ya es "vivo" y aplicarle un parallax
+                  estático rompe el efecto cine — debe verse natural. */}
           {imageUrl ? (
             isVideo ? (
               <VSVideoBackground
                 src={resolveAssetUrl(imageUrl)}
                 poster={videoPoster ? resolveAssetUrl(videoPoster) : null}
                 isActive={!!isActive}
-                className={cn(
-                  "absolute inset-0 w-full h-full object-cover",
-                  // 🎬 Paralaje 3D — el video se aleja un poco más que el marco,
-                  // creando sensación de profundidad real (como en el cine 3D).
-                  isSelected && "vs-cinema-image-depth"
-                )}
+                className="absolute inset-0 w-full h-full object-cover"
               />
             ) : (
               <SafeImage
@@ -1063,25 +1061,23 @@ const QuestionSlide = ({
       {/* 🎬 LIFT SUBJECT — duplicado del sujeto principal de la opción
           VOTADA, recortado por máscara radial. Se LEVANTA en 3D y se
           monta un poco sobre la card perdedora (estilo iOS Visual Look
-          Up / Lift Subject from Background). */}
+          Up / Lift Subject from Background).
+          🚫 SOLO PARA IMÁGENES: un video reproduciéndose ya tiene movimiento
+          propio; superponer una capa lift estática (con máscara radial y
+          escalado animado) por encima rompe la naturalidad del video y se
+          ve duplicado. En videos no aplicamos el lift. */}
       {selectedOption && (() => {
         const isVotedA = optionA?.id === selectedOption;
         const voted = isVotedA ? optionA : optionB;
+        // Si la opción votada es un video → no renderizamos lift-subject.
+        if (isVideoOption(voted)) return null;
         const votedImg = voted?.media?.url
           || voted?.media?.thumbnail
           || voted?.media_url
           || voted?.thumbnail_url
           || voted?.image;
         if (!votedImg) return null;
-        // Si el media de la opción votada es un video, el "lift subject"
-        // (que es estático, con máscara radial y animación CSS) debe usar
-        // la miniatura del video — no el .mp4 en sí — porque el efecto
-        // se basa en transform/filter sobre una capa fija y reproducir
-        // un video aquí solo añade coste sin aportar nada visual extra.
-        const votedIsVideo = isVideoOption(voted);
-        const liftSrc = votedIsVideo
-          ? (voted?.media?.thumbnail || voted?.thumbnail_url || votedImg)
-          : votedImg;
+        const liftSrc = votedImg;
 
         // El overlay cubre la mitad de la card votada; el <img> dentro
         // se escala 1.16-1.23 con la animación → al estar dentro del
@@ -1112,26 +1108,12 @@ const QuestionSlide = ({
               overflow: 'visible',
             }}
           >
-            {votedIsVideo && !voted?.media?.thumbnail && !voted?.thumbnail_url ? (
-              // Sin miniatura disponible: usamos el propio video (muteado) para
-              // que el "lift subject" no quede en blanco.
-              <video
-                src={resolveAssetUrl(liftSrc)}
-                muted
-                playsInline
-                loop
-                autoPlay
-                preload="auto"
-                className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
-              />
-            ) : (
-              <img
-                src={resolveAssetUrl(liftSrc)}
-                alt=""
-                draggable={false}
-                className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
-              />
-            )}
+            <img
+              src={resolveAssetUrl(liftSrc)}
+              alt=""
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
+            />
           </div>
         );
       })()}
