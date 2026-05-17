@@ -49,3 +49,9 @@
 - diego_demo@test.com / Demo1234! (Diego)
 - sofi_demo@test.com / Demo1234! (Sofi)
 - All start with 500+200 mock coins (topped up by the demo runner).
+
+## Screenshot test (May 2026)
+- Email: screenshottest@test.com
+- Password: test1234
+- Username: sstest
+- Auth: JWT
