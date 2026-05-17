@@ -194,20 +194,6 @@ textarea,
   will-change: box-shadow;
 }
 
-/* ✅ Checkmark "tu voto" — pop al aparecer (scale + bounce sutil).
-   Se activa cuando el usuario marca su voto y la marca verde aparece
-   junto a la card votada. */
-@keyframes vsCheckPop {
-  0%   { transform: scale(0); opacity: 0; }
-  60%  { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.vs-check-pop {
-  animation: vsCheckPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  transform-origin: center center;
-  will-change: transform, opacity;
-}
-
 /* Card perdedora — actúa como FONDO del que se LEVANTA el subject
    (estilo iOS Look Up). Se queda visible y en GRIS para indicar la
    derrota, pero suficientemente legible para ver porcentaje, votos

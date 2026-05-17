@@ -41,10 +41,31 @@ const VoteIconWithGradient = ({ gradientId, colors }) => (
   </svg>
 );
 
-const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false, gradient }) => {
+const DoubleTapVoteAnimation = ({ children, onDoubleTap, onSingleTap, disabled = false, gradient }) => {
   const [animations, setAnimations] = useState([]);
   const lastTapRef = useRef(0);
   const counterRef = useRef(0);
+
+  // 🎬 Helper: dispara la animación visual (icono Twyk + ripple + glow)
+  // en las coordenadas donde el usuario tocó. Misma animación para single
+  // tap y double tap — feedback consistente para el voto.
+  const triggerAnimation = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX || rect.width / 2) - rect.left;
+    const y = (e.clientY || e.touches?.[0]?.clientY || rect.height / 2) - rect.top;
+
+    counterRef.current += 1;
+    const id = `${Date.now()}-${counterRef.current}`;
+    // 🎨 Usa SOLO el gradient Twyk pasado por prop (lila para A, azul para B).
+    // Si por algún motivo no se pasa, cae al default (lila) — nunca random.
+    const chosenGradient = gradient || getDefaultGradient();
+
+    setAnimations(prev => [...prev, { id, x, y: y - 60, gradient: chosenGradient }]);
+
+    setTimeout(() => {
+      setAnimations(prev => prev.filter(a => a.id !== id));
+    }, 850);
+  }, [gradient]);
 
   const handleTap = useCallback((e) => {
     // Ignore clicks from interactive elements (mentions, buttons, links)
@@ -58,27 +79,23 @@ const DoubleTapVoteAnimation = ({ children, onDoubleTap, disabled = false, gradi
     lastTapRef.current = now;
 
     if (timeSinceLastTap < 350) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = (e.clientX || e.touches?.[0]?.clientX || rect.width / 2) - rect.left;
-      const y = (e.clientY || e.touches?.[0]?.clientY || rect.height / 2) - rect.top;
-
-      counterRef.current += 1;
-      const id = `${now}-${counterRef.current}`;
-      // 🎨 Usa SOLO el gradient Twyk pasado por prop (lila para A, azul para B).
-      // Si por algún motivo no se pasa, cae al default (lila) — nunca random.
-      const chosenGradient = gradient || getDefaultGradient();
-
-      setAnimations(prev => [...prev, { id, x, y: y - 60, gradient: chosenGradient }]);
-
-      setTimeout(() => {
-        setAnimations(prev => prev.filter(a => a.id !== id));
-      }, 850);
-
+      // 👆👆 Double tap — mantiene el comportamiento original
+      triggerAnimation(e);
       if (!disabled) {
         onDoubleTap?.();
       }
+      return;
     }
-  }, [disabled, onDoubleTap, gradient]);
+
+    // 👆 Single tap — si hay onSingleTap, dispara la MISMA animación
+    // (icono Twyk con pop + ripple + glow) y registra el voto.
+    // El check verde anclado en la esquina ya NO se usa: la animación
+    // efímera es el único feedback visual del voto.
+    if (onSingleTap && !disabled) {
+      triggerAnimation(e);
+      onSingleTap();
+    }
+  }, [disabled, onDoubleTap, onSingleTap, triggerAnimation]);
 
   return (
     <div

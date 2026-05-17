@@ -784,11 +784,14 @@ const QuestionSlide = ({
             : undefined,
         }}
         onClick={() => {
-          if (isActive && !showResults) onVote(option.id);
+          // 👇 El voto y la animación los gestiona DoubleTapVoteAnimation
+          // (onSingleTap). Mantener este onClick aquí provocaría doble disparo
+          // del voto. Se deja vacío como hook futuro si hace falta.
         }}
       >
         <DoubleTapVoteAnimation
           onDoubleTap={() => isActive && !showResults && onVote(option.id)}
+          onSingleTap={() => isActive && !showResults && onVote(option.id)}
           disabled={showResults}
           // 🎨 Color Twyk fijo: lila para opción A (top), azul para opción B (bottom).
           // Nunca usar colores aleatorios.
@@ -873,20 +876,11 @@ const QuestionSlide = ({
               El voto se realiza con doble tap sobre la imagen
               (DoubleTapVoteAnimation) o con un solo tap. */}
 
-          {/* Indicador de selección — checkmark verde (tu voto).
-              Se muestra siempre que la opción esté seleccionada, incluso con
-              showResults=true, porque sirve como marcador permanente de
-              "esta es la opción que voté". Antes la condición era
-              `isSelected && !showResults`, pero como handleVote pone
-              setSelectedOptions y setShowResults(true) en el mismo render,
-              el check nunca llegaba a verse. */}
-          {isSelected && (
-            <div className={cn("absolute right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg z-20 vs-check-pop", TOP_OFFSET)}>
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          )}
+          {/* 🚫 Check verde anclado eliminado por petición del usuario.
+              El feedback del voto ahora se da ÚNICAMENTE con la animación
+              efímera del icono Twyk (DoubleTapVoteAnimation) — la misma
+              que ya aparecía al hacer doble tap. Nada queda anclado en
+              la esquina tras votar. */}
         </DoubleTapVoteAnimation>
       </div>
     );
