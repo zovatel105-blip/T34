@@ -682,7 +682,7 @@ const TikTokPollCard = ({
   // sideMode=false → estilo actual: fila horizontal en la parte inferior, CON marco
   const renderActionButtons = (sideMode) => {
     const iconCls = sideMode ? "w-[23px] h-[23px]" : "w-5 h-5";
-    const txtCls = sideMode ? "text-[8px]" : "text-sm";
+    const txtCls = sideMode ? "text-[7px]" : "text-sm";
     const btnLayout = sideMode
       ? "flex flex-col items-center gap-0.5 hover:scale-110 transition-all duration-200 h-auto p-0 bg-transparent hover:bg-transparent [&_svg]:size-[23px]"
       : "flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm";
