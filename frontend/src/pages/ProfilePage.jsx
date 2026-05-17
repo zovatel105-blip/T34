@@ -19,7 +19,7 @@ import StoriesViewer from '../components/StoriesViewer';
 import DefaultAvatarSvg from '../components/common/DefaultAvatarSvg';
 import VoteIcon from '../components/icons/VoteIcon';
 import { 
-  Settings, SlidersHorizontal, Cog, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
+  Settings, SlidersHorizontal, Cog, Menu, Users, Vote, Trophy, Heart, Share, ArrowLeft, AtSign, Bookmark, LayoutDashboard, Check, 
   Share2, UserPlus, UserCheck, ChevronDown, Plus, BarChart3, Mail, MessageCircle, Send, Hash, Bell, BellOff, UserCircle, Link, X, Trash2, TrendingUp, User 
 } from 'lucide-react';
 import pollService from '../services/pollService';
@@ -2086,7 +2086,7 @@ const ProfilePage = () => {
                     )}
                   </div>
                   <Button variant="ghost" size="sm" className="w-14 h-14 rounded-full hover:bg-gray-50 p-0" onClick={handleSettingsClick}>
-                    <Cog className="w-11 h-11 text-gray-700" strokeWidth={1.5} />
+                    <Menu className="w-11 h-11 text-gray-700" strokeWidth={1.5} />
                   </Button>
                 </div>
               ) : (
