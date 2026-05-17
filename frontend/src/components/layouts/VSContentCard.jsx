@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
 import SafeImage from '../common/SafeImage';
 import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
+import { getMediaSrc, getMediaType, isVideoUrl } from '../../utils/vsMedia';
 
 /**
  * VSContentCard
@@ -20,28 +21,6 @@ import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
  *  - initialIndex: 0 (A) o 1 (B) — la que se mantuvo presionada
  *  - onClose: callback al cerrar
  */
-const getMediaSrc = (opt) => {
-  if (!opt) return null;
-  return (
-    opt.media?.url ||
-    opt.media?.thumbnail ||
-    opt.media_url ||
-    opt.thumbnail_url ||
-    opt.image ||
-    null
-  );
-};
-
-const getMediaType = (opt) => {
-  if (!opt) return null;
-  return opt.media?.type || opt.media_type || null;
-};
-
-const isVideoUrl = (url) => {
-  if (!url) return false;
-  return /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(url);
-};
-
 const renderMedia = (option) => {
   const src = getMediaSrc(option);
   const type = getMediaType(option);

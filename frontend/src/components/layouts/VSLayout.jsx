@@ -6,6 +6,7 @@ import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation, { TWYK_GRADIENTS } from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
+import { isVideoOption } from '../../utils/vsMedia';
 import VSWinnerCard from './VSWinnerCard';
 import VSContentCard from './VSContentCard';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -520,6 +521,50 @@ const getCountryPrimaryColor = (text, index) => {
   return index === 0 ? defaultColors.top.primary : defaultColors.bottom.primary;
 };
 
+// 🎥 VSVideoBackground
+// --------------------
+// Renderiza un <video> de fondo dentro de una card del VS. Reproduce el video
+// SÓLO cuando el slide está activo (`isActive`) para no quemar batería/CPU en
+// los slides vecinos del feed vertical. Va siempre muteado: el VS ya tiene
+// TTS de las opciones y no queremos que choquen los audios.
+const VSVideoBackground = ({ src, isActive, className, poster }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isActive) {
+      // Reset al inicio cuando vuelve a activarse para que se vea desde el frame 1
+      try {
+        v.currentTime = 0;
+      } catch (_) { /* noop */ }
+      const p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay bloqueado */ });
+    } else {
+      try { v.pause(); } catch (_) { /* noop */ }
+    }
+  }, [isActive]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      poster={poster || undefined}
+      className={className}
+      muted
+      playsInline
+      loop
+      preload={isActive ? 'auto' : 'metadata'}
+      autoPlay={isActive}
+      // iOS Safari/WebKit hints
+      // eslint-disable-next-line react/no-unknown-property
+      webkit-playsinline="true"
+      // eslint-disable-next-line react/no-unknown-property
+      x5-playsinline="true"
+    />
+  );
+};
+
 // Componente para una sola pregunta (Rediseño MVP — Twyk colors)
 const QuestionSlide = ({ 
   question, 
@@ -743,6 +788,10 @@ const QuestionSlide = ({
     // Preferir conteo del servidor si existe; si no, el del propio option.
     const optionVotes = isOptionA ? votesA : votesB;
     const imageUrl = option.media?.url || option.media?.thumbnail || option.media_url || option.thumbnail_url || option.image;
+    const isVideo = isVideoOption(option);
+    // Para el poster del <video>, usamos la miniatura si está disponible
+    // (cuando media.url es el .mp4, media.thumbnail suele tener el .jpg).
+    const videoPoster = isVideo ? (option.media?.thumbnail || option.thumbnail_url || null) : null;
     const status = getStatusLabel(isOptionA);
     const isWinning = showResults && (isOptionA ? winnerIsA : winnerIsB);
 
@@ -797,20 +846,34 @@ const QuestionSlide = ({
           // Nunca usar colores aleatorios.
           gradient={isOptionA ? TWYK_GRADIENTS.violet : TWYK_GRADIENTS.blue}
         >
-          {/* Imagen de fondo (cacheable) — con paralaje 3D si está votada */}
+          {/* Imagen o VIDEO de fondo (cacheable) — con paralaje 3D si está votada */}
           {imageUrl ? (
-            <SafeImage
-              src={imageUrl}
-              alt=""
-              loading={isActive ? "eager" : "lazy"}
-              decoding="async"
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover",
-                // 🎬 Paralaje 3D — la imagen se aleja un poco más que el marco,
-                // creando sensación de profundidad real (como en el cine 3D).
-                isSelected && "vs-cinema-image-depth"
-              )}
-            />
+            isVideo ? (
+              <VSVideoBackground
+                src={resolveAssetUrl(imageUrl)}
+                poster={videoPoster ? resolveAssetUrl(videoPoster) : null}
+                isActive={!!isActive}
+                className={cn(
+                  "absolute inset-0 w-full h-full object-cover",
+                  // 🎬 Paralaje 3D — el video se aleja un poco más que el marco,
+                  // creando sensación de profundidad real (como en el cine 3D).
+                  isSelected && "vs-cinema-image-depth"
+                )}
+              />
+            ) : (
+              <SafeImage
+                src={imageUrl}
+                alt=""
+                loading={isActive ? "eager" : "lazy"}
+                decoding="async"
+                className={cn(
+                  "absolute inset-0 w-full h-full object-cover",
+                  // 🎬 Paralaje 3D — la imagen se aleja un poco más que el marco,
+                  // creando sensación de profundidad real (como en el cine 3D).
+                  isSelected && "vs-cinema-image-depth"
+                )}
+              />
+            )
           ) : (
             <div
               className={cn(
@@ -918,6 +981,15 @@ const QuestionSlide = ({
           || voted?.thumbnail_url
           || voted?.image;
         if (!votedImg) return null;
+        // Si el media de la opción votada es un video, el "lift subject"
+        // (que es estático, con máscara radial y animación CSS) debe usar
+        // la miniatura del video — no el .mp4 en sí — porque el efecto
+        // se basa en transform/filter sobre una capa fija y reproducir
+        // un video aquí solo añade coste sin aportar nada visual extra.
+        const votedIsVideo = isVideoOption(voted);
+        const liftSrc = votedIsVideo
+          ? (voted?.media?.thumbnail || voted?.thumbnail_url || votedImg)
+          : votedImg;
 
         // El overlay cubre la mitad de la card votada; el <img> dentro
         // se escala 1.16-1.23 con la animación → al estar dentro del
@@ -948,12 +1020,26 @@ const QuestionSlide = ({
               overflow: 'visible',
             }}
           >
-            <img
-              src={resolveAssetUrl(votedImg)}
-              alt=""
-              draggable={false}
-              className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
-            />
+            {votedIsVideo && !voted?.media?.thumbnail && !voted?.thumbnail_url ? (
+              // Sin miniatura disponible: usamos el propio video (muteado) para
+              // que el "lift subject" no quede en blanco.
+              <video
+                src={resolveAssetUrl(liftSrc)}
+                muted
+                playsInline
+                loop
+                autoPlay
+                preload="auto"
+                className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
+              />
+            ) : (
+              <img
+                src={resolveAssetUrl(liftSrc)}
+                alt=""
+                draggable={false}
+                className="absolute inset-0 w-full h-full object-cover vs-cinema-lift-subject"
+              />
+            )}
           </div>
         );
       })()}

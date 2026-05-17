@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://social-profiles-14.preview.emergentagent.com/api"
+BACKEND_URL = "https://vs-video-playback.preview.emergentagent.com/api"
 
 class HealthTester:
     def __init__(self):
