@@ -1009,12 +1009,7 @@ const QuestionSlide = ({
             className="absolute pointer-events-none vs-cinema-lift-subject-wrapper"
             style={{
               ...slotStyle,
-              // ⚠️ zIndex POR DEBAJO de la card votada (30). El efecto
-              // "subject lifted" visual se consigue con el translateZ(140px)
-              // dentro del contexto 3D (preserve-3d), no con z-index.
-              // Esto deja libres el trofeo, %, votos y status que viven
-              // dentro de la card en su propio stacking context.
-              zIndex: 28,
+              zIndex: 31, // por encima de la card votada (30) y la perdedora (1)
               transformStyle: 'preserve-3d',
               overflow: 'visible',
             }}
