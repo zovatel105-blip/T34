@@ -527,17 +527,107 @@ const getCountryPrimaryColor = (text, index) => {
 // SÓLO cuando el slide está activo (`isActive`) para no quemar batería/CPU en
 // los slides vecinos del feed vertical. Va siempre muteado: el VS ya tiene
 // TTS de las opciones y no queremos que choquen los audios.
+//
+// 🖼️ "Portada" automática:
+// Cuando el backend no manda thumbnail (`option.media.thumbnail` vacío),
+// forzamos al <video> a pintar su primer frame mediante .load() + un micro
+// seek a ~0.1s. Como respaldo (iOS Safari + cards inactivas), extraemos un
+// data-URL del primer frame por canvas y lo usamos como `poster`. Se cachea
+// en memoria por URL para que no se regenere al volver al slide.
+const __VS_POSTER_CACHE = new Map();
+
+const generatePosterDataUrl = (videoUrl) => {
+  if (!videoUrl) return Promise.resolve(null);
+  if (__VS_POSTER_CACHE.has(videoUrl)) {
+    return Promise.resolve(__VS_POSTER_CACHE.get(videoUrl));
+  }
+  return new Promise((resolve) => {
+    try {
+      const v = document.createElement('video');
+      v.src = videoUrl;
+      v.crossOrigin = 'anonymous';
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      let settled = false;
+      const cleanup = () => {
+        try { v.src = ''; v.load(); } catch (_) { /* noop */ }
+      };
+      const finish = (val) => {
+        if (settled) return;
+        settled = true;
+        __VS_POSTER_CACHE.set(videoUrl, val);
+        cleanup();
+        resolve(val);
+      };
+      v.addEventListener('loadeddata', () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = v.videoWidth || 480;
+          canvas.height = v.videoHeight || 854;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+          // jpeg 0.7 ≈ buen tradeoff calidad/peso para poster
+          const data = canvas.toDataURL('image/jpeg', 0.7);
+          finish(data || null);
+        } catch (_) {
+          // tainted canvas (CORS) → no poster, pero el .load del <video>
+          // real igualmente forzará el primer frame.
+          finish(null);
+        }
+      });
+      v.addEventListener('error', () => finish(null));
+      // Algunos navegadores requieren seek explícito para emitir loadeddata
+      try { v.currentTime = 0.1; } catch (_) { /* noop */ }
+      // Timeout de seguridad
+      setTimeout(() => finish(null), 6000);
+    } catch (_) {
+      resolve(null);
+    }
+  });
+};
+
 const VSVideoBackground = ({ src, isActive, className, poster }) => {
   const videoRef = useRef(null);
+  const [autoPoster, setAutoPoster] = useState(() => __VS_POSTER_CACHE.get(src) || null);
 
+  // Si no hay poster del backend, generamos uno desde el primer frame con canvas.
+  useEffect(() => {
+    if (poster || autoPoster || !src) return;
+    let cancelled = false;
+    generatePosterDataUrl(src).then((data) => {
+      if (!cancelled && data) setAutoPoster(data);
+    });
+    return () => { cancelled = true; };
+  }, [src, poster, autoPoster]);
+
+  // Forzar el render del primer frame en el propio <video> con .load() + seek.
+  // Esto resuelve la "portada" sin depender del backend ni del canvas: incluso
+  // si CORS bloquea el canvas, el navegador pinta el primer frame del video.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !src) return;
+    try {
+      v.load();
+      // Micro-seek: con muted+playsInline iOS pinta el frame seekeado.
+      const onLoaded = () => {
+        try {
+          if (!isActive && v.currentTime < 0.05) {
+            v.currentTime = 0.1;
+          }
+        } catch (_) { /* noop */ }
+      };
+      v.addEventListener('loadedmetadata', onLoaded, { once: true });
+      return () => v.removeEventListener('loadedmetadata', onLoaded);
+    } catch (_) { /* noop */ }
+  }, [src, isActive]);
+
+  // Play/pause según slide activo.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     if (isActive) {
-      // Reset al inicio cuando vuelve a activarse para que se vea desde el frame 1
-      try {
-        v.currentTime = 0;
-      } catch (_) { /* noop */ }
+      try { v.currentTime = 0; } catch (_) { /* noop */ }
       const p = v.play();
       if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay bloqueado */ });
     } else {
@@ -545,16 +635,18 @@ const VSVideoBackground = ({ src, isActive, className, poster }) => {
     }
   }, [isActive]);
 
+  const effectivePoster = poster || autoPoster || undefined;
+
   return (
     <video
       ref={videoRef}
       src={src}
-      poster={poster || undefined}
+      poster={effectivePoster}
       className={className}
       muted
       playsInline
       loop
-      preload={isActive ? 'auto' : 'metadata'}
+      preload="auto"
       autoPlay={isActive}
       // iOS Safari/WebKit hints
       // eslint-disable-next-line react/no-unknown-property
