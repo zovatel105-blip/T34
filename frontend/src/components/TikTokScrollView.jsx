@@ -688,6 +688,18 @@ const TikTokPollCard = ({
       : "flex items-center gap-1 hover:scale-105 transition-all duration-200 h-auto p-1.5 rounded-lg backdrop-blur-sm";
     const dropShadowStyle = sideMode ? { filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.7))' } : undefined;
 
+    // 🏷️ Helper: en sideMode (barra de navegación inferior activa) cuando el
+    // contador está en 0 mostramos un texto-placeholder en lugar de "0".
+    //   Heart  → "be 1st"
+    //   Comment → "add 1st"
+    //   Share  → "share"
+    //   Save   → "save"
+    const getCountLabel = (count, placeholder) => {
+      const n = Number(count) || 0;
+      if (sideMode && n === 0) return placeholder;
+      return formatNumber(n);
+    };
+
     return (
       <>
         {/* Like */}
@@ -710,7 +722,7 @@ const TikTokPollCard = ({
             `${iconCls} flex-shrink-0 transition-all duration-200`,
             poll.userLiked && "fill-current scale-110 text-red-500"
           )} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.likes)}</span>
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.likes, 'be 1st')}</span>
         </Button>
 
         {/* Comment */}
@@ -744,7 +756,7 @@ const TikTokPollCard = ({
             (commentedPolls.has(poll.id) || poll.userCommented) && "fill-current text-blue-400"
           )} />
           {(poll.comments_enabled !== false && poll.commentsEnabled !== false) && (
-            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.comments)}</span>
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.comments, 'add 1st')}</span>
           )}
         </Button>
 
@@ -810,7 +822,7 @@ const TikTokPollCard = ({
             `${iconCls} flex-shrink-0`,
             (sharedPolls.has(poll.id) || poll.userShared) && "fill-current text-green-400"
           )} />
-          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.shares)}</span>
+          <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.shares, 'share')}</span>
         </Button>
 
         {/* Save */}
@@ -865,7 +877,7 @@ const TikTokPollCard = ({
               `${iconCls} flex-shrink-0`,
               (savedPolls.has(poll.id) || poll.isSaved) && "fill-current text-yellow-400"
             )} />
-            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{formatNumber(poll.saves_count || 0)}</span>
+            <span className={`font-medium ${txtCls} whitespace-nowrap text-white`}>{getCountLabel(poll.saves_count || 0, 'save')}</span>
           </Button>
         )}
 
@@ -1561,7 +1573,12 @@ const TikTokPollCard = ({
                     </span>
                   );
                 })()}
-                <span className="text-[12px] font-medium whitespace-nowrap leading-none text-white">{formatNumber(getDisplayedTotalVotes(poll))}</span>
+                <span className="text-[12px] font-medium whitespace-nowrap leading-none text-white">
+                  {(() => {
+                    const total = Number(getDisplayedTotalVotes(poll)) || 0;
+                    return total === 0 ? 'vota' : formatNumber(total);
+                  })()}
+                </span>
               </button>
             )
           )}
