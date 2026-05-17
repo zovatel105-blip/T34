@@ -5772,15 +5772,61 @@ async def resolve_video_thumbnail(media_url: Optional[str], stored_thumbnail_url
     Resolve a proper image thumbnail URL for a video.
     Handles the legacy case where stored_thumbnail_url was set to the video URL itself.
     Returns a JPG thumbnail URL, or None if it cannot be generated.
+
+    Resolution order:
+      1) Stored thumbnail_url if it's a real image (not the video URL).
+      2) Thumbnail recorded in uploaded_files collection (lazily generated).
+      3) FFmpeg generation directly from the file on disk (covers legacy uploads
+         where uploaded_files doesn't have a record — e.g. fast-upload or older
+         media). This is what keeps VS thumbnails working without any backfill.
     """
-    # If stored_thumbnail_url is set AND it's a real image (not a video), use it
+    # 1) Stored thumbnail is a real image → use it
     if stored_thumbnail_url and not _is_video_url(stored_thumbnail_url) and stored_thumbnail_url != media_url:
         return stored_thumbnail_url
-    # Otherwise try to generate from media_url
+
+    # 2) Try DB-backed lazy generation (works if uploaded_files has the record)
     if media_url:
-        thumb = await get_thumbnail_for_media_url(media_url)
-        if thumb and not _is_video_url(thumb):
-            return thumb
+        try:
+            thumb = await get_thumbnail_for_media_url(media_url)
+            if thumb and not _is_video_url(thumb):
+                return thumb
+        except Exception as e:
+            print(f"⚠️ resolve_video_thumbnail: DB lookup failed for {media_url}: {e}")
+
+    # 3) FFmpeg fallback: derive the file path from the media URL and run ffmpeg
+    #    directly. Works for any video already on disk under UPLOAD_DIR.
+    if media_url and "/api/uploads/" in media_url:
+        try:
+            # /api/uploads/<category>/<filename>  → <UPLOAD_DIR>/<category>/<filename>
+            after = media_url.split("/api/uploads/", 1)[1]
+            file_path = UPLOAD_DIR / after
+            if file_path.exists() and file_path.is_file():
+                # Map category name → UploadType so the thumbnail URL is consistent
+                category = after.split("/", 1)[0] if "/" in after else "general"
+                upload_type_map = {
+                    "avatars": UploadType.AVATAR,
+                    "poll_options": UploadType.POLL_OPTION,
+                    "poll_backgrounds": UploadType.POLL_BACKGROUND,
+                    "general": UploadType.GENERAL,
+                }
+                upload_type = upload_type_map.get(category, UploadType.GENERAL)
+                thumb_url = get_video_thumbnail_url(str(file_path), upload_type)
+                if thumb_url and not _is_video_url(thumb_url):
+                    # Best-effort: cache the generated thumbnail back into
+                    # uploaded_files if a record exists, so next time we hit
+                    # path (2) instead of re-running ffmpeg.
+                    try:
+                        filename = file_path.name
+                        await db.uploaded_files.update_one(
+                            {"filename": filename},
+                            {"$set": {"thumbnail_url": thumb_url}}
+                        )
+                    except Exception:
+                        pass  # cache is best-effort
+                    return thumb_url
+        except Exception as e:
+            print(f"⚠️ resolve_video_thumbnail: ffmpeg fallback failed for {media_url}: {e}")
+
     return None
 
 
@@ -6439,7 +6485,7 @@ async def get_polls(
                 "media": {
                     "type": option.get("media_type"),
                     "url": media_url,
-                    "thumbnail": thumbnail_url or media_url,
+                    "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                     "transform": option.get("media_transform")
                 } if media_url else None
             }
@@ -6775,7 +6821,7 @@ async def get_ultra_fast_feed(
                         "media": {
                             "type": media_type,
                             "url": media_url,
-                            "thumbnail": thumbnail_url or media_url,
+                            "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                             "transform": opt.get("media_transform")
                         } if media_url else None
                     }
@@ -7839,7 +7885,7 @@ async def get_user_polls(
                     "media": {
                         "type": media_type,
                         "url": media_url,
-                        "thumbnail": thumbnail_url or media_url,
+                        "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                         "transform": opt.get("media_transform")
                     } if media_url else None
                 }
@@ -10031,7 +10077,7 @@ async def get_posts_using_audio(
                             "media": {
                                 "type": option.get("media_type"),
                                 "url": media_url,
-                                "thumbnail": thumbnail_url or media_url
+                                "thumbnail": thumbnail_url  # None si no hay miniatura real (no caer al video URL)
                             } if media_url else None
                         }
                         options.append(option_dict)
@@ -11064,7 +11110,7 @@ async def get_saved_polls(
                                 "extracted_audio_id": option.get("extracted_audio_id"),  # 🎵 Include extracted audio ID
                                     "type": option.get("media_type"),
                                     "url": media_url,
-                                    "thumbnail": thumbnail_url or media_url,
+                                    "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                                     "transform": option.get("media_transform")
                                 } if media_url else None
                             }
@@ -11243,7 +11289,7 @@ async def get_liked_polls(
                                 "media": {
                                     "type": option.get("media_type"),
                                     "url": media_url,
-                                    "thumbnail": thumbnail_url or media_url,
+                                    "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                                     "transform": option.get("media_transform")
                                 } if media_url else None
                             }
@@ -12661,7 +12707,7 @@ async def get_challenge_polls(
                     "media": {
                         "type": media_type,
                         "url": media_url,
-                        "thumbnail": thumbnail_url or media_url,
+                        "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
                     } if media_url else None
                 }
                 transformed_options.append(option_dict)

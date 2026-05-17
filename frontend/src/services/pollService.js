@@ -257,25 +257,39 @@ class PollService {
       },
       timeAgo: backendPoll.time_ago,
       music: backendPoll.music || null,  // Si no hay música, devolver null (no mostrar "No Music")
-      options: backendPoll.options.map(option => ({
-        id: option.id,
-        user: option.user,
-        text: option.text,
-        votes: option.votes,
-        participant_id: option.participant_id || null,  // 🏆 Challenge: participant user_id for voting
-        participant_username: option.participant_username || null,
-        participant_avatar: option.participant_avatar || null,
-        mentioned_users: option.mentioned_users || [],  // ✅ CRITICAL FIX: Include option-specific mentioned_users
-        extracted_audio_id: option.extracted_audio_id,  // 🎵 NUEVO: Include extracted_audio_id for carousel audio
-        thumbnail_url: option.thumbnail_url,  // 🖼️ NUEVO: Include thumbnail_url for dynamic carousel covers
-        media_type: option.media_type,  // 🎥 NUEVO: Include media_type for video detection
-        media: option.media ? {
-          ...option.media,
-          url: this.normalizeMediaUrl(option.media.url),
-          thumbnail: this.normalizeMediaUrl(option.media.thumbnail || option.media.url),
-          transform: option.media.transform  // ✅ CRITICAL FIX: Preserve transform data
-        } : null
-      })),
+      options: backendPoll.options.map(option => {
+        // Sanitiza thumbnail: si la BD aún guarda la URL del video como
+        // "thumbnail" (datos legacy antes del fix backend), lo descartamos.
+        // Así el frontend cae a su renderizado de <video> (primer frame
+        // como portada) en lugar de pintar un <img src="video.mp4"> roto.
+        const rawMedia = option.media || null;
+        const cleanedMedia = rawMedia ? (() => {
+          const t = rawMedia.thumbnail;
+          const looksLikeVideo = t && /\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)/i.test(t);
+          return {
+            ...rawMedia,
+            url: this.normalizeMediaUrl(rawMedia.url),
+            thumbnail: looksLikeVideo ? null : this.normalizeMediaUrl(t),
+            transform: rawMedia.transform
+          };
+        })() : null;
+        const rawThumb = option.thumbnail_url;
+        const cleanedThumb = (rawThumb && /\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)/i.test(rawThumb)) ? null : rawThumb;
+        return {
+          id: option.id,
+          user: option.user,
+          text: option.text,
+          votes: option.votes,
+          participant_id: option.participant_id || null,  // 🏆 Challenge: participant user_id for voting
+          participant_username: option.participant_username || null,
+          participant_avatar: option.participant_avatar || null,
+          mentioned_users: option.mentioned_users || [],  // ✅ CRITICAL FIX: Include option-specific mentioned_users
+          extracted_audio_id: option.extracted_audio_id,  // 🎵 NUEVO: Include extracted_audio_id for carousel audio
+          thumbnail_url: cleanedThumb,  // 🖼️ Sanitizado: nunca apunta al video
+          media_type: option.media_type,  // 🎥 NUEVO: Include media_type for video detection
+          media: cleanedMedia
+        };
+      }),
       totalVotes: backendPoll.total_votes,
       likes: backendPoll.likes || backendPoll.likes_count || 0,
       shares: backendPoll.shares || backendPoll.shares_count || 0,
