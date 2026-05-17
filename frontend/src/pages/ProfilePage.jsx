@@ -2473,7 +2473,14 @@ const ProfilePage = () => {
                   {polls.length === 0 && (!isOwnProfile || activeUploads.length === 0) ? (
                     <div className="text-center py-16 space-y-4 px-4">
                       <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                        <LayoutDashboard className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-gray-400">
+                          <rect x="2" y="4" width="6" height="7" rx="1" />
+                          <rect x="9" y="4" width="6" height="7" rx="1" />
+                          <rect x="16" y="4" width="6" height="7" rx="1" />
+                          <rect x="2" y="13" width="6" height="7" rx="1" />
+                          <rect x="9" y="13" width="6" height="7" rx="1" />
+                          <rect x="16" y="13" width="6" height="7" rx="1" />
+                        </svg>
                       </div>
                       <div className="space-y-1">
                         <h3 className="text-base font-semibold text-gray-900">{t('profile.empty.noPosts')}</h3>
