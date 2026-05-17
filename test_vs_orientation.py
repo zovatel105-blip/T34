@@ -21,7 +21,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 # Test configuration
-BACKEND_URL = "https://vote-feedback-bug.preview.emergentagent.com/api"
+BACKEND_URL = "https://music-feed-viewer.preview.emergentagent.com/api"
 
 # Test credentials from /app/memory/test_credentials.md
 TEST_EMAIL = "apktest2@test.com"
