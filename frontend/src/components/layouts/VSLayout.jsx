@@ -1311,13 +1311,28 @@ const QuestionSlide = ({
         const loserName = (loserOpt?.participant_username || loserOpt?.text || '').toString();
         const winnerPerc = winnerIsA ? percA : percB;
         const loserPerc = winnerIsA ? percB : percA;
-        const winnerImage =
-          winnerOpt?.media?.url ||
-          winnerOpt?.media?.thumbnail ||
-          winnerOpt?.media_url ||
-          winnerOpt?.thumbnail_url ||
-          winnerOpt?.image ||
-          null;
+        const winnerIsVideo = isVideoOption(winnerOpt);
+        // Para la WinnerCard preferimos la MINIATURA (imagen estática) sobre la
+        // URL del video — el fondo de la card tiene texto overlay encima y un
+        // primer-frame nítido se lee mejor. Si el ganador es video, además
+        // pasamos la URL del video aparte para reproducirlo de fondo.
+        const winnerImage = winnerIsVideo
+          ? (
+              winnerOpt?.media?.thumbnail ||
+              winnerOpt?.thumbnail_url ||
+              null
+            )
+          : (
+              winnerOpt?.media?.url ||
+              winnerOpt?.media?.thumbnail ||
+              winnerOpt?.media_url ||
+              winnerOpt?.thumbnail_url ||
+              winnerOpt?.image ||
+              null
+            );
+        const winnerVideoUrl = winnerIsVideo
+          ? (winnerOpt?.media?.url || winnerOpt?.media_url || null)
+          : null;
 
         const handleShare = () => {
           const text = `¡${winnerName} ganó con ${winnerPerc}%! ⚔️ Vota tu favorito en Twyk`;
@@ -1352,6 +1367,7 @@ const QuestionSlide = ({
             winnerName={winnerName.toUpperCase()}
             winnerPercentage={winnerPerc}
             winnerImage={winnerImage}
+            winnerVideoUrl={winnerVideoUrl}
             loserName={loserName ? loserName.toUpperCase() : ''}
             loserPercentage={loserPerc}
             totalVotes={totalVotes}

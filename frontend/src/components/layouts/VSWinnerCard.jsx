@@ -30,6 +30,7 @@ const VSWinnerCard = ({
   winnerName = null,
   winnerPercentage = 0,
   winnerImage = null,
+  winnerVideoUrl = null,  // 🎥 Si la opción ganadora es video, su URL para reproducir de fondo
   loserName = '',
   loserPercentage = 0,
   totalVotes = 0,
@@ -143,9 +144,29 @@ const VSWinnerCard = ({
         style={{ background: '#0a0a0a' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Fondo: imagen del ganador (nítida) con vignette para legibilidad del texto */}
+        {/* Fondo: video o imagen del ganador (nítida) con vignette para legibilidad del texto.
+            🎥 Si el ganador es un video, lo reproducimos de fondo (muted+loop).
+            Mientras carga, se ve la miniatura como poster. Si no es video,
+            usamos solo la imagen estática como antes. */}
         <div className="absolute inset-0">
-          {winnerImage ? (
+          {winnerVideoUrl ? (
+            <video
+              src={winnerVideoUrl}
+              poster={winnerImage || undefined}
+              muted
+              playsInline
+              loop
+              autoPlay
+              preload="auto"
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: 'brightness(0.78) saturate(1.05)' }}
+              // iOS Safari/WebKit
+              // eslint-disable-next-line react/no-unknown-property
+              webkit-playsinline="true"
+              // eslint-disable-next-line react/no-unknown-property
+              x5-playsinline="true"
+            />
+          ) : winnerImage ? (
             <SafeImage
               src={winnerImage}
               alt=""
