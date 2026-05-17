@@ -859,81 +859,12 @@ const QuestionSlide = ({
             <div className="absolute inset-0 bg-yellow-400/20 z-5 animate-pulse pointer-events-none" />
           )}
 
-          {/* Trofeo si es el ganador (cuando se muestran resultados) */}
-          {isWinning && showResults && (
-            <div
-              className={cn(
-                "absolute z-40 flex items-center gap-1.5 px-2.5 py-1 rounded-full",
-                "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
-                isRow
-                  ? cn(TROPHY_TOP, isOptionA ? "left-3" : "right-3")
-                  : cn("right-3", isOptionA ? TROPHY_TOP : TROPHY_BOTTOM)
-              )}
-            >
-              <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-              <span className="text-[10px] font-black uppercase tracking-wider text-white">{t('vs.ganador')}</span>
-            </div>
-          )}
-
-          {/* Contenido principal — nombre + status pill + porcentaje + votos.
-              La status pill (VA GANANDO / REMONTANDO / ¡TU VOTO!) va INLINE
-              justo debajo del nombre, alineada a la izquierda como en la
-              imagen de referencia. */}
-          <div
-            className={cn(
-              "absolute z-40 flex flex-col px-2",
-              isRow
-                ? cn("bottom-16 right-2 left-1 items-start")
-                : cn("left-0 right-16 items-start", isOptionA ? "bottom-16" : "top-16"),
-              // 🎬 Texto/porcentaje flota DELANTE de la imagen (3 capas de profundidad)
-              isSelected && "vs-cinema-text-float"
-            )}
-          >
-            {option.text ? (
-              <h2
-                className="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-none"
-                style={{
-                  textShadow: '2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)',
-                  WebkitTextStroke: '0.5px rgba(0,0,0,0.4)',
-                }}
-              >
-                {option.text}
-              </h2>
-            ) : null}
-
-            {/* Status pill — debajo del nombre (estilo referencia) */}
-            {status && (
-              <div
-                className="mt-1.5 px-2.5 py-0.5 rounded-full backdrop-blur-md flex items-center gap-1 border border-white/30 shadow-md"
-                style={{
-                  background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
-                }}
-              >
-                <span className="text-[10px]">{status.icon}</span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white drop-shadow-md">
-                  {status.text}
-                </span>
-              </div>
-            )}
-
-            {/* Porcentaje gigante + votos */}
-            {showResults && (
-              <div className="mt-1 flex items-baseline gap-2 animate-in fade-in zoom-in duration-300">
-                <span
-                  className="text-5xl md:text-6xl font-black leading-none"
-                  style={{
-                    color: '#fff',
-                    textShadow: `0 0 16px ${colors.glow}, 2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)`,
-                  }}
-                >
-                  {percentage}%
-                </span>
-                <span className="text-xs text-white/85 font-bold tabular-nums">
-                  {optionVotes.toLocaleString()} votos
-                </span>
-              </div>
-            )}
-          </div>
+          {/* 🏷️ Trofeo + nombre + status + % + votos: MOVIDOS FUERA de la card.
+              Ahora se renderizan como capa hermana del lift-subject con
+              zIndex: 50 (al final de QuestionSlide), por encima del overlay
+              3D y del lift-subject. Esto evita que queden clippeados por
+              overflow-hidden de la card y que se vean afectados por las
+              transformaciones 3D (preserve-3d) del contexto cinema. */}
 
           {/* 🚫 Botón corazón eliminado por petición del usuario.
               El voto se realiza con doble tap sobre la imagen
@@ -1023,6 +954,121 @@ const QuestionSlide = ({
           </div>
         );
       })()}
+
+      {/* 🏷️ LABELS LAYER — nombre + status pill + % + votos + trofeo.
+          Renderizada FUERA de las cards (hermana del lift-subject) con
+          zIndex: 50 para que quede SIEMPRE por encima del overlay 3D,
+          del lift-subject (zIndex 31) y de las propias cards (zIndex 30/1).
+          Cada opción ocupa su mitad mediante un slot absolute idéntico al
+          que usa el lift-subject. La capa no captura eventos (pointer-events
+          none) para no romper el voto/long-press de las cards. */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ zIndex: 50 }}
+      >
+        {[optionA, optionB].map((option, index) => {
+          if (!option) return null;
+          const isOptionA = index === 0;
+          const colors = isOptionA ? TWYK_COLORS.top : TWYK_COLORS.bottom;
+          const isSelected = selectedOption === option.id;
+          const percentage = isOptionA ? percA : percB;
+          const optionVotes = isOptionA ? votesA : votesB;
+          const status = getStatusLabel(isOptionA);
+          const isWinning = showResults && (isOptionA ? winnerIsA : winnerIsB);
+
+          // Slot que ocupa la mitad correspondiente — igual que el lift-subject
+          const slotStyle = isRow
+            ? {
+                top: 0,
+                bottom: 0,
+                width: '50%',
+                [isOptionA ? 'left' : 'right']: 0,
+              }
+            : {
+                left: 0,
+                right: 0,
+                height: '50%',
+                [isOptionA ? 'top' : 'bottom']: 0,
+              };
+
+          return (
+            <div key={option.id} className="absolute" style={slotStyle}>
+              {/* 🏆 Trofeo */}
+              {isWinning && showResults && (
+                <div
+                  className={cn(
+                    "absolute flex items-center gap-1.5 px-2.5 py-1 rounded-full",
+                    "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-xl border-2 border-white/50",
+                    isRow
+                      ? cn(TROPHY_TOP, isOptionA ? "left-3" : "right-3")
+                      : cn("right-3", isOptionA ? TROPHY_TOP : TROPHY_BOTTOM)
+                  )}
+                >
+                  <Trophy className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-white">{t('vs.ganador')}</span>
+                </div>
+              )}
+
+              {/* Contenido principal — nombre + status pill + porcentaje + votos */}
+              <div
+                className={cn(
+                  "absolute flex flex-col px-2",
+                  isRow
+                    ? cn("bottom-16 right-2 left-1 items-start")
+                    : cn("left-0 right-16 items-start", isOptionA ? "bottom-16" : "top-16"),
+                  // 🎬 Texto/porcentaje flota DELANTE de la imagen (3 capas de profundidad)
+                  isSelected && "vs-cinema-text-float"
+                )}
+              >
+                {option.text ? (
+                  <h2
+                    className="text-white font-black text-2xl md:text-3xl uppercase tracking-tight leading-none"
+                    style={{
+                      textShadow: '2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)',
+                      WebkitTextStroke: '0.5px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {option.text}
+                  </h2>
+                ) : null}
+
+                {/* Status pill — debajo del nombre (estilo referencia) */}
+                {status && (
+                  <div
+                    className="mt-1.5 px-2.5 py-0.5 rounded-full backdrop-blur-md flex items-center gap-1 border border-white/30 shadow-md"
+                    style={{
+                      background: `linear-gradient(90deg, rgba(${colors.primaryRgb},0.55), rgba(${colors.primaryRgb},0.35))`,
+                    }}
+                  >
+                    <span className="text-[10px]">{status.icon}</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white drop-shadow-md">
+                      {status.text}
+                    </span>
+                  </div>
+                )}
+
+                {/* Porcentaje gigante + votos */}
+                {showResults && (
+                  <div className="mt-1 flex items-baseline gap-2 animate-in fade-in zoom-in duration-300">
+                    <span
+                      className="text-5xl md:text-6xl font-black leading-none"
+                      style={{
+                        color: '#fff',
+                        textShadow: `0 0 16px ${colors.glow}, 2px 2px 0 rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.6)`,
+                      }}
+                    >
+                      {percentage}%
+                    </span>
+                    <span className="text-xs text-white/85 font-bold tabular-nums">
+                      {optionVotes.toLocaleString()} votos
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Header overlay — DUELO + RONDA + live votes (solo cuando es activo) */}
       {isActive && (
