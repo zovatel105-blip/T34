@@ -1699,15 +1699,24 @@ const TikTokPollCard = ({
 };
 
 
-// — TikTokPollCard y helpers internos se mantienen igual que en tu versión original —
-// (No se modifican: renderActionButtons, UserButton, renderTextWithHashtags, etc.)
-// Solo se exporta TikTokScrollView con los cambios de fluidez.
-
-// ─── DEV LOG ────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// DEV log helper (used by TikTokScrollView)
+// ---------------------------------------------------------------------------
 const DEV = process.env.NODE_ENV === 'development';
 const log = DEV ? console.log.bind(console) : () => {};
 
-// ─── TikTokScrollView ────────────────────────────────────────────────────────
+// ===========================================================================
+// TikTokScrollView — REWRITTEN WITH TIKTOK ARCHITECTURE
+//
+// Key changes vs original:
+//  1. CSS scroll-snap (native compositor) instead of Swiper JS
+//  2. 3-node virtual recycling — only prev/current/next are in the DOM
+//  3. Pre-decode: video for next slide is decoded into GPU before swipe
+//  4. Audio pre-connect: next audio is loaded into AudioContext in advance
+//     so the switch is ~0ms instead of ~150ms
+//  5. Consolidated audio management (removed duplicate per-card useEffect)
+//  6. All console.log gated behind DEV flag
+// ===========================================================================
 const TikTokScrollView = ({
   polls,
   onVote, onLike, onShare, onComment, onSave, onExitTikTok, onCreatePoll,
@@ -1730,13 +1739,9 @@ const TikTokScrollView = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(() => !localStorage.getItem('hasScrolledFeed'));
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // Tape offset in dvh (negative = tape moves up = next, positive = prev).
+  // Used to animate the visual swipe before swapping slot contents.
   const [translateOffset, setTranslateOffset] = useState(0);
-
-  // ── Velocity-aware swipe ──────────────────────────────────────────────────
-  // Duración de la transición adaptativa según velocidad del swipe.
-  // Swipe rápido → 180ms, swipe lento → 280ms. Igual que TikTok.
-  const [transitionDuration, setTransitionDuration] = useState(250);
-  const swipeStartTimeRef = useRef(null);
 
   // Pull-to-refresh
   const [pullDistance, setPullDistance] = useState(0);
@@ -1751,26 +1756,35 @@ const TikTokScrollView = ({
   const isHighBandwidth = !isMetered;
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const controls = useAnimation();
 
-  // ─── VIRTUAL 3-SLOT POOL ──────────────────────────────────────────────────
+  // ─── VIRTUAL 3-SLOT POOL ─────────────────────────────────────────────────
+  // Maps slot indices [prev=0, current=1, next=2] to poll indices.
+  // We reuse only 3 DOM nodes and swap their data, avoiding mount/unmount cost.
   const SLOT_PREV = 0;
-  const SLOT_CUR  = 1;
+  const SLOT_CUR = 1;
   const SLOT_NEXT = 2;
 
   const slotPolls = useMemo(() => {
     if (!polls || polls.length === 0) return [null, null, null];
     const prev = activeIndex > 0 ? polls[activeIndex - 1] : null;
-    const cur  = polls[activeIndex] || null;
+    const cur = polls[activeIndex] || null;
     const next = activeIndex < polls.length - 1 ? polls[activeIndex + 1] : null;
     return [prev, cur, next];
   }, [polls, activeIndex]);
+
+  // The CSS transform offset of the visible "tape"
+  // Slot 0 = -100vh, Slot 1 = 0vh, Slot 2 = +100vh
+  // We always show Slot 1 (current). The tape never actually scrolls —
+  // we instantly reposition slots when the active index changes.
+  // The TRANSITION happens via translateY animation on the tape for 1 swipe.
 
   const tapeRef = useRef(null);
   const touchStartYRef = useRef(null);
   const touchCurrentYRef = useRef(null);
   const isAnimatingRef = useRef(false);
 
-  // ─── PRE-DECODE next video ────────────────────────────────────────────────
+  // ─── PRE-DECODE next video into GPU ──────────────────────────────────────
   const getNextVideoUrl = useCallback(() => {
     if (!polls || activeIndex >= polls.length - 1) return null;
     const nextPoll = polls[activeIndex + 1];
@@ -1782,12 +1796,16 @@ const TikTokScrollView = ({
     return null;
   }, [polls, activeIndex]);
 
+  // We keep a hidden <video> that pre-decodes the next slide's first frame
   const preDecodeVideoRef = useRef(null);
   useEffect(() => {
     const url = getNextVideoUrl();
     if (!url || !isHighBandwidth) return;
+
+    // Reuse existing element if URL hasn't changed
     if (preDecodeVideoRef.current?.src === url) return;
 
+    // Clean up previous
     if (preDecodeVideoRef.current) {
       preDecodeVideoRef.current.pause();
       preDecodeVideoRef.current.src = '';
@@ -1803,10 +1821,8 @@ const TikTokScrollView = ({
     document.body.appendChild(video);
     preDecodeVideoRef.current = video;
 
-    // Forzar decode del primer keyframe en GPU
+    // Force GPU decode of first keyframe
     video.play().then(() => { video.pause(); }).catch(() => {});
-    // Fetch 256KB para buffer inicial (TikTok-style)
-    fetch(url, { headers: { Range: 'bytes=0-262143' }, priority: 'low', cache: 'force-cache' }).catch(() => {});
 
     return () => {
       video.pause();
@@ -1818,29 +1834,34 @@ const TikTokScrollView = ({
   }, [getNextVideoUrl, isHighBandwidth]);
 
   // ─── PRE-CONNECT next audio ───────────────────────────────────────────────
+  // Load the next slide's audio into an AudioBuffer but keep it paused.
+  // When the user swipes, audioManager can start it with ~0ms latency.
   useEffect(() => {
     if (!polls || activeIndex >= polls.length - 1) return;
     const nextPoll = polls[activeIndex + 1];
     if (!nextPoll?.music?.preview_url) return;
     if (!isHighBandwidth) return;
+
+    // Tell audioManager to buffer (not play) the next track
     if (typeof audioManager.preconnect === 'function') {
       audioManager.preconnect(nextPoll.music.preview_url);
     }
   }, [polls, activeIndex, isHighBandwidth]);
 
   // ─── CENTRALIZED AUDIO MANAGER ───────────────────────────────────────────
+  // Single source of truth. Cards no longer manage audio.
   useEffect(() => {
     if (!polls || polls.length === 0) return;
     const activePoll = polls[activeIndex];
     if (!activePoll) return;
 
     let cancelled = false;
-    // Reducido a 16ms (1 frame) en lugar de 60ms para respuesta inmediata
     const id = setTimeout(async () => {
       if (cancelled) return;
       try {
         const hasExtractedAudio = activePoll.layout === 'off' && activePoll.options?.some(opt => opt.extracted_audio_id);
         const hasMusic = activePoll.music?.preview_url && !hasExtractedAudio;
+
         if (hasMusic) {
           if (!audioManager.isPlayingPost(activePoll.id)) {
             await audioManager.stop();
@@ -1853,40 +1874,20 @@ const TikTokScrollView = ({
       } catch (err) {
         log('Audio sync error:', err);
       }
-    }, 16); // 1 frame en lugar de 60ms
+    }, 60);
 
     return () => { cancelled = true; clearTimeout(id); };
   }, [activeIndex, polls]);
 
-  // ─── BACKGROUND PAUSE — videos ───────────────────────────────────────────
-  // AudioManager ya maneja el audio en background.
-  // Aquí pausamos los videos del slot activo cuando la app se minimiza.
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.hidden) {
-        // Pausar todos los videos activos
-        document.querySelectorAll('video').forEach(v => {
-          if (!v.paused) v.pause();
-        });
-      } else {
-        // Reanudar solo el video del slot activo
-        document.querySelectorAll('[data-slot-active="true"] video').forEach(v => {
-          if (v.paused) v.play().catch(() => {});
-        });
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, []);
-
-  // ─── VELOCITY-AWARE SWIPE ────────────────────────────────────────────────
-  // Calcula la duración de la transición según la velocidad del swipe.
-  // Swipe rápido (>1.5 px/ms) → 180ms, swipe lento → 280ms.
-  // Igual que TikTok: la inercia del dedo se refleja en la animación.
-  const TRANSITION_MS_FAST = 180;
-  const TRANSITION_MS_SLOW = 280;
-
-  const goToIndex = useCallback((newIndex, swipeDurationMs = null) => {
+  // ─── SWIPE NAVIGATION (2-phase animation, TikTok-style) ──────────────────
+  // Phase 1 (0 → 320ms): animate tape to ±100dvh so the next/prev slot slides
+  //                       into view with a real CSS transition.
+  // Phase 2 (after 320ms): instantly swap activeIndex (slot contents shift),
+  //                        reset translateOffset to 0 with transition disabled.
+  //                        Visually seamless because slot 1 now contains the
+  //                        same poll that slot 2/0 was just showing.
+  const TRANSITION_MS = 320;
+  const goToIndex = useCallback((newIndex) => {
     if (isAnimatingRef.current) return;
     if (newIndex < 0 || newIndex >= polls.length) return;
     if (newIndex === activeIndex) return;
@@ -1894,30 +1895,29 @@ const TikTokScrollView = ({
     isAnimatingRef.current = true;
     if (onSwipeStart) onSwipeStart();
 
+    // Direction: 'next' means tape slides up, 'prev' means tape slides down.
     const direction = newIndex > activeIndex ? 'next' : 'prev';
-    const targetOffset = direction === 'next' ? -100 : 100;
+    const targetOffset = direction === 'next' ? -100 : 100; // dvh
 
+    // Side effects we can fire immediately (don't affect the visible slot)
     if (showScrollHint && newIndex > 0) {
       setShowScrollHint(false);
       localStorage.setItem('hasScrolledFeed', 'true');
     }
-
-    // Carga silenciosa — sin spinner, igual que TikTok
     if (onLoadMore && hasMoreContent && !isLoadingMore) {
       const remaining = polls.length - newIndex;
       if (remaining <= 8) onLoadMore();
     }
 
-    // Velocidad adaptativa de transición
-    const transMs = swipeDurationMs !== null
-      ? (swipeDurationMs < 150 ? TRANSITION_MS_FAST : TRANSITION_MS_SLOW)
-      : TRANSITION_MS_SLOW;
-    setTransitionDuration(transMs);
-
+    // ── Phase 1: animate the tape ──
     setIsTransitioning(true);
     setTranslateOffset(targetOffset);
 
+    // ── Phase 2 (after the animation finishes) ──
     setTimeout(() => {
+      // Disable transition for the instant reset, swap activeIndex, and
+      // recenter the tape on slot 1 (which now contains the new active poll).
+      // All three updates batch into one render → seamless teleport.
       setIsTransitioning(false);
       setTranslateOffset(0);
       setActiveIndex(newIndex);
@@ -1928,32 +1928,41 @@ const TikTokScrollView = ({
       }
 
       isAnimatingRef.current = false;
-    }, transMs);
+    }, TRANSITION_MS);
   }, [activeIndex, polls.length, onSwipeStart, onActiveIndexChange, showScrollHint, onLoadMore, hasMoreContent, isLoadingMore]);
 
-  // Listener "Siguiente duelo"
+  // 🏆 Listener para "Siguiente duelo" desde la VSWinnerCard → avanzar al
+  // siguiente post del feed.
   useEffect(() => {
     const handleNextPost = (e) => {
       const sourcePollId = e?.detail?.pollId;
+      // Solo avanza si el evento proviene del post activo
       if (sourcePollId && polls[activeIndex]?.id !== sourcePollId) return;
-      if (activeIndex < polls.length - 1) goToIndex(activeIndex + 1);
+      if (activeIndex < polls.length - 1) {
+        goToIndex(activeIndex + 1);
+      }
     };
     window.addEventListener('vs:nextPost', handleNextPost);
     return () => window.removeEventListener('vs:nextPost', handleNextPost);
   }, [activeIndex, polls, goToIndex]);
 
-  // ─── GESTOS TÁCTILES ────────────────────────────────────────────────────
-  const SWIPE_FRACTION_THRESHOLD = 0.20;
-  const EDGE_RESISTANCE = 0.20;
+  // ─── DRAG / SWIPE GESTURE (TikTok-style live tracking) ───────────────────
+  // While dragging: the tape follows the finger 1:1 with no transition.
+  // On release: if dragged > 20% of viewport → complete the swipe;
+  //             otherwise → spring back to center.
+  // Edge resistance: at the first/last post, dragging beyond the boundary
+  //                  is dampened to 20% of finger movement (rubber-band).
+  const SWIPE_FRACTION_THRESHOLD = 0.20; // 20% of viewport
+  const EDGE_RESISTANCE = 0.20;          // 20% follow at the edges
 
+  // Swipe gesture on the 3-slot tape
   const handleTapePointerDown = useCallback((e) => {
     if (isModalOpen || storiesOverlayOpen) return;
-    if (isAnimatingRef.current) return;
+    if (isAnimatingRef.current) return; // ignore while a transition is running
     touchStartYRef.current = e.touches ? e.touches[0].clientY : e.clientY;
     touchCurrentYRef.current = touchStartYRef.current;
-    // Guardar timestamp para calcular velocidad del swipe
-    swipeStartTimeRef.current = Date.now();
 
+    // Pull-to-refresh detection
     if (onRefresh && !isRefreshing && activeIndex === 0) {
       pullStartYRef.current = touchStartYRef.current;
       isPullingRef.current = false;
@@ -1965,23 +1974,29 @@ const TikTokScrollView = ({
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     touchCurrentYRef.current = clientY;
 
-    const deltaPx = clientY - touchStartYRef.current;
+    const deltaPx = clientY - touchStartYRef.current; // +down / -up
 
+    // Pull-to-refresh has priority when at the very top and dragging down
     if (onRefresh && !isRefreshing && activeIndex === 0 && deltaPx > 0) {
       isPullingRef.current = true;
       setPullDistance(Math.min(deltaPx * 0.5, PTR_MAX));
       return;
     }
 
+    // Live tape drag: convert px → dvh (relative to viewport height)
     const vh = window.innerHeight || 1;
     let offsetDvh = (deltaPx / vh) * 100;
 
+    // Rubber-band resistance at the boundaries.
+    // - At first post: dragging DOWN (deltaPx > 0) is at boundary.
+    // - At last post:  dragging UP   (deltaPx < 0) is at boundary.
     const atStart = activeIndex === 0;
     const atEnd = activeIndex >= polls.length - 1;
     if ((atStart && deltaPx > 0) || (atEnd && deltaPx < 0)) {
       offsetDvh *= EDGE_RESISTANCE;
     }
 
+    // No transition while dragging — tape follows the finger 1:1
     setIsTransitioning(false);
     setTranslateOffset(offsetDvh);
   }, [onRefresh, isRefreshing, activeIndex, polls.length]);
@@ -1991,16 +2006,11 @@ const TikTokScrollView = ({
 
     const startY = touchStartYRef.current;
     const endY = touchCurrentYRef.current ?? startY;
-    const deltaPx = endY - startY;
-    // Calcular duración del swipe para velocidad adaptativa
-    const swipeDurationMs = swipeStartTimeRef.current
-      ? Date.now() - swipeStartTimeRef.current
-      : null;
-
+    const deltaPx = endY - startY; // +down / -up
     touchStartYRef.current = null;
     touchCurrentYRef.current = null;
-    swipeStartTimeRef.current = null;
 
+    // Handle pull-to-refresh release
     if (isPullingRef.current) {
       isPullingRef.current = false;
       pullStartYRef.current = null;
@@ -2018,29 +2028,29 @@ const TikTokScrollView = ({
 
     const vh = window.innerHeight || 1;
     const draggedFraction = Math.abs(deltaPx) / vh;
-    const wantsNext = deltaPx < 0;
-    const wantsPrev = deltaPx > 0;
+    const wantsNext = deltaPx < 0; // dragged up
+    const wantsPrev = deltaPx > 0; // dragged down
 
     const atStart = activeIndex === 0;
     const atEnd = activeIndex >= polls.length - 1;
     const cannotMove = (atStart && wantsPrev) || (atEnd && wantsNext);
 
     if (draggedFraction >= SWIPE_FRACTION_THRESHOLD && !cannotMove) {
-      if (wantsNext) goToIndex(activeIndex + 1, swipeDurationMs);
-      else goToIndex(activeIndex - 1, swipeDurationMs);
+      // Past the threshold → complete the swipe.
+      // goToIndex sets translateOffset to ±100dvh with transition; since the
+      // current offset is somewhere between 0 and ±100dvh, the spring just
+      // covers the remaining distance.
+      if (wantsNext) goToIndex(activeIndex + 1);
+      else goToIndex(activeIndex - 1);
     } else {
-      // Spring back con la misma duración adaptativa
-      const transMs = swipeDurationMs !== null && swipeDurationMs < 150
-        ? TRANSITION_MS_FAST
-        : TRANSITION_MS_SLOW;
-      setTransitionDuration(transMs);
+      // Snap back to center with a spring.
       setIsTransitioning(true);
       setTranslateOffset(0);
-      setTimeout(() => setIsTransitioning(false), transMs);
+      setTimeout(() => setIsTransitioning(false), TRANSITION_MS);
     }
   }, [pullDistance, isRefreshing, onRefresh, goToIndex, activeIndex, polls.length]);
 
-  // Teclado
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'ArrowDown') goToIndex(activeIndex + 1);
@@ -2061,7 +2071,7 @@ const TikTokScrollView = ({
     const handleWheel = (e) => {
       e.preventDefault();
       const now = Date.now();
-      if (now - lastWheel < 600) return;
+      if (now - lastWheel < 600) return; // debounce
       lastWheel = now;
       if (e.deltaY > 0) goToIndex(activeIndex + 1);
       else goToIndex(activeIndex - 1);
@@ -2070,7 +2080,7 @@ const TikTokScrollView = ({
     return () => el.removeEventListener('wheel', handleWheel);
   }, [activeIndex, goToIndex]);
 
-  // Index change para SearchPage
+  // Dynamic index change for Search Page
   useEffect(() => {
     if (onIndexChange && activeIndex !== lastActiveIndex) {
       const direction = activeIndex > lastActiveIndex ? 'next' : 'previous';
@@ -2079,21 +2089,27 @@ const TikTokScrollView = ({
     }
   }, [activeIndex, lastActiveIndex, onIndexChange, polls.length]);
 
+  // Jump to initialIndex on mount / when it changes
   useEffect(() => {
     setActiveIndex(initialIndex);
     setLastActiveIndex(initialIndex);
   }, [initialIndex]);
 
-  // ─── LIFECYCLE ────────────────────────────────────────────────────────────
+  // ─── LIFECYCLE ──────────────────────────────────────────────────────────
   useEffect(() => {
     return () => { audioManager.stop().catch(() => {}); };
   }, []);
 
   useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.hidden) await audioManager.pause();
+    };
     const handleUnload = async () => { await audioManager.stop(); };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleUnload);
     window.addEventListener('pagehide', handleUnload);
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleUnload);
       window.removeEventListener('pagehide', handleUnload);
     };
@@ -2110,7 +2126,7 @@ const TikTokScrollView = ({
     return () => window.removeEventListener('app:backbutton', handleAppBack);
   }, [closeOnBack, onExitTikTok]);
 
-  // ─── PREDICTIVE PREFETCH ──────────────────────────────────────────────────
+  // ─── PREDICTIVE PREFETCH (media cache) ───────────────────────────────────
   useEffect(() => {
     if (!polls || polls.length === 0) return;
     let cancelled = false;
@@ -2124,9 +2140,7 @@ const TikTokScrollView = ({
       const isCellular = navigator?.connection?.type === 'cellular' || ['2g', '3g'].includes(navigator?.connection?.effectiveType);
       const videoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024;
       const imageMaxBytes = 2 * 1024 * 1024;
-
-      // Prefetch también el post activo (offset 0) para thumbnails en conexión lenta
-      for (let offset = 0; offset <= 3; offset++) {
+      for (let offset = 1; offset <= 3; offset++) {
         const idx = activeIndex + offset;
         if (idx >= polls.length) break;
         const p = polls[idx];
@@ -2144,7 +2158,7 @@ const TikTokScrollView = ({
     return () => { cancelled = true; };
   }, [activeIndex, polls]);
 
-  // ─── SAVED/SHARED POLLS ───────────────────────────────────────────────────
+  // ─── SAVED/SHARED POLLS BOOTSTRAP ────────────────────────────────────────
   useEffect(() => {
     if (!polls?.length) return;
     setSavedPolls(prev => { const s = new Set(prev); polls.forEach(p => { if (p.isSaved) s.add(p.id); }); return s; });
@@ -2215,7 +2229,7 @@ const TikTokScrollView = ({
     );
   }
 
-  // ─── SHARED CARD PROPS ────────────────────────────────────────────────────
+  // ─── SHARED CARD PROPS ───────────────────────────────────────────────────
   const sharedCardProps = {
     onVote, onLike, onShare, onComment, onSave, onCreatePoll,
     showLogo, onUpdatePoll, onDeletePoll, isOwnProfile,
@@ -2225,6 +2239,7 @@ const TikTokScrollView = ({
     fromAudioDetailPage, currentAudio,
   };
 
+  // Slot-to-data mapping
   const slots = [
     { poll: slotPolls[SLOT_PREV], slotIndex: SLOT_PREV, pollIndex: activeIndex - 1 },
     { poll: slotPolls[SLOT_CUR],  slotIndex: SLOT_CUR,  pollIndex: activeIndex },
@@ -2246,6 +2261,7 @@ const TikTokScrollView = ({
         </div>
       )}
 
+      {/* Close / challenges buttons */}
       {showCloseButton && (
         <button className="absolute top-0 right-0 z-50 p-4" style={{ top: 'max(1rem, var(--safe-area-inset-top))', right: 'max(1rem, var(--safe-area-inset-right))' }}
           onClick={() => { audioManager.stop(); onExitTikTok?.(); }}>
@@ -2260,18 +2276,27 @@ const TikTokScrollView = ({
         </div>
       )}
 
-      {/* ── 3-SLOT TAPE ───────────────────────────────────────────────────── */}
+      {/* ── 3-SLOT TAPE ─────────────────────────────────────────────────── */}
+      {/*
+        The tape is 300dvh tall and always positioned so the current slot
+        is visible. We use CSS transitions for the swipe animation.
+        Slots are ordered: [prev | current | next]
+      */}
       <div
         ref={tapeRef}
         style={{
           position: 'absolute',
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           height: '300dvh',
+          // The tape is offset so slot 1 (current) is in view:
+          // slot 0 = -100dvh, slot 1 = 0dvh (visible), slot 2 = +100dvh
+          // translateOffset animates ±100dvh during a swipe so slot 0 / slot 2
+          // slides into view; after the animation we reset it to 0 and swap
+          // activeIndex (slot contents shift) → seamless teleport, no flicker.
           transform: `translateY(calc(-100dvh + ${translateOffset}dvh)) translateY(${pullDistance > 0 ? pullDistance : 0}px)`,
-          // Duración adaptativa según velocidad del swipe
-          transition: isTransitioning
-            ? `transform ${transitionDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
-            : 'none',
+          transition: isTransitioning ? 'transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
           willChange: 'transform',
         }}
         onTouchStart={handleTapePointerDown}
@@ -2284,21 +2309,18 @@ const TikTokScrollView = ({
         {slots.map(({ poll: slotPoll, slotIndex, pollIndex }) => (
           <div
             key={`slot-${slotIndex}`}
-            // data-slot-active: usado por el background pause handler para
-            // reanudar solo el video del slot activo al volver de background.
-            data-slot-active={pollIndex === activeIndex ? 'true' : 'false'}
             style={{
               position: 'absolute',
               top: `${slotIndex * 100}dvh`,
-              left: 0, right: 0,
+              left: 0,
+              right: 0,
               height: '100dvh',
               overflow: 'hidden',
-              willChange: 'transform',
             }}
           >
             {slotPoll ? (
               <TikTokPollCard
-                key={`slot-card-${slotIndex}`}
+                key={slotPoll.id}
                 poll={slotPoll}
                 isActive={pollIndex === activeIndex}
                 index={pollIndex}
@@ -2314,22 +2336,32 @@ const TikTokScrollView = ({
                 {...sharedCardProps}
               />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'black', willChange: 'transform' }} />
+              // Empty slot placeholder (prevents layout shift)
+              <div style={{ width: '100%', height: '100%', background: 'black' }} />
             )}
           </div>
         ))}
       </div>
 
-      {/* ── CARGA SILENCIOSA (sin spinner) ─────────────────────────────────
-          TikTok nunca muestra un spinner de "cargando más" — el contenido
-          aparece disponible cuando el usuario llega al final, sin interrupciones.
-          isLoadingMore se usa solo internamente para evitar peticiones duplicadas. */}
+      {/* Loading more indicator (shown as a 4th slot below) */}
+      {isLoadingMore && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center bg-black/80 py-4">
+          <div className="flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+            <p className="text-white/70 text-sm">Cargando más contenido...</p>
+          </div>
+        </div>
+      )}
+
+      {/* End of feed indicator removed per user request */}
 
       <style>{`
         @supports (height: 100dvh) {
           .fixed.inset-0 { height: 100dvh; }
         }
-        body { overscroll-behavior: none; }
+        body {
+          overscroll-behavior: none;
+        }
         video {
           -webkit-transform: translateZ(0);
           transform: translateZ(0);

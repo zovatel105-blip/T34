@@ -1,39 +1,21 @@
 /**
  * <PollOptionMedia>
  *
- * Renderiza el media (vídeo o imagen) de una `option` de un poll con
- * soporte OFFLINE-FIRST (caché en filesystem nativo vía mediaCacheService)
- * y fallback estético cuando el recurso no se puede cargar.
+ * Renderiza el media (vídeo o imagen) de una `option` de un poll.
  *
- * Pensado para sustituir bloques `<video>`/`<img>` directos repetidos en
- * TikTokScrollView, layouts, etc., manteniendo su mismo aspecto visual
- * pero agregando:
- *   - Si la URL ya estaba cacheada en filesystem (sesión anterior) →
- *     se sirve la URI local INMEDIATAMENTE (offline OK).
- *   - Si no estaba cacheada → se sirve la URL remota y se prefetcha
- *     en background para la próxima vez.
- *   - Si el video falla al cargar (offline + sin caché) → mostramos el
- *     poster (thumbnail) en su lugar. Si tampoco hay poster → gradiente
- *     elegante en vez de fondo NEGRO.
- *
- * Props:
- *   option: objeto opción del backend (con .media, .media_type, etc.)
- *   className: classes que se pasan al contenedor raíz (debe tener tamaño)
- *   style: estilos en línea para el contenedor raíz
- *   videoProps: props extra para el `<video>` (autoPlay, muted, loop, etc.)
- *   imgProps: props extra para el `<img>` (alt, loading, etc.)
- *   showPlaceholderOnError: default true. Si false, no se intenta el
- *                           fallback de poster cuando el vídeo falla.
- *   cacheVideo: default true. En APK cachea el vídeo en disco para offline.
- *               Pásalo a false en thumbnails/grids con muchos posts.
- *   videoMaxBytes: tope de tamaño para vídeos a cachear (default 25 MB).
+ * Cambios vs versión anterior:
+ * - Poster crossfade: muestra el poster hasta que el video tiene buffer,
+ *   luego hace crossfade suave (0.2s) — elimina la pantalla negra inicial.
+ * - Background pause: pausa el video cuando la app va a segundo plano
+ *   y lo reanuda al volver (igual que TikTok).
+ * - onCanPlay en lugar de autoPlay para arrancar solo cuando hay buffer
+ *   suficiente — evita el efecto "cámara lenta" por falta de datos.
  */
-import React, { useState, useEffect } from 'react';
-import { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
+import React, { useState, useEffect, useRef } from 'react';
+import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
-import HlsVideo from './HlsVideo';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
@@ -52,38 +34,22 @@ const PollOptionMedia = ({
   showPlaceholderOnError = true,
   cacheVideo = true,
   videoMaxBytes = VIDEO_MAX_BYTES_DEFAULT,
-  /** Callback ref que se aplica al <video> interno (útil para que el padre
-   *  pueda controlar play/pause/currentTime). */
-  videoRef = null,
-  /**
-   * Distancia al post activo en el feed (0 = visible, 1 = siguiente, etc.).
-   * Controla la estrategia de preload y prioridad de red, al estilo TikTok:
-   *   0  → preload="auto"      (bufferea ~1s antes de reproducir)
-   *   1  → preload="auto"      (siguiente video ya listo al swipear)
-   *   2  → preload="metadata"  (solo cabeceras + poster)
-   *   >2 → preload="none"      (nada, liberamos RAM/red)
-   */
+  videoRef: externalVideoRef = null,
   distanceFromActive = 0,
-  /**
-   * Si true, el componente considera que el usuario está en WiFi y puede
-   * ser más agresivo con el preload. En cellular debería ser false para
-   * ahorrar datos y no saturar la red móvil.
-   */
   isHighBandwidth = true,
 }) => {
   const isVideo = isVideoOption(option);
+  const internalVideoRef = useRef(null);
+  const videoEl = externalVideoRef || internalVideoRef;
 
-  // URLs originales (ya absolutas, resolveAssetUrl las normaliza)
+  // URLs originales
   const rawVideoSrc = isVideo ? pickPlayableVideoUrl(option) : null;
-  const rawHlsSrc = isVideo ? pickPlayableHlsUrl(option) : null;
   const rawPosterSrc = pickVideoPosterUrl(option);
   const rawImageSrc = !isVideo
     ? resolveAssetUrl(option?.media?.url || option?.media_url || option?.thumbnail_url)
     : null;
 
-  // 🚀 Sustituir por URI local cacheada cuando exista (offline-first).
-  // Nota: solo cacheamos el MP4 (un único fichero). El HLS son N segmentos
-  // y no tiene sentido cachearlo en filesystem para offline corto.
+  // Offline-first: sustituir por URI local cacheada cuando exista
   const cachedVideoSrc = useCachedSrc(rawVideoSrc, {
     enabled: cacheVideo && !!rawVideoSrc,
     maxBytes: videoMaxBytes,
@@ -91,29 +57,51 @@ const PollOptionMedia = ({
   const cachedPosterSrc = useCachedSrc(rawPosterSrc, { enabled: !!rawPosterSrc });
   const cachedImageSrc = useCachedSrc(rawImageSrc, { enabled: !!rawImageSrc });
 
-  // Estrategia de selección:
-  //   1) MP4 cacheado en filesystem (mejor offline) → ignoramos HLS
-  //   2) HLS (ABR adaptativo en online)
-  //   3) MP4 remoto (fallback)
-  const hasCachedMp4 = !!cachedVideoSrc;
-  const mp4SrcForPlayer = cachedVideoSrc || rawVideoSrc;
-  const hlsSrcForPlayer = hasCachedMp4 ? null : rawHlsSrc;
-  const videoSrc = mp4SrcForPlayer; // se usa para checks tipo "hay algo que reproducir"
+  const videoSrc = cachedVideoSrc || rawVideoSrc;
   const posterSrc = cachedPosterSrc || rawPosterSrc;
   const imageSrc = cachedImageSrc || rawImageSrc;
 
+  // ── POSTER CROSSFADE ──────────────────────────────────────────────────────
+  // isBuffered: true cuando el video tiene datos suficientes para reproducir
+  // sin congelarse. Hasta entonces mostramos el poster encima.
+  // El crossfade (opacity transition 0.2s) elimina el salto visual.
+  const [isBuffered, setIsBuffered] = useState(false);
   const [videoStatus, setVideoStatus] = useState('loading');
   const [imgStatus, setImgStatus] = useState('loading');
 
   // Reset cuando cambian las URLs
   useEffect(() => {
-    if (videoSrc) setVideoStatus('loading');
+    if (videoSrc) { setVideoStatus('loading'); setIsBuffered(false); }
   }, [videoSrc]);
   useEffect(() => {
     if (imageSrc) setImgStatus('loading');
   }, [imageSrc]);
 
-  // ─── No hay media en absoluto ───────────────────────────────────────────
+  // ── BACKGROUND PAUSE ─────────────────────────────────────────────────────
+  // TikTok pausa video Y audio cuando el usuario minimiza la app.
+  // AudioManager ya maneja el audio; aquí manejamos el video.
+  useEffect(() => {
+    if (!isVideo) return;
+    const v = videoEl?.current;
+    if (!v) return;
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        v.pause();
+      } else {
+        // Solo reanudar si el post está activo (distanceFromActive === 0)
+        if (distanceFromActive === 0 && !v.paused) return;
+        if (distanceFromActive === 0) {
+          v.play().catch(() => {});
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isVideo, distanceFromActive, videoEl]);
+
+  // ── No hay media ──────────────────────────────────────────────────────────
   if (!isVideo && !imageSrc) {
     return (
       <div
@@ -126,15 +114,10 @@ const PollOptionMedia = ({
     );
   }
 
-  // ─── Modo VIDEO ─────────────────────────────────────────────────────────
+  // ── Modo VIDEO ────────────────────────────────────────────────────────────
   if (isVideo) {
-    // 🧹 Si el post está MUY lejos del activo (>3), no montamos el <video>
-    // para que el navegador libere el buffer de decodificación → ahorro de RAM.
-    // Mostramos solo el poster como placeholder. Cuando el usuario se acerque
-    // al post (distance <= 3), React montará el <video> y empezará a cargar.
     const shouldRenderVideoTag = distanceFromActive <= 3;
 
-    // Si no tenemos URL de vídeo → mostrar el poster como imagen estática
     if (!videoSrc || !shouldRenderVideoTag) {
       return (
         <div
@@ -150,9 +133,7 @@ const PollOptionMedia = ({
               alt=""
               draggable={false}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
         </div>
@@ -164,63 +145,105 @@ const PollOptionMedia = ({
         className={cn('relative w-full h-full overflow-hidden', className)}
         style={style}
       >
-        <HlsVideo
-          ref={videoRef || undefined}
-          hlsUrl={hlsSrcForPlayer}
-          mp4Url={mp4SrcForPlayer}
-          poster={posterSrc || undefined}
+        {/* Poster visible hasta que el video tiene buffer suficiente.
+            Hace crossfade con el video cuando isBuffered=true.
+            Elimina la pantalla negra inicial y el efecto "cámara lenta"
+            por arrancar sin datos suficientes. */}
+        {posterSrc && (
+          <img
+            src={posterSrc}
+            alt=""
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            style={{
+              opacity: isBuffered ? 0 : 1,
+              transition: 'opacity 0.2s ease',
+              zIndex: 1,
+            }}
+          />
+        )}
+
+        <video
+          ref={videoEl}
+          src={videoSrc}
+          // No pasar poster al <video> — lo manejamos nosotros con el <img>
+          // para tener control total del crossfade.
+          onCanPlay={() => {
+            // Video tiene suficiente buffer para reproducir sin congelarse
+            setIsBuffered(true);
+            // Arrancar reproducción aquí en lugar de con autoPlay
+            // garantiza que el video no empieza antes de tener datos.
+            const v = videoEl?.current;
+            if (v && v.paused && distanceFromActive === 0) {
+              v.play().catch(() => {});
+            }
+          }}
+          onWaiting={() => {
+            // Video se quedó sin datos → mostrar poster de nuevo
+            setIsBuffered(false);
+          }}
+          onPlaying={() => {
+            // Video tiene datos de nuevo → ocultar poster
+            setIsBuffered(true);
+          }}
           onLoadedData={() => setVideoStatus('loaded')}
           onError={() => setVideoStatus('error')}
           className={cn(
             'w-full h-full object-cover',
             videoStatus === 'error' && showPlaceholderOnError && 'opacity-0'
           )}
-          // 🚀 Estrategia de preload basada en distancia al post activo
-          //    (TikTok-style: próximos auto, el resto metadata/none para no saturar).
-          preload={(() => {
-            // Override explícito desde el padre (videoProps) tiene prioridad
-            if (videoProps.preload) return videoProps.preload;
-            if (distanceFromActive <= 1) return 'auto';
-            if (distanceFromActive === 2 && isHighBandwidth) return 'metadata';
-            if (distanceFromActive === 2) return 'none';
-            return 'none';
-          })()}
-          // 🎬 Hardware acceleration: fuerza al compositor del navegador a
-          //    usar la GPU para pintar el vídeo → scrolling más suave y
-          //    menos drop frames en dispositivos mid-range.
           style={{
-            // translateZ para crear una capa separada en GPU
+            opacity: isBuffered ? 1 : 0,
+            transition: 'opacity 0.2s ease',
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             willChange: distanceFromActive <= 1 ? 'transform, opacity' : 'auto',
+            zIndex: 0,
             ...(videoProps.style || {}),
           }}
+          preload={(() => {
+            if (videoProps.preload) return videoProps.preload;
+            if (distanceFromActive <= 1) return 'auto';
+            if (distanceFromActive === 2 && isHighBandwidth) return 'metadata';
+            return 'none';
+          })()}
+          muted
+          playsInline
+          loop
+          // NO autoPlay — usamos onCanPlay para arrancar cuando hay buffer
+          // eslint-disable-next-line react/no-unknown-property
+          webkit-playsinline="true"
+          // eslint-disable-next-line react/no-unknown-property
+          x5-playsinline="true"
           {...videoProps}
+          // autoPlay siempre false — override cualquier valor del padre
+          autoPlay={false}
         />
 
-        {/* Si el vídeo falla (offline + sin caché) y hay poster → mostrarlo
-            por encima en lugar del fondo negro del WebView. */}
+        {/* Fallback si el video falla y hay poster */}
         {videoStatus === 'error' && showPlaceholderOnError && posterSrc && (
           <img
             src={posterSrc}
             alt=""
             draggable={false}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
+            style={{ zIndex: 2 }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         )}
-        {/* Si tampoco hay poster cacheado → gradiente elegante */}
+        {/* Fallback sin poster → gradiente */}
         {videoStatus === 'error' && showPlaceholderOnError && !posterSrc && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-fuchsia-800 to-pink-900 pointer-events-none" />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-purple-900 via-fuchsia-800 to-pink-900 pointer-events-none"
+            style={{ zIndex: 2 }}
+          />
         )}
       </div>
     );
   }
 
-  // ─── Modo IMAGEN ────────────────────────────────────────────────────────
+  // ── Modo IMAGEN ───────────────────────────────────────────────────────────
   return (
     <div
       className={cn('relative w-full h-full overflow-hidden', className)}
