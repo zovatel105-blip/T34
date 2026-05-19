@@ -8401,3 +8401,117 @@ agent_communication:
 
       Backend reiniciado OK. Pendiente validación funcional (publicar VS con
       ambas orientaciones y verificar render correcto).
+
+
+backend:
+  - task: "Video HLS ABR pipeline (Fase 2: integración en process_poll_media)"
+    implemented: true
+    working: "NA"
+    file: "backend/video_pipeline.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: |
+            FASE 2 — integración HLS ABR (Adaptive Bitrate) al pipeline de polls
+            de video.
+
+            CAMBIOS BACKEND (ya estaban committeados de sesiones previas, revalidados):
+            - video_pipeline.py:476-506 → process_poll_media ahora ejecuta:
+              1) transcode_video_720p (MP4 fallback) → setea optimized_media_url
+              2) transcode_video_hls (ABR 360p/540p/720p) → setea hls_url
+              Ambos son independientes y tolerantes a fallo: si HLS falla, el
+              MP4 sigue funcionando como hoy. Sin cambios de status del poll.
+            - video_pipeline.py:587-688 → backfill_missing_video_assets ahora
+              acepta include_hls=False (flag manual). Cuando True, genera HLS
+              para opciones que tienen optimized_media_url pero no hls_url.
+              El loop automático mantiene include_hls=False para no triplicar
+              CPU sin pedirlo.
+            - server.py:6559, 6564 + 5 endpoints similares → todos los
+              serializers de option exponen tanto la estructura moderna
+              `media.hls` como el campo plano `hls_url` (para fallback en
+              mediaUrl.js).
+
+            CAMBIOS FRONTEND (este turno):
+            - frontend/services/pollService.js → al transformar la option ahora
+              incluye los campos planos `optimized_media_url` y `hls_url` como
+              fallback legacy. La estructura `media.optimizedUrl`/`media.hls`
+              ya viajaba via spread.
+            - frontend/utils/mediaUrl.js → nuevo helper `pickPlayableHlsUrl(option)`
+              que devuelve la URL absoluta del master.m3u8 con la misma lógica
+              de fallback (moderno → plano → null). NO se ha tocado ningún
+              componente player todavía; el helper queda listo para cuando se
+              integre hls.js en Fase 3.
+
+            VALIDACIÓN MANUAL (sin DB, pipeline directo):
+            - Ejecutado transcode_video_hls() sobre /uploads/videos/optimized/
+              0edf3a17-eb23-4d81-b5e2-40123e13722b.mp4 (3MB, ~26s).
+            - Salida: 3 renditions × 13 segments de 2s + master.m3u8 con codecs
+              avc1.4d401f / mp4a.40.2 y bandwidths 876k/1.68M/2.89M.
+            - Endpoint serving:
+                /api/uploads/videos/hls/<id>/master.m3u8 → 200 application/vnd.apple.mpegurl
+                /api/uploads/videos/hls/<id>/360p.m3u8 → 200 application/vnd.apple.mpegurl
+                /api/uploads/videos/hls/<id>/720p_000.ts → 200 video/mp2t (563KB)
+                Path traversal (../../etc/passwd) → 404 ✅ bloqueado.
+
+            TEST E2E PENDIENTE (este turno, vía testing agent):
+            - Crear un poll de video con la API real.
+            - Esperar que el background pipeline complete.
+            - Verificar que el GET del poll devuelve:
+                option.optimized_media_url (MP4 720p) → 200 video/mp4
+                option.hls_url (master.m3u8)         → 200 application/vnd.apple.mpegurl
+                option.media.hls (idem moderno)
+            - Verificar que un nuevo poll sin video sigue pasando a `ready` en
+              segundos (no regresión).
+            - Verificar que un poll cuyo HLS falla (corner case) NO bloquea el
+              MP4 ni cambia status del poll.
+
+test_plan:
+  current_focus:
+    - "Video HLS ABR pipeline (Fase 2: integración en process_poll_media)"
+  test_all: false
+  test_priority: "high_first"
+
+
+agent_communication:
+  - agent: "main"
+    message: |
+      FASE 2 HLS — pedido test E2E del pipeline de video con HLS ABR
+      integrado.
+
+      Lo que necesito validar:
+
+      1) FLOW NORMAL (happy path):
+         - Crear un poll con al menos 1 opción de tipo video (archivo MP4
+           pequeño, ~3MB). Usar credenciales de /app/memory/test_credentials.md
+           si existen, si no registrar un usuario nuevo de test.
+         - Endpoint: POST /api/polls/create (consultar el schema actual con un
+           ejemplo de poll existente; el campo `media_type:"video"` es clave).
+         - Esperar hasta 60s a que el background task complete (status="ready").
+         - GET /api/polls/<id> y verificar que la option de video devuelve:
+             * `optimized_media_url` no null + sirve 200 video/mp4
+             * `hls_url` no null + sirve 200 application/vnd.apple.mpegurl
+             * `media.optimizedUrl` y `media.hls` con los mismos valores
+         - Bajar el master.m3u8, parsear que tiene 3 entradas
+           EXT-X-STREAM-INF (360p/540p/720p) y que cada rendition .m3u8 también
+           devuelve 200.
+
+      2) NO REGRESIÓN (poll sin video):
+         - Crear un poll de solo texto/imagen.
+         - Verificar que pasa a status="ready" inmediatamente (< 5s).
+         - Verificar que sigue funcionando como antes (no HLS innecesario).
+
+      3) ROBUSTEZ (opcional, si hay tiempo):
+         - Si encuentras forma sencilla, validar que un fallo de HLS no
+           bloquea el flujo MP4 (puedes corroborar revisando logs de pipeline
+           o forzando un video corrupto / muy corto).
+
+      Devolver:
+        - Lista de poll IDs creados con sus URLs HLS y MP4.
+        - Tiempos: cuánto tardó status processing→ready.
+        - Cualquier 4xx/5xx en endpoints HLS.
+
+      No hace falta tocar UI ni player en este test. Es 100% backend.
+
