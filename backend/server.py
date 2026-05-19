@@ -7009,7 +7009,11 @@ async def get_ultra_fast_feed(
                             "type": first_option.get("media_type"),
                             "url": first_option.get("media_url"),
                             "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
-                        } if first_option.get("media_url") else None
+                            "optimizedUrl": first_option.get("optimized_media_url"),
+                            "hls": first_option.get("hls_url"),
+                        } if first_option.get("media_url") else None,
+                        "optimized_media_url": first_option.get("optimized_media_url"),
+                        "hls_url": first_option.get("hls_url"),
                     })
             
             # Obtener info del creador
@@ -7736,7 +7740,11 @@ async def get_following_polls(
                             "type": first_option.get("media_type"),
                             "url": first_option.get("media_url"),
                             "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
-                        } if first_option.get("media_url") else None
+                            "optimizedUrl": first_option.get("optimized_media_url"),
+                            "hls": first_option.get("hls_url"),
+                        } if first_option.get("media_url") else None,
+                        "optimized_media_url": first_option.get("optimized_media_url"),
+                        "hls_url": first_option.get("hls_url"),
                     })
             
             # Info del creador
@@ -8058,7 +8066,11 @@ async def get_user_polls(
                             "type": first_option.get("media_type"),
                             "url": first_option.get("media_url"),
                             "thumbnail": first_option.get("thumbnail_url") or first_option.get("media_url"),
-                        } if first_option.get("media_url") else None
+                            "optimizedUrl": first_option.get("optimized_media_url"),
+                            "hls": first_option.get("hls_url"),
+                        } if first_option.get("media_url") else None,
+                        "optimized_media_url": first_option.get("optimized_media_url"),
+                        "hls_url": first_option.get("hls_url"),
                     })
                 
                 if not challenge_options:
@@ -8714,8 +8726,12 @@ async def create_poll(
                 "type": option.media_type,
                 "url": option.media_url,
                 "thumbnail": option.thumbnail_url,
-                "transform": option.media_transform  # ✅ Include transform data in response
-            } if option.media_url else None
+                "transform": option.media_transform,  # ✅ Include transform data in response
+                "optimizedUrl": option.optimized_media_url,
+                "hls": option.hls_url,
+            } if option.media_url else None,
+            "optimized_media_url": option.optimized_media_url,
+            "hls_url": option.hls_url,
         }
         options_response.append(option_dict)
     
@@ -9233,8 +9249,12 @@ async def get_poll_by_id(
                     "type": option.get("media_type"),
                     "url": media_url,
                     "thumbnail": thumbnail_url,
-                    "transform": option.get("media_transform")  # ✅ Include transform data
-                } if media_url else None
+                    "transform": option.get("media_transform"),  # ✅ Include transform data
+                    "optimizedUrl": option.get("optimized_media_url"),
+                    "hls": option.get("hls_url"),
+                } if media_url else None,
+                "optimized_media_url": option.get("optimized_media_url"),
+                "hls_url": option.get("hls_url"),
             }
             options.append(option_dict)
     
@@ -10181,8 +10201,12 @@ async def get_posts_using_audio(
                             "media": {
                                 "type": option.get("media_type"),
                                 "url": media_url,
-                                "thumbnail": thumbnail_url  # None si no hay miniatura real (no caer al video URL)
-                            } if media_url else None
+                                "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
+                                "optimizedUrl": option.get("optimized_media_url"),
+                                "hls": option.get("hls_url"),
+                            } if media_url else None,
+                            "optimized_media_url": option.get("optimized_media_url"),
+                            "hls_url": option.get("hls_url"),
                         }
                         options.append(option_dict)
                 
@@ -11210,13 +11234,17 @@ async def get_saved_polls(
                                     "followers": "1K"  # Placeholder
                                 },
                                 "mentioned_users": option.get("mentioned_users", []),
-                                "media": {
                                 "extracted_audio_id": option.get("extracted_audio_id"),  # 🎵 Include extracted audio ID
+                                "media": {
                                     "type": option.get("media_type"),
                                     "url": media_url,
                                     "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                                    "transform": option.get("media_transform")
-                                } if media_url else None
+                                    "transform": option.get("media_transform"),
+                                    "optimizedUrl": option.get("optimized_media_url"),
+                                    "hls": option.get("hls_url"),
+                                } if media_url else None,
+                                "optimized_media_url": option.get("optimized_media_url"),
+                                "hls_url": option.get("hls_url"),
                             }
                             options.append(option_dict)
                     
@@ -11394,8 +11422,12 @@ async def get_liked_polls(
                                     "type": option.get("media_type"),
                                     "url": media_url,
                                     "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                                    "transform": option.get("media_transform")
-                                } if media_url else None
+                                    "transform": option.get("media_transform"),
+                                    "optimizedUrl": option.get("optimized_media_url"),
+                                    "hls": option.get("hls_url"),
+                                } if media_url else None,
+                                "optimized_media_url": option.get("optimized_media_url"),
+                                "hls_url": option.get("hls_url"),
                             }
                             options.append(option_dict)
                     
@@ -12812,7 +12844,11 @@ async def get_challenge_polls(
                         "type": media_type,
                         "url": media_url,
                         "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                    } if media_url else None
+                        "optimizedUrl": opt.get("optimized_media_url"),
+                        "hls": opt.get("hls_url"),
+                    } if media_url else None,
+                    "optimized_media_url": opt.get("optimized_media_url"),
+                    "hls_url": opt.get("hls_url"),
                 }
                 transformed_options.append(option_dict)
             

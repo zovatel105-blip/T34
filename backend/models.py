@@ -450,6 +450,11 @@ class PollOption(BaseModel):
     # el cliente debería preferirlo sobre `media_url` para mejor rendimiento.
     # Si el transcoding falla, queda como None y el cliente usa `media_url`.
     optimized_media_url: Optional[str] = None
+    # URL del master HLS multi-rendition (360p/540p/720p). Generado por
+    # transcode_video_hls() en el video_pipeline tras la subida. Si está
+    # presente, el cliente debería preferirlo para ABR streaming.
+    # Si la generación falla, queda como None y el cliente usa optimized/media URL.
+    hls_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     media_transform: Optional[dict] = None  # ✅ Transform data for image cropping/positioning
     mentioned_users: List[str] = []  # List of user IDs mentioned in this option
