@@ -7389,11 +7389,37 @@ async def get_battle_polls(
         
         for option in poll_data.get("options", []):
             option_user = option_users_dict.get(option.get("user_id")) if option.get("user_id") else None
+
+            # 🎬 Build media dict: preserve existing VS media shape, inject HLS fields.
+            # Fallback to flat-field reconstruction for legacy/non-VS option shapes.
+            existing_media = option.get("media")
+            if isinstance(existing_media, dict):
+                merged_media = dict(existing_media)
+                # Inject HLS/optimized fields if missing
+                if merged_media.get("optimizedUrl") in (None, ""):
+                    merged_media["optimizedUrl"] = option.get("optimized_media_url")
+                if merged_media.get("hls") in (None, ""):
+                    merged_media["hls"] = option.get("hls_url")
+            elif option.get("media_url"):
+                merged_media = {
+                    "type": option.get("media_type"),
+                    "url": option.get("media_url"),
+                    "thumbnail": option.get("thumbnail_url") or option.get("media_url"),
+                    "transform": option.get("media_transform"),
+                    "optimizedUrl": option.get("optimized_media_url"),
+                    "hls": option.get("hls_url"),
+                }
+            else:
+                merged_media = None
+
             processed_option = {
                 "id": option.get("id"),
                 "text": option.get("text"),
                 "votes": option.get("votes", 0),
-                "media": option.get("media"),
+                "media": merged_media,
+                # 🎬 Flat HLS/optimized fields for legacy clients (mediaUrl.js fallback)
+                "optimized_media_url": option.get("optimized_media_url"),
+                "hls_url": option.get("hls_url"),
                 "isWinner": option.get("votes", 0) == max_votes and max_votes > 0
             }
             if option_user:
@@ -7409,6 +7435,7 @@ async def get_battle_polls(
         author = authors_dict.get(poll_data["author_id"])
         is_following_author = poll_data["author_id"] in following_dict
         
+        created_at_value = poll_data.get("created_at", datetime.utcnow())
         poll_response = PollResponse(
             id=poll_data["id"],
             title=poll_data["title"],
@@ -7422,7 +7449,8 @@ async def get_battle_polls(
             saves_count=poll_data.get("saves_count", 0),
             music_id=poll_data.get("music_id"),
             is_active=poll_data.get("is_active", True),
-            created_at=poll_data.get("created_at", datetime.utcnow()),
+            created_at=created_at_value,
+            time_ago=calculate_time_ago(created_at_value),  # 🐛 FIX: required field
             tags=poll_data.get("tags", []),
             category=poll_data.get("category"),
             is_featured=poll_data.get("is_featured", False),
@@ -7432,7 +7460,12 @@ async def get_battle_polls(
             is_following_author=is_following_author,
             layout=poll_data.get("layout", "vs"),
             type=poll_data.get("type", "vs"),
-            views=poll_data.get("views", 0)
+            views=poll_data.get("views", 0),
+            # VS Experience fields (this endpoint serves VS battles)
+            vs_id=poll_data.get("vs_id"),
+            vs_questions=poll_data.get("vs_questions", []),
+            creator_country=poll_data.get("creator_country"),
+            vs_orientation=poll_data.get("vs_orientation", "horizontal"),
         )
         result.append(poll_response)
     
