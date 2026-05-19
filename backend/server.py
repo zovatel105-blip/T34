@@ -6050,10 +6050,17 @@ async def get_upload_file(category: str, filename: str):
         mime_type = "application/octet-stream"
     
     # Return the file
+    # NOTE: NO pasamos `filename=` para evitar que Starlette inyecte
+    # `Content-Disposition: attachment` por defecto. Forzamos `inline` para
+    # que el browser reproduzca videos/imágenes en lugar de descargarlos.
     return FileResponse(
         path=file_path,
         media_type=mime_type,
-        filename=filename
+        headers={
+            "Content-Disposition": "inline",
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Accept-Ranges": "bytes",
+        },
     )
 
 @api_router.get("/uploads/{category}/thumbnails/{filename}")
@@ -6079,11 +6086,14 @@ async def get_thumbnail_file(category: str, filename: str):
     # Get MIME type (thumbnails are always JPEG)
     mime_type = "image/jpeg"
     
-    # Return the thumbnail
+    # Return the thumbnail (inline para que el browser lo renderice como imagen)
     return FileResponse(
         path=file_path,
         media_type=mime_type,
-        filename=filename
+        headers={
+            "Content-Disposition": "inline",
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
     )
 
 
@@ -6107,7 +6117,11 @@ async def get_optimized_video_file(filename: str):
     return FileResponse(
         path=file_path,
         media_type=mime_type,
-        filename=filename,
+        headers={
+            "Content-Disposition": "inline",
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Accept-Ranges": "bytes",
+        },
     )
 
 # =============  FILE UPLOAD ENDPOINTS =============
