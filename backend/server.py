@@ -6553,8 +6553,15 @@ async def get_polls(
                     "type": option.get("media_type"),
                     "url": media_url,
                     "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                    "transform": option.get("media_transform")
-                } if media_url else None
+                    "transform": option.get("media_transform"),
+                    # 🎬 Phase 2: optimized MP4 + HLS master playlist URLs.
+                    "optimizedUrl": option.get("optimized_media_url"),
+                    "hls": option.get("hls_url"),
+                } if media_url else None,
+                # 🎬 Phase 2 (legacy flat): el utilitario mediaUrl.js también
+                # lee estos campos si la estructura "media" no los trae.
+                "optimized_media_url": option.get("optimized_media_url"),
+                "hls_url": option.get("hls_url"),
             }
             options.append(option_dict)
         
@@ -6889,8 +6896,12 @@ async def get_ultra_fast_feed(
                             "type": media_type,
                             "url": media_url,
                             "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                            "transform": opt.get("media_transform")
-                        } if media_url else None
+                            "transform": opt.get("media_transform"),
+                            "optimizedUrl": opt.get("optimized_media_url"),
+                            "hls": opt.get("hls_url"),
+                        } if media_url else None,
+                        "optimized_media_url": opt.get("optimized_media_url"),
+                        "hls_url": opt.get("hls_url"),
                     }
                     transformed_options.append(option_dict)
                 
@@ -7583,8 +7594,12 @@ async def get_following_polls(
                     "type": option.get("media_type"),
                     "url": media_url,
                     "thumbnail": thumbnail_url,
-                    "transform": option.get("media_transform")
-                } if media_url else None
+                    "transform": option.get("media_transform"),
+                    "optimizedUrl": option.get("optimized_media_url"),
+                    "hls": option.get("hls_url"),
+                } if media_url else None,
+                "optimized_media_url": option.get("optimized_media_url"),
+                "hls_url": option.get("hls_url"),
             }
             options.append(option_dict)
         
@@ -7953,8 +7968,12 @@ async def get_user_polls(
                         "type": media_type,
                         "url": media_url,
                         "thumbnail": thumbnail_url,  # None si no hay miniatura real (no caer al video URL)
-                        "transform": opt.get("media_transform")
-                    } if media_url else None
+                        "transform": opt.get("media_transform"),
+                        "optimizedUrl": opt.get("optimized_media_url"),
+                        "hls": opt.get("hls_url"),
+                    } if media_url else None,
+                    "optimized_media_url": opt.get("optimized_media_url"),
+                    "hls_url": opt.get("hls_url"),
                 }
                 transformed_options.append(option_dict)
             
@@ -8239,8 +8258,12 @@ async def get_user_mentioned_polls(
                         "type": option.get("media_type"),
                         "url": media_url,
                         "thumbnail": thumbnail_url,
-                        "transform": option.get("media_transform")
-                    } if media_url else None
+                        "transform": option.get("media_transform"),
+                        "optimizedUrl": option.get("optimized_media_url"),
+                        "hls": option.get("hls_url"),
+                    } if media_url else None,
+                    "optimized_media_url": option.get("optimized_media_url"),
+                    "hls_url": option.get("hls_url"),
                 }
                 options.append(option_dict)
             

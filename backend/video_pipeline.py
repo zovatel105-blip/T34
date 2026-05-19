@@ -462,17 +462,22 @@ async def process_poll_media(db, poll_id: str) -> None:
 
         # 4) Transcoding async "fire-and-forget" por opción. Errores no
         #    cambian el status del poll.
+        #    Generamos primero MP4 720p (fallback universal, baja CPU) y
+        #    luego HLS ABR multi-rendition (start-up rápido, switch adaptativo).
+        #    HLS no es bloqueante: si falla, el MP4 sigue sirviéndose como hoy.
         for opt in video_options:
             local_path = _local_path_from_url(opt.get("media_url"))
             if local_path is None:
                 continue
+
+            # 4a) MP4 720p (fallback principal)
             try:
                 optimized_url = await transcode_video_720p(local_path, opt["id"])
             except Exception as tx_err:
                 logger.warning(
                     f"[pipeline] transcode crash for {opt['id']}: {tx_err}"
                 )
-                continue
+                optimized_url = None
             if optimized_url:
                 await db.polls.update_one(
                     {"id": poll_id, "options.id": opt["id"]},
@@ -480,6 +485,24 @@ async def process_poll_media(db, poll_id: str) -> None:
                 )
                 logger.info(
                     f"[pipeline] poll {poll_id} option {opt['id']} optimized -> {optimized_url}"
+                )
+
+            # 4b) HLS ABR (360p/540p/720p). Si falla, el MP4 (o el original)
+            #     sigue siendo válido — no abortamos ni cambiamos status.
+            try:
+                hls_url = await transcode_video_hls(local_path, opt["id"])
+            except Exception as hls_err:
+                logger.warning(
+                    f"[pipeline] HLS transcode crash for {opt['id']}: {hls_err}"
+                )
+                hls_url = None
+            if hls_url:
+                await db.polls.update_one(
+                    {"id": poll_id, "options.id": opt["id"]},
+                    {"$set": {"options.$.hls_url": hls_url}},
+                )
+                logger.info(
+                    f"[pipeline] poll {poll_id} option {opt['id']} HLS -> {hls_url}"
                 )
 
     except Exception as e:
@@ -564,11 +587,18 @@ async def backfill_missing_video_assets(
     batch_size: int = 5,
     sleep_between_batches: float = 10.0,
     sleep_between_items: float = 2.0,
+    include_hls: bool = False,
 ) -> int:
     """Procesa polls READY con opciones de vídeo que les faltan thumbnail
     o `optimized_media_url`. Devuelve el número total de opciones procesadas.
 
     Es idempotente: skippea opciones que ya tienen ambos campos.
+
+    Parámetros:
+        include_hls: si True, también genera HLS para opciones que ya tienen
+            optimized_media_url pero no hls_url. Por defecto False — HLS es
+            ~3x más caro que MP4 y queremos un flag manual para activar el
+            rebackfill en batch.
     """
     processed = 0
     try:
@@ -639,6 +669,22 @@ async def backfill_missing_video_assets(
                             processed += 1
                     except Exception as e:
                         logger.warning(f"[backfill] transcode failed for {opt['id']}: {e}")
+
+                # 3) HLS si falta (sólo si include_hls=True)
+                if include_hls and not opt.get("hls_url"):
+                    try:
+                        hls_url = await transcode_video_hls(local_path, opt["id"])
+                        if hls_url:
+                            await db.polls.update_one(
+                                {"id": poll_id, "options.id": opt["id"]},
+                                {"$set": {"options.$.hls_url": hls_url}},
+                            )
+                            logger.info(
+                                f"[backfill] HLS {poll_id}/{opt['id']} -> {hls_url}"
+                            )
+                            processed += 1
+                    except Exception as e:
+                        logger.warning(f"[backfill] HLS failed for {opt['id']}: {e}")
 
                 # Pausa entre opciones para no saturar CPU
                 await asyncio.sleep(sleep_between_items)
