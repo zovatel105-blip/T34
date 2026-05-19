@@ -273,6 +273,8 @@ const GridLayout = ({
               {option.media?.url ? (
                 <PollOptionMedia
                   option={option}
+                  postId={poll?.id}
+                  layout={gridType || 'grid'}
                   className="w-full h-full rounded-lg"
                   videoRef={(el) => {
                     if (el) videoRefs.current.set(option.id, el);

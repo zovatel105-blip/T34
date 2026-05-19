@@ -459,6 +459,8 @@ const CarouselLayout = ({
               <div className="absolute inset-0">
                 <PollOptionMedia
                   option={option}
+                  postId={poll?.id}
+                  layout="carousel"
                   className="w-full h-full rounded-lg"
                   videoRef={(el) => {
                     if (el) videoRefs.current.set(option.id, el);

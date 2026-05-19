@@ -17,7 +17,22 @@ class VideoMemoryManager {
   }
 
   /**
-   * Register a video element for optimization
+   * Register a video element for optimization.
+   *
+   * Modos:
+   *   - `passive: false` (default, legacy) → el manager toma control del
+   *     elemento: crea un IntersectionObserver propio, llama a play()/pause()
+   *     y ajusta `preload` cuando entra/sale del viewport. Útil para layouts
+   *     donde el componente padre NO maneja su propia playback.
+   *
+   *   - `passive: true` (recomendado en TikTok-style) → el manager SOLO
+   *     rastrea el elemento para accounting de memoria (conteo, LRU cleanup,
+   *     stats globales). NO toca play/pause/preload. El padre conserva el
+   *     control completo del ciclo de vida del vídeo (p.ej. `PollOptionMedia`
+   *     que arranca con `onCanPlay` + `distanceFromActive`). Esto evita que
+   *     dos sistemas peleen por el mismo `<video>` y permite tener una
+   *     contabilidad global de cuántos `<video>` hay vivos al mismo tiempo
+   *     sin romper la reproducción.
    */
   registerVideo(videoElement, options = {}) {
     const {
@@ -26,7 +41,8 @@ class VideoMemoryManager {
       priority = 'medium',
       layout = 'default',
       isActive = false,
-      isVisible = false
+      isVisible = false,
+      passive = false,
     } = options;
 
     const videoKey = `${postId}_${optionId}`;
@@ -39,20 +55,26 @@ class VideoMemoryManager {
       layout,
       isActive,
       isVisible,
+      passive,
       lastAccessed: Date.now(),
       loadState: 'registered',
       memoryUsage: 0
     };
 
     this.activeVideos.set(videoKey, videoData);
-    
-    // Set up intersection observer for this video
-    this.setupVideoObserver(videoElement, videoKey);
-    
-    // Apply optimization based on current performance mode
-    this.optimizeVideoElement(videoElement, videoData);
-    
-    console.log(`📹 Video registered: ${videoKey} (Layout: ${layout}, Priority: ${priority})`);
+
+    if (!passive) {
+      // Modo legacy: el manager controla autoplay/pause vía IntersectionObserver
+      this.setupVideoObserver(videoElement, videoKey);
+      this.optimizeVideoElement(videoElement, videoData);
+    }
+    // En modo passive solo registramos para accounting/cleanup global.
+    // No tocamos preload, play, pause ni atributos del elemento.
+
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.debug(`📹 Video registered ${passive ? '[passive]' : '[managed]'}: ${videoKey}`);
+    }
   }
 
   /**
@@ -212,71 +234,104 @@ class VideoMemoryManager {
   }
 
   /**
-   * Unregister video and cleanup resources
+   * Unregister video and cleanup resources.
+   *
+   * En modo `passive: true` el padre controla el ciclo de vida del <video>,
+   * así que aquí SOLO eliminamos la entrada del registry. Nunca tocamos
+   * `pause()`, `src` ni atributos del elemento — sería pelearse con el padre.
+   *
+   * En modo managed (legacy) sí pausamos el vídeo (sin limpiar el src,
+   * para que pueda reproducirse de nuevo al volver con scroll).
    */
   unregisterVideo(videoKey) {
     const videoData = this.activeVideos.get(videoKey);
     if (!videoData) return;
 
-    const { element } = videoData;
-    
-    // Cleanup observer
+    const { element, passive } = videoData;
+
+    // Cleanup observer (solo existe en modo managed)
     if (this.observers.has(videoKey)) {
       this.observers.get(videoKey).disconnect();
       this.observers.delete(videoKey);
     }
 
-    // ✅ FIXED: Solo pausar el video, NO eliminar el src
-    // Esto previene que el video desaparezca cuando vuelves después de scroll
-    if (element) {
-      element.pause();
-      // NO limpiamos el src para que el video pueda reproducirse cuando vuelvas
-      // element.src = '';  // COMENTADO - Esto causaba que el video desapareciera
-      // element.load();    // COMENTADO - Esto forzaba la recarga y pérdida de datos
+    if (!passive && element) {
+      // Modo legacy: pausar al desregistrar, pero NUNCA limpiar src.
+      try { element.pause(); } catch (_) {}
     }
+    // Modo passive: no tocamos el elemento. El padre se encarga.
 
     // Remove from tracking
     this.activeVideos.delete(videoKey);
     
-    console.log(`🗑️ Video unregistered: ${videoKey} (src preservado para scroll)`);
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.debug(`🗑️ Video unregistered ${passive ? '[passive]' : '[managed]'}: ${videoKey}`);
+    }
   }
 
   /**
-   * Cleanup old/unused videos
+   * Cleanup old/unused videos.
+   *
+   * Estrategia:
+   *  1) Elementos cuyo DOM ya fue desmontado (`!element.isConnected`) →
+   *     se eliminan del registry inmediatamente (huérfanos).
+   *  2) En modo MANAGED: si lastAccessed > maxAge y !isActive && !isVisible
+   *     → unregister (pausará el vídeo y soltará observer).
+   *  3) En modo PASSIVE: SOLO se hace cleanup por desmonte de DOM o por
+   *     superar el threshold. Nunca se pausa un vídeo en passive (lo controla
+   *     el padre). El "tope" del passive lo impone el componente padre via
+   *     `distanceFromActive`, no este servicio.
    */
   cleanup() {
     const now = Date.now();
-    const maxAge = 300000; // ✅ INCREMENTADO: 5 minutos (era 2) para ser menos agresivo
+    const maxAge = 300000; // 5 minutos
     let cleanedCount = 0;
+    let orphanCount = 0;
 
     for (const [videoKey, videoData] of this.activeVideos.entries()) {
-      const { lastAccessed, isActive, isVisible } = videoData;
-      
-      // ✅ FIXED: Solo limpiar videos MUY antiguos y definitivamente no visibles
-      // Esto previene limpiar videos que el usuario podría ver pronto al hacer scroll
-      if (now - lastAccessed > maxAge && !isActive && !isVisible) {
+      const { lastAccessed, isActive, isVisible, passive, element } = videoData;
+
+      // 1) Huérfanos: el padre ya desmontó el <video> del DOM pero no llamó
+      //    a unregister (race condition o cleanup faltante). Soltamos la
+      //    referencia para que el GC se lleve el elemento.
+      if (element && !element.isConnected) {
+        this.activeVideos.delete(videoKey);
+        if (this.observers.has(videoKey)) {
+          this.observers.get(videoKey).disconnect();
+          this.observers.delete(videoKey);
+        }
+        orphanCount++;
+        continue;
+      }
+
+      // 2) Modo managed: cleanup agresivo por edad/visibilidad
+      if (!passive && now - lastAccessed > maxAge && !isActive && !isVisible) {
         this.unregisterVideo(videoKey);
         cleanedCount++;
       }
+      // 3) Modo passive: solo huérfanos. El resto lo decide el padre.
     }
 
-    // ✅ FIXED: Threshold más alto y menos agresivo
-    // Multiplicado por 2 para dar más margen antes de limpiar
+    // Hard cap por threshold (solo aplica a managed; en passive el padre
+    // ya limita cuántos <video> hay vivos a la vez)
     const effectiveThreshold = this.memoryThreshold * 2;
-    if (this.activeVideos.size > effectiveThreshold) {
+    const managedSize = Array.from(this.activeVideos.values()).filter(v => !v.passive).length;
+    if (managedSize > effectiveThreshold) {
       const sortedVideos = Array.from(this.activeVideos.entries())
-        .filter(([,v]) => !v.isActive && !v.isVisible) // Solo considerar inactivos e invisibles
+        .filter(([,v]) => !v.passive && !v.isActive && !v.isVisible)
         .sort(([,a], [,b]) => a.lastAccessed - b.lastAccessed);
       
-      const toRemove = sortedVideos.slice(0, Math.floor(sortedVideos.length * 0.3)); // Solo limpiar 30%
+      const toRemove = sortedVideos.slice(0, Math.floor(sortedVideos.length * 0.3));
       toRemove.forEach(([videoKey]) => {
         this.unregisterVideo(videoKey);
         cleanedCount++;
       });
     }
 
-    if (cleanedCount > 0) {
-      console.log(`🧹 Video cleanup: removed ${cleanedCount} videos, ${this.activeVideos.size} remaining`);
+    if ((cleanedCount > 0 || orphanCount > 0) && process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.debug(`🧹 Video cleanup: ${cleanedCount} removed, ${orphanCount} orphans, ${this.activeVideos.size} remaining`);
     }
   }
 
@@ -331,12 +386,18 @@ class VideoMemoryManager {
           this.memoryThreshold = 100;
       }
 
-      // Re-optimize all active videos
-      for (const [videoKey, videoData] of this.activeVideos.entries()) {
-        this.optimizeVideoElement(videoData.element, videoData);
+      // Re-optimize SOLO los managed (en passive el padre controla los
+      // atributos del <video>, no tocar).
+      for (const [, videoData] of this.activeVideos.entries()) {
+        if (!videoData.passive) {
+          this.optimizeVideoElement(videoData.element, videoData);
+        }
       }
 
-      console.log(`⚙️ Performance mode changed to: ${mode}`);
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug(`⚙️ Performance mode changed to: ${mode}`);
+      }
     }
   }
 
@@ -344,16 +405,22 @@ class VideoMemoryManager {
    * Get performance statistics
    */
   getStats() {
-    const activeCount = Array.from(this.activeVideos.values())
-      .filter(v => v.isActive).length;
-    
-    const visibleCount = Array.from(this.activeVideos.values())
-      .filter(v => v.isVisible).length;
+    const all = Array.from(this.activeVideos.values());
+    const activeCount = all.filter(v => v.isActive).length;
+    const visibleCount = all.filter(v => v.isVisible).length;
+    const passiveCount = all.filter(v => v.passive).length;
+    const managedCount = all.length - passiveCount;
+    // Cuenta los que de verdad siguen en el DOM (no huérfanos)
+    const connectedCount = all.filter(v => v.element && v.element.isConnected).length;
 
     return {
       totalVideos: this.activeVideos.size,
       activeVideos: activeCount,
       visibleVideos: visibleCount,
+      managedVideos: managedCount,
+      passiveVideos: passiveCount,
+      connectedVideos: connectedCount,
+      orphanVideos: this.activeVideos.size - connectedCount,
       performanceMode: this.performanceMode,
       memoryThreshold: this.memoryThreshold,
       lastCleanup: this.lastCleanup

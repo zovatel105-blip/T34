@@ -12,10 +12,12 @@
  *   suficiente — evita el efecto "cámara lenta" por falta de datos.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
+import { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
+import HlsVideo from './HlsVideo';
+import videoMemoryManager from '../../services/videoMemoryManager';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
@@ -37,6 +39,10 @@ const PollOptionMedia = ({
   videoRef: externalVideoRef = null,
   distanceFromActive = 0,
   isHighBandwidth = true,
+  // postId + layout son opcionales y solo se usan para identificar la entrada
+  // en videoMemoryManager (accounting global de cuántos <video> hay vivos).
+  postId = null,
+  layout = 'default',
 }) => {
   const isVideo = isVideoOption(option);
   const internalVideoRef = useRef(null);
@@ -44,6 +50,7 @@ const PollOptionMedia = ({
 
   // URLs originales
   const rawVideoSrc = isVideo ? pickPlayableVideoUrl(option) : null;
+  const rawHlsSrc = isVideo ? pickPlayableHlsUrl(option) : null;
   const rawPosterSrc = pickVideoPosterUrl(option);
   const rawImageSrc = !isVideo
     ? resolveAssetUrl(option?.media?.url || option?.media_url || option?.thumbnail_url)
@@ -57,7 +64,18 @@ const PollOptionMedia = ({
   const cachedPosterSrc = useCachedSrc(rawPosterSrc, { enabled: !!rawPosterSrc });
   const cachedImageSrc = useCachedSrc(rawImageSrc, { enabled: !!rawImageSrc });
 
-  const videoSrc = cachedVideoSrc || rawVideoSrc;
+  // Estrategia de selección de fuente para el reproductor:
+  //   1) Si tenemos MP4 cacheado en filesystem → preferimos ese (offline OK,
+  //      cero latencia de manifest HLS). Saltamos HLS porque sería tonto
+  //      hacer ABR cuando ya tenemos el archivo entero en disco.
+  //   2) Si no, y hay HLS disponible → usamos HLS para tener ABR en tiempo
+  //      real (calidad se adapta al ancho de banda, cambia rendition sin
+  //      pausar). hls.js en Chrome/Android, nativo en Safari/iOS.
+  //   3) Si no hay HLS → MP4 remoto plano.
+  const hasCachedMp4 = !!cachedVideoSrc;
+  const mp4SrcForPlayer = cachedVideoSrc || rawVideoSrc;
+  const hlsSrcForPlayer = hasCachedMp4 ? null : rawHlsSrc;
+  const videoSrc = mp4SrcForPlayer; // para checks de "hay algo que reproducir"
   const posterSrc = cachedPosterSrc || rawPosterSrc;
   const imageSrc = cachedImageSrc || rawImageSrc;
 
@@ -100,6 +118,58 @@ const PollOptionMedia = ({
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [isVideo, distanceFromActive, videoEl]);
+
+  // ── REGISTRO PASIVO EN videoMemoryManager ───────────────────────────────
+  // El manager NO controla play/pause/preload (eso lo hace este componente
+  // con onCanPlay + distanceFromActive). Solo lleva la cuenta global de
+  // cuántos <video> hay vivos al mismo tiempo y limpia huérfanos cuyos
+  // padres se desmontaron sin avisar. Esto evita leaks acumulados tras
+  // muchos swipes / cambios de feed / navegación.
+  useEffect(() => {
+    if (!isVideo) return;
+    const v = videoEl?.current;
+    if (!v) return;
+
+    // Generar key estable. option.id siempre existe; postId mejora unicidad
+    // entre publicaciones que compartan el mismo option.id (no debería pasar,
+    // pero por si acaso).
+    const optionId = option?.id || option?._id || 'unknown';
+    const pId = postId || option?.poll_id || option?.postId || 'p';
+    const key = `${pId}_${optionId}`;
+
+    videoMemoryManager.registerVideo(v, {
+      postId: pId,
+      optionId,
+      layout,
+      isActive: distanceFromActive === 0,
+      isVisible: distanceFromActive <= 1,
+      priority: distanceFromActive === 0 ? 'high' : 'medium',
+      passive: true, // ← clave: solo accounting, no toca el elemento
+    });
+
+    return () => {
+      videoMemoryManager.unregisterVideo(key);
+    };
+    // Re-registramos si cambia el <video> de elemento (HLS remount, etc).
+    // distanceFromActive NO va aquí — sería tirar/registrar en cada swipe.
+    // Si necesitamos actualizar isActive/isVisible, lo hacemos en otro effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVideo, option?.id, layout, postId]);
+
+  // Actualizar isActive/isVisible cuando cambia distanceFromActive (sin
+  // re-registrar — solo mutamos la entrada del registry).
+  useEffect(() => {
+    if (!isVideo) return;
+    const optionId = option?.id || option?._id || 'unknown';
+    const pId = postId || option?.poll_id || option?.postId || 'p';
+    const key = `${pId}_${optionId}`;
+    const entry = videoMemoryManager.activeVideos.get(key);
+    if (entry) {
+      entry.isActive = distanceFromActive === 0;
+      entry.isVisible = distanceFromActive <= 1;
+      entry.lastAccessed = Date.now();
+    }
+  }, [isVideo, distanceFromActive, option?.id, postId]);
 
   // ── No hay media ──────────────────────────────────────────────────────────
   if (!isVideo && !imageSrc) {
@@ -163,9 +233,10 @@ const PollOptionMedia = ({
           />
         )}
 
-        <video
+        <HlsVideo
           ref={videoEl}
-          src={videoSrc}
+          hlsUrl={hlsSrcForPlayer}
+          mp4Url={mp4SrcForPlayer}
           // No pasar poster al <video> — lo manejamos nosotros con el <img>
           // para tener control total del crossfade.
           onCanPlay={() => {
@@ -188,6 +259,14 @@ const PollOptionMedia = ({
           }}
           onLoadedData={() => setVideoStatus('loaded')}
           onError={() => setVideoStatus('error')}
+          // 🔄 Si HLS falla fatal, hls.js cae a MP4 automáticamente (lo
+          // gestiona <HlsVideo>). Aquí solo loggeamos para debug.
+          onHlsError={(data) => {
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.debug('[PollOptionMedia] HLS fatal → fallback MP4', data);
+            }
+          }}
           className={cn(
             'w-full h-full object-cover',
             videoStatus === 'error' && showPlaceholderOnError && 'opacity-0'
