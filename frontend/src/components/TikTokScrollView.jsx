@@ -1879,17 +1879,21 @@ const TikTokScrollView = ({
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // ─── VELOCITY-AWARE SWIPE ────────────────────────────────────────────────
-  // Calcula la duración de la transición según la velocidad del swipe.
-  // Swipe rápido (>1.5 px/ms) → 180ms, swipe lento → 280ms.
-  // Igual que TikTok: la inercia del dedo se refleja en la animación.
-  const TRANSITION_MS_FAST = 180;
-  const TRANSITION_MS_SLOW = 280;
+  // ─── VELOCITY-AWARE SWIPE (TikTok-style) ──────────────────────────────────
+  // Duración de la transición según velocidad del dedo (px/ms) y la distancia
+  // restante hasta el snap. Más rápido el dedo o menos distancia → menos ms.
+  // Curva easeOutQuint para que arranque rápido y termine con suavidad real,
+  // dando la sensación "ligera" característica de TikTok.
+  const TRANSITION_MS_FAST = 160;   // flick rápido
+  const TRANSITION_MS_SLOW = 220;   // swipe deliberado
+  const TRANSITION_MS_MIN  = 140;   // techo inferior
 
-  const goToIndex = useCallback((newIndex, swipeDurationMs = null) => {
+  const goToIndex = useCallback((newIndex, opts = {}) => {
     if (isAnimatingRef.current) return;
     if (newIndex < 0 || newIndex >= polls.length) return;
     if (newIndex === activeIndex) return;
+
+    const { velocity = 0, remainingDvh = 100 } = opts;
 
     isAnimatingRef.current = true;
     if (onSwipeStart) onSwipeStart();
@@ -1908,12 +1912,20 @@ const TikTokScrollView = ({
       if (remaining <= 8) onLoadMore();
     }
 
-    // Velocidad adaptativa de transición
-    const transMs = swipeDurationMs !== null
-      ? (swipeDurationMs < 150 ? TRANSITION_MS_FAST : TRANSITION_MS_SLOW)
-      : TRANSITION_MS_SLOW;
-    setTransitionDuration(transMs);
+    // Duración: si hay velocidad, calcula tiempo real para recorrer lo que queda
+    // (en dvh → px). Limitada entre MIN y SLOW. Si no hay velocidad, usa SLOW.
+    let transMs = TRANSITION_MS_SLOW;
+    if (velocity > 0) {
+      const vh = window.innerHeight || 1;
+      const remainingPx = (Math.abs(remainingDvh) / 100) * vh;
+      // velocity en px/ms → tiempo natural = px / velocity, suavizado un 25%
+      const natural = (remainingPx / velocity) * 1.25;
+      transMs = Math.max(TRANSITION_MS_MIN, Math.min(TRANSITION_MS_SLOW, natural));
+      // Flick muy rápido → asegura sensación crujiente
+      if (velocity > 1.2) transMs = Math.min(transMs, TRANSITION_MS_FAST);
+    }
 
+    setTransitionDuration(transMs);
     setIsTransitioning(true);
     setTranslateOffset(targetOffset);
 
@@ -1942,9 +1954,14 @@ const TikTokScrollView = ({
     return () => window.removeEventListener('vs:nextPost', handleNextPost);
   }, [activeIndex, polls, goToIndex]);
 
-  // ─── GESTOS TÁCTILES ────────────────────────────────────────────────────
-  const SWIPE_FRACTION_THRESHOLD = 0.20;
+  // ─── GESTOS TÁCTILES (TikTok-style) ─────────────────────────────────────
+  // Umbral más bajo + commit por velocidad ("flick"): si el dedo se mueve
+  // rápido al soltar, cambiamos de post aunque hayas arrastrado poco.
+  const SWIPE_FRACTION_THRESHOLD = 0.12;   // 12% (antes 20%)
   const EDGE_RESISTANCE = 0.20;
+  const VELOCITY_COMMIT_PX_MS = 0.45;      // flick → cambia post aunque haya poca distancia
+  // Buffer corto de muestras (últimos ~80ms) para calcular velocidad instantánea
+  const velocitySamplesRef = useRef([]);
 
   const handleTapePointerDown = useCallback((e) => {
     if (isModalOpen || storiesOverlayOpen) return;
@@ -1953,6 +1970,7 @@ const TikTokScrollView = ({
     touchCurrentYRef.current = touchStartYRef.current;
     // Guardar timestamp para calcular velocidad del swipe
     swipeStartTimeRef.current = Date.now();
+    velocitySamplesRef.current = [{ y: touchStartYRef.current, t: swipeStartTimeRef.current }];
 
     if (onRefresh && !isRefreshing && activeIndex === 0) {
       pullStartYRef.current = touchStartYRef.current;
@@ -1964,6 +1982,12 @@ const TikTokScrollView = ({
     if (touchStartYRef.current === null) return;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     touchCurrentYRef.current = clientY;
+
+    // Muestrear para velocidad instantánea (mantener solo últimos 80ms)
+    const now = Date.now();
+    const samples = velocitySamplesRef.current;
+    samples.push({ y: clientY, t: now });
+    while (samples.length > 1 && now - samples[0].t > 80) samples.shift();
 
     const deltaPx = clientY - touchStartYRef.current;
 
@@ -1992,14 +2016,23 @@ const TikTokScrollView = ({
     const startY = touchStartYRef.current;
     const endY = touchCurrentYRef.current ?? startY;
     const deltaPx = endY - startY;
-    // Calcular duración del swipe para velocidad adaptativa
-    const swipeDurationMs = swipeStartTimeRef.current
-      ? Date.now() - swipeStartTimeRef.current
-      : null;
+
+    // Velocidad instantánea de los últimos ~80ms (px/ms). Detección de "flick".
+    const samples = velocitySamplesRef.current;
+    let instantVelocity = 0; // siempre positiva (módulo)
+    let signedVelocity = 0;
+    if (samples.length >= 2) {
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      const dt = Math.max(1, last.t - first.t);
+      signedVelocity = (last.y - first.y) / dt;
+      instantVelocity = Math.abs(signedVelocity);
+    }
 
     touchStartYRef.current = null;
     touchCurrentYRef.current = null;
     swipeStartTimeRef.current = null;
+    velocitySamplesRef.current = [];
 
     if (isPullingRef.current) {
       isPullingRef.current = false;
@@ -2018,21 +2051,34 @@ const TikTokScrollView = ({
 
     const vh = window.innerHeight || 1;
     const draggedFraction = Math.abs(deltaPx) / vh;
-    const wantsNext = deltaPx < 0;
-    const wantsPrev = deltaPx > 0;
+    const wantsNext = deltaPx < 0 || (Math.abs(deltaPx) < 4 && signedVelocity < 0);
+    const wantsPrev = deltaPx > 0 || (Math.abs(deltaPx) < 4 && signedVelocity > 0);
 
     const atStart = activeIndex === 0;
     const atEnd = activeIndex >= polls.length - 1;
     const cannotMove = (atStart && wantsPrev) || (atEnd && wantsNext);
 
-    if (draggedFraction >= SWIPE_FRACTION_THRESHOLD && !cannotMove) {
-      if (wantsNext) goToIndex(activeIndex + 1, swipeDurationMs);
-      else goToIndex(activeIndex - 1, swipeDurationMs);
+    // Commit por distancia O por velocidad (flick)
+    const isFlick = instantVelocity >= VELOCITY_COMMIT_PX_MS;
+    const shouldCommit = (draggedFraction >= SWIPE_FRACTION_THRESHOLD || isFlick) && !cannotMove;
+
+    if (shouldCommit) {
+      // remainingDvh: cuánto falta visualmente para llegar al snap
+      const currentOffsetDvh = (Math.abs(deltaPx) / vh) * 100;
+      const remainingDvh = Math.max(8, 100 - currentOffsetDvh);
+      const direction = wantsNext ? +1 : -1;
+      goToIndex(activeIndex + direction, { velocity: instantVelocity, remainingDvh });
     } else {
-      // Spring back con la misma duración adaptativa
-      const transMs = swipeDurationMs !== null && swipeDurationMs < 150
-        ? TRANSITION_MS_FAST
-        : TRANSITION_MS_SLOW;
+      // Spring back: duración basada en cuánto hay que volver
+      const currentOffsetDvh = (Math.abs(deltaPx) / vh) * 100;
+      const remainingPx = (currentOffsetDvh / 100) * vh;
+      let transMs = TRANSITION_MS_SLOW;
+      if (instantVelocity > 0) {
+        const natural = (remainingPx / instantVelocity) * 1.1;
+        transMs = Math.max(TRANSITION_MS_MIN, Math.min(TRANSITION_MS_SLOW, natural));
+      } else {
+        transMs = Math.max(TRANSITION_MS_MIN, Math.min(TRANSITION_MS_SLOW, currentOffsetDvh * 2));
+      }
       setTransitionDuration(transMs);
       setIsTransitioning(true);
       setTranslateOffset(0);
@@ -2270,7 +2316,7 @@ const TikTokScrollView = ({
           transform: `translateY(calc(-100dvh + ${translateOffset}dvh)) translateY(${pullDistance > 0 ? pullDistance : 0}px)`,
           // Duración adaptativa según velocidad del swipe
           transition: isTransitioning
-            ? `transform ${transitionDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
+            ? `transform ${transitionDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`
             : 'none',
           willChange: 'transform',
         }}
