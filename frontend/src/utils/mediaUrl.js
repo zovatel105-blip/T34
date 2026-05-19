@@ -28,6 +28,25 @@ export const pickPlayableVideoUrl = (option) => {
 };
 
 /**
+ * Devuelve la URL del master playlist HLS (.m3u8) si está disponible.
+ * Útil para reproductores compatibles (hls.js o Safari nativo) que prefieran
+ * streaming adaptativo en vez del MP4 fijo.
+ *
+ * @param {object} option - option de un poll (del backend)
+ * @returns {string|null} URL absoluta del master.m3u8 o null si no hay HLS
+ */
+export const pickPlayableHlsUrl = (option) => {
+  if (!option) return null;
+  // Estructura moderna "media": { type, url, hls }
+  const modernHls = option.media?.hls || option.media?.hls_url;
+  // Estructura plana (legacy):
+  const flatHls = option.hls_url;
+
+  const best = modernHls || flatHls;
+  return resolveAssetUrl(best);
+};
+
+/**
  * Devuelve la URL del poster (thumbnail) para un <video>.
  * Soporta tanto estructura moderna como legacy.
  */

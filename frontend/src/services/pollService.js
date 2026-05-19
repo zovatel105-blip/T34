@@ -287,7 +287,11 @@ class PollService {
           extracted_audio_id: option.extracted_audio_id,  // 🎵 NUEVO: Include extracted_audio_id for carousel audio
           thumbnail_url: cleanedThumb,  // 🖼️ Sanitizado: nunca apunta al video
           media_type: option.media_type,  // 🎥 NUEVO: Include media_type for video detection
-          media: cleanedMedia
+          media: cleanedMedia,
+          // 🎬 Phase 2: legacy flat fields for video pipeline (MP4 + HLS).
+          // mediaUrl.js los lee como fallback si la estructura "media" no existe.
+          optimized_media_url: option.optimized_media_url || cleanedMedia?.optimizedUrl || null,
+          hls_url: option.hls_url || cleanedMedia?.hls || null,
         };
       }),
       totalVotes: backendPoll.total_votes,
