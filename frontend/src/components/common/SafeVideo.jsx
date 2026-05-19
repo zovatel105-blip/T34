@@ -31,10 +31,11 @@
  *                    25 MB — cubre clips cortos tipo TikTok/Reels).
  */
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
+import { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import useCachedMedia from '../../hooks/useCachedMedia';
 import { cn } from '../../lib/utils';
+import HlsVideo from './HlsVideo';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25MB
 
@@ -60,6 +61,7 @@ const SafeVideo = forwardRef(
 
     // Resolver URLs originales (remotas)
     const rawSrc = option ? pickPlayableVideoUrl(option) : resolveAssetUrl(srcProp);
+    const rawHls = option ? pickPlayableHlsUrl(option) : null;
     const rawPoster = option ? pickVideoPosterUrl(option) : resolveAssetUrl(posterProp);
 
     // 🚀 Sustituir por URI local si está cacheada (offline-first).
@@ -71,7 +73,14 @@ const SafeVideo = forwardRef(
     });
     const { src: cachedPosterSrc } = useCachedMedia(rawPoster, { enabled: true });
 
-    const src = cachedVideoSrc || rawSrc;
+    // Estrategia de selección:
+    //   1) MP4 cacheado (mejor para offline) → ignoramos HLS
+    //   2) HLS (mejor para online: ABR adaptativo)
+    //   3) MP4 remoto (fallback final)
+    const hasCachedMp4 = !!cachedVideoSrc;
+    const mp4Src = cachedVideoSrc || rawSrc;
+    const hlsSrc = hasCachedMp4 ? null : rawHls;
+    const src = mp4Src; // para validaciones de "no hay nada que reproducir"
     const poster = cachedPosterSrc || rawPoster;
 
     const [status, setStatus] = useState(src ? 'loading' : 'error');
@@ -120,9 +129,10 @@ const SafeVideo = forwardRef(
 
     return (
       <div className={cn('relative overflow-hidden', className)}>
-        <video
+        <HlsVideo
           ref={videoRef}
-          src={src}
+          hlsUrl={hlsSrc}
+          mp4Url={mp4Src}
           poster={poster || undefined}
           onLoadedData={handleLoadedData}
           onError={handleError}

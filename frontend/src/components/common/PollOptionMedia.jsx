@@ -29,10 +29,11 @@
  *   videoMaxBytes: tope de tamaño para vídeos a cachear (default 25 MB).
  */
 import React, { useState, useEffect } from 'react';
-import { pickPlayableVideoUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
+import { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
+import HlsVideo from './HlsVideo';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
@@ -74,12 +75,15 @@ const PollOptionMedia = ({
 
   // URLs originales (ya absolutas, resolveAssetUrl las normaliza)
   const rawVideoSrc = isVideo ? pickPlayableVideoUrl(option) : null;
+  const rawHlsSrc = isVideo ? pickPlayableHlsUrl(option) : null;
   const rawPosterSrc = pickVideoPosterUrl(option);
   const rawImageSrc = !isVideo
     ? resolveAssetUrl(option?.media?.url || option?.media_url || option?.thumbnail_url)
     : null;
 
-  // 🚀 Sustituir por URI local cacheada cuando exista (offline-first)
+  // 🚀 Sustituir por URI local cacheada cuando exista (offline-first).
+  // Nota: solo cacheamos el MP4 (un único fichero). El HLS son N segmentos
+  // y no tiene sentido cachearlo en filesystem para offline corto.
   const cachedVideoSrc = useCachedSrc(rawVideoSrc, {
     enabled: cacheVideo && !!rawVideoSrc,
     maxBytes: videoMaxBytes,
@@ -87,7 +91,14 @@ const PollOptionMedia = ({
   const cachedPosterSrc = useCachedSrc(rawPosterSrc, { enabled: !!rawPosterSrc });
   const cachedImageSrc = useCachedSrc(rawImageSrc, { enabled: !!rawImageSrc });
 
-  const videoSrc = cachedVideoSrc || rawVideoSrc;
+  // Estrategia de selección:
+  //   1) MP4 cacheado en filesystem (mejor offline) → ignoramos HLS
+  //   2) HLS (ABR adaptativo en online)
+  //   3) MP4 remoto (fallback)
+  const hasCachedMp4 = !!cachedVideoSrc;
+  const mp4SrcForPlayer = cachedVideoSrc || rawVideoSrc;
+  const hlsSrcForPlayer = hasCachedMp4 ? null : rawHlsSrc;
+  const videoSrc = mp4SrcForPlayer; // se usa para checks tipo "hay algo que reproducir"
   const posterSrc = cachedPosterSrc || rawPosterSrc;
   const imageSrc = cachedImageSrc || rawImageSrc;
 
@@ -153,9 +164,10 @@ const PollOptionMedia = ({
         className={cn('relative w-full h-full overflow-hidden', className)}
         style={style}
       >
-        <video
+        <HlsVideo
           ref={videoRef || undefined}
-          src={videoSrc}
+          hlsUrl={hlsSrcForPlayer}
+          mp4Url={mp4SrcForPlayer}
           poster={posterSrc || undefined}
           onLoadedData={() => setVideoStatus('loaded')}
           onError={() => setVideoStatus('error')}
