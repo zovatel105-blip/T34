@@ -2019,6 +2019,69 @@ const TikTokScrollView = ({
     eagerPrefetchedIndexRef.current = -1;
   }, [activeIndex]);
 
+  // ── PAUSA DE SEGMENTOS HLS NO-CRÍTICOS DEL VIDEO ACTIVO ───────────────────
+  //
+  // Del spec TikTok (punto #7):
+  //   onSwipeStart → "Cancela descarga de segmentos no críticos del video
+  //                  actual"
+  //
+  // Cuando el usuario apenas toca la pantalla para hacer swipe, el video
+  // activo SIGUE descargando segmentos del MP4/HLS que ya no va a necesitar
+  // (porque está a punto de pasar al siguiente). Esos bytes compiten por
+  // bandwidth con el video +1 que SÍ va a importar en ~150ms.
+  //
+  // Solución:
+  //   - Si el video activo usa hls.js → `hls.stopLoad()` detiene la
+  //     descarga de fragmentos manteniendo el buffer ya descargado intacto.
+  //     El usuario puede seguir viendo lo que tiene; solo paramos lo nuevo.
+  //   - Si usa HLS nativo (Safari/iOS) → no podemos abortar (lo controla
+  //     internamente Webkit), pero el `video.pause()` natural al cambiar de
+  //     post desencadenará la pausa del loader nativo.
+  //   - Si usa MP4 plano → no hacemos nada (el browser ya gestiona prioridad
+  //     según `<video>` visible vs no visible).
+  //
+  // Guardamos referencia al elemento que pausamos para poder reanudarlo
+  // (`startLoad`) si el swipe se cancela y el usuario vuelve al mismo video.
+  const pausedHlsElRef = useRef(null);
+
+  const pauseActiveVideoHlsLoading = useCallback(() => {
+    try {
+      const activeVideo = document.querySelector('[data-slot-active="true"] video');
+      if (!activeVideo) return;
+      const hls = activeVideo._hlsInstance;
+      if (hls && typeof hls.stopLoad === 'function') {
+        hls.stopLoad();
+        pausedHlsElRef.current = activeVideo;
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.debug('[TikTokScroll] HLS stopLoad (swipe start) on active video');
+        }
+      }
+    } catch (_) { /* noop */ }
+  }, []);
+
+  const resumeActiveVideoHlsLoading = useCallback(() => {
+    try {
+      const el = pausedHlsElRef.current;
+      pausedHlsElRef.current = null;
+      if (!el) return;
+      // Solo reanudamos si sigue siendo el video activo (si el swipe
+      // completó y cambió el activeIndex, el viejo activo ya no nos
+      // importa — debe quedarse parado para no seguir descargando bytes
+      // del post que el usuario abandonó).
+      if (el.getAttribute && el.closest?.('[data-slot-active="true"]')) {
+        const hls = el._hlsInstance;
+        if (hls && typeof hls.startLoad === 'function') {
+          hls.startLoad();
+          if (process.env.NODE_ENV !== 'production') {
+            // eslint-disable-next-line no-console
+            console.debug('[TikTokScroll] HLS startLoad (swipe cancelled)');
+          }
+        }
+      }
+    } catch (_) { /* noop */ }
+  }, []);
+
   const handleTapePointerDown = useCallback((e) => {
     if (isModalOpen || storiesOverlayOpen) return;
     if (isAnimatingRef.current) return;
@@ -2034,11 +2097,17 @@ const TikTokScrollView = ({
       eagerPrefetchNextPost(activeIndex + 1);
     }
 
+    // 🛑 Spec TikTok punto #7: paramos la descarga de segmentos no-críticos
+    //    del video ACTUAL para que el bandwidth pase al +1 que el usuario
+    //    está a punto de ver. El buffer ya descargado se mantiene → si el
+    //    swipe se cancela, reanudamos con `resumeActiveVideoHlsLoading()`.
+    pauseActiveVideoHlsLoading();
+
     if (onRefresh && !isRefreshing && activeIndex === 0) {
       pullStartYRef.current = touchStartYRef.current;
       isPullingRef.current = false;
     }
-  }, [isModalOpen, storiesOverlayOpen, onRefresh, isRefreshing, activeIndex, polls.length, eagerPrefetchNextPost]);
+  }, [isModalOpen, storiesOverlayOpen, onRefresh, isRefreshing, activeIndex, polls.length, eagerPrefetchNextPost, pauseActiveVideoHlsLoading]);
 
   const handleTapePointerMove = useCallback((e) => {
     if (touchStartYRef.current === null) return;
