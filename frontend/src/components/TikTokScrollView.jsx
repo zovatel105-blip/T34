@@ -2225,6 +2225,15 @@ const TikTokScrollView = ({
   useEffect(() => {
     if (!polls || polls.length === 0) return;
     let cancelled = false;
+
+    // 🚫 Cancelar prefetches de posts que ahora están lejos del activo
+    // (TikTok-style: tras un flick rápido, los intermedios ya no importan
+    // y compiten por bandwidth con el post que el usuario sí mira).
+    import('../services/feedMediaPrefetcher').then(({ default: prefetcher }) => {
+      if (cancelled) return;
+      try { prefetcher.cancelDistantPolls(activeIndex, 4); } catch (_) {}
+    }).catch(() => {});
+
     Promise.all([
       import('../services/mediaCacheService'),
       import('../utils/mediaUrl'),

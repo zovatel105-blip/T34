@@ -283,10 +283,15 @@ export const lookupSync = (url) => {
  * Opciones:
  *   maxBytes: si la respuesta excede este tamaño (Content-Length), se cancela
  *             la cacheo (útil para no cachear vídeos enormes).
+ *   signal:   AbortSignal opcional. Si se aborta antes/durante la descarga,
+ *             la cancela y limpia el slot de in-flight. Útil para cancelar
+ *             prefetches de posts que se han alejado del activo (flick rápido).
  */
 export const prefetch = async (url, opts = {}) => {
   if (!url) return;
   if (!isNative) return; // en web, confiamos en el cache del navegador.
+  // Si ya viene abortado, no iniciar siquiera.
+  if (opts.signal?.aborted) return;
   if (!_initialized) await init();
   if (!_Filesystem) return;
 
@@ -301,8 +306,9 @@ export const prefetch = async (url, opts = {}) => {
 
   const task = (async () => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, opts.signal ? { signal: opts.signal } : undefined);
       if (!res.ok) return;
+      if (opts.signal?.aborted) return;
 
       const cl = parseInt(res.headers.get('content-length') || '0', 10);
       if (opts.maxBytes && cl && cl > opts.maxBytes) {
@@ -310,6 +316,7 @@ export const prefetch = async (url, opts = {}) => {
       }
 
       const blob = await res.blob();
+      if (opts.signal?.aborted) return;
       if (opts.maxBytes && blob.size > opts.maxBytes) return;
 
       // Convertir blob a base64 para Capacitor Filesystem.writeFile
@@ -323,6 +330,7 @@ export const prefetch = async (url, opts = {}) => {
         };
         fr.readAsDataURL(blob);
       });
+      if (opts.signal?.aborted) return;
 
       const ext = _extFromUrl(url);
       const filename = `${hash}.${ext}`;
@@ -358,6 +366,12 @@ export const prefetch = async (url, opts = {}) => {
       await _evictIfOverQuota();
       await _persistIndex();
     } catch (e) {
+      // AbortError es esperado cuando el consumidor cancela — silencioso.
+      if (e?.name === 'AbortError') {
+        // eslint-disable-next-line no-console
+        // console.debug('[mediaCache] prefetch aborted:', url);
+        return;
+      }
       // eslint-disable-next-line no-console
       console.warn('[mediaCache] prefetch failed for', url, e?.message);
     } finally {

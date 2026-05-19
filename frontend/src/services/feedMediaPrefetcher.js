@@ -137,6 +137,40 @@ const extractAudioUrls = (poll) => {
   return urls.filter(Boolean);
 };
 
+// ─── State interno para cancelación de prefetches ─────────────────────────
+// `_controllers` mapea URL → AbortController. Un controller por URL en vuelo.
+// `_pollUrls` mapea pollIndex → Set<URL> para poder cancelar todos los
+// prefetches asociados a un poll concreto (útil cuando el post sale de
+// la ventana de interés tras un flick rápido).
+const _controllers = new Map();
+const _pollUrls = new Map();
+
+const _registerController = (url, pollIndex) => {
+  let ctrl = _controllers.get(url);
+  if (!ctrl || ctrl.signal.aborted) {
+    ctrl = new AbortController();
+    _controllers.set(url, ctrl);
+  }
+  let urls = _pollUrls.get(pollIndex);
+  if (!urls) {
+    urls = new Set();
+    _pollUrls.set(pollIndex, urls);
+  }
+  urls.add(url);
+  return ctrl;
+};
+
+const _releaseController = (url, pollIndex) => {
+  // Sólo desregistra; no aborta. Si el prefetch completó normalmente,
+  // ya no hay nada que cancelar.
+  _controllers.delete(url);
+  const urls = _pollUrls.get(pollIndex);
+  if (urls) {
+    urls.delete(url);
+    if (urls.size === 0) _pollUrls.delete(pollIndex);
+  }
+};
+
 const feedMediaPrefetcher = {
   /**
    * Cachea en disco los thumbnails/posters/avatares de TODOS los posts
@@ -175,6 +209,7 @@ const feedMediaPrefetcher = {
    * que el reproductor funcione offline para los siguientes posts.
    *
    * Es seguro llamar múltiples veces — `mediaCache.prefetch()` deduplica.
+   * Los prefetches son cancelables vía `cancelDistantPolls()`.
    */
   prefetchAudiosAroundIndex(polls, index, aheadCount = 5) {
     if (!isCapacitorNative()) return;
@@ -187,9 +222,11 @@ const feedMediaPrefetcher = {
       for (let i = start; i < end; i++) {
         const audios = extractAudioUrls(polls[i]);
         for (const a of audios) {
+          const controller = _registerController(a, i);
           mediaCache
-            .prefetch(a, { maxBytes: AUDIO_MAX_BYTES })
-            .catch(() => { /* offline — ignorar */ });
+            .prefetch(a, { maxBytes: AUDIO_MAX_BYTES, signal: controller.signal })
+            .catch(() => { /* offline — ignorar */ })
+            .finally(() => _releaseController(a, i));
         }
       }
     });
@@ -198,6 +235,10 @@ const feedMediaPrefetcher = {
   /**
    * Cachea en disco los VÍDEOS de los próximos N posts a partir del
    * índice activo. Llamar cuando el usuario cambia de post.
+   *
+   * Los prefetches en vuelo son cancelables vía `cancelDistantPolls()`,
+   * lo que ahorra bandwidth cuando el usuario hace flick rápido por
+   * varios posts seguidos.
    *
    * @param {Array} polls
    * @param {number} index   — índice del post actualmente visible
@@ -213,19 +254,70 @@ const feedMediaPrefetcher = {
       for (let i = index; i < end; i++) {
         const urls = extractVideoUrls(polls[i]);
         for (const u of urls) {
+          const controller = _registerController(u, i);
           mediaCache
-            .prefetch(u, { maxBytes: VIDEO_MAX_BYTES })
-            .catch(() => { /* offline o vídeo demasiado grande — ignorar */ });
+            .prefetch(u, { maxBytes: VIDEO_MAX_BYTES, signal: controller.signal })
+            .catch(() => { /* offline o vídeo demasiado grande — ignorar */ })
+            .finally(() => _releaseController(u, i));
         }
       }
     });
   },
 
   /**
+   * 🚫 Cancela todos los prefetches en vuelo cuyos polls estén a más
+   * de `maxDistance` del `activeIndex`. Llamar tras cada cambio de post
+   * activo (especialmente útil cuando el usuario hace flick rápido por
+   * varios posts seguidos: los prefetches intermedios se cancelan en lugar
+   * de competir por el bandwidth del post que el usuario está mirando).
+   *
+   * @param {number} activeIndex — índice del post activo actual
+   * @param {number} maxDistance — distancia máxima a mantener viva (default 4)
+   * @returns {number} número de prefetches abortados (útil para debug)
+   */
+  cancelDistantPolls(activeIndex, maxDistance = 4) {
+    if (typeof activeIndex !== 'number') return 0;
+    let aborted = 0;
+    for (const [pollIndex, urls] of _pollUrls.entries()) {
+      if (Math.abs(pollIndex - activeIndex) <= maxDistance) continue;
+      for (const url of urls) {
+        const ctrl = _controllers.get(url);
+        if (ctrl && !ctrl.signal.aborted) {
+          try { ctrl.abort(); aborted++; } catch (_) {}
+        }
+        _controllers.delete(url);
+      }
+      _pollUrls.delete(pollIndex);
+    }
+    return aborted;
+  },
+
+  /**
+   * Cancela TODOS los prefetches en vuelo. Útil al desmontar el feed,
+   * cambiar de cuenta o cerrar sesión.
+   */
+  cancelAll() {
+    let aborted = 0;
+    for (const ctrl of _controllers.values()) {
+      if (!ctrl.signal.aborted) {
+        try { ctrl.abort(); aborted++; } catch (_) {}
+      }
+    }
+    _controllers.clear();
+    _pollUrls.clear();
+    return aborted;
+  },
+
+  /**
    * Snapshot de uso útil para debug (Settings → "Almacenamiento").
    */
   stats() {
-    return mediaCache.stats?.() || null;
+    const base = mediaCache.stats?.() || null;
+    return base ? {
+      ...base,
+      inflightPrefetches: _controllers.size,
+      trackedPolls: _pollUrls.size,
+    } : null;
   },
 };
 
