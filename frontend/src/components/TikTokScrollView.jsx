@@ -2223,10 +2223,31 @@ const TikTokScrollView = ({
     return () => window.removeEventListener('app:backbutton', handleAppBack);
   }, [closeOnBack, onExitTikTok]);
 
-  // ─── PREDICTIVE PREFETCH ──────────────────────────────────────────────────
+  // ─── PREDICTIVE PREFETCH (ventana deslizante TikTok-style) ────────────────
+  //
+  // Cuando el usuario está parado en el post `activeIndex`, mantenemos
+  // una "ventana" de hasta 5 posts en distintos estados de preparación,
+  // imitando el modelo del spec TikTok:
+  //
+  //   [-2] → Destruido (gestionado por <PollOptionMedia>: distance>3 = no <video>)
+  //         + cache LRU del filesystem evicta sus bytes si hace falta espacio.
+  //   [-1] → Suspendido — solo thumbnail/poster en cache (back-swipe instantáneo).
+  //   [ 0] → Activo, reproduciendo a calidad completa.
+  //   [+1] → Pre-cargado — video casi completo (10MB max) + thumbnail + audio
+  //          pre-connect. La mayor parte de esto lo dispara también
+  //          `eagerPrefetchNextPost` en el touchStart.
+  //   [+2] → Thumbnail + PRIMER SEGMENTO del video (~512KB via Range request)
+  //          → "Frame 50ms HLS ya descargado" del spec.
+  //   [+3] → SOLO metadata (HEAD warmup → calienta DNS/TLS/HTTP2 connection
+  //          pool, sin descargar bytes de video).
+  //   [+4] → Nada (descansa).
+  //
+  // Esto sustituye al loop uniforme "offset 0..3 todos igual" que había antes
+  // y permite que la bandwidth se priorice por proximidad real.
   useEffect(() => {
     if (!polls || polls.length === 0) return;
     let cancelled = false;
+    const localControllers = [];
 
     // 🚫 Cancelar prefetches de posts que ahora están lejos del activo
     // (TikTok-style: tras un flick rápido, los intermedios ya no importan
@@ -2242,28 +2263,123 @@ const TikTokScrollView = ({
     ]).then(([cacheMod, mediaMod]) => {
       if (cancelled) return;
       const cache = cacheMod.default;
-      const { pickPlayableVideoUrl, pickVideoPosterUrl, pickImageUrl } = mediaMod;
-      const isCellular = navigator?.connection?.type === 'cellular' || ['2g', '3g'].includes(navigator?.connection?.effectiveType);
-      const videoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024;
-      const imageMaxBytes = 2 * 1024 * 1024;
+      const { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl, pickImageUrl } = mediaMod;
+      const isCellular =
+        navigator?.connection?.type === 'cellular' ||
+        ['2g', '3g'].includes(navigator?.connection?.effectiveType);
+      const isSaveData = !!navigator?.connection?.saveData;
+      // Si el usuario activa Data Saver, NO bajamos video pesado más allá del +1
+      const allowVideoPrefetch = !isSaveData;
 
-      // Prefetch también el post activo (offset 0) para thumbnails en conexión lenta
-      for (let offset = 0; offset <= 3; offset++) {
+      const imageMaxBytes = 2 * 1024 * 1024;     // 2MB por thumbnail
+      const fullVideoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024; // 10MB +1
+      const firstSegmentBytes = isCellular ? 256 * 1024 : 512 * 1024; // 256KB-512KB +2
+
+      // Helper: pide los primeros N bytes (Range request) del video del post.
+      // Estos bytes quedan en el HTTP cache del navegador, así que cuando
+      // el <video>/HlsVideo realmente arranque, el browser continúa desde
+      // donde está sin pedir el rango de nuevo → playback instantáneo.
+      const prefetchFirstSegment = (videoUrl, bytes) => {
+        if (!videoUrl || cancelled) return;
+        try {
+          const ctrl = new AbortController();
+          localControllers.push(ctrl);
+          // priority:'low' para no robarle bandwidth al video activo.
+          const init = {
+            headers: { Range: `bytes=0-${bytes - 1}` },
+            signal: ctrl.signal,
+            cache: 'force-cache',
+          };
+          try { init.priority = 'low'; } catch (_) {}
+          fetch(videoUrl, init).catch(() => {});
+        } catch (_) {}
+      };
+
+      // Helper: HEAD-only para calentar DNS/TLS/keepalive sin gastar datos.
+      // Cuando el usuario llegue al +3, la conexión ya está abierta y el
+      // primer byte de video llega en ms en vez de 200-500ms (TLS handshake).
+      const prefetchMetadataOnly = (url) => {
+        if (!url || cancelled) return;
+        try {
+          const ctrl = new AbortController();
+          localControllers.push(ctrl);
+          const init = { method: 'HEAD', signal: ctrl.signal, cache: 'no-cache' };
+          try { init.priority = 'low'; } catch (_) {}
+          fetch(url, init).catch(() => {});
+        } catch (_) {}
+      };
+
+      // ── PROCESAMIENTO DE LA VENTANA ────────────────────────────────────
+      // Iteramos -1, 0, +1, +2, +3 con políticas distintas:
+      const windowOffsets = [-1, 0, 1, 2, 3];
+      for (const offset of windowOffsets) {
         const idx = activeIndex + offset;
-        if (idx >= polls.length) break;
+        if (idx < 0 || idx >= polls.length) continue;
         const p = polls[idx];
         if (!p?.options) continue;
+
         for (const option of p.options) {
+          // Thumbnail/poster siempre (lo más ligero, ya está en disco LRU)
           const thumbUrl = pickVideoPosterUrl(option) || pickImageUrl(option);
-          if (thumbUrl) cache.prefetch(thumbUrl, { maxBytes: imageMaxBytes });
-          if (videoMaxBytes > 0 && option.media_type === 'video') {
-            const videoUrl = pickPlayableVideoUrl(option);
-            if (videoUrl) { cache.prefetch(videoUrl, { maxBytes: videoMaxBytes }); break; }
+          if (thumbUrl) {
+            try { cache.prefetch(thumbUrl, { maxBytes: imageMaxBytes }); } catch (_) {}
+          }
+
+          const isVideoOpt = option.media_type === 'video' || option.media?.type === 'video';
+          if (!isVideoOpt) continue;
+          if (!allowVideoPrefetch) continue; // Save-Data → no video
+
+          const videoUrl = pickPlayableVideoUrl(option);
+          const hlsUrl = pickPlayableHlsUrl(option);
+
+          // Política por offset
+          if (offset === 0) {
+            // Activo: ya lo está descargando el reproductor, no duplicamos
+            // (sería pelearse con el <video> por la misma URL). Solo
+            // garantizamos el thumbnail (ya hecho arriba).
+            break;
+          } else if (offset === 1) {
+            // +1: video casi completo (hasta 10MB) → cache filesystem LRU.
+            // Si hay HLS, los primeros segmentos quedan en HTTP cache via
+            // el pre-decode de eagerPrefetchNextPost. Aquí cubrimos el MP4.
+            if (videoUrl && fullVideoMaxBytes > 0) {
+              try { cache.prefetch(videoUrl, { maxBytes: fullVideoMaxBytes }); } catch (_) {}
+            }
+            break; // 1 video por post es suficiente para el +1
+          } else if (offset === 2) {
+            // +2: primer segmento via Range request (256-512KB).
+            // Si hay HLS, calentamos el .m3u8 con HEAD para que el manifest
+            // esté listo cuando llegue el usuario. Luego un segmento real.
+            if (hlsUrl) {
+              prefetchMetadataOnly(hlsUrl);
+            }
+            if (videoUrl) {
+              prefetchFirstSegment(videoUrl, firstSegmentBytes);
+            }
+            break;
+          } else if (offset === 3) {
+            // +3: solo metadata. HEAD warmup → calienta conexión, no descarga.
+            if (hlsUrl) prefetchMetadataOnly(hlsUrl);
+            else if (videoUrl) prefetchMetadataOnly(videoUrl);
+            break;
+          } else if (offset === -1) {
+            // -1: SOLO thumbnail (ya hecho arriba). No tocamos video.
+            // El back-swipe es raro pero rápido cuando ocurre.
+            break;
           }
         }
       }
     }).catch(() => {});
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      // Abortar Range/HEAD requests pendientes al cambiar de activeIndex.
+      // Crítico: si el usuario hace flick rápido, no queremos seguir
+      // descargando first-segments de posts que ya no son +2.
+      for (const c of localControllers) {
+        try { c.abort(); } catch (_) {}
+      }
+    };
   }, [activeIndex, polls]);
 
   // ─── SAVED/SHARED POLLS ───────────────────────────────────────────────────
