@@ -1963,6 +1963,60 @@ const TikTokScrollView = ({
   // Buffer corto de muestras (últimos ~80ms) para calcular velocidad instantánea
   const velocitySamplesRef = useRef([]);
 
+  // ─── EAGER PREFETCH (TikTok-style: kick off al tocar, no al soltar) ─────
+  // TikTok eleva la prioridad del +1 en onSwipeStart (dedo apenas tocó).
+  // Antes, lo hacíamos en el useEffect [activeIndex] que sólo corre DESPUÉS
+  // del setTimeout(transMs) en goToIndex → llegaba 150–300ms tarde.
+  // Ahora disparamos prefetch del +1 (vídeo + poster + audio) en cuanto el
+  // dedo toca la pantalla. eagerPrefetchedIndexRef evita re-disparos
+  // redundantes durante el mismo touchmove.
+  const eagerPrefetchedIndexRef = useRef(-1);
+
+  const eagerPrefetchNextPost = useCallback((targetIndex) => {
+    if (typeof targetIndex !== 'number' || targetIndex < 0) return;
+    if (!polls || targetIndex >= polls.length) return;
+    if (eagerPrefetchedIndexRef.current === targetIndex) return;
+    eagerPrefetchedIndexRef.current = targetIndex;
+
+    // Native (Capacitor): disk-persistent cache del +1 (vídeo + audio)
+    try {
+      import('../services/feedMediaPrefetcher').then(({ default: prefetcher }) => {
+        prefetcher.prefetchVideosAroundIndex(polls, targetIndex, 0);
+        prefetcher.prefetchAudiosAroundIndex(polls, targetIndex, 0);
+      }).catch(() => {});
+    } catch (_) {}
+
+    // Web + native: cache HTTP/LRU del poster + 1er vídeo del +1
+    try {
+      Promise.all([
+        import('../services/mediaCacheService'),
+        import('../utils/mediaUrl'),
+      ]).then(([cacheMod, mediaMod]) => {
+        const cache = cacheMod.default;
+        const { pickPlayableVideoUrl, pickVideoPosterUrl, pickImageUrl } = mediaMod;
+        const conn = navigator?.connection;
+        const isCellular = conn?.type === 'cellular' || ['2g', '3g'].includes(conn?.effectiveType || '');
+        const videoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024;
+        const imageMaxBytes = 2 * 1024 * 1024;
+        const p = polls[targetIndex];
+        if (!p?.options) return;
+        for (const option of p.options) {
+          const thumbUrl = pickVideoPosterUrl(option) || pickImageUrl(option);
+          if (thumbUrl) cache.prefetch(thumbUrl, { maxBytes: imageMaxBytes });
+          if (videoMaxBytes > 0 && option.media_type === 'video') {
+            const videoUrl = pickPlayableVideoUrl(option);
+            if (videoUrl) { cache.prefetch(videoUrl, { maxBytes: videoMaxBytes }); break; }
+          }
+        }
+      }).catch(() => {});
+    } catch (_) {}
+  }, [polls]);
+
+  // Reset al cambiar de post activo → permite eager-prefetchar el nuevo +1
+  useEffect(() => {
+    eagerPrefetchedIndexRef.current = -1;
+  }, [activeIndex]);
+
   const handleTapePointerDown = useCallback((e) => {
     if (isModalOpen || storiesOverlayOpen) return;
     if (isAnimatingRef.current) return;
@@ -1972,11 +2026,17 @@ const TikTokScrollView = ({
     swipeStartTimeRef.current = Date.now();
     velocitySamplesRef.current = [{ y: touchStartYRef.current, t: swipeStartTimeRef.current }];
 
+    // 🚀 TikTok-style: prefetch del +1 al instante (90%+ de swipes van forward).
+    // Esto ahorra ~150–300ms vs esperar a que termine la animación de swipe.
+    if (activeIndex + 1 < polls.length) {
+      eagerPrefetchNextPost(activeIndex + 1);
+    }
+
     if (onRefresh && !isRefreshing && activeIndex === 0) {
       pullStartYRef.current = touchStartYRef.current;
       isPullingRef.current = false;
     }
-  }, [isModalOpen, storiesOverlayOpen, onRefresh, isRefreshing, activeIndex]);
+  }, [isModalOpen, storiesOverlayOpen, onRefresh, isRefreshing, activeIndex, polls.length, eagerPrefetchNextPost]);
 
   const handleTapePointerMove = useCallback((e) => {
     if (touchStartYRef.current === null) return;
@@ -2109,12 +2169,17 @@ const TikTokScrollView = ({
       const now = Date.now();
       if (now - lastWheel < 600) return;
       lastWheel = now;
-      if (e.deltaY > 0) goToIndex(activeIndex + 1);
-      else goToIndex(activeIndex - 1);
+      if (e.deltaY > 0) {
+        // 🚀 Eager prefetch del +1 antes de iniciar la transición
+        if (activeIndex + 1 < polls.length) eagerPrefetchNextPost(activeIndex + 1);
+        goToIndex(activeIndex + 1);
+      } else {
+        goToIndex(activeIndex - 1);
+      }
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
-  }, [activeIndex, goToIndex]);
+  }, [activeIndex, goToIndex, polls.length, eagerPrefetchNextPost]);
 
   // Index change para SearchPage
   useEffect(() => {
