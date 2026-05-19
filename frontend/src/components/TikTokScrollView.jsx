@@ -1215,6 +1215,7 @@ const TikTokPollCard = ({
                             <PollOptionMedia
                               option={option}
                               className="w-full h-full"
+                              distanceFromActive={isActive ? 0 : 99}
                               videoProps={{
                                 autoPlay: true,
                                 loop: true,
@@ -1305,6 +1306,7 @@ const TikTokPollCard = ({
                               <PollOptionMedia
                                 option={option}
                                 className="w-full h-full"
+                                distanceFromActive={isActive ? 0 : 99}
                                 videoProps={{
                                   autoPlay: true,
                                   loop: true,

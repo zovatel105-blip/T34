@@ -277,9 +277,12 @@ const GridLayout = ({
                   videoRef={(el) => {
                     if (el) videoRefs.current.set(option.id, el);
                   }}
-                  // 🚀 Preload inteligente TikTok-style: el padre decide la
-                  //    distancia al post activo, PollOptionMedia decide "auto|metadata|none"
-                  distanceFromActive={distanceFromActive}
+                  // 🚀 MEJORA #3: en layouts grid, sólo el slot ACTIVO renderiza
+                  //   <video> elements. Slots PREV/NEXT muestran únicamente poster.
+                  //   Esto reduce RAM 60-70% en grids 2x2 / 3x2 (de 12-18 <video>
+                  //   simultáneos a 4-6). PollOptionMedia ya descarta <video>
+                  //   cuando distanceFromActive > 3 (línea 119).
+                  distanceFromActive={isActive ? 0 : 99}
                   isHighBandwidth={isHighBandwidth}
                   videoProps={{
                     autoPlay: isActive,

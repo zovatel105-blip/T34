@@ -187,6 +187,36 @@ const CarouselLayout = ({
     });
   }, [currentSlide, isActive, poll.options]);
 
+  // 🚀 MEJORA #4: Pre-fetch del VIDEO del slide +1 (y +2) del carrusel.
+  //   Hasta ahora sólo se cargaba el video del slide actual; al deslizar
+  //   horizontalmente había un pequeño delay esperando al fetch.
+  //   Ahora calentamos mediaCache para que el swipe horizontal sea instantáneo.
+  //   Sólo corremos cuando isActive=true (no quemar bandwidth en slots PREV/NEXT).
+  useEffect(() => {
+    if (!isActive || !poll.options) return;
+    // Cap razonable para no comerse la cuota LRU con carruseles largos.
+    const PREFETCH_MAX_BYTES = 10 * 1024 * 1024; // 10 MB por slide
+
+    [currentSlide + 1, currentSlide + 2].forEach(idx => {
+      if (idx < 0 || idx >= poll.options.length) return;
+      const opt = poll.options[idx];
+      if (!opt) return;
+      // Sólo prefetch si la opción tiene video reproducible.
+      const isVideoOpt =
+        opt.media_type === 'video' ||
+        (typeof opt.media?.type === 'string' && opt.media.type.toLowerCase().includes('video'));
+      if (!isVideoOpt) return;
+      const videoUrl = pickPlayableVideoUrl(opt);
+      if (!videoUrl) return;
+      try {
+        // mediaCache.prefetch dedupea por hash, así que es seguro reinvocar.
+        mediaCache.prefetch(videoUrl, { maxBytes: PREFETCH_MAX_BYTES }).catch(() => {});
+      } catch (_) {
+        /* mediaCache no disponible (web sin filesystem) */
+      }
+    });
+  }, [currentSlide, isActive, poll.options]);
+
   // ========== SWIPER SLIDE CHANGE HANDLER ==========
   const handleSlideChange = (swiper) => {
     const newIndex = swiper.activeIndex;
