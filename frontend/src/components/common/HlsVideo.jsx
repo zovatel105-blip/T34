@@ -20,6 +20,11 @@
  */
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import Hls from 'hls.js';
+import {
+  getInitialHlsStartLevel,
+  pickStartLevelIndexFromLevels,
+  getNetworkProfile,
+} from '../../utils/networkQuality';
 
 // Cache la detección de HLS nativo (no cambia durante la sesión).
 let _nativeHlsCache = null;
@@ -44,7 +49,11 @@ const DEFAULT_HLS_CONFIG = {
   maxBufferSize: 30 * 1000 * 1000,     // 30 MB
   backBufferLength: 4,                 // segundos hacia atrás (rewind corto)
   // — ABR / arranque —
-  startLevel: -1,                      // auto (arranca prudente y sube)
+  // `startLevel` lo sobreescribimos en runtime según `navigator.connection`:
+  //   WiFi/Ethernet → 720p, 4G → 540p, 3G o menor / Save-Data → 360p.
+  // Si la API no está disponible (Safari/Firefox) caemos a 720p (probable WiFi).
+  // ABR seguirá subiendo/bajando automáticamente después del primer segmento.
+  startLevel: -1,                      // overridden per-instance abajo
   capLevelToPlayerSize: true,          // no descarga 1080p si el player es 400px
   // — Performance —
   enableWorker: true,                  // demuxing en Web Worker → smoother UI
@@ -91,10 +100,45 @@ const HlsVideo = forwardRef(
         }
         // Resto → hls.js
         if (Hls.isSupported()) {
-          const hls = new Hls({ ...DEFAULT_HLS_CONFIG, ...(hlsConfig || {}) });
+          // ── Network-aware start level ────────────────────────────────
+          // Decidimos la rendition inicial ANTES de cargar el manifest.
+          // El override por prop (hlsConfig.startLevel) gana sobre la red.
+          const networkStartLevel = getInitialHlsStartLevel();
+          const finalConfig = {
+            ...DEFAULT_HLS_CONFIG,
+            startLevel: networkStartLevel,
+            ...(hlsConfig || {}),
+          };
+          const hls = new Hls(finalConfig);
           hls.loadSource(hlsUrl);
           hls.attachMedia(video);
           video._hlsInstance = hls;
+
+          // Safety net: si el ladder real del backend cambia y nuestro
+          // índice asumido apunta a una resolución distinta, recalculamos
+          // con las heights reales en cuanto el manifest está parseado.
+          // hls.js permite ajustar `startLevel` tras MANIFEST_PARSED sólo
+          // si aún no ha empezado a fetchear; usamos `nextLevel` que sí es
+          // dinámico y fuerza el siguiente segmento a la calidad correcta.
+          hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+            if (!data?.levels || data.levels.length === 0) return;
+            const correctIdx = pickStartLevelIndexFromLevels(data.levels);
+            if (correctIdx >= 0 && correctIdx !== networkStartLevel) {
+              try {
+                // currentLevel = -1 mantiene ABR auto, pero nextLevel fuerza
+                // que el PRÓXIMO fragmento sea el que queremos.
+                hls.nextLevel = correctIdx;
+              } catch (_) { /* noop */ }
+              if (process.env.NODE_ENV !== 'production') {
+                const profile = getNetworkProfile();
+                // eslint-disable-next-line no-console
+                console.debug(
+                  '[HlsVideo] startLevel re-aligned',
+                  { assumed: networkStartLevel, actual: correctIdx, profile },
+                );
+              }
+            }
+          });
 
           hls.on(Hls.Events.ERROR, (_event, data) => {
             // Solo nos importan los fatales; los no-fatales hls.js los recupera solo.

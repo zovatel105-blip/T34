@@ -28,6 +28,10 @@
  * @param {number} [options.startLevel=-1] - rendition inicial (-1 = auto).
  */
 import { useEffect, useRef } from 'react';
+import {
+  getInitialHlsStartLevel,
+  pickStartLevelIndexFromLevels,
+} from '../utils/networkQuality';
 
 const isHlsUrl = (url) => typeof url === 'string' && /\.m3u8(\?|#|$)/i.test(url);
 
@@ -46,7 +50,11 @@ export const useHlsVideo = (videoRef, src, options = {}) => {
   const {
     maxBufferLength = 10,
     maxMaxBufferLength = 20,
-    startLevel = -1,
+    // `startLevel` por defecto sigue la calidad de red detectada:
+    //   WiFi/Ethernet → 720p, 4G → 540p, 3G o menor / Save-Data → 360p.
+    // Si el caller pasa `startLevel` explícito (ej. forzar -1 para auto-ABR
+    // puro), respetamos su decisión.
+    startLevel = getInitialHlsStartLevel(),
   } = options;
 
   useEffect(() => {
@@ -152,6 +160,16 @@ export const useHlsVideo = (videoRef, src, options = {}) => {
                 hlsInstanceRef.current = null;
                 break;
             }
+          }
+        });
+
+        // Safety net: realinea startLevel con las heights reales si el
+        // ladder del backend cambia (asumido vs real).
+        hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+          if (!data?.levels || data.levels.length === 0) return;
+          const correctIdx = pickStartLevelIndexFromLevels(data.levels);
+          if (correctIdx >= 0 && correctIdx !== startLevel) {
+            try { hls.nextLevel = correctIdx; } catch (_) {}
           }
         });
 
