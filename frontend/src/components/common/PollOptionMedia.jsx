@@ -21,10 +21,25 @@ import videoMemoryManager from '../../services/videoMemoryManager';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
+const VIDEO_URL_RE = /\.(mp4|mov|webm|avi|m4v)(\?|$)/i;
+
 const isVideoOption = (option) => {
   if (!option) return false;
+  // 1) Tipo declarado en estructura moderna o plana
   const t = option.media_type || option.media?.type;
-  return typeof t === 'string' && t.toLowerCase().includes('video');
+  if (typeof t === 'string' && t.toLowerCase().includes('video')) return true;
+  // 2) Fallback por extensión de URL — necesario para entradas legacy de VS
+  //    (vs_questions) donde NO viene `media_type` y la URL está en
+  //    `option.image`. Si la URL parece un video, lo tratamos como video.
+  const candidates = [
+    option.media?.url,
+    option.media?.optimizedUrl,
+    option.media?.optimized_media_url,
+    option.media_url,
+    option.optimized_media_url,
+    option.image,
+  ];
+  return candidates.some((u) => typeof u === 'string' && VIDEO_URL_RE.test(u));
 };
 
 const PollOptionMedia = ({
@@ -53,7 +68,13 @@ const PollOptionMedia = ({
   const rawHlsSrc = isVideo ? pickPlayableHlsUrl(option) : null;
   const rawPosterSrc = pickVideoPosterUrl(option);
   const rawImageSrc = !isVideo
-    ? resolveAssetUrl(option?.media?.url || option?.media_url || option?.thumbnail_url)
+    ? resolveAssetUrl(
+        option?.media?.url ||
+        option?.media_url ||
+        option?.media?.thumbnail ||
+        option?.thumbnail_url ||
+        option?.image
+      )
     : null;
 
   // Offline-first: sustituir por URI local cacheada cuando exista

@@ -22,8 +22,14 @@ export const pickPlayableVideoUrl = (option) => {
   // Estructura plana (legacy):
   const flatOptimized = option.optimized_media_url;
   const flatOriginal = option.media_url;
+  // Estructura legacy de VS (vs_questions): el media va en `option.image`.
+  // Si la extensión coincide con un video, lo aceptamos como source.
+  const legacyVsImage = option.image;
+  const isVideoLikeUrl = (u) =>
+    typeof u === 'string' && /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(u);
+  const legacyVideo = isVideoLikeUrl(legacyVsImage) ? legacyVsImage : null;
 
-  const best = modernOptimized || flatOptimized || modernOriginal || flatOriginal;
+  const best = modernOptimized || flatOptimized || modernOriginal || flatOriginal || legacyVideo;
   return resolveAssetUrl(best);
 };
 
@@ -52,7 +58,16 @@ export const pickPlayableHlsUrl = (option) => {
  */
 export const pickVideoPosterUrl = (option) => {
   if (!option) return null;
-  const thumb = option.media?.thumbnail || option.thumbnail_url;
+  // Poster preferente del pipeline → thumbnail moderno → legacy thumbnail_url.
+  // Como último fallback, para entradas legacy de VS (vs_questions) donde el
+  // media va en `option.image`, usamos esa imagen como poster solo si NO
+  // parece un video (si es un .jpg/.png, sirve perfectamente como poster).
+  const isVideoLikeUrl = (u) =>
+    typeof u === 'string' && /\.(mp4|mov|webm|avi|m4v)(\?|$)/i.test(u);
+  const legacyImageAsPoster =
+    option.image && !isVideoLikeUrl(option.image) ? option.image : null;
+  const thumb =
+    option.media?.thumbnail || option.thumbnail_url || legacyImageAsPoster;
   return resolveAssetUrl(thumb);
 };
 
@@ -61,7 +76,17 @@ export const pickVideoPosterUrl = (option) => {
  */
 export const pickImageUrl = (option) => {
   if (!option) return null;
-  const src = option.media?.url || option.media_url || option.thumbnail_url;
+  // Orden de prioridad:
+  //   1) media.url (estructura moderna)
+  //   2) media_url (legacy plana)
+  //   3) thumbnail (moderno) / thumbnail_url (legacy)
+  //   4) option.image (legacy de VS / vs_questions)
+  const src =
+    option.media?.url ||
+    option.media_url ||
+    option.media?.thumbnail ||
+    option.thumbnail_url ||
+    option.image;
   return resolveAssetUrl(src);
 };
 
