@@ -855,10 +855,18 @@ const QuestionSlide = ({
           "flex-1 relative overflow-hidden cursor-pointer",
           isHighlighted && !isSelected && "scale-[1.01]",
           // Card votada → respira/flota en 3D ("sale" de la pantalla, viva)
-          // + aberración cromática (RGB split) tipo gafas 3D
-          isSelected && "vs-cinema-3d-active vs-cinema-chroma-shadow",
-          // Card perdedora → se va AL FONDO (translateZ negativo + blur)
-          isLoser && "vs-cinema-recede"
+          // + aberración cromática (RGB split) tipo gafas 3D.
+          // 🎬 Si la card es VIDEO usamos variantes "video-safe" sin
+          // animaciones infinitas ni filter (la versión original tira
+          // del GPU cada frame y desincroniza la reproducción del video).
+          isSelected && !isVideo && "vs-cinema-3d-active vs-cinema-chroma-shadow",
+          isSelected && isVideo && "vs-cinema-3d-active-video vs-cinema-chroma-shadow-video",
+          // Card perdedora → se va AL FONDO (translateZ negativo + blur).
+          // 🎬 Sobre video, el `filter: grayscale+brightness+saturate` mata
+          // el rendimiento (cada frame se reprocesa por GPU). Usamos una
+          // variante con opacity + overlay negro estático.
+          isLoser && !isVideo && "vs-cinema-recede",
+          isLoser && isVideo && "vs-cinema-recede-video"
         )}
         style={{
           // 🎬 Lift Subject: origen en el CENTRO para que la card crezca

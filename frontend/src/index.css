@@ -209,6 +209,49 @@ textarea,
   will-change: transform;
 }
 
+/* ====================================================================
+   🎬 VARIANTES "VIDEO-SAFE" — sin animaciones infinitas, sin filter.
+   Cuando una card contiene un <video> reproduciéndose, las versiones
+   originales (infinite box-shadow / 3D / filter) machacan el GPU y el
+   video se ve a tirones tras votar. Estas variantes mantienen el
+   feedback visual (elevación + sombra estática + atenuación de la
+   perdedora) sin tocar el pipeline de decodificación de video.
+   ==================================================================== */
+
+/* Card votada (con video dentro): elevación estática única. */
+.vs-cinema-3d-active-video {
+  transform: scale(1.06) translateZ(40px);
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* Sombra estática (sin animación de box-shadow) para la card votada
+   cuando es video. Da la sensación de "lift" sin repintar cada frame. */
+.vs-cinema-chroma-shadow-video {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.22),
+    0 0 26px rgba(255, 255, 255, 0.28),
+    0 30px 60px -10px rgba(0, 0, 0, 0.88),
+    0 60px 110px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* Card perdedora (con video dentro): sin filter (que mata el video) ni
+   animación; sólo una atenuación con opacity + tinte negro semitransp. */
+.vs-cinema-recede-video {
+  opacity: 0.55;
+  transform: translateZ(-10px);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vs-cinema-recede-video::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 4;
+}
+
 /* Brillo cinematográfico que pulsa desde el centro de la card votada */
 @keyframes vsCinemaInnerPulse {
   0%, 100% { opacity: 0.55; transform: scale(1); }
