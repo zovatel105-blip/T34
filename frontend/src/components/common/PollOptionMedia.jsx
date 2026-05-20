@@ -202,6 +202,14 @@ const PollOptionMedia = ({
               src={posterSrc}
               alt=""
               draggable={false}
+              // Slot lejano (distance > 3): el <video> ya no se monta,
+              // solo se muestra el poster. Lo bajamos a prioridad mínima
+              // para que NUNCA compita con thumbnails del slot activo/+1.
+              // `loading="lazy"` deja al browser decidir cuándo descargar
+              // según viewport — incluso este poster puede saltarse.
+              fetchpriority="low"
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
@@ -314,6 +322,13 @@ const PollOptionMedia = ({
             src={posterSrc}
             alt=""
             draggable={false}
+            // Video falló → el poster pasa a ser EL contenido visible.
+            // Si es el slot activo, prioridad alta (es lo único que ve el
+            // usuario); si es lejano, baja. `decoding="sync"` en activo
+            // evita un segundo flash mientras el browser decodifica.
+            fetchpriority={distanceFromActive === 0 ? 'high' : 'low'}
+            decoding={distanceFromActive === 0 ? 'sync' : 'async'}
+            loading={distanceFromActive <= 1 ? 'eager' : 'lazy'}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ zIndex: 2 }}
             onError={(e) => { e.currentTarget.style.display = 'none'; }}

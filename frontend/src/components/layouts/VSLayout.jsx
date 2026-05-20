@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import voiceService from '../../services/voiceService';
 import DoubleTapVoteAnimation, { TWYK_GRADIENTS } from '../DoubleTapVoteAnimation';
 import SafeImage from '../common/SafeImage';
+import PollOptionMedia from '../common/PollOptionMedia';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import { isVideoOption } from '../../utils/vsMedia';
 import VSWinnerCard from './VSWinnerCard';
@@ -678,6 +679,10 @@ const QuestionSlide = ({
   // 🏆 Winner card overlay
   pollId,
   onRequestNextDuel,
+  // 🚀 TikTok "Illusion of Instant" — propagados desde VSLayout para que
+  // PollOptionMedia (dentro de renderCard) sepa qué prioridad usar.
+  distanceFromActive = 0,
+  isHighBandwidth = true,
 }) => {
   const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
@@ -938,32 +943,36 @@ const QuestionSlide = ({
           // Nunca usar colores aleatorios.
           gradient={isOptionA ? TWYK_GRADIENTS.violet : TWYK_GRADIENTS.blue}
         >
-          {/* Imagen o VIDEO de fondo (cacheable) — con paralaje 3D si está votada.
-              🚫 El paralaje 3D (vs-cinema-image-depth) se aplica SOLO a imágenes:
-                  un video reproduciéndose ya es "vivo" y aplicarle un parallax
-                  estático rompe el efecto cine — debe verse natural. */}
+          {/* Imagen o VIDEO de fondo — ahora vía PollOptionMedia para heredar
+              TODA la capa TikTok "Illusion of Instant":
+                · HLS adaptativo (ABR en tiempo real, startLevel según red)
+                · Poster crossfade buffered (cero pantalla negra al arrancar)
+                · Registro pasivo en videoMemoryManager (límite global de
+                  <video> vivos + cleanup de huérfanos)
+                · Fetch Priority API por distancia (high para activo, low para
+                  vecinos, lazy + decoding async en lejanos)
+                · Eager prefetch del +1 que dispara TikTokScrollView coopera
+                  con esto al hidratar el caché de disco antes de montarse.
+
+              🚫 La clase de parallax 3D (vs-cinema-image-depth) y los efectos
+                 cinema sólo aplican a IMÁGENES — un video reproduciéndose ya
+                 está vivo y un parallax estático lo rompe. Se inyecta vía
+                 `imgProps.className` para que llegue solo al <img> y no al
+                 <video> ni al poster crossfade. */}
           {imageUrl ? (
-            isVideo ? (
-              <VSVideoBackground
-                src={resolveAssetUrl(imageUrl)}
-                poster={videoPoster ? resolveAssetUrl(videoPoster) : null}
-                isActive={!!isActive}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <SafeImage
-                src={imageUrl}
-                alt=""
-                loading={isActive ? "eager" : "lazy"}
-                decoding="async"
-                className={cn(
-                  "absolute inset-0 w-full h-full object-cover",
-                  // 🎬 Paralaje 3D — la imagen se aleja un poco más que el marco,
-                  // creando sensación de profundidad real (como en el cine 3D).
-                  isSelected && "vs-cinema-image-depth"
-                )}
-              />
-            )
+            <PollOptionMedia
+              option={option}
+              className="absolute inset-0"
+              distanceFromActive={distanceFromActive}
+              isHighBandwidth={isHighBandwidth}
+              postId={pollId}
+              layout="vs"
+              imgProps={
+                !isVideo && isSelected
+                  ? { className: 'vs-cinema-image-depth' }
+                  : undefined
+              }
+            />
           ) : (
             <div
               className={cn(
@@ -1403,7 +1412,14 @@ const VSLayout = ({
   // 🧭 Si la bottom-nav está visible, se reservan ~56px más al pie del post
   // (ver TikTokScrollView padding). Se propaga a QuestionSlide para ajustar
   // las posiciones de los overlays (timer, status pills, trofeo, etc.).
-  isBottomNavVisible = false
+  isBottomNavVisible = false,
+  // 🚀 TikTok "Illusion of Instant" — propagamos la distancia al post activo
+  // y el flag de banda ancha al PollOptionMedia que renderiza cada card. Esto
+  // habilita HLS ABR, Fetch Priority API, registro pasivo en videoMemoryManager
+  // y crossfade de poster por buffer. Sin estos props, las VS no recibirían
+  // la misma capa de optimización que el resto del feed TikTok-style.
+  distanceFromActive = 0,
+  isHighBandwidth = true,
 }) => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
@@ -1967,6 +1983,8 @@ const VSLayout = ({
               stats={questionStats[question.id]}
               isBottomNavVisible={isBottomNavVisible}
               pollId={poll.id}
+              distanceFromActive={distanceFromActive}
+              isHighBandwidth={isHighBandwidth}
               onRequestNextDuel={() => {
                 if (currentIndex < totalQuestions - 1) {
                   goToNext();
