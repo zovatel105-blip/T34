@@ -11,6 +11,10 @@ import { isVideoOption } from '../../utils/vsMedia';
 import VSWinnerCard from './VSWinnerCard';
 import VSContentCard from './VSContentCard';
 import { useTranslation } from '../../hooks/useTranslation';
+// 🆕 Fase C: poster canvas global (antes vivía local en este archivo).
+// Extraído a utils/canvasPoster.js para que PollOptionMedia también pueda
+// usarlo como defensa en profundidad cuando el backend no manda thumbnail.
+import { generatePosterDataUrl } from '../../utils/canvasPoster';
 
 // 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
 // Top card (Player A) → lila, Bottom card (Player B) → azul.
@@ -533,64 +537,15 @@ const getCountryPrimaryColor = (text, index) => {
 // Cuando el backend no manda thumbnail (`option.media.thumbnail` vacío),
 // forzamos al <video> a pintar su primer frame mediante .load() + un micro
 // seek a ~0.1s. Como respaldo (iOS Safari + cards inactivas), extraemos un
-// data-URL del primer frame por canvas y lo usamos como `poster`. Se cachea
-// en memoria por URL para que no se regenere al volver al slide.
-const __VS_POSTER_CACHE = new Map();
-
-const generatePosterDataUrl = (videoUrl) => {
-  if (!videoUrl) return Promise.resolve(null);
-  if (__VS_POSTER_CACHE.has(videoUrl)) {
-    return Promise.resolve(__VS_POSTER_CACHE.get(videoUrl));
-  }
-  return new Promise((resolve) => {
-    try {
-      const v = document.createElement('video');
-      v.src = videoUrl;
-      v.crossOrigin = 'anonymous';
-      v.muted = true;
-      v.playsInline = true;
-      v.preload = 'auto';
-      let settled = false;
-      const cleanup = () => {
-        try { v.src = ''; v.load(); } catch (_) { /* noop */ }
-      };
-      const finish = (val) => {
-        if (settled) return;
-        settled = true;
-        __VS_POSTER_CACHE.set(videoUrl, val);
-        cleanup();
-        resolve(val);
-      };
-      v.addEventListener('loadeddata', () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = v.videoWidth || 480;
-          canvas.height = v.videoHeight || 854;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-          // jpeg 0.7 ≈ buen tradeoff calidad/peso para poster
-          const data = canvas.toDataURL('image/jpeg', 0.7);
-          finish(data || null);
-        } catch (_) {
-          // tainted canvas (CORS) → no poster, pero el .load del <video>
-          // real igualmente forzará el primer frame.
-          finish(null);
-        }
-      });
-      v.addEventListener('error', () => finish(null));
-      // Algunos navegadores requieren seek explícito para emitir loadeddata
-      try { v.currentTime = 0.1; } catch (_) { /* noop */ }
-      // Timeout de seguridad
-      setTimeout(() => finish(null), 6000);
-    } catch (_) {
-      resolve(null);
-    }
-  });
-};
+// data-URL del primer frame por canvas y lo usamos como `poster`.
+//
+// 🆕 Fase C: la función generatePosterDataUrl ahora vive en
+// `utils/canvasPoster.js` con su propio cache LRU + inflight dedup.
+// Aquí solo la usamos.
 
 const VSVideoBackground = ({ src, isActive, className, poster }) => {
   const videoRef = useRef(null);
-  const [autoPoster, setAutoPoster] = useState(() => __VS_POSTER_CACHE.get(src) || null);
+  const [autoPoster, setAutoPoster] = useState(null);
 
   // Si no hay poster del backend, generamos uno desde el primer frame con canvas.
   useEffect(() => {

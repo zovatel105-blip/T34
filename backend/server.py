@@ -13390,6 +13390,11 @@ class VSOption(BaseModel):
     id: str
     text: str
     image: Optional[str] = None
+    # 🆕 Fase A: aceptar enriquecimiento desde el cliente (opcional). Si el
+    # cliente ya conoce el tipo y/o el thumbnail (p.ej. tras un upload directo
+    # que devolvió esos campos), evitamos re-detectarlo y/o re-generarlo.
+    media_type: Optional[str] = None
+    thumbnail_url: Optional[str] = None
 
 class VSQuestion(BaseModel):
     id: Optional[str] = None
@@ -13428,24 +13433,98 @@ async def create_vs_experience(
             "avatar_url": str(current_user.avatar_url) if current_user.avatar_url else None
         }
         
-        # Process questions
+        # 🆕 Fase A — Helper local que detecta media_type real (video vs imagen)
+        # por extensión, genera thumbnail con ffmpeg para videos y devuelve un
+        # dict de opción totalmente enriquecido. Idéntico contrato para todas
+        # las preguntas — la primera ya no es un caso especial.
+        #
+        # Garantiza que `vs_questions[].options[]` SIEMPRE traiga:
+        #   - id, text, votes
+        #   - image (URL del media original, se mantiene por compat. del front)
+        #   - media_url (alias canónico de image, lo usa el pipeline TikTok)
+        #   - media_type ('video' | 'image' | None)
+        #   - thumbnail_url (poster real para <video>, o la propia imagen)
+        #
+        # Si el cliente ya envió `media_type` / `thumbnail_url`, se respeta lo
+        # que vino (caso de upload directo en el flow nuevo). Si no, se detecta
+        # y genera aquí.
+        def _enrich_vs_option(opt: VSOption) -> dict:
+            opt_id = str(opt.id)
+            opt_text = str(opt.text) if opt.text else ""
+            media_url = str(opt.image) if opt.image else None
+
+            # Empezar con lo que vino del cliente (puede ser None).
+            real_type = (opt.media_type or "").strip().lower() or None
+            real_thumb = opt.thumbnail_url if opt.thumbnail_url else None
+
+            if media_url:
+                is_video_url = bool(re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", media_url, re.IGNORECASE))
+                is_image_url = bool(re.search(r"\.(jpg|jpeg|png|gif|webp|bmp|avif|heic|heif)(\?|$)", media_url, re.IGNORECASE))
+
+                # Forzar el media_type por extensión si el cliente envió uno
+                # incorrecto (p. ej. el front siempre etiqueta como "image").
+                if is_video_url:
+                    real_type = "video"
+                elif is_image_url:
+                    real_type = "image"
+                elif not real_type:
+                    real_type = "image"  # fallback razonable
+
+                # Generar thumbnail si es video y no llegó uno usable.
+                thumb_is_bogus = (
+                    not real_thumb
+                    or real_thumb == media_url
+                    or bool(re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", str(real_thumb), re.IGNORECASE))
+                )
+                if real_type == "video" and thumb_is_bogus:
+                    real_thumb = None
+                    try:
+                        if "/api/uploads/" in media_url:
+                            after = media_url.split("/api/uploads/", 1)[1]
+                            file_path = UPLOAD_DIR / after
+                            if file_path.exists() and file_path.is_file():
+                                category = after.split("/", 1)[0] if "/" in after else "general"
+                                upload_type_map = {
+                                    "avatars": UploadType.AVATAR,
+                                    "poll_options": UploadType.POLL_OPTION,
+                                    "poll_backgrounds": UploadType.POLL_BACKGROUND,
+                                    "general": UploadType.GENERAL,
+                                }
+                                ut = upload_type_map.get(category, UploadType.GENERAL)
+                                gen_thumb = get_video_thumbnail_url(str(file_path), ut)
+                                if gen_thumb and not re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", gen_thumb, re.IGNORECASE):
+                                    real_thumb = gen_thumb
+                    except Exception as e:
+                        logger.warning(f"VS option thumb gen failed for {media_url}: {e}")
+
+                # Para imágenes, la propia imagen sirve como poster.
+                if real_type == "image" and not real_thumb:
+                    real_thumb = media_url
+
+            return {
+                "id": opt_id,
+                "text": opt_text,
+                "image": media_url,           # legacy / front actual
+                "media_url": media_url,       # canónico (pipeline TikTok)
+                "media_type": real_type,      # 'video' | 'image' | None
+                "thumbnail_url": real_thumb,  # poster real
+                "votes": 0,
+            }
+
+        # Process questions — TODAS las preguntas pasan por _enrich_vs_option.
+        # Antes (Fase A pendiente): solo la primera tenía thumbnail; las 2..N
+        # se guardaban como {id,text,image,votes} y rompían el pipeline TikTok
+        # ("Illusion of Instant" punto #1 — thumbnail en RAM).
         questions = []
         for idx, q in enumerate(vs_data.questions):
             question_id = str(uuid.uuid4())
-            options = []
-            for opt in q.options:
-                options.append({
-                    "id": str(opt.id),
-                    "text": str(opt.text) if opt.text else "",
-                    "image": str(opt.image) if opt.image else None,
-                    "votes": 0
-                })
+            options = [_enrich_vs_option(opt) for opt in q.options]
             questions.append({
                 "id": question_id,
                 "options": options
             })
-            logger.info(f"Processed question {idx+1}: {question_id} with {len(options)} options")
-        
+            logger.info(f"Processed question {idx+1}: {question_id} with {len(options)} options (enriched)")
+
         logger.info(f"Total questions processed: {len(questions)}")
         
         # Validar orientación VS — sólo aceptamos 'vertical' (lado a lado) o
@@ -13466,52 +13545,21 @@ async def create_vs_experience(
         
         await db.vs_experiences.insert_one(vs_doc)
         
-        # También crear un poll para que aparezca en el feed
+        # 🆕 Fase A — Cero duplicación: poll.options (que alimenta el feed)
+        # se construye directamente a partir de las opciones YA enriquecidas
+        # de la primera pregunta. Antes había un segundo bloque que repetía
+        # la detección + thumbnail gen, dejando vs_questions[] sin enriquecer.
         first_question = questions[0] if questions else None
         poll_options = []
-        
         if first_question:
             for opt in first_question["options"]:
-                # 🛡️ Detectar el tipo real por extensión, no asumir "image".
-                # El campo `image` aquí en realidad guarda la URL del media,
-                # que puede ser video (.mp4/.mov/.webm) o imagen.
-                media_url = opt.get("image")
-                if media_url and re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", str(media_url), re.IGNORECASE):
-                    real_type = "video"
-                    # Generar miniatura con ffmpeg desde el archivo en disco.
-                    real_thumb = None
-                    try:
-                        if "/api/uploads/" in str(media_url):
-                            after = str(media_url).split("/api/uploads/", 1)[1]
-                            file_path = UPLOAD_DIR / after
-                            if file_path.exists() and file_path.is_file():
-                                category = after.split("/", 1)[0] if "/" in after else "general"
-                                upload_type_map = {
-                                    "avatars": UploadType.AVATAR,
-                                    "poll_options": UploadType.POLL_OPTION,
-                                    "poll_backgrounds": UploadType.POLL_BACKGROUND,
-                                    "general": UploadType.GENERAL,
-                                }
-                                ut = upload_type_map.get(category, UploadType.GENERAL)
-                                gen_thumb = get_video_thumbnail_url(str(file_path), ut)
-                                if gen_thumb and not re.search(r"\.(mp4|mov|webm|avi|m4v|mkv)(\?|$)", gen_thumb, re.IGNORECASE):
-                                    real_thumb = gen_thumb
-                    except Exception as e:
-                        logger.warning(f"VS poll thumb gen failed for {media_url}: {e}")
-                elif media_url and re.search(r"\.(jpg|jpeg|png|gif|webp|bmp|avif|heic|heif)(\?|$)", str(media_url), re.IGNORECASE):
-                    real_type = "image"
-                    real_thumb = media_url
-                else:
-                    real_type = "image" if media_url else None
-                    real_thumb = media_url
-
                 poll_options.append({
-                    "id": str(opt["id"]),
-                    "text": str(opt["text"]) if opt["text"] else "",
-                    "media_url": media_url,
-                    "media_type": real_type,
-                    "thumbnail_url": real_thumb,
-                    "votes": 0
+                    "id": opt["id"],
+                    "text": opt["text"],
+                    "media_url": opt.get("media_url") or opt.get("image"),
+                    "media_type": opt.get("media_type"),
+                    "thumbnail_url": opt.get("thumbnail_url"),
+                    "votes": 0,
                 })
         
         poll_doc = {

@@ -18,6 +18,11 @@ import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
 import HlsVideo from './HlsVideo';
 import videoMemoryManager from '../../services/videoMemoryManager';
+// 🆕 Fase C — Defensa en profundidad: cuando el backend NO mandó
+// thumbnail_url (típico de VS legacy con vs_questions[].options[] sin
+// enriquecer por Fase A/B), generamos el poster client-side desde el
+// primer frame del video. Cache LRU + inflight dedup vive en el módulo.
+import { generatePosterDataUrl } from '../../utils/canvasPoster';
 
 const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
@@ -97,7 +102,47 @@ const PollOptionMedia = ({
   const mp4SrcForPlayer = cachedVideoSrc || rawVideoSrc;
   const hlsSrcForPlayer = hasCachedMp4 ? null : rawHlsSrc;
   const videoSrc = mp4SrcForPlayer; // para checks de "hay algo que reproducir"
-  const posterSrc = cachedPosterSrc || rawPosterSrc;
+
+  // ── POSTER CANVAS FALLBACK (Fase C) ───────────────────────────────────────
+  // Si el backend NO mandó poster (rawPosterSrc=null) y SÍ tenemos un video,
+  // generamos uno client-side desde el primer keyframe. Cache LRU global
+  // por URL en el módulo → al hacer swipe back no se regenera.
+  //
+  // Esto cubre 3 casos:
+  //   a) VS legacy ya en BD: vs_questions[].options[] sin thumbnail_url
+  //      porque se creó antes de Fase A (y aún no se corrió Fase B).
+  //   b) Backend con thumbnail roto / 404 (que pickVideoPosterUrl ya
+  //      filtraría como inexistente más adelante en el ciclo de vida).
+  //   c) Cualquier flujo futuro que olvide enriquecer la opción.
+  //
+  // Esto NO sustituye Fase A/B — el thumbnail server-side es siempre más
+  // rápido (HTTP cacheable, no consume CPU del cliente). Es solo el plan B.
+  const [canvasPoster, setCanvasPoster] = useState(null);
+  useEffect(() => {
+    // Solo intentamos canvas si:
+    //   - Es video (no tiene sentido para imagen)
+    //   - No hay poster del backend (raw o cacheado)
+    //   - Tenemos URL del video para extraer frame
+    if (!isVideo) { setCanvasPoster(null); return; }
+    if (rawPosterSrc) { setCanvasPoster(null); return; }
+    if (!rawVideoSrc) { setCanvasPoster(null); return; }
+    // Solo en slot activo o adyacente — no malgastemos CPU decodificando
+    // posters de slots a distancia > 2 que el usuario quizá nunca verá.
+    if (distanceFromActive > 2) { setCanvasPoster(null); return; }
+
+    let cancelled = false;
+    generatePosterDataUrl(rawVideoSrc).then((data) => {
+      if (cancelled) return;
+      if (data) setCanvasPoster(data);
+    });
+    return () => { cancelled = true; };
+  }, [isVideo, rawPosterSrc, rawVideoSrc, distanceFromActive]);
+
+  // El poster final es, en orden de preferencia:
+  //   1) Versión cacheada del poster del backend (RAM/disk)
+  //   2) Poster crudo del backend (URL HTTP)
+  //   3) Poster generado client-side desde canvas (Fase C fallback)
+  const posterSrc = cachedPosterSrc || rawPosterSrc || canvasPoster;
   const imageSrc = cachedImageSrc || rawImageSrc;
 
   // ── POSTER CROSSFADE ──────────────────────────────────────────────────────
