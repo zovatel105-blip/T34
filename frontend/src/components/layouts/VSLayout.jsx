@@ -940,18 +940,12 @@ const QuestionSlide = ({
             />
           )}
 
-          {/* 🎬 Pulso interno cinematográfico — solo en la card votada.
-              Da sensación de "vida" — la publicación respira luz por dentro. */}
-          {isSelected && (
-            <div
-              aria-hidden
-              className="absolute inset-0 vs-cinema-inner-pulse pointer-events-none"
-              style={{
-                background: `radial-gradient(ellipse at 50% 50%, ${colors.glow} 0%, transparent 65%)`,
-                mixBlendMode: 'screen',
-              }}
-            />
-          )}
+          {/* 🚫 vs-cinema-inner-pulse eliminado — petición del usuario.
+              Antes pintaba un radial-gradient con el color de la opción
+              (lila/azul) en mixBlendMode:'screen' sobre todo el video,
+              tiñendo el centro al votar. Ahora el feedback visual del voto
+              queda solo en: glow de borde Twyk (abajo) + animación
+              efímera del icono (DoubleTapVoteAnimation). */}
 
           {/* Overlay degradado para legibilidad del texto */}
           <div
