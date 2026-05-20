@@ -1807,8 +1807,28 @@ const TikTokScrollView = ({
 
     // Forzar decode del primer keyframe en GPU
     video.play().then(() => { video.pause(); }).catch(() => {});
-    // Fetch 256KB para buffer inicial (TikTok-style)
-    fetch(url, { headers: { Range: 'bytes=0-262143' }, priority: 'low', cache: 'force-cache' }).catch(() => {});
+    // Fetch 256KB para buffer inicial (TikTok-style).
+    // Va por priorityFetchQueue en nivel HIGH: es el +1, lo verá el usuario
+    // en cuanto haga swipe. NO es low (lookahead lejano).
+    const preDecodeCancel = (() => {
+      try {
+        // Import dinámico para no engordar el bundle inicial
+        let cancelFn = null;
+        import('../services/priorityFetchQueue').then(({ default: queue }) => {
+          const { cancel } = queue.enqueue(url, {
+            priority: 'high',
+            init: {
+              headers: { Range: 'bytes=0-262143' },
+              cache: 'force-cache',
+            },
+          });
+          cancelFn = cancel;
+        }).catch(() => {});
+        return () => { try { cancelFn?.(); } catch (_) {} };
+      } catch (_) {
+        return () => {};
+      }
+    })();
 
     return () => {
       video.pause();
@@ -1816,6 +1836,8 @@ const TikTokScrollView = ({
       video.load();
       try { document.body.removeChild(video); } catch (_) {}
       if (preDecodeVideoRef.current === video) preDecodeVideoRef.current = null;
+      // Cancelar el Range del +1 si todavía está en cola
+      try { preDecodeCancel(); } catch (_) {}
     };
   }, [getNextVideoUrl, isHighBandwidth]);
 
@@ -2330,7 +2352,7 @@ const TikTokScrollView = ({
   useEffect(() => {
     if (!polls || polls.length === 0) return;
     let cancelled = false;
-    const localControllers = [];
+    const localCancellers = []; // cancel() de cada job de priorityFetchQueue
 
     // 🚫 Cancelar prefetches de posts que ahora están lejos del activo
     // (TikTok-style: tras un flick rápido, los intermedios ya no importan
@@ -2340,12 +2362,24 @@ const TikTokScrollView = ({
       try { prefetcher.cancelDistantPolls(activeIndex, 4); } catch (_) {}
     }).catch(() => {});
 
+    // 🚫 Cancelar TODA la cola LOW al cambiar de activeIndex.
+    // Lo que está in-flight de lookahead (+2/+3) del activeIndex ANTERIOR
+    // ya no nos sirve: el usuario ya cambió de post. Esto coincide
+    // exactamente con el spec TikTok punto #7: "Se cancela si el usuario
+    // hace swipe rápido".
+    import('../services/priorityFetchQueue').then(({ default: queue }) => {
+      if (cancelled) return;
+      try { queue.cancelAll('low'); } catch (_) {}
+    }).catch(() => {});
+
     Promise.all([
       import('../services/mediaCacheService'),
       import('../utils/mediaUrl'),
-    ]).then(([cacheMod, mediaMod]) => {
+      import('../services/priorityFetchQueue'),
+    ]).then(([cacheMod, mediaMod, queueMod]) => {
       if (cancelled) return;
       const cache = cacheMod.default;
+      const queue = queueMod.default;
       const { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl, pickImageUrl } = mediaMod;
       const isCellular =
         navigator?.connection?.type === 'cellular' ||
@@ -2362,33 +2396,34 @@ const TikTokScrollView = ({
       // Estos bytes quedan en el HTTP cache del navegador, así que cuando
       // el <video>/HlsVideo realmente arranque, el browser continúa desde
       // donde está sin pedir el rango de nuevo → playback instantáneo.
+      //
+      // Va por la cola LOW: si el usuario hace swipe rápido (flick), se
+      // cancela junto con el resto de LOW vía `cancelAll('low')`.
       const prefetchFirstSegment = (videoUrl, bytes) => {
         if (!videoUrl || cancelled) return;
         try {
-          const ctrl = new AbortController();
-          localControllers.push(ctrl);
-          // priority:'low' para no robarle bandwidth al video activo.
-          const init = {
-            headers: { Range: `bytes=0-${bytes - 1}` },
-            signal: ctrl.signal,
-            cache: 'force-cache',
-          };
-          try { init.priority = 'low'; } catch (_) {}
-          fetch(videoUrl, init).catch(() => {});
+          const { cancel } = queue.enqueue(videoUrl, {
+            priority: 'low',
+            init: {
+              headers: { Range: `bytes=0-${bytes - 1}` },
+              cache: 'force-cache',
+            },
+          });
+          // Cancelar si el effect se desmonta
+          localCancellers.push(cancel);
         } catch (_) {}
       };
 
       // Helper: HEAD-only para calentar DNS/TLS/keepalive sin gastar datos.
-      // Cuando el usuario llegue al +3, la conexión ya está abierta y el
-      // primer byte de video llega en ms en vez de 200-500ms (TLS handshake).
+      // También en LOW — el +3 puede esperar.
       const prefetchMetadataOnly = (url) => {
         if (!url || cancelled) return;
         try {
-          const ctrl = new AbortController();
-          localControllers.push(ctrl);
-          const init = { method: 'HEAD', signal: ctrl.signal, cache: 'no-cache' };
-          try { init.priority = 'low'; } catch (_) {}
-          fetch(url, init).catch(() => {});
+          const { cancel } = queue.enqueue(url, {
+            priority: 'low',
+            init: { method: 'HEAD', cache: 'no-cache' },
+          });
+          localCancellers.push(cancel);
         } catch (_) {}
       };
 
@@ -2459,8 +2494,8 @@ const TikTokScrollView = ({
       // Abortar Range/HEAD requests pendientes al cambiar de activeIndex.
       // Crítico: si el usuario hace flick rápido, no queremos seguir
       // descargando first-segments de posts que ya no son +2.
-      for (const c of localControllers) {
-        try { c.abort(); } catch (_) {}
+      for (const c of localCancellers) {
+        try { c(); } catch (_) {}
       }
     };
   }, [activeIndex, polls]);

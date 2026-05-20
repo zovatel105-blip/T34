@@ -224,6 +224,14 @@ const PollOptionMedia = ({
             src={posterSrc}
             alt=""
             draggable={false}
+            // Fetch Priority API: el poster del slot ACTIVO (distance=0)
+            // se descarga con prioridad alta — es lo primero que ve el
+            // usuario y debe ganarle bandwidth a thumbnails de +2/+3.
+            // El poster de slots distantes va con prioridad baja.
+            // Browsers que no lo soporten ignoran el atributo.
+            fetchpriority={distanceFromActive === 0 ? 'high' : 'low'}
+            decoding={distanceFromActive === 0 ? 'sync' : 'async'}
+            loading={distanceFromActive <= 1 ? 'eager' : 'lazy'}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{
               opacity: isBuffered ? 0 : 1,
