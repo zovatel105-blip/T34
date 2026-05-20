@@ -39,6 +39,31 @@ const isCapacitorNative = () => {
 };
 
 /**
+ * 🚀 FIX BUG #2: Devuelve TODAS las opciones de un poll, incluyendo las de
+ * `poll.vs_questions[].options` (VS multi-pregunta). Los extractores previos
+ * sólo miraban `poll.options`, lo que dejaba sin cachear/prefetchear los
+ * vídeos, posters y audios de las preguntas 2..N de un VS.
+ *
+ * Devuelve un array plano de opciones. No deduplica por identidad de objeto
+ * porque cada opción de cada pregunta es semánticamente distinta; la
+ * deduplicación se hace por URL aguas abajo (via Set en el caller).
+ */
+const collectAllOptions = (poll) => {
+  if (!poll || typeof poll !== 'object') return [];
+  const all = [];
+  if (Array.isArray(poll.options)) {
+    for (const o of poll.options) if (o) all.push(o);
+  }
+  if (Array.isArray(poll.vs_questions)) {
+    for (const q of poll.vs_questions) {
+      const qOpts = Array.isArray(q?.options) ? q.options : [];
+      for (const o of qOpts) if (o) all.push(o);
+    }
+  }
+  return all;
+};
+
+/**
  * Extrae todas las URLs de imagen/poster/avatar de un poll que conviene
  * cachear en disco. Devuelve un array de strings (URLs absolutas).
  */
@@ -58,8 +83,8 @@ const extractLightweightUrls = (poll) => {
   const musicCover = poll?.music?.cover;
   if (musicCover) urls.push(resolveAssetUrl(musicCover));
 
-  // Por cada opción: poster del vídeo o url de imagen
-  const options = Array.isArray(poll?.options) ? poll.options : [];
+  // Por cada opción (incluyendo VS multi-pregunta): poster del vídeo o url de imagen
+  const options = collectAllOptions(poll);
   for (const opt of options) {
     if (!opt) continue;
     const poster = pickVideoPosterUrl(opt);
@@ -71,7 +96,8 @@ const extractLightweightUrls = (poll) => {
     }
   }
 
-  return urls.filter(Boolean);
+  // Deduplicar por URL antes de devolver
+  return Array.from(new Set(urls.filter(Boolean)));
 };
 
 /**
@@ -81,7 +107,7 @@ const extractLightweightUrls = (poll) => {
 const extractVideoUrls = (poll) => {
   if (!poll || typeof poll !== 'object') return [];
   const urls = [];
-  const options = Array.isArray(poll?.options) ? poll.options : [];
+  const options = collectAllOptions(poll);
   for (const opt of options) {
     if (!opt) continue;
     const isVideo =
@@ -92,7 +118,7 @@ const extractVideoUrls = (poll) => {
     const videoUrl = pickPlayableVideoUrl(opt);
     if (videoUrl) urls.push(videoUrl);
   }
-  return urls.filter(Boolean);
+  return Array.from(new Set(urls.filter(Boolean)));
 };
 
 /**
@@ -122,8 +148,8 @@ const extractAudioUrls = (poll) => {
     poll?.audio?.url;
   if (pollAudio) urls.push(resolveAssetUrl(pollAudio));
 
-  // 3) Audios extraídos por slide en carruseles
-  const options = Array.isArray(poll?.options) ? poll.options : [];
+  // 3) Audios extraídos por slide en carruseles (incluyendo VS multi-pregunta)
+  const options = collectAllOptions(poll);
   for (const opt of options) {
     if (!opt) continue;
     const extracted =
@@ -134,7 +160,7 @@ const extractAudioUrls = (poll) => {
     if (extracted) urls.push(resolveAssetUrl(extracted));
   }
 
-  return urls.filter(Boolean);
+  return Array.from(new Set(urls.filter(Boolean)));
 };
 
 // ─── State interno para cancelación de prefetches ─────────────────────────

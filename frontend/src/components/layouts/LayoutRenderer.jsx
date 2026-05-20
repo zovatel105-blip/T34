@@ -82,6 +82,13 @@ const LayoutRenderer = ({
           isActive={isActive}
           isThumbnail={isThumbnail}
           isBottomNavVisible={isBottomNavVisible}
+          // 🚀 FIX BUG #1: Propagar distancia y ancho de banda para que
+          // PollOptionMedia aplique la ventana deslizante (5 videos / 3 <video>)
+          // y degrade preload/fetchpriority en VS lejanos.
+          distanceFromActive={distanceFromActive}
+          isHighBandwidth={isHighBandwidth}
+          index={index}
+          layout={layout}
         />
       </ErrorBoundary>
     );

@@ -1776,10 +1776,27 @@ const TikTokScrollView = ({
   const getNextVideoUrl = useCallback(() => {
     if (!polls || activeIndex >= polls.length - 1) return null;
     const nextPoll = polls[activeIndex + 1];
-    if (!nextPoll?.options) return null;
-    for (const opt of nextPoll.options) {
+    if (!nextPoll) return null;
+
+    // 🚀 FIX BUG #3: Para VS multi-pregunta, además de `options` (que solo
+    // contiene la pregunta 1), recorrer también `vs_questions[].options[]`.
+    // Si la pregunta 1 es imagen pero la 2 ó 3 es vídeo, queremos
+    // pre-decodificar la primera URL de vídeo encontrada (la más probable
+    // que vea el usuario al hacer swipe horizontal).
+    const baseOptions = Array.isArray(nextPoll.options) ? nextPoll.options : [];
+    for (const opt of baseOptions) {
       const url = pickPlayableVideoUrl(opt);
       if (url) return url;
+    }
+
+    if (nextPoll.layout === 'vs' && Array.isArray(nextPoll.vs_questions)) {
+      for (const q of nextPoll.vs_questions) {
+        const qOpts = Array.isArray(q?.options) ? q.options : [];
+        for (const opt of qOpts) {
+          const url = pickPlayableVideoUrl(opt);
+          if (url) return url;
+        }
+      }
     }
     return null;
   }, [polls, activeIndex]);
