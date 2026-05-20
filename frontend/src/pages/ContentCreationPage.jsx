@@ -389,12 +389,10 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                               alt={`Video Opción ${slotIndex + 1}`}
                               className="w-full h-full object-cover"
                             />
-                            {/* Video play overlay */}
-                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                              <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                                <Video className="w-8 h-8 text-gray-900 ml-1" />
-                              </div>
-                            </div>
+                            {/* 🚫 Video play overlay eliminado — petición del usuario.
+                                Antes pintaba un círculo blanco con icono Video
+                                centrado sobre un dim oscuro (bg-black/20). Ahora
+                                el thumbnail del video se ve limpio. */}
                           </div>
                         ) : (
                           <InlineCrop
@@ -566,12 +564,10 @@ const LayoutPreview = ({ layout, options = [], title, selectedMusic, onImageUplo
                             alt={`Video Opción ${slotIndex + 1}`}
                             className="w-full h-full object-cover"
                           />
-                          {/* Video play overlay */}
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                              <Video className="w-8 h-8 text-gray-900 ml-1" />
-                            </div>
-                          </div>
+                          {/* 🚫 Video play overlay eliminado — petición del usuario.
+                              Antes pintaba un círculo blanco con icono Video
+                              centrado sobre un dim oscuro (bg-black/20). Ahora
+                              el thumbnail del video se ve limpio. */}
                         </div>
                       ) : (
                         <InlineCrop
