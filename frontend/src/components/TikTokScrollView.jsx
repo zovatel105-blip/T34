@@ -2017,6 +2017,11 @@ const TikTokScrollView = ({
   // Reset al cambiar de post activo → permite eager-prefetchar el nuevo +1
   useEffect(() => {
     eagerPrefetchedIndexRef.current = -1;
+    // Si llegamos aquí por wheel/teclado/programático y había un video
+    // pausado por HLS stopLoad, asumimos que el cambio de activeIndex ya
+    // lo ha vuelto irrelevante (el video pasó a PREV). No queremos
+    // reanudarlo después porque ya no se ve. Limpiamos la ref.
+    pausedHlsElRef.current = null;
   }, [activeIndex]);
 
   // ── PAUSA DE SEGMENTOS HLS NO-CRÍTICOS DEL VIDEO ACTIVO ───────────────────
@@ -2198,8 +2203,17 @@ const TikTokScrollView = ({
       const currentOffsetDvh = (Math.abs(deltaPx) / vh) * 100;
       const remainingDvh = Math.max(8, 100 - currentOffsetDvh);
       const direction = wantsNext ? +1 : -1;
+      // Swipe completa: el viejo activo pasa a PREV — debe quedarse parado
+      // (no reanudamos su HLS). Solo limpiamos la ref para no reanudarlo
+      // accidentalmente en un cambio futuro de activeIndex.
+      pausedHlsElRef.current = null;
       goToIndex(activeIndex + direction, { velocity: instantVelocity, remainingDvh });
     } else {
+      // Spring back: el usuario soltó sin completar el swipe → vuelve al
+      // mismo video. Reanudamos la descarga de segmentos HLS que paramos
+      // en `handleTapePointerDown`.
+      resumeActiveVideoHlsLoading();
+
       // Spring back: duración basada en cuánto hay que volver
       const currentOffsetDvh = (Math.abs(deltaPx) / vh) * 100;
       const remainingPx = (currentOffsetDvh / 100) * vh;
@@ -2215,7 +2229,7 @@ const TikTokScrollView = ({
       setTranslateOffset(0);
       setTimeout(() => setIsTransitioning(false), transMs);
     }
-  }, [pullDistance, isRefreshing, onRefresh, goToIndex, activeIndex, polls.length]);
+  }, [pullDistance, isRefreshing, onRefresh, goToIndex, activeIndex, polls.length, resumeActiveVideoHlsLoading]);
 
   // Teclado
   useEffect(() => {
