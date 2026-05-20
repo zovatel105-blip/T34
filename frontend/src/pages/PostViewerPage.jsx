@@ -9,6 +9,7 @@ import { useToast } from '../hooks/use-toast';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
 import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
+import { isVSPost } from '../utils/postFilters';
 
 /**
  * Full-screen TikTok-style viewer for a single post.
@@ -88,13 +89,32 @@ const PostViewerPage = () => {
 
   const handleVote = useCallback(async (pollId, optionId) => {
     try {
+      // 🎬 Para VS, VSLayout ya envía el voto a /api/vs/{vs_id}/vote.
+      // Saltamos la ruta genérica + refresh para no desmontar los <video>.
+      const targetPoll = polls.find(p => p.id === pollId);
+      if (isVSPost(targetPoll)) {
+        // Optimistic local update (sin refetch)
+        setPolls((prev) => prev.map(p => {
+          if (p.id !== pollId || p.userVote) return p;
+          return {
+            ...p,
+            userVote: optionId,
+            options: p.options.map(o => ({
+              ...o,
+              votes: o.id === optionId ? (o.votes || 0) + 1 : o.votes,
+            })),
+            totalVotes: (p.totalVotes || 0) + 1,
+          };
+        }));
+        return;
+      }
       await pollService.voteOnPoll(pollId, optionId);
       const fresh = await pollService.refreshPoll(pollId);
       if (fresh) setPolls([fresh]);
     } catch (e) {
       console.error('Error voting:', e);
     }
-  }, []);
+  }, [polls]);
 
   const handleLike = useCallback(async (pollId) => {
     try {

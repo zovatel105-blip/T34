@@ -29,6 +29,7 @@ import {
 import { Plus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTranslation } from '../hooks/useTranslation';
+import { isVSPost } from '../utils/postFilters';
 
 const FeedPage = () => {
   const { t } = useTranslation();
@@ -585,6 +586,12 @@ const FeedPage = () => {
       // Find the poll to check if it's a challenge
       const targetPoll = polls.find(p => p.id === pollId);
       const isChallenge = targetPoll?.is_challenge && targetPoll?.challenge_id;
+      // 🎬 Para posts VS, VSLayout ya envía el voto al endpoint específico
+      // /api/vs/{vs_id}/vote y actualiza sus propios stats. Re-votar contra
+      // /api/polls/{id}/vote + refreshPoll provoca un setPolls que sustituye
+      // el objeto poll entero y desmonta los <video> (el post "se queda
+      // lento" al votar en VS con video). Saltamos esa ruta para VS.
+      const isVS = isVSPost(targetPoll);
 
       // Optimistic update
       setPolls(prev => prev.map(poll => {
@@ -610,6 +617,10 @@ const FeedPage = () => {
       if (isChallenge) {
         // For challenges, optionId is the participant_id (user_id)
         voteResult = await pollService.voteOnChallenge(targetPoll.challenge_id, optionId);
+      } else if (isVS) {
+        // VS posts: el voto ya se persistió desde VSLayout en
+        // /api/vs/{vs_id}/vote. No volvemos a votar aquí ni refrescamos.
+        voteResult = { ok: true, vs: true };
       } else {
         voteResult = await pollService.voteOnPoll(pollId, optionId, {
           optimistic: { option_id: optionId, queued: true },
@@ -630,7 +641,9 @@ const FeedPage = () => {
 
       // Refresh poll data to get accurate counts (skip for challenges - they use synthetic IDs)
       // y skip si la acción quedó encolada offline (no hay data fresca que buscar)
-      if (!isChallenge && !voteResult?.queued) {
+      // 🎬 Skip también para VS: VSLayout ya gestiona los stats internos via
+      // /api/vs/{vs_id} y refrescar aquí desmonta los <video>.
+      if (!isChallenge && !isVS && !voteResult?.queued) {
         const updatedPoll = await pollService.refreshPoll(pollId);
         if (updatedPoll) {
           setPolls(prev => prev.map(poll => 

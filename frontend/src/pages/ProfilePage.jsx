@@ -33,6 +33,7 @@ import { useFollow } from '../contexts/FollowContext';
 import { useShare } from '../hooks/useShare';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { isVSPost } from '../utils/postFilters';
 import { cn } from '../lib/utils';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
 import config from '../config/config';
@@ -1581,6 +1582,11 @@ const ProfilePage = () => {
     }
 
     try {
+      // 🎬 Detectar VS: VSLayout ya persiste el voto via /api/vs/{vs_id}/vote.
+      // Saltamos la ruta genérica + refreshPoll para no desmontar los <video>.
+      const targetPoll = (polls.find(p => p.id === pollId) || tikTokPolls.find(p => p.id === pollId));
+      const isVS = isVSPost(targetPoll);
+
       // Optimistic update for main polls array
       setPolls(prev => prev.map(poll => {
         if (poll.id === pollId) {
@@ -1618,23 +1624,27 @@ const ProfilePage = () => {
         return poll;
       }));
 
-      // Send vote to backend
-      await pollService.voteOnPoll(pollId, optionId);
+      // Send vote to backend (skip for VS — VSLayout ya lo persiste)
+      if (!isVS) {
+        await pollService.voteOnPoll(pollId, optionId);
+      }
       
       toast({
         title: "¡Voto registrado!",
         description: "Tu voto ha sido contabilizado exitosamente",
       });
       
-      // Refresh poll data to get accurate counts
-      const updatedPoll = await pollService.refreshPoll(pollId);
-      if (updatedPoll) {
-        setPolls(prev => prev.map(poll => 
-          poll.id === pollId ? updatedPoll : poll
-        ));
-        setTikTokPolls(prev => prev.map(poll => 
-          poll.id === pollId ? updatedPoll : poll
-        ));
+      // Refresh poll data to get accurate counts (skip for VS — desmonta videos)
+      if (!isVS) {
+        const updatedPoll = await pollService.refreshPoll(pollId);
+        if (updatedPoll) {
+          setPolls(prev => prev.map(poll => 
+            poll.id === pollId ? updatedPoll : poll
+          ));
+          setTikTokPolls(prev => prev.map(poll => 
+            poll.id === pollId ? updatedPoll : poll
+          ));
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);

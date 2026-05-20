@@ -21,6 +21,7 @@ import { useShare } from '../hooks/useShare';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, ArrowLeft, Users, User, Eye, PlusCircle, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { isVSPost } from '../utils/postFilters';
 
 const FollowingPage = () => {
   const { t } = useTranslation();
@@ -383,6 +384,12 @@ const FollowingPage = () => {
     }
 
     try {
+      // 🎬 Detectar VS: VSLayout ya envía el voto via /api/vs/{vs_id}/vote
+      // y mantiene sus propios stats. Saltamos la ruta genérica para no
+      // desmontar los <video> al votar.
+      const targetPoll = polls.find(p => p.id === pollId);
+      const isVS = isVSPost(targetPoll);
+
       // Optimistic update
       setPolls(prev => prev.map(poll => {
         if (poll.id === pollId) {
@@ -402,8 +409,10 @@ const FollowingPage = () => {
         return poll;
       }));
 
-      // Send vote to backend
-      await pollService.voteOnPoll(pollId, optionId);
+      // Send vote to backend (skip for VS — VSLayout ya lo persiste)
+      if (!isVS) {
+        await pollService.voteOnPoll(pollId, optionId);
+      }
       
       // Track action for addiction system
       await trackAction('vote');
@@ -413,12 +422,14 @@ const FollowingPage = () => {
         description: t('following.toast.voteRegisteredDesc'),
       });
       
-      // Refresh poll data to get accurate counts
-      const updatedPoll = await pollService.refreshPoll(pollId);
-      if (updatedPoll) {
-        setPolls(prev => prev.map(poll => 
-          poll.id === pollId ? updatedPoll : poll
-        ));
+      // Refresh poll data to get accurate counts (skip for VS — desmonta videos)
+      if (!isVS) {
+        const updatedPoll = await pollService.refreshPoll(pollId);
+        if (updatedPoll) {
+          setPolls(prev => prev.map(poll => 
+            poll.id === pollId ? updatedPoll : poll
+          ));
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);
