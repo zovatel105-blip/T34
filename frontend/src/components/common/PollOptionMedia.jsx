@@ -28,6 +28,22 @@ const VIDEO_MAX_BYTES_DEFAULT = 25 * 1024 * 1024; // 25 MB
 
 const VIDEO_URL_RE = /\.(mp4|mov|webm|avi|m4v)(\?|$)/i;
 
+// ── POSTER TRANSPARENTE (1×1 negro) ────────────────────────────────────────
+// SVG inline pasado como `poster=` al <video> para BLOQUEAR el placeholder
+// nativo del WebView de Android (círculo/triángulo de "play" sobre fondo
+// gris). El WebView solo dibuja su placeholder cuando el <video> NO tiene
+// poster. Pasándole este SVG transparente/negro de 1×1 le decimos: "ya
+// tienes poster, no pintes el tuyo". El poster VISIBLE (la miniatura real)
+// lo seguimos pintando aparte con un <img> encima con z-index>0, así que
+// este truco no interfiere con el crossfade.
+const TRANSPARENT_POSTER =
+  'data:image/svg+xml;charset=utf-8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">' +
+    '<rect width="1" height="1" fill="black"/>' +
+    '</svg>'
+  );
+
 const isVideoOption = (option) => {
   if (!option) return false;
   // 1) Tipo declarado en estructura moderna o plana
@@ -319,8 +335,10 @@ const PollOptionMedia = ({
           ref={videoEl}
           hlsUrl={hlsSrcForPlayer}
           mp4Url={mp4SrcForPlayer}
-          // No pasar poster al <video> — lo manejamos nosotros con el <img>
-          // para tener control total del crossfade.
+          // Poster TRANSPARENTE para bloquear el placeholder nativo del
+          // WebView Android (▶ sobre gris). El poster VISIBLE real es el
+          // <img> de arriba; este sólo silencia el del WebView.
+          poster={TRANSPARENT_POSTER}
           onCanPlay={() => {
             // Video tiene suficiente buffer para reproducir sin congelarse
             setIsBuffered(true);
@@ -354,6 +372,12 @@ const PollOptionMedia = ({
             videoStatus === 'error' && showPlaceholderOnError && 'opacity-0'
           )}
           style={{
+            // CLAVE: visibility hidden + opacity 0 hasta que haya primer
+            // frame. visibility:hidden evita que el WebView pinte NADA
+            // del <video> (ni el placeholder); opacity:0 da el crossfade
+            // suave cuando volvemos a `visible`. El usuario nunca llega
+            // a ver el <video> antes del primer frame renderizado.
+            visibility: isBuffered ? 'visible' : 'hidden',
             opacity: isBuffered ? 1 : 0,
             transition: 'opacity 0.2s ease',
             transform: 'translateZ(0)',

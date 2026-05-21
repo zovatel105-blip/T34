@@ -422,11 +422,31 @@ video::-webkit-media-controls,
 video::-webkit-media-controls-enclosure,
 video::-webkit-media-controls-panel,
 video::-webkit-media-controls-overlay-play-button,
-video::-webkit-media-controls-start-playback-button {
+video::-webkit-media-controls-start-playback-button,
+video::-webkit-media-controls-overlay-cast-button,
+video::-webkit-media-controls-play-button,
+video::-webkit-media-controls-mute-button,
+video::-webkit-media-controls-fullscreen-button,
+video::-webkit-media-controls-timeline,
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-time-remaining-display,
+video::-internal-media-controls-overlay-cast-button,
+video::-internal-media-controls-button-panel {
   display: none !important;
   -webkit-appearance: none !important;
+  appearance: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Refuerzo: el propio <video> no debe exponer controles nativos en
+   ningún flujo (incluso si algún componente olvida `controls={false}`). */
+video {
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 /* Android WebView: fondo negro por defecto en lugar del gris que
