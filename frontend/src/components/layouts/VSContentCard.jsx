@@ -127,11 +127,16 @@ const VSContentCard = ({
       }}
     >
       {/* Wrapper con el glow Twyk — el glow vive aquí (NO en la card con
-          overflow-hidden) para que sea SIEMPRE visible hacia fuera. */}
+          overflow-hidden) para que sea SIEMPRE visible hacia fuera.
+          🛡️ Usa la clase `vs-content-card-glow` que aplica el box-shadow
+          con !important para sobrevivir al selector global
+          `*:active/*:hover { box-shadow: none !important; }`.
+          Los colores Twyk se inyectan vía CSS variables (--vs-glow-*). */}
       <div
-        className="relative w-full max-w-[420px] aspect-[6/11] rounded-3xl transition-colors duration-300"
+        className="vs-content-card-glow relative w-full max-w-[420px] aspect-[6/11] rounded-3xl transition-colors duration-300"
         style={{
-          boxShadow: `0 0 0 2px ${activeColor.primary}, 0 0 32px ${activeColor.glow}, 0 0 80px ${activeColor.glow}`,
+          '--vs-glow-primary': activeColor.primary,
+          '--vs-glow': activeColor.glow,
         }}
       >
         {/* Card interior — overflow-hidden aquí para recortar el contenido,

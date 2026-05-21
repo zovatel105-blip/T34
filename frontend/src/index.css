@@ -640,6 +640,21 @@ div:hover {
   -webkit-tap-highlight-color: transparent !important;
 }
 
+/* 🏆 VSContentCard glow — necesita !important para sobrevivir al
+   selector global "*:active/*:hover/*:focus { box-shadow: none !important; }"
+   que lo elimina mientras el usuario está interactuando con la card.
+   Los colores Twyk (lila=A, azul=B) se controlan vía CSS variables
+   inyectadas inline desde React. */
+.vs-content-card-glow,
+.vs-content-card-glow:focus,
+.vs-content-card-glow:active,
+.vs-content-card-glow:hover {
+  box-shadow:
+    0 0 0 2px var(--vs-glow-primary, #A855F7),
+    0 0 32px var(--vs-glow, rgba(168,85,247,0.65)),
+    0 0 80px var(--vs-glow, rgba(168,85,247,0.65)) !important;
+}
+
 
 
 @layer base {
