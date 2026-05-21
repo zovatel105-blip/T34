@@ -127,15 +127,25 @@ class PriorityFetchQueue {
     return {
       promise,
       cancel: () => {
+        // 🛡️ La cancelación es INTENCIONAL — si el caller no enganchó un
+        // .catch() a `promise`, una rejection con AbortError aparecería
+        // como "Uncaught (in promise) AbortError" en el overlay de dev.
+        // Adjuntamos un catch no-op para silenciar SOLO esa rejection
+        // (no afecta a otros .catch() del caller).
+        try { promise.catch(() => {}); } catch (_) {}
         // Si todavía está en cola, lo quitamos
         const idx = this.queues[priority].indexOf(job);
         if (idx >= 0) {
           this.queues[priority].splice(idx, 1);
           this.stats.cancelled[priority]++;
-          job.reject(new DOMException('Cancelled', 'AbortError'));
+          job.reject(new DOMException('Cancelled by caller', 'AbortError'));
         } else {
-          // Ya está en vuelo → abort
-          try { controller.abort(); } catch (_) {}
+          // Ya está en vuelo → abort con reason explícita
+          try {
+            controller.abort(new DOMException('Cancelled by caller', 'AbortError'));
+          } catch (_) {
+            try { controller.abort(); } catch (__) {}
+          }
         }
       },
     };
@@ -161,15 +171,28 @@ class PriorityFetchQueue {
     while (pending.length > 0) {
       const job = pending.shift();
       this.stats.cancelled[priority]++;
-      try { job.controller.abort(); } catch (_) {}
-      try { job.reject(new DOMException('Cancelled', 'AbortError')); } catch (_) {}
+      // 🛡️ Silenciar unhandled rejection — cancelAll es intencional.
+      try { job.promise.catch(() => {}); } catch (_) {}
+      try { job.controller.abort(new DOMException('Cancelled by cancelAll', 'AbortError')); } catch (_) {}
+      try { job.reject(new DOMException('Cancelled by cancelAll', 'AbortError')); } catch (_) {}
       n++;
     }
     // 2) Abortar las en vuelo de este nivel
     for (const [id, entry] of this.inFlight.entries()) {
       if (entry.level === priority) {
         this.stats.cancelled[priority]++;
-        try { entry.controller.abort(); } catch (_) {}
+        // 🛡️ La promise asociada (job.promise) será rechazada por el catch
+        // de _execute cuando fetch lance el AbortError. Si el caller no la
+        // engancha, queda como unhandled. Aquí buscamos el job actual y
+        // silenciamos su promise.
+        if (entry.promise) {
+          try { entry.promise.catch(() => {}); } catch (_) {}
+        }
+        try {
+          entry.controller.abort(new DOMException('Cancelled by cancelAll', 'AbortError'));
+        } catch (_) {
+          try { entry.controller.abort(); } catch (__) {}
+        }
         this.inFlight.delete(id);
         n++;
       }
@@ -212,6 +235,7 @@ class PriorityFetchQueue {
       controller: job.controller,
       url: job.url,
       startedAt: Date.now(),
+      promise: job.promise, // 🛡️ guardamos ref para que cancelAll pueda silenciar unhandled rejection
     });
 
     fetch(job.url, job.init).then((response) => {
