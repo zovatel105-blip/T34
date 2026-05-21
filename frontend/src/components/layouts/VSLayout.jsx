@@ -638,6 +638,10 @@ const QuestionSlide = ({
   // PollOptionMedia (dentro de renderCard) sepa qué prioridad usar.
   distanceFromActive = 0,
   isHighBandwidth = true,
+  // 🏆 NUEVO: indica si el usuario acaba de votar EN ESTA SESIÓN.
+  //    La WinnerCard solo se muestra cuando esto es true; al volver
+  //    al post (re-mount o re-activar) no debe reaparecer.
+  justVoted = false,
 }) => {
   const isRow = orientation === 'vertical';  // lado a lado
   const options = question.options || [];
@@ -659,7 +663,10 @@ const QuestionSlide = ({
   //    SOLO se muestra para el slide activo. Como VSWinnerCard se portaliza a
   //    document.body, sin este gate verías cards de publicaciones anteriores
   //    todavía montadas en el "tape" del scroller.
+  //    🆕 Además solo se muestra UNA VEZ por instancia y solo cuando el usuario
+  //    acaba de votar (justVoted=true). Si vuelve al post después, no reaparece.
   const [showWinnerCard, setShowWinnerCard] = useState(false);
+  const winnerShownOnceRef = useRef(false);
 
   // 🖼️ Content card — vista "solo contenido" del duelo. Se activa con long-press
   //    y se cierra con el botón Atrás del dispositivo.
@@ -745,9 +752,19 @@ const QuestionSlide = ({
       setShowWinnerCard(false);
       return;
     }
-    const t = setTimeout(() => setShowWinnerCard(true), 1500);
+    // 🛑 Solo mostrar la WinnerCard UNA SOLA VEZ y únicamente si el usuario
+    //    acaba de votar en esta sesión. Si la pregunta ya estaba votada
+    //    desde antes (cargada del servidor) o ya se mostró antes, no
+    //    volvemos a mostrar el popup al volver/re-activar el post.
+    if (!justVoted || winnerShownOnceRef.current) {
+      return;
+    }
+    const t = setTimeout(() => {
+      setShowWinnerCard(true);
+      winnerShownOnceRef.current = true;
+    }, 1500);
     return () => clearTimeout(t);
-  }, [showResults, isActive]);
+  }, [showResults, isActive, justVoted]);
   useEffect(() => {
     if (!showResults) {
       setNextDuelCountdown(null);
@@ -1410,6 +1427,11 @@ const VSLayout = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showResults, setShowResults] = useState({});
+  // 🏆 Track de preguntas que se acaban de votar EN ESTA SESIÓN.
+  //    Solo cuando esta marca está activa, el QuestionSlide mostrará la
+  //    WinnerCard popup (una única vez). Al volver al post o al recargar,
+  //    el mapa estará vacío y la card no reaparecerá.
+  const [justVotedMap, setJustVotedMap] = useState({});
   const [timeLeft, setTimeLeft] = useState(5);
   const [showVS, setShowVS] = useState(true);
   const [highlightedOption, setHighlightedOption] = useState(null); // Para resaltar visualmente
@@ -1689,6 +1711,12 @@ const VSLayout = ({
       ...prev,
       [currentQuestionId]: true
     }));
+    // 🏆 Marcamos esta pregunta como "recién votada" para que la WinnerCard
+    //    se muestre como popup UNA SOLA VEZ. Al volver al post no aparecerá.
+    setJustVotedMap(prev => ({
+      ...prev,
+      [currentQuestionId]: true
+    }));
 
     // 📊 OPTIMISTA: incrementar stats locales para que los porcentajes se vean
     // bien al instante (antes de la respuesta del backend). Si stats no existe
@@ -1934,6 +1962,7 @@ const VSLayout = ({
               onVote={handleVote}
               selectedOption={selectedOptions[question.id]}
               showResults={showResults[question.id]}
+              justVoted={!!justVotedMap[question.id]}
               creatorCountry={creatorCountry}
               highlightedOption={qIndex === currentIndex ? highlightedOption : null}
               totalQuestions={totalQuestions}
