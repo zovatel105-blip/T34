@@ -34,6 +34,12 @@ const VSContentCard = ({
   optionB,
   initialIndex = 0,
   onClose,
+  // 🆔 pollId (opcional) — se usa para que PollOptionMedia registre el
+  //    <video> en videoMemoryManager con la misma key que el feed,
+  //    permitiendo compartir caché HTTP, ABR de HLS ya negociado y el
+  //    estado de buffer. Esto consigue que al abrir el VSContentCard el
+  //    video arranque con la MISMA fluidez que en el feed.
+  pollId = null,
 }) => {
   const pushedRef = useRef(false);
   const scrollerRef = useRef(null);
@@ -143,7 +149,9 @@ const VSContentCard = ({
                     className="absolute inset-0"
                     distanceFromActive={i === activeIdx ? 0 : 1}
                     isHighBandwidth
+                    postId={pollId}
                     layout="vs-content-card"
+                    videoProps={{ preload: 'auto' }}
                   />
                 ) : (
                   <div className="absolute inset-0 bg-black" />

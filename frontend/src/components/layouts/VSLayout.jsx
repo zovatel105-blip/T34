@@ -1375,6 +1375,7 @@ const QuestionSlide = ({
           optionB={optionB}
           initialIndex={contentCardInitial}
           onClose={() => setShowContentCard(false)}
+          pollId={pollId}
         />
       )}
     </div>
