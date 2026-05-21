@@ -849,6 +849,12 @@ const QuestionSlide = ({
 
     // 🎬 CINEMA 3D — clases para el efecto estereoscópico tipo cine 3D
     const isLoser = showResults && !isSelected && !isWinning;
+    // 🚫 Cuando la card es VIDEO, NO aplicamos ningún efecto 3D (ni la
+    // animación pop-out, ni la aberración cromática RGB-split, ni el
+    // recede con blur/grayscale). La card de video queda totalmente plana
+    // — petición del usuario. Mantenemos el contexto `perspective` del
+    // contenedor padre por si la card vecina es IMAGEN y sí debe animar.
+    const useFlatStyles = isVideo || (!isSelected && !isLoser);
     return (
       <div
         className={cn(
@@ -856,17 +862,11 @@ const QuestionSlide = ({
           isHighlighted && !isSelected && "scale-[1.01]",
           // Card votada → respira/flota en 3D ("sale" de la pantalla, viva)
           // + aberración cromática (RGB split) tipo gafas 3D.
-          // 🎬 Si la card es VIDEO usamos variantes "video-safe" sin
-          // animaciones infinitas ni filter (la versión original tira
-          // del GPU cada frame y desincroniza la reproducción del video).
+          // 🚫 SOLO para imágenes: en video no se aplica ningún efecto 3D.
           isSelected && !isVideo && "vs-cinema-3d-active vs-cinema-chroma-shadow",
-          isSelected && isVideo && "vs-cinema-3d-active-video vs-cinema-chroma-shadow-video",
           // Card perdedora → se va AL FONDO (translateZ negativo + blur).
-          // 🎬 Sobre video, el `filter: grayscale+brightness+saturate` mata
-          // el rendimiento (cada frame se reprocesa por GPU). Usamos una
-          // variante con opacity + overlay negro estático.
-          isLoser && !isVideo && "vs-cinema-recede",
-          isLoser && isVideo && "vs-cinema-recede-video"
+          // 🚫 SOLO para imágenes: en video no se aplica el recede.
+          isLoser && !isVideo && "vs-cinema-recede"
         )}
         style={{
           // 🎬 Lift Subject: origen en el CENTRO para que la card crezca
@@ -876,19 +876,22 @@ const QuestionSlide = ({
           zIndex: isSelected ? 30 : (isLoser ? 1 : 5),
           // 🎬 Border radius animado: la card votada parece RECORTADA del
           // fondo (Visual Look Up / Lift Subject from Background) — bordes
-          // limpios al superponerse sobre la card vecina.
+          // limpios al superponerse sobre la card vecina. Lo mantenemos
+          // también en video porque es un detalle 2D (no 3D).
           borderRadius: isSelected ? '22px' : '0px',
-          // Solo aplicamos transform inline cuando NO está la animación 3D activa
-          // (la animación CSS controla el transform de los estados isSelected/isLoser).
-          transform: !isSelected && !isLoser ? 'none' : undefined,
-          transition: !isSelected && !isLoser
+          // Para cards de VIDEO siempre forzamos estilos planos (sin
+          // transform/filter/opacity) — equivalente al estado neutro.
+          transform: useFlatStyles ? 'none' : undefined,
+          transition: useFlatStyles
             ? 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease, border-radius 0.4s ease'
             : 'border-radius 0.4s cubic-bezier(0.16,1,0.3,1)',
-          filter: !isSelected && !isLoser ? 'none' : undefined,
-          opacity: !isSelected && !isLoser ? 1 : undefined,
-          // Glow base sólo cuando NO está votada (sin animar). Cuando está votada,
-          // el box-shadow lo controla la animación .vs-cinema-chroma-shadow.
-          boxShadow: !isSelected
+          filter: useFlatStyles ? 'none' : undefined,
+          opacity: useFlatStyles ? 1 : undefined,
+          // Glow base sólo cuando NO está votada (sin animar). Cuando está
+          // votada Y es imagen, el box-shadow lo controla la animación
+          // .vs-cinema-chroma-shadow. Si la card es video, también usamos
+          // el glow base (sin aberración cromática).
+          boxShadow: (!isSelected || isVideo)
             ? (isActive ? `inset 0 0 60px ${colors.glowSoft}` : 'none')
             : undefined,
         }}
