@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft } from 'lucide-react';
-import SafeImage from '../common/SafeImage';
-import { resolveAssetUrl } from '../../utils/resolveAssetUrl';
-import { getMediaSrc, getMediaType, isVideoUrl } from '../../utils/vsMedia';
+import PollOptionMedia from '../common/PollOptionMedia';
 
 /**
  * VSContentCard
@@ -15,41 +13,21 @@ import { getMediaSrc, getMediaType, isVideoUrl } from '../../utils/vsMedia';
  * - Backdrop oscuro, card centrada con bordes redondeados (estilo WinnerCard).
  * - Cierra con: botón Atrás del dispositivo, botón ← de la card, o tap fuera.
  *
+ * 🖼️ "Portada" para videos:
+ * Se delega el render del media a <PollOptionMedia>, que ya implementa toda
+ * la lógica de portada (poster del backend → poster generado client-side
+ * desde el primer frame del video por canvas → crossfade con el video al
+ * llegar el buffer). Esto unifica el comportamiento con el feed VS regular,
+ * donde el mismo issue se resolvió en su momento. Antes, este componente
+ * usaba un <video> plano sin poster que mostraba un play-button difuso
+ * mientras cargaba.
+ *
  * Props:
  *  - visible: boolean
  *  - optionA, optionB: objetos de opción
  *  - initialIndex: 0 (A) o 1 (B) — la que se mantuvo presionada
  *  - onClose: callback al cerrar
  */
-const renderMedia = (option) => {
-  const src = getMediaSrc(option);
-  const type = getMediaType(option);
-  const isVideo = type === 'video' || isVideoUrl(src);
-  const resolved = resolveAssetUrl(src);
-  if (!resolved) {
-    return <div className="absolute inset-0 bg-black" />;
-  }
-  if (isVideo) {
-    return (
-      <video
-        src={resolved}
-        className="absolute inset-0 w-full h-full object-cover"
-        muted
-        playsInline
-        autoPlay
-        loop
-      />
-    );
-  }
-  return (
-    <SafeImage
-      src={resolved}
-      alt=""
-      className="absolute inset-0 w-full h-full object-cover"
-    />
-  );
-};
-
 const VSContentCard = ({
   visible,
   optionA,
@@ -154,7 +132,22 @@ const VSContentCard = ({
                 key={i}
                 className="flex-shrink-0 w-full h-full relative bg-black snap-center"
               >
-                {renderMedia(opt)}
+                {/* 🖼️ PollOptionMedia maneja toda la lógica de portada
+                    (poster del backend o generado client-side desde el
+                    primer frame). El slide activo recibe distance=0 →
+                    se autoreproduce. El inactivo recibe distance=1 →
+                    solo muestra el poster (portada estática). */}
+                {opt ? (
+                  <PollOptionMedia
+                    option={opt}
+                    className="absolute inset-0"
+                    distanceFromActive={i === activeIdx ? 0 : 1}
+                    isHighBandwidth
+                    layout="vs-content-card"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-black" />
+                )}
               </div>
             ))}
           </div>
