@@ -1209,7 +1209,7 @@ const QuestionSlide = ({
                       {percentage}%
                     </span>
                     <span className="text-xs text-white/85 font-bold tabular-nums">
-                      {optionVotes.toLocaleString()} votos
+                      {optionVotes.toLocaleString()} {t('vs.votos')}
                     </span>
                   </div>
                 )}
