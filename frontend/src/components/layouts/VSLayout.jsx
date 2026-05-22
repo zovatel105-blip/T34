@@ -613,6 +613,100 @@ const VSVideoBackground = ({ src, isActive, className, poster }) => {
   );
 };
 
+
+// 🎬 resolveBackendUrl
+// --------------------
+// Convierte una URL relativa al backend (p.ej. "/api/uploads/...") en una URL
+// absoluta usando REACT_APP_BACKEND_URL. URLs ya absolutas / data / blob pasan
+// sin cambios. Necesario porque el <video> nativo no resuelve relativo al host
+// del frontend (que en native APK no es el mismo que el backend).
+const resolveBackendUrl = (url) => {
+  if (!url) return null;
+  if (/^(https?:|blob:|data:)/i.test(url)) return url;
+  if (url.startsWith('/')) {
+    const base = process.env.REACT_APP_BACKEND_URL || '';
+    return `${base}${url}`;
+  }
+  return url;
+};
+
+
+// 🎬 VSComposedOverlay (estilo TikTok Duet)
+// -----------------------------------------
+// Renderiza UN SOLO <video> con el MP4 compuesto (split-screen pre-incrustado
+// por FFmpeg en el backend). Cubre todo el área de la primera pregunta del VS
+// mientras el usuario no ha votado.
+//
+// Características clave:
+//   - pointer-events:none → los double-taps pasan a las cards subyacentes
+//     (DoubleTapVoteAnimation sigue gestionando el voto).
+//   - Fade-out 300ms cuando `visible` pasa a false (al votar) → cinema 3D
+//     toma el control sin corte visual.
+//   - Audio: lo emite el MP4 compuesto (lado A original; B silenciado por
+//     FFmpeg). NO va muted — es el audio principal del feed mientras dura.
+//   - playsInline, autoPlay, loop → mismo comportamiento que TikTok.
+const VSComposedOverlay = ({ src, visible, isActive }) => {
+  const videoRef = useRef(null);
+  // Mantenemos el <video> montado mientras "renderable" sea true, aunque
+  // visible (opacity) baje a 0 — así no perdemos buffer cuando el usuario
+  // vota y volvemos a verlo si revota (no aplica en VS actual, pero la
+  // semántica es importante: un unmount durante el fade haría flash).
+  const [renderable, setRenderable] = useState(visible);
+  useEffect(() => {
+    if (visible) {
+      setRenderable(true);
+    } else {
+      // Desmontamos 350ms después de que termine el fade-out — pasado ese
+      // tiempo las streams individuales ya están en pantalla.
+      const t = setTimeout(() => setRenderable(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [visible]);
+
+  // Play/pause según isActive (post visible en feed) y visible (no votado).
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isActive && visible) {
+      try { v.currentTime = v.currentTime || 0; } catch (_) { /* noop */ }
+      const p = v.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay bloqueado */ });
+    } else {
+      try { v.pause(); } catch (_) { /* noop */ }
+    }
+  }, [isActive, visible]);
+
+  if (!renderable || !src) return null;
+
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none transition-opacity duration-300 ease-out"
+      style={{
+        opacity: visible ? 1 : 0,
+        // Por encima de las cards subyacentes (PollOptionMedia) pero por
+        // debajo de los overlays de UI (timer, status pills, trofeo).
+        // Cards individuales tienen z-index ~5; los overlays >=20.
+        zIndex: 8,
+      }}
+    >
+      <video
+        ref={videoRef}
+        src={src}
+        className="w-full h-full object-cover"
+        playsInline
+        loop
+        preload="auto"
+        autoPlay={isActive && visible}
+        // El audio sale del lado A (FFmpeg map 0:a?). NO va muted.
+        // eslint-disable-next-line react/no-unknown-property
+        webkit-playsinline="true"
+        // eslint-disable-next-line react/no-unknown-property
+        x5-playsinline="true"
+      />
+    </div>
+  );
+};
+
 // Componente para una sola pregunta (Rediseño MVP — Twyk colors)
 const QuestionSlide = ({ 
   question, 
@@ -1441,6 +1535,19 @@ const VSLayout = ({
   // Estructura: { [question_id]: { total_votes, options: [{ id, votes, percentage }] } }
   const [questionStats, setQuestionStats] = useState({});
 
+  // 🎬 VS Composed (estilo TikTok Duet) — cuando ambas opciones de la
+  // primera pregunta son video, el backend genera un MP4 con split-screen
+  // pre-incrustado. Mientras `composedInfo.status === 'ready'` y el usuario
+  // NO ha votado todavía, el feed reproduce ese único MP4 (1 decoder → fluido
+  // como TikTok). Al votar, hacemos switch a streams separados (cinema 3D).
+  // Fallback transparente: si status !== 'ready' (pending/failed/N/A) seguimos
+  // con el comportamiento previo (PollOptionMedia individual por lado).
+  const [composedInfo, setComposedInfo] = useState({
+    url: poll?.composed_video_url || null,
+    status: poll?.composed_status || null,
+    orientation: poll?.composed_orientation || poll?.vs_orientation || null,
+  });
+
   // 🔄 SYNC al montar: traer el estado fresco desde /api/vs/{vs_id}
   //   1) Votos previos del usuario (selectedOptions + showResults)
   //   2) Conteos actuales por pregunta/opcion (questionStats con porcentajes exactos)
@@ -1529,6 +1636,15 @@ const VSLayout = ({
             }));
           }
         }
+
+        // 5) 🎬 Capturar info de composed video (TikTok Duet style)
+        if (data?.composed_status || data?.composed_video_url) {
+          setComposedInfo({
+            url: data.composed_video_url || null,
+            status: data.composed_status || null,
+            orientation: data.composed_orientation || poll?.vs_orientation || null,
+          });
+        }
       } catch (e) {
         // silent: si falla, se usa el snapshot local del poll
       }
@@ -1540,6 +1656,80 @@ const VSLayout = ({
   const currentQuestion = allQuestions[currentIndex];
   const currentQuestionId = currentQuestion?.id;
   const hasVoted = !!selectedOptions[currentQuestionId];
+
+  // 🎬 Poll suave: si el composed_status es pending/processing y el VS está
+  // visible en el feed (isActive), revalidamos cada 4s hasta que llegue a
+  // un estado terminal (ready/failed/not_applicable) o se agoten 8 intentos.
+  // Esto permite que el cliente haga "upgrade automático" a composed cuando
+  // el FFmpeg de background termine, SIN necesitar un WebSocket.
+  useEffect(() => {
+    if (isThumbnail) return;
+    if (!isActive) return;
+    if (!poll?.vs_id) return;
+    const status = composedInfo.status;
+    const pending = status === 'pending' || status === 'processing';
+    if (!pending) return;
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 8;
+    const INTERVAL_MS = 4000;
+    let timer = null;
+    let cancelled = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      try {
+        const token = localStorage.getItem('token');
+        const backendUrl = process.env.REACT_APP_BACKEND_URL;
+        const res = await fetch(`${backendUrl}/api/vs/${poll.vs_id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (data?.composed_status && data.composed_status !== status) {
+          setComposedInfo({
+            url: data.composed_video_url || null,
+            status: data.composed_status,
+            orientation: data.composed_orientation || poll?.vs_orientation || null,
+          });
+          // Si llegó a estado terminal, no rearmamos el timer.
+          if (data.composed_status !== 'pending' && data.composed_status !== 'processing') {
+            return;
+          }
+        }
+      } catch (_) {
+        // silent
+      }
+      if (!cancelled && attempts < MAX_ATTEMPTS) {
+        timer = setTimeout(tick, INTERVAL_MS);
+      }
+    };
+
+    timer = setTimeout(tick, INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [composedInfo.status, isActive, poll?.vs_id, isThumbnail]);
+
+  // 🎬 ¿Debe activarse el modo composed para la PRIMERA pregunta del VS?
+  // Condiciones (todas requeridas):
+  //   - poll está activo en el feed (isActive)
+  //   - composed_status === 'ready' y hay URL
+  //   - el usuario NO ha votado todavía la primera pregunta
+  //   - estamos en la primera pregunta (currentIndex === 0)
+  // Si alguna falla, fallback transparente a streams separados (sin tocar nada).
+  const firstQuestionId = allQuestions[0]?.id;
+  const firstQuestionVoted = !!selectedOptions[firstQuestionId];
+  const composedReady = composedInfo.status === 'ready' && !!composedInfo.url;
+  const composedActive = isActive
+    && !isThumbnail
+    && composedReady
+    && !firstQuestionVoted
+    && currentIndex === 0;
 
   // Función para detener toda la voz y secuencia
   const stopVoice = useCallback(() => {
@@ -1963,7 +2153,17 @@ const VSLayout = ({
           //     en VS porque shouldRenderVideoTag está topado en <=1)
           //   - Pregunta lejana: distanceFromActive + N → solo poster
           const questionDistance = Math.abs(qIndex - currentIndex);
-          const effectiveDistance = (distanceFromActive || 0) + questionDistance;
+          // 🎬 Si el composed video está reproduciéndose en qIndex=0, los
+          // <video> individuales de PollOptionMedia A/B se mantienen como
+          // SOLO POSTER (sin decoder, sin stream). Distance > 1 + layout='vs'
+          // → PollOptionMedia salta el render del <video> y devuelve poster.
+          // Cuando el usuario vote, composedActive pasa a false → la distance
+          // vuelve a su valor normal y los <video> empiezan a cargar mientras
+          // la animación cinema 3D cubre la transición.
+          const composedSuppressIndividual = composedActive && qIndex === 0;
+          const effectiveDistance = composedSuppressIndividual
+            ? 99
+            : (distanceFromActive || 0) + questionDistance;
           return (
             <div
               key={question.id}
@@ -1997,6 +2197,21 @@ const VSLayout = ({
                   }
                 }}
               />
+
+              {/* 🎬 VS Composed Overlay — UN SOLO <video> con split-screen
+                  pre-incrustado (estilo TikTok Duet). Sólo en qIndex=0,
+                  mientras isActive y el usuario NO haya votado.
+                  pointer-events:none → los double-taps pasan a los cards
+                  subyacentes (DoubleTapVoteAnimation sigue gestionando el voto).
+                  Al votar, hacemos fade-out 300ms y los streams separados
+                  toman el control (cinema 3D, winner card, glow, lift-subject). */}
+              {qIndex === 0 && composedReady && currentIndex === 0 && (
+                <VSComposedOverlay
+                  src={resolveBackendUrl(composedInfo.url)}
+                  visible={composedActive}
+                  isActive={qIndex === currentIndex && isActive}
+                />
+              )}
             </div>
           );
         })}

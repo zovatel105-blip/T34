@@ -40,9 +40,11 @@ UPLOAD_DIR = Path(__file__).parent / "uploads"
 THUMBNAIL_DIR = UPLOAD_DIR / "thumbnails"
 OPTIMIZED_DIR = UPLOAD_DIR / "videos" / "optimized"
 HLS_DIR = UPLOAD_DIR / "videos" / "hls"
+VS_COMPOSED_DIR = UPLOAD_DIR / "videos" / "vs_composed"  # 🎬 MP4 compuesto VS (1vs1 estilo TikTok Duet)
 THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
 OPTIMIZED_DIR.mkdir(parents=True, exist_ok=True)
 HLS_DIR.mkdir(parents=True, exist_ok=True)
+VS_COMPOSED_DIR.mkdir(parents=True, exist_ok=True)
 
 # Semáforo global para limitar ffmpeg concurrente (CPU-bound).
 # 2 concurrentes es razonable en contenedores típicos (2 vCPU).
@@ -53,6 +55,16 @@ _FFPROBE_TIMEOUT = 15.0     # validación rápida
 _THUMBNAIL_TIMEOUT = 20.0   # generar un JPG de 1 frame
 _TRANSCODE_TIMEOUT = 180.0  # transcoding puede tardar en videos largos
 _HLS_TIMEOUT = 300.0        # HLS multi-rendition es más caro (3 ladders)
+_VS_COMPOSE_TIMEOUT = 240.0  # composición VS: 2 inputs + re-encode, suele tardar 5-20s
+
+# 🎬 VS Composed canónico (estilo TikTok Duet)
+# Output 720x1280 @30fps, h264 main, CRF 23, GOP 30 (1s), +faststart.
+# vertical  → hstack (side-by-side): cada lado 360x1280
+# horizontal → vstack (top/bottom): cada lado 720x640
+_VS_OUTPUT_W = 720
+_VS_OUTPUT_H = 1280
+_VS_FPS = 30
+_VS_GOP = 30  # 1 segundo a 30fps
 
 # HLS bitrate ladder (resolución_alto, video_bitrate_k, max_bitrate_k, audio_bitrate_k)
 # Optimizado para móvil/feed social: 360p arranca instantáneo, 720p calidad final.
@@ -371,6 +383,256 @@ def _cleanup_dir(d: Path) -> None:
         d.rmdir()
     except OSError:
         pass
+
+# ──────────────────────────────────────────────────────────────────────────
+# 🎬 VS Composed Pipeline (estilo TikTok Duet)
+#
+# Filosofía: cuando AMBAS opciones de la primera pregunta de un VS son video,
+# generamos UN SOLO MP4 con el split-screen ya pre-incrustado (hstack/vstack).
+# El feed reproduce ese MP4 con 1 decoder → fluido como TikTok.
+# Al votar, el frontend hace switch a streams separados (cinema 3D + winner card).
+#
+# Esto resuelve el problema central de "2 decoders simultáneos" en el feed.
+# Coste: ~5-20s de FFmpeg en background por VS al publicar. Async, no bloquea.
+# ──────────────────────────────────────────────────────────────────────────
+
+
+async def compose_vs_video(
+    path_a: Path,
+    path_b: Path,
+    vs_id: str,
+    orientation: str = "vertical",
+) -> Optional[str]:
+    """Compone dos videos en un único MP4 con split-screen pre-incrustado.
+
+    Parámetros:
+        path_a: video del lado A (audio principal — el del creador del VS).
+        path_b: video del lado B (audio silenciado).
+        vs_id: identificador del VS — define el nombre del archivo de salida.
+        orientation:
+            - 'vertical'   → hstack (side-by-side): cada lado 360x1280
+            - 'horizontal' → vstack (top/bottom):    cada lado 720x640
+
+    Output canónico:
+        720x1280 @30fps, h264 main, CRF 23, GOP 30 (1s), +faststart, AAC 128k.
+        Duración = min(dur_A, dur_B) (flag `-shortest`).
+
+    Devuelve la URL pública (`/api/uploads/...`) del MP4 compuesto, o None
+    si la composición falla (frontend hará fallback a streams separados).
+    """
+    VS_COMPOSED_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = VS_COMPOSED_DIR / f"{vs_id}.mp4"
+
+    # Validar inputs existentes
+    if not path_a.exists() or not path_b.exists():
+        logger.warning(
+            f"[vs_compose] {vs_id}: missing inputs "
+            f"(a_exists={path_a.exists()}, b_exists={path_b.exists()})"
+        )
+        return None
+
+    # Definir layout según orientación
+    if orientation == "horizontal":
+        # vstack (top/bottom): cada lado 720x640 → output 720x1280
+        side_w, side_h = _VS_OUTPUT_W, _VS_OUTPUT_H // 2  # 720x640
+        stack_filter = "vstack=inputs=2"
+    else:
+        # vertical / default: hstack (side-by-side): cada lado 360x1280 → output 720x1280
+        side_w, side_h = _VS_OUTPUT_W // 2, _VS_OUTPUT_H  # 360x1280
+        stack_filter = "hstack=inputs=2"
+
+    # Filter complex:
+    #   - Cada input se normaliza a 30fps y se escala con object-fit:cover style
+    #     (force_original_aspect_ratio=increase + crop centrado).
+    #   - Después hstack/vstack los pega.
+    # `setsar=1` evita warnings por sample aspect ratio diferente.
+    filter_complex = (
+        f"[0:v]fps={_VS_FPS},"
+        f"scale={side_w}:{side_h}:force_original_aspect_ratio=increase,"
+        f"crop={side_w}:{side_h},setsar=1[a];"
+        f"[1:v]fps={_VS_FPS},"
+        f"scale={side_w}:{side_h}:force_original_aspect_ratio=increase,"
+        f"crop={side_w}:{side_h},setsar=1[b];"
+        f"[a][b]{stack_filter}[v]"
+    )
+
+    # Comando FFmpeg
+    # Audio: SOLO del input A (`-map 0:a?`). El audio de B se descarta.
+    # `-shortest` corta el output al final del input más corto.
+    # `+faststart` mueve MOOV al inicio → empieza a reproducir sin descargar todo.
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(path_a),
+        "-i", str(path_b),
+        "-filter_complex", filter_complex,
+        "-map", "[v]",
+        "-map", "0:a?",                  # audio de A (si existe); B silenciado
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-crf", "23",
+        "-profile:v", "main",
+        "-level", "4.0",                 # 720x1280 cabe en 3.1 también pero 4.0 da margen
+        "-pix_fmt", "yuv420p",
+        "-r", str(_VS_FPS),
+        "-g", str(_VS_GOP),
+        "-keyint_min", str(_VS_GOP),
+        "-sc_threshold", "0",
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-ar", "44100",
+        "-shortest",
+        "-movflags", "+faststart",
+        "-max_muxing_queue_size", "1024",
+        str(out_path),
+    ]
+
+    try:
+        async with _FFMPEG_SEMAPHORE:
+            logger.info(f"[vs_compose] {vs_id}: starting composition ({orientation})")
+            rc, _, stderr = await _run(cmd, _VS_COMPOSE_TIMEOUT)
+    except asyncio.TimeoutError:
+        logger.warning(f"[vs_compose] {vs_id}: timeout after {_VS_COMPOSE_TIMEOUT}s")
+        try:
+            out_path.unlink()
+        except FileNotFoundError:
+            pass
+        return None
+
+    if rc != 0 or not out_path.exists() or out_path.stat().st_size == 0:
+        logger.warning(
+            f"[vs_compose] {vs_id}: ffmpeg failed (rc={rc}): "
+            f"{stderr.decode(errors='ignore')[:300]}"
+        )
+        try:
+            out_path.unlink()
+        except FileNotFoundError:
+            pass
+        return None
+
+    public_url = _public_url_from_path(out_path)
+    logger.info(
+        f"[vs_compose] {vs_id}: OK → {public_url} "
+        f"({out_path.stat().st_size // 1024} KB)"
+    )
+    return public_url
+
+
+async def compose_vs_video_task(db, vs_id: str) -> None:
+    """Orquestador async que decide si componer, ejecuta FFmpeg y actualiza
+    el doc en MongoDB. Pensado para correr como BackgroundTask.
+
+    Estados de `composed_status`:
+        - 'not_applicable' → al menos un lado NO es video, o falta media_url.
+        - 'pending'        → enqueued, pero todavía no arrancó el ffmpeg.
+        - 'processing'     → ffmpeg corriendo.
+        - 'ready'          → composed_video_url disponible y servible.
+        - 'failed'         → ffmpeg falló (frontend usa streams separados).
+
+    El task es tolerante: cualquier excepción deja el doc en 'failed'.
+    """
+    try:
+        # Cargamos el poll (donde vive la primera pregunta) y el vs_experience.
+        poll = await db.polls.find_one({"id": vs_id})
+        if not poll or poll.get("layout") != "vs":
+            logger.warning(f"[vs_compose] {vs_id}: poll not found or not VS layout, skip")
+            return
+
+        options = poll.get("options") or []
+        if len(options) < 2:
+            logger.info(f"[vs_compose] {vs_id}: not enough options ({len(options)}), skip")
+            await _set_vs_composed_status(db, vs_id, "not_applicable")
+            return
+
+        opt_a, opt_b = options[0], options[1]
+
+        # Ambos lados deben ser video
+        if opt_a.get("media_type") != "video" or opt_b.get("media_type") != "video":
+            logger.info(
+                f"[vs_compose] {vs_id}: not video+video "
+                f"(A={opt_a.get('media_type')}, B={opt_b.get('media_type')}), skip"
+            )
+            await _set_vs_composed_status(db, vs_id, "not_applicable")
+            return
+
+        # Resolver paths locales. Si alguno no es upload local, no podemos componer.
+        path_a = _local_path_from_url(opt_a.get("media_url"))
+        path_b = _local_path_from_url(opt_b.get("media_url"))
+        if path_a is None or path_b is None:
+            logger.info(
+                f"[vs_compose] {vs_id}: non-local media "
+                f"(a={opt_a.get('media_url')}, b={opt_b.get('media_url')}), skip"
+            )
+            await _set_vs_composed_status(db, vs_id, "not_applicable")
+            return
+
+        if not path_a.exists() or not path_b.exists():
+            logger.warning(
+                f"[vs_compose] {vs_id}: local files missing "
+                f"(a_exists={path_a.exists()}, b_exists={path_b.exists()})"
+            )
+            await _set_vs_composed_status(db, vs_id, "failed", error="files_missing")
+            return
+
+        # Marcar processing
+        await _set_vs_composed_status(db, vs_id, "processing")
+
+        orientation = poll.get("vs_orientation") or "vertical"
+        composed_url = await compose_vs_video(path_a, path_b, vs_id, orientation)
+
+        if composed_url:
+            await db.polls.update_one(
+                {"id": vs_id},
+                {"$set": {
+                    "composed_video_url": composed_url,
+                    "composed_status": "ready",
+                    "composed_orientation": orientation,
+                    "composed_completed_at": datetime.utcnow(),
+                }},
+            )
+            # Mirror en vs_experiences (algunos endpoints leen de ahí)
+            await db.vs_experiences.update_one(
+                {"id": vs_id},
+                {"$set": {
+                    "composed_video_url": composed_url,
+                    "composed_status": "ready",
+                    "composed_orientation": orientation,
+                    "composed_completed_at": datetime.utcnow(),
+                }},
+            )
+            logger.info(f"[vs_compose] {vs_id}: marked ready")
+        else:
+            await _set_vs_composed_status(db, vs_id, "failed", error="ffmpeg_failed")
+    except Exception as e:
+        logger.error(f"[vs_compose] {vs_id}: unhandled error: {e}", exc_info=True)
+        try:
+            await _set_vs_composed_status(db, vs_id, "failed", error=f"crash:{str(e)[:120]}")
+        except Exception:
+            pass
+
+
+async def _set_vs_composed_status(
+    db,
+    vs_id: str,
+    status: str,
+    error: Optional[str] = None,
+) -> None:
+    """Helper: actualiza composed_status en `polls` y `vs_experiences` a la vez."""
+    update = {"composed_status": status, "composed_updated_at": datetime.utcnow()}
+    if error:
+        update["composed_error"] = error
+    if status == "processing":
+        update["composed_started_at"] = datetime.utcnow()
+    try:
+        await db.polls.update_one({"id": vs_id}, {"$set": update})
+    except Exception as e:
+        logger.warning(f"[vs_compose] {vs_id}: failed to set polls status: {e}")
+    try:
+        await db.vs_experiences.update_one({"id": vs_id}, {"$set": update})
+    except Exception as e:
+        logger.warning(f"[vs_compose] {vs_id}: failed to set vs_experiences status: {e}")
+
+
+
 
 
 async def process_poll_media(db, poll_id: str) -> None:

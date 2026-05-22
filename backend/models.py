@@ -575,6 +575,12 @@ class PollResponse(BaseModel):
     vs_questions: List[dict] = []  # All questions for VS experience
     creator_country: Optional[str] = None  # Country where VS was created
     vs_orientation: Optional[str] = "horizontal"  # 'vertical'=lado a lado (izq-der), 'horizontal'=arriba-abajo
+    # 🎬 VS Composed (estilo TikTok Duet) — MP4 con split-screen pre-incrustado
+    # generado por FFmpeg en background al publicar el VS. El frontend lo
+    # reproduce como un único <video> mientras el usuario no ha votado.
+    composed_video_url: Optional[str] = None
+    composed_status: Optional[str] = None  # 'pending'|'processing'|'ready'|'failed'|'not_applicable'
+    composed_orientation: Optional[str] = None  # snapshot de vs_orientation al componer
     created_at: datetime
     time_ago: str  # Campo calculado como "hace 2 horas"
     # Post settings
