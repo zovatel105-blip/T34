@@ -1772,64 +1772,103 @@ const TikTokScrollView = ({
   const touchCurrentYRef = useRef(null);
   const isAnimatingRef = useRef(false);
 
-  // ─── PRE-DECODE next video ────────────────────────────────────────────────
-  const getNextVideoUrl = useCallback(() => {
-    if (!polls || activeIndex >= polls.length - 1) return null;
+  // ─── PRE-DECODE next video(s) ─────────────────────────────────────────────
+  // 🚀 FIX GAP #1 (VS Illusion of Instant): cuando el +1 es un VS, el slide
+  // visible inicialmente contiene 2 videos (lado A y lado B). Pre-decodificar
+  // solo el primero deja al segundo lado en "loading" durante el swipe →
+  // pantalla negra o poster mientras uno ya está vivo. Ahora devolvemos
+  // hasta N URLs y creamos un <video> oculto por cada una, en paralelo.
+  //
+  // Reglas:
+  //   - Post normal (no VS): 1 sola URL (la primera de options).
+  //   - VS clásico (1 pregunta): hasta 2 URLs (opciones 0 y 1 de la 1ª
+  //     pregunta). Son las que el usuario verá nada más soltar el dedo.
+  //   - VS multi-pregunta: solo las 2 de la 1ª pregunta (las demás se
+  //     prefetchan vía eagerPrefetchNextPost / feedMediaPrefetcher; aquí
+  //     priorizamos lo que se ve en t=0).
+  //
+  // Aún limitamos a 2 para no saturar decoder pool en gama media (Android
+  // suele permitir 2–4 decoders H.264 hw simultáneos en background).
+  const getNextVideoUrls = useCallback(() => {
+    if (!polls || activeIndex >= polls.length - 1) return [];
     const nextPoll = polls[activeIndex + 1];
-    if (!nextPoll) return null;
+    if (!nextPoll) return [];
 
-    // 🚀 FIX BUG #3: Para VS multi-pregunta, además de `options` (que solo
-    // contiene la pregunta 1), recorrer también `vs_questions[].options[]`.
-    // Si la pregunta 1 es imagen pero la 2 ó 3 es vídeo, queremos
-    // pre-decodificar la primera URL de vídeo encontrada (la más probable
-    // que vea el usuario al hacer swipe horizontal).
-    const baseOptions = Array.isArray(nextPoll.options) ? nextPoll.options : [];
-    for (const opt of baseOptions) {
+    const out = [];
+    const pushIfVideo = (opt) => {
+      if (!opt) return;
       const url = pickPlayableVideoUrl(opt);
-      if (url) return url;
-    }
+      if (url && !out.includes(url)) out.push(url);
+    };
 
-    if (nextPoll.layout === 'vs' && Array.isArray(nextPoll.vs_questions)) {
-      for (const q of nextPoll.vs_questions) {
-        const qOpts = Array.isArray(q?.options) ? q.options : [];
-        for (const opt of qOpts) {
-          const url = pickPlayableVideoUrl(opt);
-          if (url) return url;
+    // 1) VS: la 1ª pregunta visible (vs_questions[0] o options) — ambos lados.
+    if (nextPoll.layout === 'vs') {
+      const firstQ = Array.isArray(nextPoll.vs_questions) && nextPoll.vs_questions.length > 0
+        ? nextPoll.vs_questions[0]
+        : { options: nextPoll.options || [] };
+      const qOpts = Array.isArray(firstQ?.options) ? firstQ.options : [];
+      for (const opt of qOpts) {
+        pushIfVideo(opt);
+        if (out.length >= 2) break;
+      }
+      // Si la 1ª pregunta es imagen, intentar con la primera con video
+      // (para que al menos haya 1 pre-decodificado).
+      if (out.length === 0 && Array.isArray(nextPoll.vs_questions)) {
+        outer: for (const q of nextPoll.vs_questions) {
+          const opts = Array.isArray(q?.options) ? q.options : [];
+          for (const opt of opts) {
+            pushIfVideo(opt);
+            if (out.length >= 1) break outer;
+          }
         }
       }
+      return out;
     }
-    return null;
+
+    // 2) Post normal: la primera URL de video (igual que antes).
+    const baseOptions = Array.isArray(nextPoll.options) ? nextPoll.options : [];
+    for (const opt of baseOptions) {
+      pushIfVideo(opt);
+      if (out.length >= 1) break;
+    }
+    return out;
   }, [polls, activeIndex]);
 
-  const preDecodeVideoRef = useRef(null);
+  // Map url → HTMLVideoElement para poder limpiarlos en el cleanup.
+  const preDecodeVideosRef = useRef(new Map());
   useEffect(() => {
-    const url = getNextVideoUrl();
-    if (!url || !isHighBandwidth) return;
-    if (preDecodeVideoRef.current?.src === url) return;
+    if (!isHighBandwidth) return;
+    const urls = getNextVideoUrls();
+    if (!urls || urls.length === 0) return;
 
-    if (preDecodeVideoRef.current) {
-      preDecodeVideoRef.current.pause();
-      preDecodeVideoRef.current.src = '';
-      preDecodeVideoRef.current.load();
+    const existing = preDecodeVideosRef.current;
+    const wanted = new Set(urls);
+    // 1) Eliminar los que ya no queremos (sobraron de un activeIndex previo)
+    for (const [oldUrl, oldVideo] of existing.entries()) {
+      if (!wanted.has(oldUrl)) {
+        try { oldVideo.pause(); oldVideo.src = ''; oldVideo.load(); } catch (_) {}
+        try { document.body.removeChild(oldVideo); } catch (_) {}
+        existing.delete(oldUrl);
+      }
     }
 
-    const video = document.createElement('video');
-    video.src = url;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;pointer-events:none;';
-    document.body.appendChild(video);
-    preDecodeVideoRef.current = video;
+    const cancelers = [];
+    // 2) Crear los nuevos
+    for (const url of urls) {
+      if (existing.has(url)) continue;
+      const video = document.createElement('video');
+      video.src = url;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;pointer-events:none;';
+      document.body.appendChild(video);
+      existing.set(url, video);
+      // Forzar decode del primer keyframe en GPU
+      video.play().then(() => { video.pause(); }).catch(() => {});
 
-    // Forzar decode del primer keyframe en GPU
-    video.play().then(() => { video.pause(); }).catch(() => {});
-    // Fetch 256KB para buffer inicial (TikTok-style).
-    // Va por priorityFetchQueue en nivel HIGH: es el +1, lo verá el usuario
-    // en cuanto haga swipe. NO es low (lookahead lejano).
-    const preDecodeCancel = (() => {
+      // Range 256KB para arrancar el buffer (TikTok-style, prioridad HIGH).
       try {
-        // Import dinámico para no engordar el bundle inicial
         let cancelFn = null;
         import('../services/priorityFetchQueue').then(({ default: queue }) => {
           const { cancel } = queue.enqueue(url, {
@@ -1841,22 +1880,27 @@ const TikTokScrollView = ({
           });
           cancelFn = cancel;
         }).catch(() => {});
-        return () => { try { cancelFn?.(); } catch (_) {} };
-      } catch (_) {
-        return () => {};
-      }
-    })();
+        cancelers.push(() => { try { cancelFn?.(); } catch (_) {} });
+      } catch (_) {}
+    }
 
     return () => {
-      video.pause();
-      video.src = '';
-      video.load();
-      try { document.body.removeChild(video); } catch (_) {}
-      if (preDecodeVideoRef.current === video) preDecodeVideoRef.current = null;
-      // Cancelar el Range del +1 si todavía está en cola
-      try { preDecodeCancel(); } catch (_) {}
+      // Cancelar Ranges en cola
+      for (const c of cancelers) { try { c(); } catch (_) {} }
     };
-  }, [getNextVideoUrl, isHighBandwidth]);
+  }, [getNextVideoUrls, isHighBandwidth]);
+
+  // Cleanup global al desmontar TikTokScrollView (cambio de feed, etc.)
+  useEffect(() => {
+    return () => {
+      const existing = preDecodeVideosRef.current;
+      for (const [, v] of existing.entries()) {
+        try { v.pause(); v.src = ''; v.load(); } catch (_) {}
+        try { document.body.removeChild(v); } catch (_) {}
+      }
+      existing.clear();
+    };
+  }, []);
 
   // ─── PRE-CONNECT next audio ───────────────────────────────────────────────
   useEffect(() => {
@@ -2040,13 +2084,46 @@ const TikTokScrollView = ({
         const videoMaxBytes = isCellular ? 0 : 10 * 1024 * 1024;
         const imageMaxBytes = 2 * 1024 * 1024;
         const p = polls[targetIndex];
-        if (!p?.options) return;
-        for (const option of p.options) {
+        if (!p) return;
+
+        // 🚀 FIX GAP #6 (VS multi-pregunta en touch prefetch): igual que
+        // MediaPrefetcher / feedMediaPrefetcher, hay que iterar también
+        // poll.vs_questions[].options. De lo contrario, las preguntas
+        // 2..N del +1 VS no se cachean en touchstart y se siente lento
+        // cuando el usuario hace swipe horizontal dentro del nuevo post.
+        const collectAllOpts = (poll) => {
+          const all = [];
+          if (Array.isArray(poll?.options)) {
+            for (const o of poll.options) if (o) all.push(o);
+          }
+          if (Array.isArray(poll?.vs_questions)) {
+            for (const q of poll.vs_questions) {
+              const qOpts = Array.isArray(q?.options) ? q.options : [];
+              for (const o of qOpts) if (o) all.push(o);
+            }
+          }
+          return all;
+        };
+
+        const allOpts = collectAllOpts(p);
+        if (allOpts.length === 0) return;
+        let videoPrefetched = 0;
+        const seenVideoUrls = new Set();
+        for (const option of allOpts) {
           const thumbUrl = pickVideoPosterUrl(option) || pickImageUrl(option);
           if (thumbUrl) cache.prefetch(thumbUrl, { maxBytes: imageMaxBytes });
           if (videoMaxBytes > 0 && option.media_type === 'video') {
             const videoUrl = pickPlayableVideoUrl(option);
-            if (videoUrl) { cache.prefetch(videoUrl, { maxBytes: videoMaxBytes }); break; }
+            if (videoUrl && !seenVideoUrls.has(videoUrl)) {
+              seenVideoUrls.add(videoUrl);
+              cache.prefetch(videoUrl, { maxBytes: videoMaxBytes });
+              videoPrefetched += 1;
+              // Para VS, prefetchamos hasta 2 vídeos (los 2 lados de la
+              // 1ª pregunta — lo que ve el usuario al instante).
+              // Para post normal, basta 1 (el primero).
+              const maxVideos = p.layout === 'vs' ? 2 : 1;
+              if (videoPrefetched >= maxVideos) break;
+            }
           }
         }
       }).catch(() => {});

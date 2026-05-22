@@ -268,7 +268,14 @@ const PollOptionMedia = ({
 
   // ── Modo VIDEO ────────────────────────────────────────────────────────────
   if (isVideo) {
-    const shouldRenderVideoTag = distanceFromActive <= 3;
+    // 🚀 FIX GAP #2 (Android decoder pool): para layout VS no podemos
+    // mantener 6 <video> vivos (PREV/CUR/NEXT × 2 lados) — Android limita
+    // a 2–4 decoders H.264 simultáneos en hardware. Para VS solo montamos
+    // el <video> en el slot activo y el vecino inmediato (<=1). El resto
+    // muestra solo poster (gap silencioso, no pantalla negra).
+    // Para layouts normales seguimos con <=3 (1 video por post, hay margen).
+    const videoTagMaxDistance = layout === 'vs' ? 1 : 3;
+    const shouldRenderVideoTag = distanceFromActive <= videoTagMaxDistance;
 
     if (!videoSrc || !shouldRenderVideoTag) {
       return (
@@ -335,6 +342,12 @@ const PollOptionMedia = ({
           ref={videoEl}
           hlsUrl={hlsSrcForPlayer}
           mp4Url={mp4SrcForPlayer}
+          // 🚀 FIX GAP #3 (VS bitrate cap): en layout VS el <video> ocupa
+          // ~mitad de pantalla; pedir 1080p en cada lado es desperdicio.
+          // Cap a 720p → ~40% menos bytes y ~50% menos tiempo de decode
+          // sin pérdida visible. Para layouts normales (full-screen),
+          // dejamos que ABR + capLevelToPlayerSize decidan sin techo.
+          maxHeightCap={layout === 'vs' ? 720 : null}
           // Poster TRANSPARENTE para bloquear el placeholder nativo del
           // WebView Android (▶ sobre gris). El poster VISIBLE real es el
           // <img> de arriba; este sólo silencia el del WebView.

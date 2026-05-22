@@ -1950,41 +1950,56 @@ const VSLayout = ({
           transform: `translateX(-${(currentIndex / totalQuestions) * 100}%)` 
         }}
       >
-        {allQuestions.map((question, qIndex) => (
-          <div 
-            key={question.id} 
-            className="h-full relative"
-            style={{ width: `${100 / totalQuestions}%` }}
-          >
-            <QuestionSlide
-              question={question}
-              questionIndex={qIndex}
-              isActive={qIndex === currentIndex && isActive}
-              onVote={handleVote}
-              selectedOption={selectedOptions[question.id]}
-              showResults={showResults[question.id]}
-              justVoted={!!justVotedMap[question.id]}
-              creatorCountry={creatorCountry}
-              highlightedOption={qIndex === currentIndex ? highlightedOption : null}
-              totalQuestions={totalQuestions}
-              currentIndex={currentIndex}
-              timeLeft={timeLeft}
-              orientation={vsOrientation}
-              stats={questionStats[question.id]}
-              isBottomNavVisible={isBottomNavVisible}
-              pollId={poll.id}
-              distanceFromActive={distanceFromActive}
-              isHighBandwidth={isHighBandwidth}
-              onRequestNextDuel={() => {
-                if (currentIndex < totalQuestions - 1) {
-                  goToNext();
-                } else if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('vs:nextPost', { detail: { pollId: poll.id } }));
-                }
-              }}
-            />
-          </div>
-        ))}
+        {allQuestions.map((question, qIndex) => {
+          // 🚀 FIX GAP #4 (VS multi-pregunta decoder hog): cuando hay 3
+          // preguntas, las 6 opciones reciben todas distanceFromActive=0
+          // y montan <video preload="auto"> compitiendo por decoder y
+          // bandwidth aunque el usuario solo vea la pregunta currentIndex.
+          // Sumamos la distancia HORIZONTAL (qIndex vs currentIndex) a la
+          // distancia VERTICAL (post activo en feed) para que las
+          // preguntas no visibles bajen su prioridad.
+          //   - Pregunta activa: effectiveDistance = distanceFromActive
+          //   - Pregunta vecina: distanceFromActive + 1 (no monta <video>
+          //     en VS porque shouldRenderVideoTag está topado en <=1)
+          //   - Pregunta lejana: distanceFromActive + N → solo poster
+          const questionDistance = Math.abs(qIndex - currentIndex);
+          const effectiveDistance = (distanceFromActive || 0) + questionDistance;
+          return (
+            <div
+              key={question.id}
+              className="h-full relative"
+              style={{ width: `${100 / totalQuestions}%` }}
+            >
+              <QuestionSlide
+                question={question}
+                questionIndex={qIndex}
+                isActive={qIndex === currentIndex && isActive}
+                onVote={handleVote}
+                selectedOption={selectedOptions[question.id]}
+                showResults={showResults[question.id]}
+                justVoted={!!justVotedMap[question.id]}
+                creatorCountry={creatorCountry}
+                highlightedOption={qIndex === currentIndex ? highlightedOption : null}
+                totalQuestions={totalQuestions}
+                currentIndex={currentIndex}
+                timeLeft={timeLeft}
+                orientation={vsOrientation}
+                stats={questionStats[question.id]}
+                isBottomNavVisible={isBottomNavVisible}
+                pollId={poll.id}
+                distanceFromActive={effectiveDistance}
+                isHighBandwidth={isHighBandwidth}
+                onRequestNextDuel={() => {
+                  if (currentIndex < totalQuestions - 1) {
+                    goToNext();
+                  } else if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('vs:nextPost', { detail: { pollId: poll.id } }));
+                  }
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* VS central — diseño tipo referencia (italic, bold, neón intenso)

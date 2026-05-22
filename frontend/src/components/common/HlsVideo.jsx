@@ -65,7 +65,7 @@ const DEFAULT_HLS_CONFIG = {
 };
 
 const HlsVideo = forwardRef(
-  ({ hlsUrl, mp4Url, hlsConfig, onHlsError, ...videoProps }, ref) => {
+  ({ hlsUrl, mp4Url, hlsConfig, onHlsError, maxHeightCap = null, ...videoProps }, ref) => {
     const videoRef = useRef(null);
     useImperativeHandle(ref, () => videoRef.current, []);
 
@@ -122,19 +122,55 @@ const HlsVideo = forwardRef(
           // dinámico y fuerza el siguiente segmento a la calidad correcta.
           hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
             if (!data?.levels || data.levels.length === 0) return;
+
+            // 🚀 FIX GAP #3 (VS bitrate cap): si maxHeightCap está activo,
+            // limitamos `autoLevelCapping` al nivel más alto cuya
+            // resolución vertical sea <= cap. En VS pasamos 720 para evitar
+            // descargar 1080p por cada lado del split (40% menos bytes,
+            // ~50% menos decode time). capLevelToPlayerSize también ayuda
+            // pero solo mira el <video> visible; aquí lo fijamos
+            // explícitamente independientemente del tamaño renderizado.
+            if (typeof maxHeightCap === 'number' && maxHeightCap > 0) {
+              let highestAllowed = -1;
+              data.levels.forEach((lvl, idx) => {
+                const h = lvl?.height || 0;
+                if (h > 0 && h <= maxHeightCap && idx > highestAllowed) {
+                  highestAllowed = idx;
+                }
+              });
+              if (highestAllowed >= 0) {
+                try { hls.autoLevelCapping = highestAllowed; } catch (_) { /* noop */ }
+                if (process.env.NODE_ENV !== 'production') {
+                  // eslint-disable-next-line no-console
+                  console.debug(
+                    '[HlsVideo] autoLevelCapping applied',
+                    { maxHeightCap, cappedIdx: highestAllowed, level: data.levels[highestAllowed] }
+                  );
+                }
+              }
+            }
+
             const correctIdx = pickStartLevelIndexFromLevels(data.levels);
-            if (correctIdx >= 0 && correctIdx !== networkStartLevel) {
+            // Si tenemos cap, no permitas que startLevel lo supere.
+            let targetStart = correctIdx;
+            if (typeof maxHeightCap === 'number' && maxHeightCap > 0 && targetStart >= 0) {
+              const startLvl = data.levels[targetStart];
+              if (startLvl && startLvl.height > maxHeightCap && hls.autoLevelCapping >= 0) {
+                targetStart = hls.autoLevelCapping;
+              }
+            }
+            if (targetStart >= 0 && targetStart !== networkStartLevel) {
               try {
                 // currentLevel = -1 mantiene ABR auto, pero nextLevel fuerza
                 // que el PRÓXIMO fragmento sea el que queremos.
-                hls.nextLevel = correctIdx;
+                hls.nextLevel = targetStart;
               } catch (_) { /* noop */ }
               if (process.env.NODE_ENV !== 'production') {
                 const profile = getNetworkProfile();
                 // eslint-disable-next-line no-console
                 console.debug(
                   '[HlsVideo] startLevel re-aligned',
-                  { assumed: networkStartLevel, actual: correctIdx, profile },
+                  { assumed: networkStartLevel, actual: targetStart, profile },
                 );
               }
             }
@@ -160,7 +196,7 @@ const HlsVideo = forwardRef(
       // No hay HLS → MP4 directo.
       fallbackToMp4();
       return detachHls;
-    }, [hlsUrl, mp4Url]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [hlsUrl, mp4Url, maxHeightCap]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Nota: NO pasamos `src` al <video> en JSX — lo gestionamos imperativamente
     // dentro del useEffect para evitar que React lo sobreescriba en re-renders.
