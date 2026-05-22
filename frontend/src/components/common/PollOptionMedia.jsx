@@ -166,16 +166,167 @@ const PollOptionMedia = ({
   // sin congelarse. Hasta entonces mostramos el poster encima.
   // El crossfade (opacity transition 0.2s) elimina el salto visual.
   const [isBuffered, setIsBuffered] = useState(false);
+  // hasFirstFrame: true cuando el primer frame del video YA está pintado en
+  // GPU (no solo decodificado en buffer). Usamos requestVideoFrameCallback
+  // (donde existe) para saberlo con precisión. Esto es lo que evita el
+  // "negro de 1-2 frames" típico entre que se quita el poster y aparece el
+  // primer frame real del video.
+  const [hasFirstFrame, setHasFirstFrame] = useState(false);
   const [videoStatus, setVideoStatus] = useState('loading');
   const [imgStatus, setImgStatus] = useState('loading');
 
   // Reset cuando cambian las URLs
   useEffect(() => {
-    if (videoSrc) { setVideoStatus('loading'); setIsBuffered(false); }
+    if (videoSrc) {
+      setVideoStatus('loading');
+      setIsBuffered(false);
+      setHasFirstFrame(false);
+    }
   }, [videoSrc]);
   useEffect(() => {
     if (imageSrc) setImgStatus('loading');
   }, [imageSrc]);
+
+  // ── 🚀 PLAY/PAUSE DRIVEN BY distanceFromActive (FIX CRÍTICO TikTok-style)
+  //
+  // CAUSA RAÍZ encontrada: `onCanPlay` solo dispara UNA VEZ por carga. Si
+  // dispara cuando el slot está aún a distance=1 (preloaded), el play() se
+  // omite (porque la condición `distanceFromActive === 0` no se cumple).
+  // Cuando el slot pasa a CUR (distance=0), NADA llama a play() de nuevo
+  // → el video preloaded se queda quieto en el primer frame mientras el
+  // usuario ve resultado: pantalla congelada / poster.
+  //
+  // Fix: drive play/pause desde el cambio de distanceFromActive, no del
+  // evento canplay. Si el video ya está listo (readyState >= 2 = HAVE_CURRENT_DATA),
+  // play inmediatamente. Si no, onCanPlay lo arrancará cuando llegue datos.
+  //
+  // Esto es lo que hace que TikTok 1vs1 se sienta instantáneo: al hacer
+  // swipe, ambos videos del nuevo slot YA están bufferizados Y comienzan a
+  // reproducirse simultáneamente sin esperar a otro evento de buffer.
+  useEffect(() => {
+    if (!isVideo) return;
+    const v = videoEl?.current;
+    if (!v) return;
+
+    if (distanceFromActive === 0) {
+      // Slot ACTIVO: arrancar reproducción ya. Si aún no hay datos
+      // suficientes, onCanPlay lo gestionará en cuanto lleguen.
+      const tryPlay = () => {
+        if (v.paused && v.readyState >= 2) {
+          v.play().catch(() => {});
+        }
+      };
+      // 2 intentos: inmediato (si ya está listo) y tras 1 frame (por si
+      // React acaba de re-renderizar y el video aún no terminó su effect).
+      tryPlay();
+      const rafId = requestAnimationFrame(tryPlay);
+      return () => cancelAnimationFrame(rafId);
+    } else {
+      // Slot NO activo: pausar para liberar decoder hardware (crítico en
+      // Android gama media donde solo hay 2-4 decoders H.264 simultáneos).
+      // Mantenemos el buffer ya descargado (no llamamos .load() ni .src='').
+      if (!v.paused) {
+        try { v.pause(); } catch (_) {}
+      }
+      return undefined;
+    }
+  }, [isVideo, distanceFromActive, videoEl, videoSrc]);
+
+  // ── 🚀 WARM-PLAY: forzar decode del primer frame en el <video> del slot
+  //
+  // Cuando el slot está a distance=1 (preloaded, no activo aún), el browser
+  // descarga bytes (preload="auto") pero NO decodifica ni renderiza el
+  // primer frame en GPU hasta que se llama .play(). Resultado: cuando el
+  // usuario hace swipe, ve "negro" 1-3 frames mientras el decoder produce
+  // el primer frame.
+  //
+  // Truco TikTok: hacer un play() + pause() inmediato en distance=1 para
+  // forzar al decoder a producir y pintar el primer frame. Cuando el slot
+  // pase a distance=0, el frame YA está en pantalla y solo necesitamos
+  // reanudar la reproducción.
+  //
+  // Solo se hace UNA VEZ por carga de URL — evitamos re-disparos.
+  const warmedRef = useRef(null);
+  useEffect(() => {
+    if (!isVideo) return;
+    if (distanceFromActive !== 1) return;
+    if (warmedRef.current === videoSrc) return;
+    const v = videoEl?.current;
+    if (!v) return;
+
+    let cancelled = false;
+    const warm = async () => {
+      // Esperar a tener al menos metadata (readyState >= 1)
+      if (v.readyState < 1) {
+        await new Promise((resolve) => {
+          const onMeta = () => { v.removeEventListener('loadedmetadata', onMeta); resolve(); };
+          v.addEventListener('loadedmetadata', onMeta);
+          // Failsafe: 800ms
+          setTimeout(() => { v.removeEventListener('loadedmetadata', onMeta); resolve(); }, 800);
+        });
+      }
+      if (cancelled) return;
+      try {
+        // Asegurar muted=true (browsers bloquean autoplay con sonido).
+        v.muted = true;
+        const playPromise = v.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          await playPromise;
+        }
+        if (cancelled) return;
+        // Pausar inmediatamente — solo queríamos forzar el primer frame.
+        // Si en este tiempo (1-2 frames) el slot pasó a activo, la pausa
+        // será inmediatamente revertida por el effect de play/pause
+        // arriba.
+        if (distanceFromActive !== 0) {
+          v.pause();
+        }
+        warmedRef.current = videoSrc;
+      } catch (_) {
+        // play() puede fallar (autoplay policy en navegadores estrictos).
+        // No es fatal — el video arrancará por la ruta normal en
+        // distance=0. Solo perdemos el frame warmup en este caso.
+      }
+    };
+
+    // Damos un pequeño respiro (1 frame) para no competir con animaciones
+    // del swipe que aún está en curso cuando entramos en distance=1.
+    const rafId = requestAnimationFrame(warm);
+    return () => { cancelled = true; cancelAnimationFrame(rafId); };
+  }, [isVideo, distanceFromActive, videoSrc, videoEl]);
+
+  // ── 🚀 PRIMER FRAME RENDERIZADO via requestVideoFrameCallback
+  //
+  // Sabemos con exactitud CUÁNDO el primer frame del video está pintado en
+  // GPU (no solo cuando hay buffer). Esto elimina el "flash negro" entre el
+  // poster desapareciendo y el video apareciendo: en lugar de fiarnos de
+  // `canplay` (buffer suficiente, frame puede estar a 1-2 ticks de renderizar),
+  // esperamos al primer rVFC para decir hasFirstFrame=true.
+  //
+  // Fallback: si el browser no soporta rVFC (Safari <17 viejo), usamos
+  // `playing` event como aproximación.
+  useEffect(() => {
+    if (!isVideo) return;
+    const v = videoEl?.current;
+    if (!v) return;
+
+    let rvfcHandle = null;
+    if (typeof v.requestVideoFrameCallback === 'function') {
+      rvfcHandle = v.requestVideoFrameCallback(() => {
+        setHasFirstFrame(true);
+      });
+    } else {
+      // Fallback: marcar hasFirstFrame al primer evento 'playing'
+      const onPlaying = () => { setHasFirstFrame(true); };
+      v.addEventListener('playing', onPlaying, { once: true });
+      return () => v.removeEventListener('playing', onPlaying);
+    }
+    return () => {
+      if (rvfcHandle != null && typeof v.cancelVideoFrameCallback === 'function') {
+        try { v.cancelVideoFrameCallback(rvfcHandle); } catch (_) {}
+      }
+    };
+  }, [isVideo, videoSrc, videoEl]);
 
   // ── BACKGROUND PAUSE ─────────────────────────────────────────────────────
   // TikTok pausa video Y audio cuando el usuario minimiza la app.
@@ -312,10 +463,12 @@ const PollOptionMedia = ({
         className={cn('relative w-full h-full overflow-hidden', className)}
         style={style}
       >
-        {/* Poster visible hasta que el video tiene buffer suficiente.
-            Hace crossfade con el video cuando isBuffered=true.
-            Elimina la pantalla negra inicial y el efecto "cámara lenta"
-            por arrancar sin datos suficientes. */}
+        {/* Poster visible hasta que el video tiene SU PRIMER FRAME pintado.
+            Hace crossfade con el video cuando hasFirstFrame=true.
+            Usamos hasFirstFrame (rVFC) en lugar de isBuffered (canplay) para
+            eliminar el flash negro de 1-2 frames entre "hay buffer" y "hay
+            primer frame pintado". Si el browser no soporta rVFC, cae a
+            'playing' event como aproximación. */}
         {posterSrc && (
           <img
             src={posterSrc}
@@ -331,7 +484,7 @@ const PollOptionMedia = ({
             loading={distanceFromActive <= 1 ? 'eager' : 'lazy'}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{
-              opacity: isBuffered ? 0 : 1,
+              opacity: hasFirstFrame ? 0 : 1,
               transition: 'opacity 0.2s ease',
               zIndex: 1,
             }}
@@ -355,8 +508,10 @@ const PollOptionMedia = ({
           onCanPlay={() => {
             // Video tiene suficiente buffer para reproducir sin congelarse
             setIsBuffered(true);
-            // Arrancar reproducción aquí en lugar de con autoPlay
-            // garantiza que el video no empieza antes de tener datos.
+            // Si el slot está activo Y el effect de play/pause no llegó
+            // a arrancar (porque readyState aún era <2 cuando se ejecutó),
+            // arrancamos ahora. Si el slot ya no está activo, ignoramos
+            // (un play aquí provocaría reproducción accidental en PREV).
             const v = videoEl?.current;
             if (v && v.paused && distanceFromActive === 0) {
               v.play().catch(() => {});
@@ -365,10 +520,14 @@ const PollOptionMedia = ({
           onWaiting={() => {
             // Video se quedó sin datos → mostrar poster de nuevo
             setIsBuffered(false);
+            // No reseteamos hasFirstFrame: el frame YA está pintado.
+            // El crossfade del poster usa hasFirstFrame, así que el
+            // poster solo vuelve si videoSrc cambia (re-load completo).
           }}
           onPlaying={() => {
             // Video tiene datos de nuevo → ocultar poster
             setIsBuffered(true);
+            setHasFirstFrame(true);
           }}
           onLoadedData={() => setVideoStatus('loaded')}
           onError={() => setVideoStatus('error')}
@@ -386,12 +545,13 @@ const PollOptionMedia = ({
           )}
           style={{
             // CLAVE: visibility hidden + opacity 0 hasta que haya primer
-            // frame. visibility:hidden evita que el WebView pinte NADA
-            // del <video> (ni el placeholder); opacity:0 da el crossfade
-            // suave cuando volvemos a `visible`. El usuario nunca llega
-            // a ver el <video> antes del primer frame renderizado.
-            visibility: isBuffered ? 'visible' : 'hidden',
-            opacity: isBuffered ? 1 : 0,
+            // frame REAL pintado (no solo bufferizado). visibility:hidden
+            // evita que el WebView pinte NADA del <video> (ni el placeholder);
+            // opacity:0 da el crossfade suave cuando volvemos a `visible`.
+            // El usuario nunca llega a ver el <video> antes del primer
+            // frame renderizado en GPU (detectado via requestVideoFrameCallback).
+            visibility: hasFirstFrame ? 'visible' : 'hidden',
+            opacity: hasFirstFrame ? 1 : 0,
             transition: 'opacity 0.2s ease',
             transform: 'translateZ(0)',
             backfaceVisibility: 'hidden',
