@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useNavPreference } from '../hooks/useNavPreference';
 import { useModalBackButton } from '../hooks/useBackButton';
+import useKeyboardOpen from '../hooks/useKeyboardOpen';
 
 const CommentsModal = ({ 
   isOpen, 
@@ -27,6 +28,12 @@ const CommentsModal = ({
   const { hideRightNavigationBar, showRightNavigationBar, hideBottomNavigationBar, showBottomNavigationBar, setCommentInputConfig } = useTikTok();
   const { isBottomNav } = useNavPreference();
   const [isExpanded, setIsExpanded] = useState(false);
+  // 📱 Cuando el teclado aparece estando el modal en estado "medio abierto"
+  // (bottom-sheet), el dvh se reduce y el contenido queda con apenas 160px
+  // visibles → ni se ven los comentarios ni cabe la lista. TikTok soluciona
+  // esto auto-expandiendo el modal a casi pantalla completa, dejando el
+  // post como un thumbnail arriba. Aquí replicamos ese comportamiento.
+  const { isOpen: isKeyboardOpen } = useKeyboardOpen();
   
   const didHideNavRef = useRef(false);
   const dragStartY = useRef(0);
@@ -109,6 +116,23 @@ const CommentsModal = ({
       setIsExpanded(false);
     }
   }, [isOpen]);
+
+  // 📱 Auto-expand cuando el teclado se abre en modo bottom-sheet:
+  // - El usuario tocó el input "Añade un comentario" → se abre el teclado.
+  // - El modal medio abierto (40dvh-113px) deja ~160px → no se ve nada.
+  // - Forzamos isExpanded=true → modal pasa a 95vh → comentarios visibles
+  //   y el post queda como un thumbnail en el slim restante arriba.
+  // Cuando el teclado se cierra NO volvemos a colapsar automáticamente,
+  // igual que TikTok: el usuario ya está leyendo comentarios, no tiene
+  // sentido devolverlo a medio abrir y perder contexto.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!isBottomSheet) return;
+    if (isKeyboardOpen && !isExpanded) {
+      setIsExpanded(true);
+      if (onExpandChange) onExpandChange(true);
+    }
+  }, [isKeyboardOpen, isOpen, isBottomSheet, isExpanded, onExpandChange]);
 
   // Detect mobile
   useEffect(() => {
@@ -232,7 +256,14 @@ const CommentsModal = ({
               "relative overflow-hidden flex flex-col transition-all duration-300",
               isBottomSheet 
                 ? (isExpanded 
-                    ? "w-full h-[95vh] rounded-t-3xl bg-zinc-900 shadow-2xl"
+                    ? (isKeyboardOpen
+                        // 🆕 Con teclado abierto: dejamos ~200px en la parte
+                        // superior para que el post se vea como un thumbnail
+                        // (igual que TikTok). dvh ya descuenta el área del
+                        // teclado en adjustResize, así que (100dvh - 200px)
+                        // = todo el espacio disponible MENOS 200px para el post.
+                        ? "w-full h-[calc(100dvh-200px)] rounded-t-3xl bg-zinc-900 shadow-2xl"
+                        : "w-full h-[95vh] rounded-t-3xl bg-zinc-900 shadow-2xl")
                     : "w-full h-[calc(40dvh-113px)] min-h-[160px] rounded-t-3xl bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]")
                 : isMobile 
                   ? "w-full h-[75dvh] max-h-[85dvh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900 shadow-2xl"
