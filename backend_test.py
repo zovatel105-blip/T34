@@ -19,7 +19,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 # Test configuration
-BACKEND_URL = "https://pod-details-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://dual-stream-decoder.preview.emergentagent.com/api"
 BROKEN_POLL_ID = "685e9de8-8dc4-49ec-94c0-8e0da20e2ae4"
 
 # Test credentials - using created test user
