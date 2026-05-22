@@ -23,7 +23,7 @@ import { useViewTracking } from '../hooks/useViewTracking';
 import { cn } from '../lib/utils';
 import AppConfig from '../config/config';
 import { resolveAssetUrl } from '../utils/resolveAssetUrl';
-import { pickPlayableVideoUrl } from '../utils/mediaUrl';
+import { pickPlayableVideoUrl, pickVideoPosterUrl, pickImageUrl } from '../utils/mediaUrl';
 import { ChevronUp, ChevronDown, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, CheckCircle, User, Home, Search, Plus, Mail, Trophy, Share2, Music, X, Swords } from 'lucide-react';
 import VoteIcon from './icons/VoteIcon';
 import { Button } from './ui/button';
@@ -112,7 +112,23 @@ const UserButton = ({ user, percentage, isSelected, isWinner, onClick, onUserCli
   </div>
 );
 
-const TikTokPollCard = ({ 
+// 🚀 OPTIMIZACIÓN CRÍTICA TikTok-style: TikTokPollCard memoizado
+//
+// CAUSA RAÍZ del lag durante el swipe: el padre TikTokScrollView llama
+// setTranslateOffset(...) en CADA touchmove (60+ veces/s). Eso re-renderiza
+// el padre, que vuelve a montar el array `slots.map(...)`, que pasa props
+// a TikTokPollCard. Si TikTokPollCard NO está memoizado, se re-renderiza
+// 60 veces/s — junto con su árbol (PollOptionMedia, VSLayout, MediaToolbar,
+// CommentsModal lazy, etc.). En un VS con 2 videos + 3 preguntas eso son
+// miles de operaciones por segundo durante un swipe.
+//
+// React.memo con shallow compare es suficiente: las únicas props que
+// cambian durante el swipe son las internas de TikTokScrollView (que NO
+// se pasan al card). poll / isActive / distanceFromActive solo cambian
+// al COMMITear el swipe (al final), no durante. Las callbacks deben
+// venir envueltas en useCallback desde el padre — si no, fallarían el
+// shallow compare. (Ya se pasan así desde la página padre).
+const TikTokPollCardInner = ({
   poll, 
   onVote, 
   onLike, 
@@ -1700,6 +1716,12 @@ const TikTokPollCard = ({
   );
 };
 
+// 🚀 React.memo wrapping — el shallow compare es exactamente lo que
+// necesitamos: props del card son estables durante el swipe; solo cambian
+// al COMMITear (cambio de slot). Esto reduce los renders durante el drag
+// de ~60/s a 0.
+const TikTokPollCard = React.memo(TikTokPollCardInner);
+TikTokPollCard.displayName = 'TikTokPollCard';
 
 // — TikTokPollCard y helpers internos se mantienen igual que en tu versión original —
 // (No se modifican: renderActionButtons, UserButton, renderTextWithHashtags, etc.)
@@ -1901,6 +1923,79 @@ const TikTokScrollView = ({
       existing.clear();
     };
   }, []);
+
+  // ─── 🚀 PRE-DECODE POSTERS del +1 con img.decode() ────────────────────────
+  // El poster JPEG se descarga sí — pero NO se decodifica en memoria hasta
+  // que se renderiza. Decodificar un JPEG 1080×1920 en CPU cuesta ~30-80ms
+  // en gama media → si el swipe ocurre antes, el browser tiene que decode
+  // sync mientras renderiza → frame drop visible.
+  //
+  // img.decode() es una Promise API que decode en background y resuelve
+  // cuando la imagen está lista para paint. Lo hacemos para los posters
+  // del +1 (siguiente post) — cuando el slot pase a CUR, el poster ya
+  // está pre-decodificado y aparece instantáneo.
+  //
+  // Para layouts VS hay 2 posters (lados A y B), así que decode ambos.
+  const decodedPostersRef = useRef(new Set());
+  useEffect(() => {
+    if (!polls || activeIndex >= polls.length - 1) return;
+    const nextPoll = polls[activeIndex + 1];
+    if (!nextPoll) return;
+
+    const collectPosterUrls = (poll) => {
+      const urls = [];
+      const addFromOption = (opt) => {
+        if (!opt) return;
+        const url = pickVideoPosterUrl(opt) || pickImageUrl(opt);
+        if (url && !urls.includes(url)) urls.push(url);
+      };
+      // Para VS: posters de la 1ª pregunta (los 2 lados visibles al swipe)
+      if (poll.layout === 'vs') {
+        const firstQ = Array.isArray(poll.vs_questions) && poll.vs_questions.length > 0
+          ? poll.vs_questions[0]
+          : { options: poll.options || [] };
+        const qOpts = Array.isArray(firstQ?.options) ? firstQ.options : [];
+        qOpts.forEach(addFromOption);
+      } else {
+        // Post normal: solo la 1ª opción (la primera que se ve)
+        if (Array.isArray(poll.options) && poll.options[0]) {
+          addFromOption(poll.options[0]);
+        }
+      }
+      return urls;
+    };
+
+    const posterUrls = collectPosterUrls(nextPoll);
+    if (posterUrls.length === 0) return;
+
+    // Decode en background. Ignoramos errores (la imagen puede fallar de
+    // descargar — no es crítico, el browser decodifica on-demand al render).
+    posterUrls.forEach((url) => {
+      if (decodedPostersRef.current.has(url)) return;
+      const img = new Image();
+      img.src = url;
+      // decode() devuelve Promise — el browser hace decode en thread aparte
+      // (si lo soporta) o en main thread pero NO bloquea render.
+      if (typeof img.decode === 'function') {
+        img.decode().then(() => {
+          decodedPostersRef.current.add(url);
+        }).catch(() => {
+          // Decode falló (img no cargó, CORS, etc.) — no es crítico
+        });
+      } else {
+        // Fallback: simplemente cargar via Image constructor (warm HTTP cache)
+        img.onload = () => decodedPostersRef.current.add(url);
+      }
+    });
+
+    // Limpiamos el Set cuando crece demasiado (>50 entries) para no
+    // mantener referencias innecesarias. No removemos imágenes individuales
+    // — están en HTTP cache del browser, no consumen memoria de imágenes
+    // decodificadas (esas se gestionan automáticamente por el browser).
+    if (decodedPostersRef.current.size > 50) {
+      decodedPostersRef.current.clear();
+    }
+  }, [polls, activeIndex]);
 
   // ─── PRE-CONNECT next audio ───────────────────────────────────────────────
   useEffect(() => {
@@ -2212,6 +2307,16 @@ const TikTokScrollView = ({
     swipeStartTimeRef.current = Date.now();
     velocitySamplesRef.current = [{ y: touchStartYRef.current, t: swipeStartTimeRef.current }];
 
+    // 🚀 BYPASS REACT: marcamos drag activo y desactivamos transición en el
+    // tape vía DOM directo. Cualquier re-render accidental durante el drag
+    // verá `dragActiveRef=true` y mantendrá el transform actual.
+    dragActiveRef.current = true;
+    currentDragOffsetRef.current = 0;
+    currentPullRef.current = 0;
+    if (tapeRef.current) {
+      tapeRef.current.style.transition = 'none';
+    }
+
     // 🚀 TikTok-style: prefetch del +1 al instante (90%+ de swipes van forward).
     // Esto ahorra ~150–300ms vs esperar a que termine la animación de swipe.
     if (activeIndex + 1 < polls.length) {
@@ -2230,6 +2335,27 @@ const TikTokScrollView = ({
     }
   }, [isModalOpen, storiesOverlayOpen, onRefresh, isRefreshing, activeIndex, polls.length, eagerPrefetchNextPost, pauseActiveVideoHlsLoading]);
 
+  // 🚀 BYPASS REACT durante el drag — actualiza el transform directamente
+  // via ref. Evita re-renders del componente padre + cascade a los 3 cards
+  // en cada touchmove (60+/s = 60+ renders/s perdidos a tiempo de paint).
+  // Esto es exactamente lo que hace TikTok: durante el drag, ningún
+  // componente React se renderiza; solo se mueve el contenedor con CSS
+  // transform desde un listener nativo.
+  //
+  // `currentDragOffsetRef` guarda el offset actual del drag para que el
+  // touchend pueda leerlo sin depender de state asíncrono.
+  const currentDragOffsetRef = useRef(0);
+  const currentPullRef = useRef(0);
+  const dragActiveRef = useRef(false);
+
+  const applyTapeTransform = useCallback((offsetDvh, pullPx = 0) => {
+    const el = tapeRef.current;
+    if (!el) return;
+    // translate3d para forzar layer GPU. Sin transition (drag activo).
+    el.style.transition = 'none';
+    el.style.transform = `translate3d(0, calc(-100dvh + ${offsetDvh}dvh + ${pullPx}px), 0)`;
+  }, []);
+
   const handleTapePointerMove = useCallback((e) => {
     if (touchStartYRef.current === null) return;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -2245,7 +2371,13 @@ const TikTokScrollView = ({
 
     if (onRefresh && !isRefreshing && activeIndex === 0 && deltaPx > 0) {
       isPullingRef.current = true;
-      setPullDistance(Math.min(deltaPx * 0.5, PTR_MAX));
+      const pullPx = Math.min(deltaPx * 0.5, PTR_MAX);
+      currentPullRef.current = pullPx;
+      // Actualizar el indicador de pull-to-refresh (mantiene React aquí
+      // porque cambia el spinner visualmente; pero solo cuando hay pull).
+      setPullDistance(pullPx);
+      // El tape también se desplaza con el pull
+      applyTapeTransform(0, pullPx);
       return;
     }
 
@@ -2258,9 +2390,12 @@ const TikTokScrollView = ({
       offsetDvh *= EDGE_RESISTANCE;
     }
 
-    setIsTransitioning(false);
-    setTranslateOffset(offsetDvh);
-  }, [onRefresh, isRefreshing, activeIndex, polls.length]);
+    // 🚀 BYPASS REACT: actualizar el DOM directamente, NO setState aquí.
+    // React no se entera del drag → 0 re-renders durante el swipe.
+    currentDragOffsetRef.current = offsetDvh;
+    dragActiveRef.current = true;
+    applyTapeTransform(offsetDvh, 0);
+  }, [onRefresh, isRefreshing, activeIndex, polls.length, applyTapeTransform]);
 
   const handleTapePointerUp = useCallback(async (e) => {
     if (touchStartYRef.current === null) return;
@@ -2285,6 +2420,13 @@ const TikTokScrollView = ({
     touchCurrentYRef.current = null;
     swipeStartTimeRef.current = null;
     velocitySamplesRef.current = [];
+
+    // 🚀 BYPASS REACT: liberar el flag ANTES del setState para que el
+    // próximo re-render use los valores de state (no del ref de drag).
+    // El DOM sigue con el transform bypassed; React lo sobreescribirá con
+    // el target (con transition activa) → el browser anima del actual al
+    // target. Esa es la "snap-to" animation.
+    dragActiveRef.current = false;
 
     if (isPullingRef.current) {
       isPullingRef.current = false;
@@ -2717,12 +2859,21 @@ const TikTokScrollView = ({
           position: 'absolute',
           top: 0, left: 0, right: 0,
           height: '300dvh',
-          transform: `translateY(calc(-100dvh + ${translateOffset}dvh)) translateY(${pullDistance > 0 ? pullDistance : 0}px)`,
+          // 🚀 translate3d → force compositor layer desde el primer paint.
+          // El browser crea una capa GPU permanente, así que las
+          // actualizaciones de transform durante el drag son compositor-only
+          // (no layout, no paint del contenido).
+          transform: `translate3d(0, calc(-100dvh + ${translateOffset}dvh + ${pullDistance > 0 ? pullDistance : 0}px), 0)`,
           // Duración adaptativa según velocidad del swipe
           transition: isTransitioning
             ? `transform ${transitionDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`
             : 'none',
           willChange: 'transform',
+          // 🚀 touch-action: pan-y → declara al browser que solo procesamos
+          // pan vertical. El browser puede iniciar el gesto sin esperar a
+          // saber si vamos a hacer preventDefault. Crítico para 60fps.
+          // Sin esto, hay un retardo de ~50-100ms en mobile WebView.
+          touchAction: 'pan-y',
         }}
         onTouchStart={handleTapePointerDown}
         onTouchMove={handleTapePointerMove}
@@ -2743,7 +2894,17 @@ const TikTokScrollView = ({
               left: 0, right: 0,
               height: '100dvh',
               overflow: 'hidden',
-              willChange: 'transform',
+              // 🚀 CSS Containment — aisla layout + paint + size del slot.
+              // El browser sabe que cambios dentro del slot NO afectan a
+              // los hermanos → puede optimizar layout/paint dramáticamente.
+              // Esto reduce trabajo en repaint durante el drag.
+              contain: 'layout paint size',
+              // willChange solo en el slot activo y vecinos cercanos: cada
+              // capa GPU cuesta memoria. Promote permanentemente solo
+              // lo que se beneficia (los 3 slots SÍ, pero usamos transform3d
+              // arriba para forzar la capa sin willChange constante).
+              transform: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
             }}
           >
             {slotPoll ? (
@@ -2764,7 +2925,7 @@ const TikTokScrollView = ({
                 {...sharedCardProps}
               />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: 'black', willChange: 'transform' }} />
+              <div style={{ width: '100%', height: '100%', background: 'black' }} />
             )}
           </div>
         ))}

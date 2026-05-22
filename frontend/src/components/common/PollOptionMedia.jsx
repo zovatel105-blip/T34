@@ -187,6 +187,31 @@ const PollOptionMedia = ({
     if (imageSrc) setImgStatus('loading');
   }, [imageSrc]);
 
+  // ── 🚀 IMG.DECODE() del poster: garantiza decode antes del paint ──────────
+  //
+  // El poster JPEG/WebP se descarga via <img src=...> pero el browser solo
+  // lo DECODIFICA cuando va a pintarlo. Decode de JPEG 1080×1920 toma
+  // 30-80ms en gama media. Si el slot pasa de PREV/NEXT a CUR durante esos
+  // 30-80ms, el browser hace decode sync mientras render → frame drop.
+  //
+  // img.decode() es una Promise API que decodifica en background y resuelve
+  // cuando la imagen está lista para pintar inmediatamente. Lo hacemos en
+  // distance <= 1 (CUR + vecinos) para que estén pre-decoded antes del swipe.
+  useEffect(() => {
+    if (!posterSrc) return;
+    if (distanceFromActive > 1) return;
+    if (typeof Image === 'undefined') return;
+    let cancelled = false;
+    const img = new Image();
+    img.src = posterSrc;
+    if (typeof img.decode === 'function') {
+      img.decode().catch(() => { /* decode fail OK */ });
+    } else if (img.complete) {
+      // Ya en cache; no hacemos nada
+    }
+    return () => { cancelled = true; void cancelled; };
+  }, [posterSrc, distanceFromActive]);
+
   // ── 🚀 PLAY/PAUSE DRIVEN BY distanceFromActive (FIX CRÍTICO TikTok-style)
   //
   // CAUSA RAÍZ encontrada: `onCanPlay` solo dispara UNA VEZ por carga. Si
