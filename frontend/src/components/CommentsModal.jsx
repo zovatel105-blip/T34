@@ -117,22 +117,17 @@ const CommentsModal = ({
     }
   }, [isOpen]);
 
-  // 📱 Auto-expand cuando el teclado se abre en modo bottom-sheet:
-  // - El usuario tocó el input "Añade un comentario" → se abre el teclado.
-  // - El modal medio abierto (40dvh-113px) deja ~160px → no se ve nada.
-  // - Forzamos isExpanded=true → modal pasa a 95vh → comentarios visibles
-  //   y el post queda como un thumbnail en el slim restante arriba.
-  // Cuando el teclado se cierra NO volvemos a colapsar automáticamente,
-  // igual que TikTok: el usuario ya está leyendo comentarios, no tiene
-  // sentido devolverlo a medio abrir y perder contexto.
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!isBottomSheet) return;
-    if (isKeyboardOpen && !isExpanded) {
-      setIsExpanded(true);
-      if (onExpandChange) onExpandChange(true);
-    }
-  }, [isKeyboardOpen, isOpen, isBottomSheet, isExpanded, onExpandChange]);
+  // 📱 Comportamiento con teclado abierto (estilo TikTok):
+  // No expandimos el modal automáticamente. En lugar de eso, cuando el
+  // teclado aparece dejamos el modal en estado "minimizado" pero
+  // redimensionado para que sea usable (ver lógica de altura más abajo
+  // en el className). Así el post sigue visible como thumbnail en la
+  // parte superior y el modal solo aloja: barra de emojis + input +
+  // los últimos comentarios. Eso es exactamente lo que muestra TikTok.
+  //
+  // Nota: si el usuario YA había expandido manualmente el modal y luego
+  // tocó el input, NO lo colapsamos automáticamente — respetamos su
+  // intención. Solo redimensionamos cuando estaba en half-open.
 
   // Detect mobile
   useEffect(() => {
@@ -256,15 +251,19 @@ const CommentsModal = ({
               "relative overflow-hidden flex flex-col transition-all duration-300",
               isBottomSheet 
                 ? (isExpanded 
-                    ? (isKeyboardOpen
-                        // 🆕 Con teclado abierto: dejamos ~200px en la parte
-                        // superior para que el post se vea como un thumbnail
-                        // (igual que TikTok). dvh ya descuenta el área del
-                        // teclado en adjustResize, así que (100dvh - 200px)
-                        // = todo el espacio disponible MENOS 200px para el post.
-                        ? "w-full h-[calc(100dvh-200px)] rounded-t-3xl bg-zinc-900 shadow-2xl"
-                        : "w-full h-[95vh] rounded-t-3xl bg-zinc-900 shadow-2xl")
-                    : "w-full h-[calc(40dvh-113px)] min-h-[160px] rounded-t-3xl bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]")
+                    ? "w-full h-[95vh] rounded-t-3xl bg-zinc-900 shadow-2xl"
+                    // Half-open (estado por defecto del bottom-sheet):
+                    //   • Sin teclado: 40dvh - 113px (espacio para nav abajo).
+                    //   • Con teclado abierto: el dvh ya se reduce por
+                    //     adjustResize, así que 40dvh quedaría ridículamente
+                    //     pequeño. Para que el modal siga siendo USABLE pero
+                    //     SIN expandirse (el usuario quiere ver el post como
+                    //     thumbnail arriba, como TikTok), forzamos una altura
+                    //     calculada que deja ~220px arriba para el post y
+                    //     usa el resto para comentarios + emojis + input.
+                    : isKeyboardOpen
+                      ? "w-full h-[calc(100dvh-220px)] rounded-t-3xl bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
+                      : "w-full h-[calc(40dvh-113px)] min-h-[160px] rounded-t-3xl bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.4)]")
                 : isMobile 
                   ? "w-full h-[75dvh] max-h-[85dvh] rounded-t-3xl safe-area-inset-bottom bg-zinc-900 shadow-2xl"
                   : "w-full max-w-2xl max-h-[92dvh] rounded-2xl bg-zinc-900 shadow-2xl"
