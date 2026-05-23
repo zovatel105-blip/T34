@@ -39,6 +39,7 @@ import storyService from '../services/storyService';
 import { useNavPreference } from '../hooks/useNavPreference';
 import { useTikTok } from '../contexts/TikTokContext';
 import useNetworkStatus from '../hooks/useNetworkStatus';
+import { setFastScrolling } from '../utils/scrollVelocityTracker';
 
 // Helper function to render text with clickable hashtags
 const renderTextWithHashtags = (text, navigate) => {
@@ -2455,6 +2456,23 @@ const TikTokScrollView = ({
     // Commit por distancia O por velocidad (flick)
     const isFlick = instantVelocity >= VELOCITY_COMMIT_PX_MS;
     const shouldCommit = (draggedFraction >= SWIPE_FRACTION_THRESHOLD || isFlick) && !cannotMove;
+
+    // 🚀 FIX BOTTLENECK #3 — Fast-scroll detection
+    // ───────────────────────────────────────────
+    // Si el commit es un FLICK (velocidad alta) o si el usuario ya estaba en
+    // fast-scrolling (cascada de swipes), marcamos el flag global. Los slots
+    // PREV/NEXT van a SUSPENDER la carga de HLS (manifest + primer segmento)
+    // mientras el flag esté activo. Esto evita malgastar bandwidth en
+    // contenido que el usuario va a saltar.
+    // El tracker tiene auto-release a los 250ms de inactividad → cuando el
+    // scroll se estabiliza, los slots vuelven a cargar HLS automáticamente.
+    if (shouldCommit && isFlick) {
+      setFastScrolling(true);
+    } else if (shouldCommit) {
+      // Commit lento (drag completo, sin flick) → es scroll deliberado.
+      // No marcamos fast; los slots cargan HLS normalmente.
+      setFastScrolling(false);
+    }
 
     if (shouldCommit) {
       // remainingDvh: cuánto falta visualmente para llegar al snap

@@ -864,19 +864,29 @@ async def backfill_missing_video_assets(
     """
     processed = 0
     try:
-        # Buscar polls ready con opciones de vídeo que les falte algo
+        # Buscar polls ready con opciones de vídeo que les falte algo.
+        # Incluye 3 estados:
+        #   - thumbnail_url ausente
+        #   - optimized_media_url ausente
+        #   - hls_url ausente (solo relevante si include_hls=True)
+        missing_clauses = [
+            {"thumbnail_url": {"$in": [None, ""]}},
+            {"thumbnail_url": {"$exists": False}},
+            {"optimized_media_url": {"$in": [None, ""]}},
+            {"optimized_media_url": {"$exists": False}},
+        ]
+        if include_hls:
+            missing_clauses.extend([
+                {"hls_url": {"$in": [None, ""]}},
+                {"hls_url": {"$exists": False}},
+            ])
         cursor = db.polls.find(
             {
                 "status": "ready",
                 "options": {
                     "$elemMatch": {
                         "media_type": "video",
-                        "$or": [
-                            {"thumbnail_url": {"$in": [None, ""]}},
-                            {"thumbnail_url": {"$exists": False}},
-                            {"optimized_media_url": {"$in": [None, ""]}},
-                            {"optimized_media_url": {"$exists": False}},
-                        ],
+                        "$or": missing_clauses,
                     }
                 },
             },
@@ -961,17 +971,29 @@ async def backfill_loop(
     db,
     interval_seconds: int = 30,
     batch_size: int = 5,
+    include_hls: bool = True,
 ) -> None:
     """Loop infinito: cada `interval_seconds` procesa un batch de polls con
     assets de vídeo faltantes. Pensado para correr tras startup y recuperar
     vídeos históricos sin bloquear el servicio.
+
+    🚀 FIX BOTTLENECK #5: `include_hls=True` por defecto. Antes el HLS NUNCA
+    se generaba para vídeos legacy (default era False) → solo 1 de cada 23
+    vídeos tenía HLS y el feed servía MP4 plano (sin ABR, sin fast-start de
+    360p, primer byte 1-2s en 4G). Ahora el backfill genera HLS para todos
+    los vídeos sin él, dándoles arranque sub-segundo estilo TikTok.
     """
-    logger.info(f"[backfill] loop started (every {interval_seconds}s, batch={batch_size})")
+    logger.info(
+        f"[backfill] loop started (every {interval_seconds}s, "
+        f"batch={batch_size}, include_hls={include_hls})"
+    )
     # Esperar un poco al arranque para dejar que el servidor se estabilice
     await asyncio.sleep(20)
     while True:
         try:
-            processed = await backfill_missing_video_assets(db, batch_size=batch_size)
+            processed = await backfill_missing_video_assets(
+                db, batch_size=batch_size, include_hls=include_hls,
+            )
             if processed == 0:
                 # Nada que hacer: esperar más antes de la siguiente pasada
                 await asyncio.sleep(interval_seconds * 4)

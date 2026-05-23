@@ -18,6 +18,11 @@ import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
 import HlsVideo from './HlsVideo';
 import videoMemoryManager from '../../services/videoMemoryManager';
+// 🚀 FIX BOTTLENECK #3 — Fast-scroll suspension. Cuando el usuario hace
+// flick rápido y cascadas de swipes, los slots PREV/NEXT suspenden HLS
+// (manifest + primer segmento) para no malgastar bandwidth en contenido
+// que va a saltar.
+import { useFastScrolling } from '../../utils/scrollVelocityTracker';
 // 🆕 Fase C — Defensa en profundidad: cuando el backend NO mandó
 // thumbnail_url (típico de VS legacy con vs_questions[].options[] sin
 // enriquecer por Fase A/B), generamos el poster client-side desde el
@@ -116,7 +121,15 @@ const PollOptionMedia = ({
   //   3) Si no hay HLS → MP4 remoto plano.
   const hasCachedMp4 = !!cachedVideoSrc;
   const mp4SrcForPlayer = cachedVideoSrc || rawVideoSrc;
-  const hlsSrcForPlayer = hasCachedMp4 ? null : rawHlsSrc;
+  // 🚀 FIX BOTTLENECK #3 — durante fast-scroll (flick + cascada), los
+  // slots PREV/NEXT (distance > 0) suspenden HLS. El slot activo
+  // (distance === 0) carga HLS siempre. Cuando el tracker libera el flag
+  // (250ms de idle), los slots vecinos reanudan automáticamente.
+  // Nota: si hay MP4 cacheado en disco, NO suspendemos — es offline-first,
+  // cero coste de red.
+  const isFastScrolling = useFastScrolling();
+  const suspendHls = isFastScrolling && distanceFromActive > 0 && !hasCachedMp4;
+  const hlsSrcForPlayer = hasCachedMp4 || suspendHls ? null : rawHlsSrc;
   const videoSrc = mp4SrcForPlayer; // para checks de "hay algo que reproducir"
 
   // ── POSTER CANVAS FALLBACK (Fase C) ───────────────────────────────────────
@@ -532,11 +545,9 @@ const PollOptionMedia = ({
           poster={TRANSPARENT_POSTER}
           onCanPlay={() => {
             // Video tiene suficiente buffer para reproducir sin congelarse
+            // (readyState 3 = HAVE_FUTURE_DATA). Mantenemos esta guarda como
+            // fallback si el browser saltó loadeddata (algunos WebView lo hacen).
             setIsBuffered(true);
-            // Si el slot está activo Y el effect de play/pause no llegó
-            // a arrancar (porque readyState aún era <2 cuando se ejecutó),
-            // arrancamos ahora. Si el slot ya no está activo, ignoramos
-            // (un play aquí provocaría reproducción accidental en PREV).
             const v = videoEl?.current;
             if (v && v.paused && distanceFromActive === 0) {
               v.play().catch(() => {});
@@ -554,7 +565,18 @@ const PollOptionMedia = ({
             setIsBuffered(true);
             setHasFirstFrame(true);
           }}
-          onLoadedData={() => setVideoStatus('loaded')}
+          onLoadedData={() => {
+            setVideoStatus('loaded');
+            // 🚀 FIX BOTTLENECK #4 — arranca el play en readyState 2
+            // (HAVE_CURRENT_DATA = primer frame ya decodificado), sin
+            // esperar a readyState 3 (HAVE_FUTURE_DATA = ~500ms de buffer).
+            // Esto recorta ~80-150ms al primer frame visible en cada swipe.
+            // Es el equivalente a `bufferForPlaybackMs` bajo de ExoPlayer.
+            const v = videoEl?.current;
+            if (v && v.paused && distanceFromActive === 0) {
+              v.play().catch(() => {});
+            }
+          }}
           onError={() => setVideoStatus('error')}
           // 🔄 Si HLS falla fatal, hls.js cae a MP4 automáticamente (lo
           // gestiona <HlsVideo>). Aquí solo loggeamos para debug.

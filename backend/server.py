@@ -13680,6 +13680,40 @@ async def create_vs_experience(
         except Exception as compose_err:
             logger.error(f"Failed to queue VS composition for {vs_id}: {compose_err}")
         
+        # 🚀 FIX BOTTLENECK #5a: VS también necesita pasar por el pipeline
+        # estándar (process_poll_media) para generar:
+        #   - optimized_media_url (MP4 720p, fast-start)
+        #   - hls_url (ABR ladder 360p/540p/720p, arranque sub-segundo)
+        # Sin esto, el feed sirve los uploads RAW (1080p@60fps en peor caso),
+        # primer byte 1-2s en 4G, NO ABR, NO fast-start de 360p.
+        # Esto se aplica POR OPCIÓN, así que cada lado del VS recibe su HLS.
+        # El status arranca en "processing" y termina en "ready" cuando
+        # la validación + thumbnails básicos terminen (~3s).
+        try:
+            has_video = any(
+                opt.get("media_type") == "video" and opt.get("media_url")
+                for q in vs_data.questions for opt in q.options
+            )
+            if has_video:
+                # Marcar status como processing (el pipeline lo cambiará a ready)
+                await db.polls.update_one(
+                    {"id": vs_id},
+                    {"$set": {
+                        "status": "processing",
+                        "processing_started_at": datetime.utcnow(),
+                    }},
+                )
+                background_tasks.add_task(video_pipeline.process_poll_media, db, vs_id)
+                logger.info(f"🎬 VS {vs_id} queued to video optimization pipeline")
+            else:
+                # No videos → marca ready directamente
+                await db.polls.update_one(
+                    {"id": vs_id},
+                    {"$set": {"status": "ready"}},
+                )
+        except Exception as opt_err:
+            logger.error(f"Failed to queue VS optimization for {vs_id}: {opt_err}")
+        
         logger.info(f"VS experience created: {vs_id} by user {current_user.id}")
         
         # Usar JSONResponse directamente para evitar problemas de serialización
