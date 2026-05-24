@@ -14,7 +14,8 @@ import { useTranslation } from '../../hooks/useTranslation';
 // 🆕 Fase C: poster canvas global (antes vivía local en este archivo).
 // Extraído a utils/canvasPoster.js para que PollOptionMedia también pueda
 // usarlo como defensa en profundidad cuando el backend no manda thumbnail.
-import { generatePosterDataUrl } from '../../utils/canvasPoster';
+// canvasPoster: ya no se usa aquí (VSVideoBackground eliminado en cleanup).
+// Sigue disponible en /utils/canvasPoster.js para otros componentes.
 
 // 🎨 Twyk brand colors — usados en el rediseño VS del MVP.
 // Top card (Player A) → lila, Bottom card (Player B) → azul.
@@ -526,92 +527,14 @@ const getCountryPrimaryColor = (text, index) => {
   return index === 0 ? defaultColors.top.primary : defaultColors.bottom.primary;
 };
 
-// 🎥 VSVideoBackground
-// --------------------
-// Renderiza un <video> de fondo dentro de una card del VS. Reproduce el video
-// SÓLO cuando el slide está activo (`isActive`) para no quemar batería/CPU en
-// los slides vecinos del feed vertical. Va siempre muteado: el VS ya tiene
-// TTS de las opciones y no queremos que choquen los audios.
-//
-// 🖼️ "Portada" automática:
-// Cuando el backend no manda thumbnail (`option.media.thumbnail` vacío),
-// forzamos al <video> a pintar su primer frame mediante .load() + un micro
-// seek a ~0.1s. Como respaldo (iOS Safari + cards inactivas), extraemos un
-// data-URL del primer frame por canvas y lo usamos como `poster`.
-//
-// 🆕 Fase C: la función generatePosterDataUrl ahora vive en
-// `utils/canvasPoster.js` con su propio cache LRU + inflight dedup.
-// Aquí solo la usamos.
-
-const VSVideoBackground = ({ src, isActive, className, poster }) => {
-  const videoRef = useRef(null);
-  const [autoPoster, setAutoPoster] = useState(null);
-
-  // Si no hay poster del backend, generamos uno desde el primer frame con canvas.
-  useEffect(() => {
-    if (poster || autoPoster || !src) return;
-    let cancelled = false;
-    generatePosterDataUrl(src).then((data) => {
-      if (!cancelled && data) setAutoPoster(data);
-    });
-    return () => { cancelled = true; };
-  }, [src, poster, autoPoster]);
-
-  // Forzar el render del primer frame en el propio <video> con .load() + seek.
-  // Esto resuelve la "portada" sin depender del backend ni del canvas: incluso
-  // si CORS bloquea el canvas, el navegador pinta el primer frame del video.
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v || !src) return;
-    try {
-      v.load();
-      // Micro-seek: con muted+playsInline iOS pinta el frame seekeado.
-      const onLoaded = () => {
-        try {
-          if (!isActive && v.currentTime < 0.05) {
-            v.currentTime = 0.1;
-          }
-        } catch (_) { /* noop */ }
-      };
-      v.addEventListener('loadedmetadata', onLoaded, { once: true });
-      return () => v.removeEventListener('loadedmetadata', onLoaded);
-    } catch (_) { /* noop */ }
-  }, [src, isActive]);
-
-  // Play/pause según slide activo.
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (isActive) {
-      try { v.currentTime = 0; } catch (_) { /* noop */ }
-      const p = v.play();
-      if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay bloqueado */ });
-    } else {
-      try { v.pause(); } catch (_) { /* noop */ }
-    }
-  }, [isActive]);
-
-  const effectivePoster = poster || autoPoster || undefined;
-
-  return (
-    <video
-      ref={videoRef}
-      src={src}
-      poster={effectivePoster}
-      className={className}
-      muted
-      playsInline
-      loop
-      preload="auto"
-      autoPlay={isActive}
-      // iOS Safari/WebKit hints
-      // eslint-disable-next-line react/no-unknown-property
-      webkit-playsinline="true"
-      // eslint-disable-next-line react/no-unknown-property
-      x5-playsinline="true"
-    />
-  );
-};
+// 🎥 VSVideoBackground (ELIMINADO)
+// --------------------------------
+// Este componente reproducía un <video> nativo SIN HLS para los fondos VS.
+// Quedaba como código muerto desde que VSLayout migró a:
+//   1. <PollOptionMedia> con <HlsVideo> para cada opción individual
+//   2. <VSComposedOverlay> con un solo <video> para el split-screen composed
+// Verificación: grep "<VSVideoBackground" → 0 invocaciones en todo el repo.
+// 80+ líneas de código muerto eliminadas (versión: julio 2025).
 
 
 // 🎬 resolveBackendUrl
