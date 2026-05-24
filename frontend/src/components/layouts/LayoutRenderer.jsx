@@ -170,4 +170,9 @@ export const isValidLayout = (layoutType) => {
   return layoutType in layoutComponents;
 };
 
-export default LayoutRenderer;
+// 🚀 FIX F2 — Memoización del LayoutRenderer.
+// Sin React.memo, cada swipe re-renderiza el árbol completo del layout
+// (~5000 líneas entre VSLayout/CarouselLayout/GridLayout) aunque los props
+// del poll no hayan cambiado. Shallow compare bloquea ese re-render salvo
+// que isActive/currentSlide/poll/etc. cambien de verdad.
+export default React.memo(LayoutRenderer);

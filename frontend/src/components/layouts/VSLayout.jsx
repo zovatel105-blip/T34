@@ -971,10 +971,14 @@ const QuestionSlide = ({
         className={cn(
           "flex-1 relative overflow-hidden cursor-pointer",
           isHighlighted && !isSelected && "scale-[1.01]",
-          // Card votada → respira/flota en 3D ("sale" de la pantalla, viva)
-          // + aberración cromática (RGB split) tipo gafas 3D.
-          // 🚫 SOLO para imágenes: en video no se aplica ningún efecto 3D.
-          isSelected && !isVideo && "vs-cinema-3d-active vs-cinema-chroma-shadow",
+          // Card votada → respira/flota en 3D ("sale" de la pantalla, viva).
+          // 🚀 FIX F4: usamos la sombra ESTÁTICA `vs-cinema-chroma-shadow-video`
+          // (no la animada `vs-cinema-chroma-shadow`) incluso para imágenes.
+          // La animación de `box-shadow` infinita en CPU (2.8s loop) bajaba
+          // 5-15 FPS sostenidos. La sombra estática mantiene el "lift" sin
+          // repintar cada frame. El efecto 3D de respiración sigue activo
+          // vía `vs-cinema-3d-active` (transform: GPU-composited).
+          isSelected && !isVideo && "vs-cinema-3d-active vs-cinema-chroma-shadow-video",
           // Card perdedora → se va AL FONDO (translateZ negativo + blur).
           // 🚫 SOLO para imágenes: en video no se aplica el recede.
           isLoser && !isVideo && "vs-cinema-recede"
@@ -2290,4 +2294,8 @@ const VSLayout = ({
   );
 };
 
-export default VSLayout;
+// 🚀 FIX F2 — VSLayout memoizado (2293 líneas, 32 hooks).
+// Sin memo, cada swipe re-renderizaba todo este árbol. Con shallow compare,
+// solo se re-renderiza cuando isActive/poll/distanceFromActive cambian de
+// verdad — el resto de re-renders del padre durante swipe se cortan aquí.
+export default React.memo(VSLayout);

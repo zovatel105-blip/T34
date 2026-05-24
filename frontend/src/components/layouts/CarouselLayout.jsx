@@ -612,4 +612,5 @@ const CarouselLayout = ({
   );
 };
 
-export default CarouselLayout;
+// 🚀 FIX F2 — CarouselLayout memoizado (615 líneas).
+export default React.memo(CarouselLayout);

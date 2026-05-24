@@ -471,4 +471,5 @@ const GridLayout = ({
   );
 };
 
-export default GridLayout;
+// 🚀 FIX F2 — GridLayout memoizado (473 líneas).
+export default React.memo(GridLayout);

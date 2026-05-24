@@ -188,6 +188,24 @@ const TikTokPollCardInner = ({
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   const [isVotersExpanded, setIsVotersExpanded] = useState(false);
 
+  // 🚀 FIX F5 — Lazy-mount de modales con persistencia.
+  // ANTES: Los 5 modales (Comments/PostDetail/Voters/ChallengeParticipants/
+  //   Share) se montaban en cada slot SIEMPRE. × 3 slots = 15 árboles de
+  //   modal con sus hooks corriendo en cada swipe (~5-15ms desperdiciados).
+  // AHORA: solo se monta tras la PRIMERA apertura, y permanece montado
+  //   después para preservar las animaciones de exit de AnimatePresence
+  //   (que está dentro de cada modal). En el 95% de la sesión un usuario
+  //   no abre la mayoría de estos modales → 0 coste.
+  const hasOpenedCommentsRef = useRef(false);
+  const hasOpenedPostDetailRef = useRef(false);
+  const hasOpenedVotersRef = useRef(false);
+  const hasOpenedChallengeParticipantsRef = useRef(false);
+  const hasOpenedShareRef = useRef(false);
+  if (showCommentsModal) hasOpenedCommentsRef.current = true;
+  if (showPostDetailModal) hasOpenedPostDetailRef.current = true;
+  if (showVotersModal) hasOpenedVotersRef.current = true;
+  if (showChallengeParticipants) hasOpenedChallengeParticipantsRef.current = true;
+
   // 🗳️ VS posts: el snapshot `polls.total_votes` no se actualiza al votar
   // en el endpoint VS. VSLayout dispara `vs:statsUpdate` con el conteo real
   // tras el fetch a /api/vs/{vs_id}. Guardamos el override para mostrarlo
@@ -467,19 +485,32 @@ const TikTokPollCardInner = ({
 
   const authorUserId = getAuthorUserId();
 
+  // 🚀 FIX F6 — Gate de fetches HTTP por swipe.
+  // ANTES: estos 2 efectos disparaban fetch a `getFollowStatus` y
+  //   `getUserStories` cada vez que `authorUserId` cambiaba — es decir,
+  //   en CADA swipe, incluso en los slots PREV/NEXT (inactivos). Cuando
+  //   el usuario hacía fast-scroll, 4-6 fetch HTTP se acumulaban robando
+  //   ancho de banda al HLS del nuevo video → primer frame retardado.
+  // AHORA: sólo se disparan si la card está ACTIVA (es la visible) y
+  //   tras 300ms de estabilidad (debounce). En un fast-scroll de 5 posts
+  //   seguidos en <300ms, sólo el último dispara los fetch.
   // Check follow status when component mounts or follow state changes
   useEffect(() => {
-    if (authorUserId && currentUser && authorUserId !== currentUser.id) {
+    if (!isActive || !authorUserId || !currentUser || authorUserId === currentUser.id) return;
+    const t = setTimeout(() => {
       getFollowStatus(authorUserId);
-    }
-  }, [authorUserId, currentUser, getFollowStatus, followStateVersion]);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [isActive, authorUserId, currentUser, getFollowStatus, followStateVersion]);
 
-  // Load author stories status
+  // Load author stories status — gated igual que follow status
   useEffect(() => {
-    const loadAuthorStories = async () => {
+    if (!isActive || !authorUserId) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
       try {
-        if (!authorUserId) return;
         const storiesResponse = await storyService.getUserStories(authorUserId);
+        if (cancelled) return;
         if (storiesResponse && storiesResponse.total_stories > 0) {
           setAuthorHasStories(true);
           setAuthorStoriesData(storiesResponse);
@@ -488,105 +519,31 @@ const TikTokPollCardInner = ({
           setAuthorStoriesData(null);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Error loading author stories:', error);
         setAuthorHasStories(false);
         setAuthorStoriesData(null);
       }
-    };
-    loadAuthorStories();
-  }, [authorUserId]);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [isActive, authorUserId]);
 
-  // SINCRONIZACIÓN COMPLETA DE AUDIO con detección mejorada
+  // 🚀 FIX F1 — RACE CONDITION DE AUDIO ELIMINADA
+  // ANTES: este efecto + el efecto del padre (línea ~2013) competían por
+  //   audioManager.play/stop con un setTimeout(100) artificial entre stop y
+  //   play. Resultado: 100-200ms de silencio por swipe + race condition.
+  // AHORA: el control real de audio (play/stop) vive SOLO en el padre
+  //   (TikTokScrollView, efecto en activeIndex/polls). Este efecto se reduce
+  //   a su única función legítima: actualizar el flag UI `isMusicPlaying`
+  //   para que el icono musical refleje el estado. Sin setTimeout, sin
+  //   await artificiales, sin console.log spam (6/swipe eliminados).
   useEffect(() => {
-    const handleAudioSync = async () => {
-      // Si es un carrusel con audio extraído por slide, NO gestionar música aquí
-      // CarouselLayout gestiona su propio audio por slide
-      const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
-      const hasMusic = poll.music && poll.music.preview_url && !hasExtractedAudio;
-      const currentPostId = audioManager.getCurrentPostId();
-      const isPlayingThisPost = audioManager.isPlayingPost(poll.id);
-      
-      console.log(`🎵 AUDIO SYNC - Post #${index} (ID: ${poll.id}):`);
-      console.log(`  ▶️ Active: ${isActive}`);
-      console.log(`  🎵 Has Music: ${hasMusic}`);
-      console.log(`  🎵 Music: ${poll.music?.title || 'N/A'} - ${poll.music?.artist || 'N/A'}`);
-      console.log(`  🔊 Currently Playing Post: ${currentPostId || 'None'}`);
-      console.log(`  ✅ Is Playing This Post: ${isPlayingThisPost}`);
-      
-      if (isActive && hasMusic) {
-        // Este post está activo y tiene música
-        if (!isPlayingThisPost) {
-          try {
-            // Activar contexto de audio si es necesario
-            if (!audioContextActivated) {
-              console.log('🔧 Activating audio context...');
-              const activated = await audioManager.activateAudioContext();
-              setAudioContextActivated(activated);
-              if (!activated) {
-                console.warn('⚠️ Failed to activate audio context');
-                return;
-              }
-            }
-
-            // STOP COMPLETO del audio anterior
-            console.log('⏹️ Stopping previous audio...');
-            await audioManager.stop();
-            
-            // Esperar un momento para asegurar que se detuvo completamente
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // REPRODUCIR nueva música con postId
-            console.log(`▶️ Starting playback: ${poll.music.title} for post ${poll.id}`);
-            const success = await audioManager.play(poll.music.preview_url, {
-              startTime: 0,
-              loop: true,
-              volume: 0.7,
-              postId: poll.id // Agregar ID del post para rastreo específico
-            });
-
-            if (success) {
-              setIsMusicPlaying(true);
-              console.log(`✅ Successfully playing: ${poll.music.title} - ${poll.music.artist} for post ${poll.id}`);
-            } else {
-              console.error('❌ Failed to start audio playback');
-              setIsMusicPlaying(false);
-            }
-            
-          } catch (error) {
-            console.error('❌ Audio sync error:', error);
-            setIsMusicPlaying(false);
-          }
-        } else {
-          // Ya está reproduciendo la música correcta para este post específico
-          console.log('✅ Already playing correct music for this post - keeping state');
-          setIsMusicPlaying(true);
-        }
-      } else if (isActive && !hasMusic) {
-        // CASO CRÍTICO: Post activo sin música - DETENER cualquier música reproduciéndose
-        console.log(`⏸️ Active post has no music - stopping any playing audio`);
-        if (audioManager.isPlaying) {
-          console.log('⏹️ Stopping music - current active post has no music');
-          await audioManager.stop();
-        }
-        setIsMusicPlaying(false);
-      } else if (!isActive) {
-        // Post inactivo - solo detener si era música de este post específico
-        if (isPlayingThisPost) {
-          console.log(`⏹️ Stopping music - post ${poll.id} is now inactive`);
-          await audioManager.stop();
-          setIsMusicPlaying(false);
-        } else {
-          // Post inactivo pero no era su música - mantener estado false
-          setIsMusicPlaying(false);
-        }
-      }
-    };
-
-    // Ejecutar sincronización con un pequeño delay para evitar conflictos de scroll
-    const syncTimeout = setTimeout(handleAudioSync, 50);
-    
-    return () => clearTimeout(syncTimeout);
-  }, [isActive, poll.music?.preview_url, poll.id, poll.music?.title, poll.music?.artist, audioContextActivated, index]);
+    const hasExtractedAudio = poll.layout === 'off' && poll.options?.some(opt => opt.extracted_audio_id);
+    const hasMusic = !!(poll.music && poll.music.preview_url && !hasExtractedAudio);
+    // El icono musical sólo "vibra" en el card activo que efectivamente
+    // tiene música. Cuando deja de estar activo, apagamos el flag.
+    setIsMusicPlaying(isActive && hasMusic);
+  }, [isActive, poll.music?.preview_url, poll.id, poll.layout, poll.options]);
 
   // Activar audio context en primera interacción
   useEffect(() => {
@@ -1650,45 +1607,51 @@ const TikTokPollCardInner = ({
 
       </div>{/* Cierre del contenedor miniatura */}
 
-      {/* Modal de comentarios */}
-      <CommentsModal
-        isOpen={showCommentsModal}
-        onClose={() => { setShowCommentsModal(false); setIsCommentsExpanded(false); }}
-        pollId={poll.id}
-        pollTitle={poll.title}
-        pollAuthor={poll.author?.display_name || poll.author?.username || 'Usuario'}
-        commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
-        onExpandChange={setIsCommentsExpanded}
-      />
+      {/* Modal de comentarios — lazy-mount (F5) */}
+      {hasOpenedCommentsRef.current && (
+        <CommentsModal
+          isOpen={showCommentsModal}
+          onClose={() => { setShowCommentsModal(false); setIsCommentsExpanded(false); }}
+          pollId={poll.id}
+          pollTitle={poll.title}
+          pollAuthor={poll.author?.display_name || poll.author?.username || 'Usuario'}
+          commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
+          onExpandChange={setIsCommentsExpanded}
+        />
+      )}
 
-      {/* Modal de detalle del post (al tocar título) */}
-      <PostDetailModal
-        isOpen={showPostDetailModal}
-        onClose={() => setShowPostDetailModal(false)}
-        poll={poll}
-        isFollowing={isFollowing(authorUserId) || (currentUser && authorUserId === currentUser.id)}
-        onFollow={() => {
-          const userToFollow = poll.authorUser || { 
-            username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
-            displayName: poll.author?.display_name || poll.author?.username || 'Usuario',
-            id: authorUserId 
-          };
-          handleFollowUser(userToFollow);
-        }}
-        commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
-      />
+      {/* Modal de detalle del post (al tocar título) — lazy-mount (F5) */}
+      {hasOpenedPostDetailRef.current && (
+        <PostDetailModal
+          isOpen={showPostDetailModal}
+          onClose={() => setShowPostDetailModal(false)}
+          poll={poll}
+          isFollowing={isFollowing(authorUserId) || (currentUser && authorUserId === currentUser.id)}
+          onFollow={() => {
+            const userToFollow = poll.authorUser || { 
+              username: (poll.author?.username || poll.author?.display_name || 'unknown').toLowerCase().replace(/\s+/g, '_'),
+              displayName: poll.author?.display_name || poll.author?.username || 'Usuario',
+              id: authorUserId 
+            };
+            handleFollowUser(userToFollow);
+          }}
+          commentsEnabled={poll.comments_enabled !== false && poll.commentsEnabled !== false}
+        />
+      )}
 
-      {/* Modal de votantes */}
-      <VotersModal
-        isOpen={showVotersModal}
-        onClose={() => { setShowVotersModal(false); setIsVotersExpanded(false); }}
-        pollId={poll.id}
-        poll={poll}
-        onExpandChange={setIsVotersExpanded}
-      />
+      {/* Modal de votantes — lazy-mount (F5) */}
+      {hasOpenedVotersRef.current && (
+        <VotersModal
+          isOpen={showVotersModal}
+          onClose={() => { setShowVotersModal(false); setIsVotersExpanded(false); }}
+          pollId={poll.id}
+          poll={poll}
+          onExpandChange={setIsVotersExpanded}
+        />
+      )}
 
-      {/* Modal de participantes del challenge */}
-      {poll.is_challenge && (
+      {/* Modal de participantes del challenge — lazy-mount (F5) */}
+      {poll.is_challenge && hasOpenedChallengeParticipantsRef.current && (
         <ChallengeParticipantsModal
           isOpen={showChallengeParticipants}
           onClose={() => setShowChallengeParticipants(false)}
@@ -1697,12 +1660,17 @@ const TikTokPollCardInner = ({
         />
       )}
 
-      {/* Modal de compartir */}
-      <ShareModal
-        isOpen={shareModal.isOpen}
-        onClose={closeShareModal}
-        content={shareModal.content}
-      />
+      {/* Modal de compartir — lazy-mount (F5) */}
+      {(() => {
+        if (shareModal.isOpen) hasOpenedShareRef.current = true;
+        return hasOpenedShareRef.current ? (
+          <ShareModal
+            isOpen={shareModal.isOpen}
+            onClose={closeShareModal}
+            content={shareModal.content}
+          />
+        ) : null;
+      })()}
       
       {/* Story Viewer - Portal to escape stacking context */}
       {showAuthorStoryViewer && authorStoriesData && createPortal(
