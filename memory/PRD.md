@@ -63,6 +63,15 @@
 ✅ **Marco unificado**: bottom nav sin `rounded-t-3xl` cuando hay comentarios activos → modal + input se ven como un único marco blanco continuo que se expande.
 ✅ **Reacciones rápidas con emoji**: long-press sobre un comentario abre picker con ❤️🔥😂😮😢👏. Backend: `POST /api/comments/{id}/reaction` (toggle/replace), nueva colección `comment_reactions`. Frontend: chips clickeables debajo del texto con conteo y estado del usuario actual; optimistic UI; fallback a refresh ante error.
 
+### Sesión Feb 2026 — Optimización Feed TikTok-like (Video Pipeline)
+✅ **P0 — Fix "pantalla negra al swipear"** en `PollOptionMedia.jsx`:
+   - Contenedor base usa gradiente brand (`from-purple-950 via-fuchsia-950 to-pink-950`) en lugar de heredar `bg-black` del card.
+   - Posters de slots en DOM (distance ≤ videoTagMaxDistance) cargan con `loading="eager"` + `fetchpriority="high"` para distance ≤ 1.
+   - `decoding="sync"` para slot activo, `async` para vecinos.
+   - `img.decode()` Promise API pre-decodifica el poster antes del paint para evitar frame drops al hacer swipe.
+✅ **P1 — Hardware decoder pool optimization**: `videoTagMaxDistance` bajado de `3` a `2` para layouts normales (sigue en `1` para VS). Antes podía haber 5 `<video>` simultáneos en el DOM; ahora 5 → 3 efectivos, respetando el límite de 2-4 decoders H.264 hardware de Android WebView gama media.
+✅ **P2 — Consolidación de `v.play()`**: extraído helper `tryPlayIfActive` con guarda única (activo + paused + readyState≥2). Antes había 3 copias duplicadas de la guarda en `effect[distanceFromActive]`, `onCanPlay`, `onLoadedData`. Mantienen los 3 triggers como red de seguridad para distintos WebViews.
+
 ### Sesión Feb 2026 — i18n (Fase 1)
 ✅ **Selector de idioma funcional**: `SettingsPage` ahora llama a `i18n.setLocale(value)` al cambiarlo y aplica re-render inmediato vía evento `localeChanged`.
 ✅ **Sincronización con backend**: `AuthContext.setAuthData` lee `userData.app_language` y aplica el locale al iniciar sesión / refrescar el usuario.

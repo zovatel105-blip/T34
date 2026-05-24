@@ -11,7 +11,7 @@
  * - onCanPlay en lugar de autoPlay para arrancar solo cuando hay buffer
  *   suficiente — evita el efecto "cámara lenta" por falta de datos.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { pickPlayableVideoUrl, pickPlayableHlsUrl, pickVideoPosterUrl } from '../../utils/mediaUrl';
 import resolveAssetUrl from '../../utils/resolveAssetUrl';
 import useCachedSrc from '../../hooks/useCachedSrc';
@@ -225,6 +225,25 @@ const PollOptionMedia = ({
     return () => { cancelled = true; void cancelled; };
   }, [posterSrc, distanceFromActive]);
 
+  // ── 🚀 P2: HELPER ÚNICO DE PLAY ──────────────────────────────────────────
+  // Antes había 3 triggers de v.play() dispersos (effect distanceFromActive,
+  // onCanPlay, onLoadedData) con la misma guarda copy-pasted. Ahora todos
+  // llaman a esta función. La guarda es:
+  //   1) Slot debe ser ACTIVO (distance === 0) — otros slots no reproducen.
+  //   2) Video debe estar PAUSADO — no relanzamos play sobre play.
+  //   3) readyState >= 2 (HAVE_CURRENT_DATA) — al menos primer frame.
+  //      Si no, el evento de buffer (canplay/loadeddata) lo llamará luego.
+  // Mantenemos los 3 triggers como red de seguridad: distintos WebViews
+  // disparan onCanPlay y onLoadedData en orden distinto.
+  const tryPlayIfActive = useCallback(() => {
+    const v = videoEl?.current;
+    if (!v) return;
+    if (distanceFromActive !== 0) return;
+    if (!v.paused) return;
+    if (v.readyState < 2) return;
+    v.play().catch(() => {});
+  }, [videoEl, distanceFromActive]);
+
   // ── 🚀 PLAY/PAUSE DRIVEN BY distanceFromActive (FIX CRÍTICO TikTok-style)
   //
   // CAUSA RAÍZ encontrada: `onCanPlay` solo dispara UNA VEZ por carga. Si
@@ -249,15 +268,10 @@ const PollOptionMedia = ({
     if (distanceFromActive === 0) {
       // Slot ACTIVO: arrancar reproducción ya. Si aún no hay datos
       // suficientes, onCanPlay lo gestionará en cuanto lleguen.
-      const tryPlay = () => {
-        if (v.paused && v.readyState >= 2) {
-          v.play().catch(() => {});
-        }
-      };
       // 2 intentos: inmediato (si ya está listo) y tras 1 frame (por si
       // React acaba de re-renderizar y el video aún no terminó su effect).
-      tryPlay();
-      const rafId = requestAnimationFrame(tryPlay);
+      tryPlayIfActive();
+      const rafId = requestAnimationFrame(tryPlayIfActive);
       return () => cancelAnimationFrame(rafId);
     } else {
       // Slot NO activo: pausar para liberar decoder hardware (crítico en
@@ -268,7 +282,7 @@ const PollOptionMedia = ({
       }
       return undefined;
     }
-  }, [isVideo, distanceFromActive, videoEl, videoSrc]);
+  }, [isVideo, distanceFromActive, videoEl, videoSrc, tryPlayIfActive]);
 
   // ── 🚀 WARM-PLAY: forzar decode del primer frame en el <video> del slot
   //
@@ -462,8 +476,15 @@ const PollOptionMedia = ({
     // a 2–4 decoders H.264 simultáneos en hardware. Para VS solo montamos
     // el <video> en el slot activo y el vecino inmediato (<=1). El resto
     // muestra solo poster (gap silencioso, no pantalla negra).
-    // Para layouts normales seguimos con <=3 (1 video por post, hay margen).
-    const videoTagMaxDistance = layout === 'vs' ? 1 : 3;
+    //
+    // 🚀 P1 OPTIMIZATION: Para layouts normales bajamos de <=3 a <=2.
+    // Antes: CUR + PREV + NEXT + NEXT+1 + NEXT+2 + NEXT+3 = potencialmente
+    // 5 <video> vivos a la vez (cuando entran/salen del viewport). Ahora:
+    // CUR + PREV + NEXT + NEXT+1 + NEXT+2 = 5 → 3 efectivos activos.
+    // Android WebView gama media solo soporta 2-4 decoders H.264 hw
+    // simultáneos; pasar el límite causa freezing del video activo.
+    // Con distance=2 mantenemos un buffer de pre-warm sin saturar.
+    const videoTagMaxDistance = layout === 'vs' ? 1 : 2;
     const shouldRenderVideoTag = distanceFromActive <= videoTagMaxDistance;
 
     if (!videoSrc || !shouldRenderVideoTag) {
@@ -498,7 +519,18 @@ const PollOptionMedia = ({
 
     return (
       <div
-        className={cn('relative w-full h-full overflow-hidden', className)}
+        className={cn(
+          // 🎨 FIX BLACK-SCREEN: gradiente brand como fallback cuando el
+          // poster del backend tarda en descargar. ANTES: el contenedor
+          // heredaba `bg-black` del card → pantalla NEGRA mientras el
+          // poster cargaba (0-500ms en primer acceso). AHORA: el usuario
+          // SIEMPRE ve un gradiente coherente con la marca, incluso si el
+          // poster nunca llega (offline, error 404, etc.). El poster se
+          // pinta encima cuando carga; el primer frame de video se pinta
+          // encima del poster cuando llega.
+          'relative w-full h-full overflow-hidden bg-gradient-to-br from-purple-950 via-fuchsia-950 to-pink-950',
+          className,
+        )}
         style={style}
       >
         {/* Poster visible hasta que el video tiene SU PRIMER FRAME pintado.
@@ -512,14 +544,20 @@ const PollOptionMedia = ({
             src={posterSrc}
             alt=""
             draggable={false}
-            // Fetch Priority API: el poster del slot ACTIVO (distance=0)
-            // se descarga con prioridad alta — es lo primero que ve el
-            // usuario y debe ganarle bandwidth a thumbnails de +2/+3.
-            // El poster de slots distantes va con prioridad baja.
-            // Browsers que no lo soporten ignoran el atributo.
-            fetchpriority={distanceFromActive === 0 ? 'high' : 'low'}
+            // 🚀 FIX BLACK-SCREEN: Fetch Priority + eager loading agresivos.
+            // ANTES: distance≥2 usaba loading="lazy" → poster NO se descargaba
+            //   hasta entrar en viewport. Al hacer fast-scroll, el slot pasaba
+            //   de distance=3 → distance=0 sin haber descargado el poster
+            //   nunca → PANTALLA NEGRA hasta que el fetch completara
+            //   (200-500ms en 4G).
+            // AHORA: TODOS los posters en DOM (distance ≤ 3) cargan eager.
+            //   Son tiny (~10-50KB), descargar 7 en paralelo cuesta nada.
+            //   Para distance ≤ 1 además se piden con priority="high" para
+            //   ganar bandwidth al resto. distance=0 además decoding="sync"
+            //   para que el browser bloquee y pinte ya.
+            fetchpriority={distanceFromActive <= 1 ? 'high' : 'auto'}
             decoding={distanceFromActive === 0 ? 'sync' : 'async'}
-            loading={distanceFromActive <= 1 ? 'eager' : 'lazy'}
+            loading="eager"
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{
               opacity: hasFirstFrame ? 0 : 1,
@@ -548,10 +586,7 @@ const PollOptionMedia = ({
             // (readyState 3 = HAVE_FUTURE_DATA). Mantenemos esta guarda como
             // fallback si el browser saltó loadeddata (algunos WebView lo hacen).
             setIsBuffered(true);
-            const v = videoEl?.current;
-            if (v && v.paused && distanceFromActive === 0) {
-              v.play().catch(() => {});
-            }
+            tryPlayIfActive();
           }}
           onWaiting={() => {
             // Video se quedó sin datos → mostrar poster de nuevo
@@ -572,10 +607,7 @@ const PollOptionMedia = ({
             // esperar a readyState 3 (HAVE_FUTURE_DATA = ~500ms de buffer).
             // Esto recorta ~80-150ms al primer frame visible en cada swipe.
             // Es el equivalente a `bufferForPlaybackMs` bajo de ExoPlayer.
-            const v = videoEl?.current;
-            if (v && v.paused && distanceFromActive === 0) {
-              v.play().catch(() => {});
-            }
+            tryPlayIfActive();
           }}
           onError={() => setVideoStatus('error')}
           // 🔄 Si HLS falla fatal, hls.js cae a MP4 automáticamente (lo
