@@ -89,6 +89,28 @@
    - `ProfilePage` stats labels (Votos, Me gusta, Seguidores, Seguidos), botones (Editar perfil/Estadísticas/Seguir/Mensaje), toasts y panel "Invitación enviada".
 ✅ **Bug VS votos en perfil**: `ensure_user_profile` ahora suma también votos de `vs_experiences.questions[].options[].votes` (antes solo contaba `polls`). Endpoint `/user/profile` recalcula en cada GET.
 
+
+### Sesión May 2026 — Feed V2 (VS-only, aislado para testing de fluidez)
+✅ **Nueva ruta `/feed-v2`** dedicada a publicaciones VS, sin tocar `/feed` actual.
+✅ **Arquitectura "Video First"** con separación estricta video-layer / UI-layer:
+   - `pages/FeedV2Page.jsx` — carga datos (reusa `pollService.getPollsForFrontend` que ya filtra a VS via `MVP_VS_ONLY=true`).
+   - `components/feedV2/VSFeedSwiper.jsx` — Swiper v12 vertical con Virtual module (addSlidesBefore=1, addSlidesAfter=2, cache=true, resistance=false, threshold=5, Mousewheel+Keyboard).
+   - `components/feedV2/VSSlideV2.jsx` — render condicional por isActive. Memoizado con compare estricto.
+   - `components/feedV2/VSVideoLayer.jsx` — capa pura de video. Slot inactivo = sólo `<img>` poster (0 nodes pesados). Slot activo = `<video>` adquirido vía `videoPool.acquire()` imperativo. Memoizado por `option.id` + `isActive`.
+   - `components/feedV2/VSOverlayLayer.jsx` — UI overlay separada (autor, votación, like, comments, share). Modales lazy-import via `React.lazy`.
+   - `components/feedV2/LikeAnimation.jsx` — corazón animado para doble tap (CSS composite-only).
+   - `hooks/useActiveVSSlide.js` — IntersectionObserver para play/pause automático (threshold 0.6).
+   - `hooks/useVSGestures.js` — tap (toggle pause/play) vs doble tap (like animado) con timer 280ms.
+✅ **VideoPool reutilizado** (`lib/videoPool.js`): pool de 3 `<video>` reciclables con swap-source + lazy-release 30s. Confirmado en runtime: 2 ocupados (lados A+B del slide activo), 1 libre para preload.
+✅ **videoTimeCache reutilizado** para restaurar `currentTime` al volver a un post dentro de 30s.
+✅ **Eager prefetch del +1** en onTouchStart usando `feedMediaPrefetcher`.
+✅ **Modo inmersivo**: `enterTikTokMode()` + `hideRightNavigationBar()` ocultan navegación lateral/inferior global al entrar a `/feed-v2`.
+✅ **Acceso**: botón "Probar Feed V2 (beta)" en `SettingsPage` (sección Cuenta, icono Rocket).
+✅ **Funciones MVP V2 cableadas**: votación VS (POST `/api/vs/{vs_id}/vote`) optimista con barras de porcentaje, like (POST `/api/polls/{id}/like`), comments y share (modales lazy reusados del feed principal), tap=pause/play, doble tap=like animado.
+✅ **Smoke test verificado**: `/feed-v2` carga, muestra 2 lados VS lado-a-lado, badge "FEED V2 · BETA", pool reporta 2 busy/1 free, sólo 2 `<video>` en DOM por slot activo.
+⚠️ **Pendiente V2.1** (backlog): multi-pregunta VS (swipe horizontal nested), audio waves decorativos, modo "rápido" con skeleton cuando velocity > 500px/s, follow modal, stories ring.
+
+
 ## Backlog / Próximas mejoras (P2)
 - **Wire `videoPool.js` en `PollOptionMedia`** para MP4-only single-option posts (refactor opcional — la infraestructura ya está lista en `frontend/src/lib/videoPool.js`). Requiere reemplazar `<HlsVideo>` por un wrapper que use `pool.acquire/release` en el camino sin HLS.
 - **i18n Fase 2**: traducir TikTokScrollView, layouts (VS/Image/Music/Audio), modals (Voters/Share/Comments/Stats).

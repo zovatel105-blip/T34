@@ -1,5 +1,19 @@
 # Test Credentials
 
+## ✅ Active Test User (Feed V2 testing — funciona como de 2026-05-27)
+- Email: feedv2test@test.com
+- Password: Test1234!
+- Username: feedv2test
+- Display Name: FeedV2 Test
+- User ID: 15c87636-79b2-4490-9860-26d6ff4aaa87
+- Auth: JWT — POST /api/auth/login con `{email, password}` → returns `access_token`
+- Use para `/feed-v2` smoke tests
+
+## ⚠️ NOTA: Las credenciales antiguas (i18ntest, apktest2, etc.) NO funcionan actualmente
+- La DB de polls está vacía
+- Login con esas users devuelve "Incorrect email/username or password"
+- Si necesitas más usuarios para testing, REGÍSTRALOS via POST /api/auth/register
+
 ## Active Test User (i18n testing - works as of 2026-05-11)
 - Email: i18ntest@test.com
 - Password: test1234

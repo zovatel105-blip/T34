@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import ResponsiveLayout from './components/ResponsiveLayout';
 import FeedPage from './pages/FeedPage';
+import FeedV2Page from './pages/FeedV2Page';
 import ExplorePage from './pages/ExplorePage';
 // Demo pages removed - using real implementations only
 import ProfilePage from './pages/ProfilePage';
@@ -246,6 +247,7 @@ function AppContent() {
         {/* Redirect root to feed */}
         <Route path="/" element={<Navigate to="/feed" replace />} />
         <Route path="/feed" element={<FeedPage />} />
+        <Route path="/feed-v2" element={<FeedV2Page />} />
         <Route path="/explore" element={<ExplorePage />} />
 
         {/* Main pages */}

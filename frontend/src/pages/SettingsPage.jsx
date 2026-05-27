@@ -5,7 +5,7 @@ import {
   ArrowLeft, ChevronRight, User, Shield, Bell, MessageCircle, 
   LogOut, Monitor, Key, Globe, Moon, Sun, Volume2, Smartphone,
   Wifi, BatteryLow, Languages, Type, HelpCircle, Info, Mail,
-  Mic, PanelBottom, PanelRight
+  Mic, PanelBottom, PanelRight, Rocket
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -265,6 +265,13 @@ const SettingsPage = () => {
           {/* Cuenta */}
           <SectionTitle>{t('settings.sections.account')}</SectionTitle>
           <div className="flex flex-col gap-2">
+            <SettingsItem
+              icon={Rocket}
+              title="Probar Feed V2 (beta)"
+              description="Feed VS optimizado: pool de video, virtualización, fluidez TikTok-style"
+              onClick={() => navigate('/feed-v2')}
+              showChevron
+            />
             <SettingsItem
               icon={User}
               title={t('settings.account.editProfile')}
