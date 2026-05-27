@@ -2917,20 +2917,14 @@ const TikTokScrollView = ({
         onMouseUp={handleTapePointerUp}
       >
         {slots.map(({ poll: slotPoll, slotIndex, pollIndex }) => {
-          // 🚀 FLUIDEZ VS (Fase A-3): para slots VS NO-activos, activamos
-          // `content-visibility: auto`. El navegador salta layout + paint
-          // de TODO el contenido off-screen (3D perspective context, Lift
-          // Subject overlay, gradientes lila/azul, glow inset, percentage
-          // bars…) hasta que el slot entra al viewport. El scripting sigue
-          // ejecutándose normalmente — `preload="auto"`, warm-play y
-          // prefetch del +1 NO se interrumpen porque CV solo difiere paint
-          // y layout, no JavaScript. `contain-intrinsic-size` declara el
-          // tamaño "implícito" del slot sin renderizar, evitando saltos
-          // visuales al hacer scroll. Acotado a VS para no alterar polls
-          // regulares ni challenges.
-          const isVSSlot = slotPoll?.layout === 'vs' || !!slotPoll?.vs_id;
+          // 🚀 FLUIDEZ VS (Fase A-3): WIP — `content-visibility: auto` se
+          // probó aquí pero CAUSABA pantalla negra durante el swipe-in: el
+          // navegador difería paint+layout del subárbol VS y, al entrar al
+          // viewport, no le daba tiempo a pintar las cards antes de mostrar
+          // el frame → ventana negra con sólo el VS divider visible.
+          // Removido. El `contain: 'layout paint size'` ya aplicado abajo
+          // mantiene la isolation sin diferir paint.
           const isActiveSlot = pollIndex === activeIndex;
-          const useVSContentVisibility = isVSSlot && !isActiveSlot;
           return (
           <div
             key={`slot-${slotIndex}`}
@@ -2954,10 +2948,6 @@ const TikTokScrollView = ({
               // arriba para forzar la capa sin willChange constante).
               transform: 'translateZ(0)',
               backfaceVisibility: 'hidden',
-              // 🚀 Fluidez VS (A-3): defer paint/layout en slots VS no-activos.
-              ...(useVSContentVisibility
-                ? { contentVisibility: 'auto', containIntrinsicSize: '100dvh 100vw' }
-                : {}),
             }}
           >
             {slotPoll ? (
