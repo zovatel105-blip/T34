@@ -1166,6 +1166,22 @@ const TikTokPollCardInner = ({
                 
                 if (poll.options.length === 2) {
                   // Layout 1vs1 - Dos contenidos lado a lado
+                  // 🚀 FLUIDEZ VS (Fase A-1): si la publicación es VS, propagamos
+                  // la distancia REAL al `<PollOptionMedia>` (en lugar del 99
+                  // legacy que desactivaba todas las optimizaciones del media:
+                  // warm-play, `preload="auto"`, fetch priority alto, primer
+                  // frame pintado vía `requestVideoFrameCallback`). Además
+                  // pasamos `layout="vs"` para que PollOptionMedia aplique el
+                  // cap estricto `videoTagMaxDistance=1` — solo monta `<video>`
+                  // en activo + vecino inmediato, manteniéndonos dentro de los
+                  // 2–4 decoders H.264 hw disponibles en Android gama media
+                  // incluso con 2 vídeos por slot (4 simultáneos máx en
+                  // transición). Los polls regulares de 2 opciones NO se
+                  // ven afectados — el cambio se acota con `isVSPoll`.
+                  const isVSPoll = poll?.layout === 'vs' || !!poll?.vs_id;
+                  const vsAwareDistance = isVSPoll
+                    ? distanceFromActive
+                    : (isActive ? 0 : 99);
                   return (
                     <>
                       {poll.options.map((option, optIdx) => {
@@ -1189,7 +1205,9 @@ const TikTokPollCardInner = ({
                             <PollOptionMedia
                               option={option}
                               className="w-full h-full"
-                              distanceFromActive={isActive ? 0 : 99}
+                              distanceFromActive={vsAwareDistance}
+                              layout={isVSPoll ? 'vs' : undefined}
+                              postId={poll?.id}
                               videoProps={{
                                 autoPlay: true,
                                 loop: true,
@@ -2873,12 +2891,27 @@ const TikTokScrollView = ({
         onMouseMove={handleTapePointerMove}
         onMouseUp={handleTapePointerUp}
       >
-        {slots.map(({ poll: slotPoll, slotIndex, pollIndex }) => (
+        {slots.map(({ poll: slotPoll, slotIndex, pollIndex }) => {
+          // 🚀 FLUIDEZ VS (Fase A-3): para slots VS NO-activos, activamos
+          // `content-visibility: auto`. El navegador salta layout + paint
+          // de TODO el contenido off-screen (3D perspective context, Lift
+          // Subject overlay, gradientes lila/azul, glow inset, percentage
+          // bars…) hasta que el slot entra al viewport. El scripting sigue
+          // ejecutándose normalmente — `preload="auto"`, warm-play y
+          // prefetch del +1 NO se interrumpen porque CV solo difiere paint
+          // y layout, no JavaScript. `contain-intrinsic-size` declara el
+          // tamaño "implícito" del slot sin renderizar, evitando saltos
+          // visuales al hacer scroll. Acotado a VS para no alterar polls
+          // regulares ni challenges.
+          const isVSSlot = slotPoll?.layout === 'vs' || !!slotPoll?.vs_id;
+          const isActiveSlot = pollIndex === activeIndex;
+          const useVSContentVisibility = isVSSlot && !isActiveSlot;
+          return (
           <div
             key={`slot-${slotIndex}`}
             // data-slot-active: usado por el background pause handler para
             // reanudar solo el video del slot activo al volver de background.
-            data-slot-active={pollIndex === activeIndex ? 'true' : 'false'}
+            data-slot-active={isActiveSlot ? 'true' : 'false'}
             style={{
               position: 'absolute',
               top: `${slotIndex * 100}dvh`,
@@ -2896,6 +2929,10 @@ const TikTokScrollView = ({
               // arriba para forzar la capa sin willChange constante).
               transform: 'translateZ(0)',
               backfaceVisibility: 'hidden',
+              // 🚀 Fluidez VS (A-3): defer paint/layout en slots VS no-activos.
+              ...(useVSContentVisibility
+                ? { contentVisibility: 'auto', containIntrinsicSize: '100dvh 100vw' }
+                : {}),
             }}
           >
             {slotPoll ? (
@@ -2919,7 +2956,8 @@ const TikTokScrollView = ({
               <div style={{ width: '100%', height: '100%', background: 'black' }} />
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── CARGA SILENCIOSA (sin spinner) ─────────────────────────────────
