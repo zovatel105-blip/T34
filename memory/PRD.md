@@ -72,6 +72,13 @@
 ✅ **P1 — Hardware decoder pool optimization**: `videoTagMaxDistance` bajado de `3` a `2` para layouts normales (sigue en `1` para VS). Antes podía haber 5 `<video>` simultáneos en el DOM; ahora 5 → 3 efectivos, respetando el límite de 2-4 decoders H.264 hardware de Android WebView gama media.
 ✅ **P2 — Consolidación de `v.play()`**: extraído helper `tryPlayIfActive` con guarda única (activo + paused + readyState≥2). Antes había 3 copias duplicadas de la guarda en `effect[distanceFromActive]`, `onCanPlay`, `onLoadedData`. Mantienen los 3 triggers como red de seguridad para distintos WebViews.
 
+### Sesión Feb 2026 — Fluidez TikTok-style (videoPool + videoTimeCache)
+✅ **`/app/frontend/src/lib/videoPool.js`** — Pool de 3 elementos `<video>` reciclables con `acquire/release/swapSource` y `LAZY_RELEASE_MS = 30_000`. Réplica exacta de la referencia. Singleton `window.__videoPool` para debug. Infraestructura lista para futuro refactor de MP4-only single-option posts (no se ha cableado aún porque el sistema actual HLS+videoMemoryManager ya cubre el caso multi-option/VS).
+✅ **`/app/frontend/src/lib/videoTimeCache.js`** — `Map<url, {currentTime, ts}>` con TTL 30 s. Save al desmontar, restore al `loadedmetadata`. Cap LRU 60 entradas. Min save 1 s, skip near-end 1.5 s. Singleton `window.__videoTimeCache`.
+✅ **Wire `videoTimeCache` en `PollOptionMedia`** — al volver a una publicación dentro de 30 s, el vídeo reanuda en el mismo frame en que se dejó (replica el efecto "lazy-release" del pool sin pool imperativo). Compatible con HLS y MP4 vía `videoEl.currentTime` directo.
+✅ **Prefetch threshold bajado 8 → 5** en `TikTokScrollView` (`remaining <= 5` dispara `onLoadMore`). Alineado con la referencia de "carga al final" sin ser demasiado tardío.
+✅ Verificado: `viewport-fit=cover` + `user-scalable=no` (`public/index.html` L5), `overscroll-behavior: none` (`index.css` L351, L375), `transform: translateZ(0)` en vídeo activo, `requestVideoFrameCallback` para primer frame, double-tap like optimista (`DoubleTapVoteAnimation`), animaciones GPU-only (`transform`/`opacity`).
+
 ### Sesión Feb 2026 — i18n (Fase 1)
 ✅ **Selector de idioma funcional**: `SettingsPage` ahora llama a `i18n.setLocale(value)` al cambiarlo y aplica re-render inmediato vía evento `localeChanged`.
 ✅ **Sincronización con backend**: `AuthContext.setAuthData` lee `userData.app_language` y aplica el locale al iniciar sesión / refrescar el usuario.
@@ -83,6 +90,7 @@
 ✅ **Bug VS votos en perfil**: `ensure_user_profile` ahora suma también votos de `vs_experiences.questions[].options[].votes` (antes solo contaba `polls`). Endpoint `/user/profile` recalcula en cada GET.
 
 ## Backlog / Próximas mejoras (P2)
+- **Wire `videoPool.js` en `PollOptionMedia`** para MP4-only single-option posts (refactor opcional — la infraestructura ya está lista en `frontend/src/lib/videoPool.js`). Requiere reemplazar `<HlsVideo>` por un wrapper que use `pool.acquire/release` en el camino sin HLS.
 - **i18n Fase 2**: traducir TikTokScrollView, layouts (VS/Image/Music/Audio), modals (Voters/Share/Comments/Stats).
 - **i18n Fase 3**: ContentCreationPage, ChallengeCreationPage, MessagesPage, NotificationsPage.
 - **i18n Fase 4**: ExplorePage, Stories, LivePage, AuthPage, EditProfilePage, ChangePasswordPage.

@@ -2055,10 +2055,15 @@ const TikTokScrollView = ({
       localStorage.setItem('hasScrolledFeed', 'true');
     }
 
-    // Carga silenciosa — sin spinner, igual que TikTok
+    // Carga silenciosa — sin spinner, igual que TikTok.
+    // 🚀 Prefetch threshold alineado con referencia "loadMore cuando faltan n":
+    // bajamos de 8 → 5 para reducir tráfico anticipado innecesario sin perder
+    // continuidad (con virtualización ajustada PREV/CUR/NEXT, 5 posts de
+    // colchón sobran para que la siguiente página llegue antes del próximo
+    // swipe del usuario).
     if (onLoadMore && hasMoreContent && !isLoadingMore) {
       const remaining = polls.length - newIndex;
-      if (remaining <= 8) onLoadMore();
+      if (remaining <= 5) onLoadMore();
     }
 
     // Duración: si hay velocidad, calcula tiempo real para recorrer lo que queda

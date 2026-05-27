@@ -18,6 +18,11 @@ import useCachedSrc from '../../hooks/useCachedSrc';
 import { cn } from '../../lib/utils';
 import HlsVideo from './HlsVideo';
 import videoMemoryManager from '../../services/videoMemoryManager';
+// 🚀 SCROLL-BACK INSTANT RESUME — guarda `currentTime` por URL durante 30 s.
+// Permite que al volver a una publicación reciente el vídeo reanude en el
+// mismo frame, replicando el `lazy-release` del videoPool TikTok-style sin
+// requerir un pool imperativo de elementos.
+import videoTimeCache from '../../lib/videoTimeCache';
 // 🚀 FIX BOTTLENECK #3 — Fast-scroll suspension. Cuando el usuario hace
 // flick rápido y cascadas de swipes, los slots PREV/NEXT suspenden HLS
 // (manifest + primer segmento) para no malgastar bandwidth en contenido
@@ -455,6 +460,48 @@ const PollOptionMedia = ({
       entry.lastAccessed = Date.now();
     }
   }, [isVideo, distanceFromActive, option?.id, postId]);
+
+  // ── 🚀 SCROLL-BACK INSTANT RESUME (videoTimeCache, TTL 30 s) ──────────────
+  //
+  // INTENT: cuando el slot sale de la ventana virtual y se desmonta, el
+  // <video> también desaparece. Si el usuario hace scroll-back dentro de
+  // los próximos 30 s, queremos que la publicación reanude en el mismo
+  // frame en que la dejó — no desde 0. Esto da la sensación TikTok-style
+  // de "el feed se acuerda de dónde estabas". Los bytes del vídeo siguen
+  // en HTTP cache (CDN/disk via useCachedSrc), por lo que el primer frame
+  // aparece en <100 ms y el time-seek es esencialmente gratis.
+  //
+  // Save: cuando cambia videoSrc o se desmonta el componente, grabamos
+  //       el currentTime contra la URL anterior.
+  // Restore: cuando llega `loadedmetadata` del <video>, comprobamos si hay
+  //          entrada en cache TTL≤30s y aplicamos currentTime ANTES de
+  //          que arranque play().
+  useEffect(() => {
+    if (!isVideo) return;
+    const v = videoEl?.current;
+    if (!v || !videoSrc) return;
+
+    // Restore al obtener metadata (duración disponible → seek seguro).
+    const handleLoadedMeta = () => {
+      videoTimeCache.restore(videoSrc, v);
+    };
+    v.addEventListener('loadedmetadata', handleLoadedMeta);
+    // Si ya tenemos metadata (caso reused/cached), restauramos ya.
+    if (v.readyState >= 1) {
+      videoTimeCache.restore(videoSrc, v);
+    }
+
+    return () => {
+      v.removeEventListener('loadedmetadata', handleLoadedMeta);
+      // Save SOLO si conocemos el currentTime — evitamos guardar 0 al primer
+      // load (que también dispara este cleanup en el ciclo inicial).
+      try {
+        const t = v.currentTime;
+        const d = isFinite(v.duration) ? v.duration : null;
+        if (t > 0) videoTimeCache.save(videoSrc, t, d);
+      } catch (_) {}
+    };
+  }, [isVideo, videoSrc, videoEl]);
 
   // ── No hay media ──────────────────────────────────────────────────────────
   if (!isVideo && !imageSrc) {
