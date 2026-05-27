@@ -1,18 +1,17 @@
 /**
  * VSFeedSwiper — contenedor Swiper.js vertical para el Feed V2.
  *
- * INTENCIÓN:
- *   Reemplaza el sistema de 3 slots manual de TikTokScrollView por Swiper
- *   con Virtual module. Configuración optimizada según spec del usuario:
- *     - Virtual: addSlidesBefore=1, addSlidesAfter=2, cache=true
- *     - Sin resistance → cero rebote en iOS
- *     - touchRatio=1, threshold=5, freeMode OFF (snap forzado)
- *     - Speed=300ms para sensación TikTok
+ * Configuración alineada con la referencia VT3 (replicada exactamente):
+ *   - Virtual: addSlidesBefore=1, addSlidesAfter=2, cache=true.
+ *   - Resistance OFF (sin rebote en iOS), threshold=5.
+ *   - longSwipesRatio=0.4 (más sensible para flick TikTok-style).
+ *   - mousewheel.thresholdDelta=20 (evita over-scroll con trackpad).
+ *   - keyboard.onlyInViewport=true.
  *
- *   Sólo el slide activo monta `<video>` + UI completa. Los slides
- *   adyacentes muestran sólo posters (handled por VSSlideV2).
- *
- *   Eager prefetch del +1 al iniciar transición vía onSliderMove.
+ * Pasa al slide:
+ *   - `isActive`: slide visible → monta video + UI completa.
+ *   - `isNear`:   slide adyacente (±1) → preload poster + 256KB del video.
+ *   - `muted`:    estado global de audio (toggle desde TopBar).
  */
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -24,6 +23,7 @@ import 'swiper/css/virtual';
 export default function VSFeedSwiper({
   polls,
   initialIndex = 0,
+  muted = true,
   onActiveIndexChange,
   onReachEnd,
   hasMore = false,
@@ -37,9 +37,8 @@ export default function VSFeedSwiper({
     setActiveIndex(idx);
     onActiveIndexChange?.(idx);
 
-    // Trigger load-more cuando quedan 3 slides para el final
-    const remaining = polls.length - idx;
-    if (hasMore && !isLoadingMore && remaining <= 3) {
+    // Trigger load-more cuando quedan 3 slides para el final (VT3-style)
+    if (hasMore && !isLoadingMore && idx >= polls.length - 3) {
       onReachEnd?.();
     }
   }, [polls.length, onReachEnd, onActiveIndexChange, hasMore, isLoadingMore]);
@@ -48,7 +47,6 @@ export default function VSFeedSwiper({
   const handleTouchStart = useCallback((swiper) => {
     const next = swiper.activeIndex + 1;
     if (next >= polls.length) return;
-    // Reusa feedMediaPrefetcher si está disponible — best-effort.
     try {
       import('../../services/feedMediaPrefetcher').then(({ default: prefetcher }) => {
         prefetcher?.prefetchVideosAroundIndex?.(polls, next, 0);
@@ -56,7 +54,6 @@ export default function VSFeedSwiper({
     } catch (_) {}
   }, [polls]);
 
-  // Reaccionar a cambios externos del initialIndex
   useEffect(() => {
     if (swiperRef.current && swiperRef.current.activeIndex !== initialIndex) {
       swiperRef.current.slideTo(initialIndex, 0);
@@ -87,7 +84,7 @@ export default function VSFeedSwiper({
         threshold={5}
         shortSwipes
         longSwipes
-        longSwipesRatio={0.5}
+        longSwipesRatio={0.4}
         longSwipesMs={300}
         observer
         observeParents
@@ -101,27 +98,37 @@ export default function VSFeedSwiper({
           forceToAxis: true,
           sensitivity: 1,
           releaseOnEdges: false,
+          thresholdDelta: 20,
         }}
-        keyboard={{ enabled: true }}
+        keyboard={{ enabled: true, onlyInViewport: true }}
         initialSlide={initialIndex}
         onSwiper={(s) => { swiperRef.current = s; }}
         onSlideChange={handleSlideChange}
         onTouchStart={handleTouchStart}
+        className="snaptok-swiper"
         style={{
           height: '100%',
           width: '100%',
         }}
         data-testid="vs-feed-swiper"
       >
-        {polls.map((poll, idx) => (
-          <SwiperSlide
-            key={poll.id || idx}
-            virtualIndex={idx}
-            style={{ height: '100dvh' }}
-          >
-            <VSSlideV2 poll={poll} isActive={idx === activeIndex} />
-          </SwiperSlide>
-        ))}
+        {polls.map((poll, idx) => {
+          const distance = Math.abs(idx - activeIndex);
+          return (
+            <SwiperSlide
+              key={poll.id || idx}
+              virtualIndex={idx}
+              style={{ height: '100dvh' }}
+            >
+              <VSSlideV2
+                poll={poll}
+                isActive={idx === activeIndex}
+                isNear={distance <= 1}
+                muted={muted}
+              />
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </div>
   );

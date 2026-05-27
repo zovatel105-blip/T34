@@ -25,7 +25,7 @@ function getFirstQuestion(poll) {
   return { id: poll?.id, options: poll?.options || [] };
 }
 
-function VSSlideV2Impl({ poll, isActive }) {
+function VSSlideV2Impl({ poll, isActive, isNear = false, muted = true }) {
   const slideRef = useRef(null);
   const [likeAnimations, setLikeAnimations] = useState([]);
   const [isPaused, setIsPaused] = useState(false);
@@ -102,7 +102,7 @@ function VSSlideV2Impl({ poll, isActive }) {
       {/* Capa de video: A + B con divisor central */}
       <div className={`absolute inset-0 ${containerLayout}`}>
         <div className="relative flex-1 overflow-hidden">
-          <VSVideoLayer option={optA} isActive={isActive} />
+          <VSVideoLayer option={optA} isActive={isActive} isNear={isNear} muted={muted} />
         </div>
         {/* Divisor central */}
         <div
@@ -113,7 +113,7 @@ function VSSlideV2Impl({ poll, isActive }) {
           }
         />
         <div className="relative flex-1 overflow-hidden">
-          <VSVideoLayer option={optB} isActive={isActive} />
+          <VSVideoLayer option={optB} isActive={isActive} isNear={isNear} muted={muted} />
         </div>
       </div>
 
@@ -151,7 +151,12 @@ function VSSlideV2Impl({ poll, isActive }) {
 }
 
 const VSSlideV2 = memo(VSSlideV2Impl, (prev, next) => {
-  return prev.isActive === next.isActive && prev.poll?.id === next.poll?.id;
+  return (
+    prev.isActive === next.isActive &&
+    prev.isNear === next.isNear &&
+    prev.muted === next.muted &&
+    prev.poll?.id === next.poll?.id
+  );
 });
 
 export default VSSlideV2;

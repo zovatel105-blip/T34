@@ -9,8 +9,9 @@
  */
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import VSFeedSwiper from '../components/feedV2/VSFeedSwiper';
+import VSFeedTopBar from '../components/feedV2/VSFeedTopBar';
 import pollService from '../services/pollService';
 import { useTikTok } from '../contexts/TikTokContext';
 
@@ -25,6 +26,10 @@ export default function FeedV2Page() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // 🔇 Audio global del feed. Arranca muted=true (autoplay permite muted).
+  // Tras la PRIMERA interacción (pointerdown), se desmutea automáticamente.
+  // El usuario puede togglear con el botón del TopBar.
+  const [muted, setMuted] = useState(true);
   const loadingRef = useRef(false);
 
   // Activar modo TikTok inmersivo (oculta navegación lateral/bottom global)
@@ -91,6 +96,10 @@ export default function FeedV2Page() {
     }
   }, [offset, hasMore]);
 
+  const handleFirstInteraction = useCallback(() => {
+    if (muted) setMuted(false);
+  }, [muted]);
+
   // Estado de carga inicial
   if (isLoading) {
     return (
@@ -145,40 +154,25 @@ export default function FeedV2Page() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black" data-testid="feed-v2-page">
+    <div
+      className="fixed inset-0 bg-black"
+      data-testid="feed-v2-page"
+      onPointerDown={muted ? handleFirstInteraction : undefined}
+    >
       <VSFeedSwiper
         polls={polls}
         initialIndex={0}
+        muted={muted}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}
         onReachEnd={handleLoadMore}
       />
 
-      {/* Botón flotante de salir (esquina superior izquierda) */}
-      <button
-        onClick={() => navigate('/feed')}
-        className="absolute z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center"
-        style={{
-          top: 'max(0.75rem, var(--safe-area-inset-top, 0.75rem))',
-          left: 'max(0.75rem, var(--safe-area-inset-left, 0.75rem))',
-        }}
-        data-testid="feed-v2-back-btn"
-        aria-label="Volver al feed"
-      >
-        <ArrowLeft className="w-5 h-5 text-white" />
-      </button>
-
-      {/* Badge V2 — visible y discreto */}
-      <div
-        className="absolute z-50 px-2 py-1 rounded-full bg-fuchsia-600/80 backdrop-blur-md text-white text-[10px] font-bold tracking-wide"
-        style={{
-          top: 'max(0.75rem, var(--safe-area-inset-top, 0.75rem))',
-          right: 'max(0.75rem, var(--safe-area-inset-right, 0.75rem))',
-        }}
-        data-testid="feed-v2-badge"
-      >
-        FEED V2 · BETA
-      </div>
+      <VSFeedTopBar
+        muted={muted}
+        onToggleMute={() => setMuted((m) => !m)}
+        onBack={() => navigate('/feed')}
+      />
     </div>
   );
 }

@@ -110,6 +110,16 @@
 ✅ **Smoke test verificado**: `/feed-v2` carga, muestra 2 lados VS lado-a-lado, badge "FEED V2 · BETA", pool reporta 2 busy/1 free, sólo 2 `<video>` en DOM por slot activo.
 ⚠️ **Pendiente V2.1** (backlog): multi-pregunta VS (swipe horizontal nested), audio waves decorativos, modo "rápido" con skeleton cuando velocity > 500px/s, follow modal, stories ring.
 
+### Sesión May 2026 — Feed V2 alineado con referencia VT3
+✅ **Refinamientos VT3 aplicados** tras comparar línea por línea con el código de referencia compartido por el usuario:
+   - `longSwipesRatio: 0.4` (más sensible al flick).
+   - `mousewheel.thresholdDelta: 20` (evita over-scroll con trackpad).
+   - `keyboard.onlyInViewport: true`.
+   - **`isNear` prop** propagado al slide → vecinos ±1 cargan poster `<img>` con `loading="eager" decoding="sync" fetchpriority="high"` + prefetch de 256KB del video URL vía `mediaCacheService.prefetch()`. Cuando el usuario swipea, el primer frame ya está en caché → 0 frame negro.
+   - **Estado `muted` global** con first-interaction-unmute (`onPointerDown`). Botón toggle en `VSFeedTopBar` que actualiza el `<video>` del pool in-place sin recrear el effect.
+   - Nuevo componente `components/feedV2/VSFeedTopBar.jsx` con back-button + mute-toggle + badge.
+✅ **Verificado en runtime**: `videos muted INITIAL: [true, true]` → `AFTER unmute: [false, false]` sin recrear elementos; 2 `<video>` activos + 1 pool libre; `data-testid="vs-video-layer-near"` confirmado para el slide vecino.
+
 
 ## Backlog / Próximas mejoras (P2)
 - **Wire `videoPool.js` en `PollOptionMedia`** para MP4-only single-option posts (refactor opcional — la infraestructura ya está lista en `frontend/src/lib/videoPool.js`). Requiere reemplazar `<HlsVideo>` por un wrapper que use `pool.acquire/release` en el camino sin HLS.
