@@ -2225,7 +2225,32 @@ const TikTokScrollView = ({
     // lo ha vuelto irrelevante (el video pasó a PREV). No queremos
     // reanudarlo después porque ya no se ve. Limpiamos la ref.
     pausedHlsElRef.current = null;
-  }, [activeIndex]);
+
+    // 🚀 FLUIDEZ VS (Fase A-4): kickoff prefetch del +1 INMEDIATAMENTE tras
+    // cambiar de slot — sin esperar al próximo touchstart. Antes, si el
+    // usuario hacía dos swipes seguidos (típico en feed TikTok), el segundo
+    // vídeo llegaba "frío" porque `eagerPrefetchNextPost` solo se disparaba
+    // en touchstart y entre el final del primer swipe y el inicio del segundo
+    // touch puede haber <100 ms — no suficiente para que el manifest HLS y
+    // primer segmento del nuevo +1 estén en caché HTTP. Adelantamos el
+    // prefetch a este `useEffect` (que corre tras el commit del nuevo
+    // activeIndex) usando `requestIdleCallback` para no competir con el
+    // paint del slot recién activo. Fallback a `setTimeout(0)` en browsers
+    // sin rIC (iOS WebView).
+    const nextIdx = activeIndex + 1;
+    if (nextIdx < polls.length) {
+      const scheduler = (typeof window !== 'undefined' && window.requestIdleCallback)
+        || ((cb) => setTimeout(cb, 0));
+      const handle = scheduler(() => {
+        try { eagerPrefetchNextPost(nextIdx); } catch (_) {}
+      }, { timeout: 250 });
+      return () => {
+        if (typeof window !== 'undefined' && window.cancelIdleCallback && typeof handle === 'number') {
+          try { window.cancelIdleCallback(handle); } catch (_) {}
+        }
+      };
+    }
+  }, [activeIndex, polls.length, eagerPrefetchNextPost]);
 
   // ── PAUSA DE SEGMENTOS HLS NO-CRÍTICOS DEL VIDEO ACTIVO ───────────────────
   //

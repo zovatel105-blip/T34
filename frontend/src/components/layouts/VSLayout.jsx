@@ -1046,16 +1046,27 @@ const QuestionSlide = ({
     );
   };
 
+  // 🚀 FLUIDEZ VS (Fase A-extra): el contexto 3D (`perspective` +
+  // `preserve-3d`) sólo aporta valor cuando el slot está ACTIVO (el usuario
+  // está viendo el VS y puede notar el lift / pop-out estereoscópico al
+  // votar). En slots NO-activos (PREV/NEXT), forzar un contexto 3D obliga
+  // al compositor del navegador a tratar TODO el subárbol como capas GPU
+  // separadas — costoso en composición/paint, especialmente con
+  // `content-visibility: auto` aplicado al wrapper exterior. Saltándolo
+  // bajamos el coste de pintura al entrar el slot al viewport durante el
+  // swipe (la diferencia es perceptible en gama media Android).
+  const apply3DContext = distanceFromActive === 0;
+
   return (
     <div
       className={cn("w-full h-full flex relative", isRow ? "flex-row" : "flex-col")}
-      style={{
+      style={apply3DContext ? {
         // 🎬 Contexto 3D cinematográfico — esencial para que translateZ
         // de las cards funcione como pop-out estereoscópico real (gafas 3D).
         perspective: '1400px',
         perspectiveOrigin: '50% 45%',
         transformStyle: 'preserve-3d',
-      }}
+      } : undefined}
       onTouchStart={handleLongPressStart}
       onTouchMove={handleLongPressMove}
       onTouchEnd={handleLongPressEnd}
