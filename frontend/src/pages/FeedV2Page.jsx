@@ -12,8 +12,14 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import VSFeedSwiper from '../components/feedV2/VSFeedSwiper';
 import VSFeedTopBar from '../components/feedV2/VSFeedTopBar';
+import VSSlidePretty from '../components/feedV2/VSSlidePretty';
 import pollService from '../services/pollService';
 import { useTikTok } from '../contexts/TikTokContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/use-toast';
+import { useAddiction } from '../contexts/AddictionContext';
+import { useTranslation } from '../hooks/useTranslation';
+import { isVSPost } from '../utils/postFilters';
 
 const PAGE_SIZE = 20;
 
@@ -31,6 +37,150 @@ export default function FeedV2Page() {
   // El usuario puede togglear con el botón del TopBar.
   const [muted, setMuted] = useState(true);
   const loadingRef = useRef(false);
+
+  // ── Pegamento para reutilizar la UI bonita (TikTokPollCard) ──────────────
+  // TikTokPollCard maneja internamente sus modales (comentarios/compartir) y
+  // los Sets de guardados/comentados/compartidos. Estos handlers solo hacen
+  // persistencia en backend + update optimista del estado `polls`.
+  const { isAuthenticated, user } = useAuth();
+  const { toast } = useToast();
+  const { trackAction } = useAddiction();
+  const { t } = useTranslation();
+  const [savedPolls, setSavedPolls] = useState(() => new Set());
+  const [commentedPolls, setCommentedPolls] = useState(() => new Set());
+  const [sharedPolls, setSharedPolls] = useState(() => new Set());
+
+  const handleVote = useCallback(async (pollId, optionId) => {
+    if (!isAuthenticated) {
+      toast?.({ title: t('feed.toast.loginRequired'), description: t('feed.toast.loginToVote'), variant: 'destructive' });
+      return;
+    }
+    try {
+      const targetPoll = polls.find((p) => p.id === pollId);
+      const isChallenge = targetPoll?.is_challenge && targetPoll?.challenge_id;
+      const isVS = isVSPost(targetPoll);
+      // Optimistic update
+      setPolls((prev) => prev.map((poll) => {
+        if (poll.id === pollId) {
+          if (poll.userVote) return poll;
+          return {
+            ...poll,
+            userVote: optionId,
+            options: poll.options.map((opt) => ({ ...opt, votes: opt.id === optionId ? opt.votes + 1 : opt.votes })),
+            totalVotes: (poll.totalVotes || 0) + 1,
+          };
+        }
+        return poll;
+      }));
+      // VS: el voto ya se persiste desde la capa VS; no re-votamos ni refrescamos
+      // (refrescar desmontaría los <video> y "ralentizaría" el post).
+      if (isChallenge) {
+        await pollService.voteOnChallenge(targetPoll.challenge_id, optionId);
+      } else if (!isVS) {
+        await pollService.voteOnPoll(pollId, optionId, { optimistic: { option_id: optionId, queued: true } });
+      }
+      trackAction?.('vote');
+      if (!isChallenge && !isVS) {
+        const updatedPoll = await pollService.refreshPoll(pollId);
+        if (updatedPoll) setPolls((prev) => prev.map((p) => (p.id === pollId ? updatedPoll : p)));
+      }
+    } catch (error) {
+      console.error('[FeedV2] vote failed:', error);
+      setPolls((prev) => prev.map((poll) => {
+        if (poll.id === pollId && poll.userVote === optionId) {
+          return {
+            ...poll,
+            userVote: null,
+            options: poll.options.map((opt) => ({ ...opt, votes: opt.id === optionId ? opt.votes - 1 : opt.votes })),
+            totalVotes: (poll.totalVotes || 1) - 1,
+          };
+        }
+        return poll;
+      }));
+    }
+  }, [isAuthenticated, polls, toast, t, trackAction]);
+
+  const handleLike = useCallback(async (pollId) => {
+    if (!isAuthenticated) {
+      toast?.({ title: t('feed.toast.loginRequired'), description: t('feed.toast.loginToLike'), variant: 'destructive' });
+      return;
+    }
+    let wasLiked = false;
+    let optimisticLikes = 0;
+    try {
+      setPolls((prev) => prev.map((poll) => {
+        if (poll.id === pollId) {
+          wasLiked = poll.userLiked;
+          optimisticLikes = poll.userLiked ? poll.likes - 1 : poll.likes + 1;
+          return { ...poll, userLiked: !poll.userLiked, likes: optimisticLikes };
+        }
+        return poll;
+      }));
+      const result = await pollService.toggleLike(pollId, { optimistic: { liked: !wasLiked, likes: optimisticLikes } });
+      trackAction?.('like');
+      setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, userLiked: result.liked, likes: result.likes } : poll)));
+    } catch (error) {
+      console.error('[FeedV2] like failed:', error);
+      setPolls((prev) => prev.map((poll) => {
+        if (poll.id === pollId) {
+          return { ...poll, userLiked: !poll.userLiked, likes: poll.userLiked ? poll.likes + 1 : poll.likes - 1 };
+        }
+        return poll;
+      }));
+    }
+  }, [isAuthenticated, toast, t, trackAction]);
+
+  const handleShare = useCallback(async (pollId) => {
+    try {
+      const result = await pollService.sharePoll(pollId);
+      setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, shares: result.shares } : poll)));
+      trackAction?.('share');
+    } catch (error) {
+      console.warn('[FeedV2] share persist failed:', error);
+    }
+  }, [trackAction]);
+
+  const handleSave = useCallback(async (pollId) => {
+    // TikTokPollCard ya actualiza el Set de guardados; aquí solo persistimos.
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+      await fetch(`${baseUrl}/api/polls/${pollId}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      console.warn('[FeedV2] save persist failed:', error);
+    }
+  }, []);
+
+  const handleComment = useCallback(() => {
+    trackAction?.('create');
+  }, [trackAction]);
+
+  // Render-prop: inyecta la UI bonita (TikTokPollCard) en cada slide del motor
+  // fluido. Memo + callbacks estables → sin re-renders durante el swipe.
+  const renderSlide = useCallback((poll, { isActive, distanceFromActive, index }) => (
+    <VSSlidePretty
+      poll={poll}
+      isActive={isActive}
+      distanceFromActive={distanceFromActive}
+      index={index}
+      total={polls.length}
+      currentUser={user}
+      savedPolls={savedPolls}
+      setSavedPolls={setSavedPolls}
+      commentedPolls={commentedPolls}
+      setCommentedPolls={setCommentedPolls}
+      sharedPolls={sharedPolls}
+      setSharedPolls={setSharedPolls}
+      onVote={handleVote}
+      onLike={handleLike}
+      onShare={handleShare}
+      onComment={handleComment}
+      onSave={handleSave}
+    />
+  ), [polls.length, user, savedPolls, commentedPolls, sharedPolls, handleVote, handleLike, handleShare, handleComment, handleSave]);
 
   // Activar modo TikTok inmersivo (oculta navegación lateral/bottom global)
   useEffect(() => {
@@ -166,6 +316,7 @@ export default function FeedV2Page() {
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}
         onReachEnd={handleLoadMore}
+        renderSlide={renderSlide}
       />
 
       <VSFeedTopBar

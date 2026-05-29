@@ -28,6 +28,10 @@ export default function VSFeedSwiper({
   onReachEnd,
   hasMore = false,
   isLoadingMore = false,
+  // 🎨 Render-prop opcional: inyecta la UI del slide (ej. la UI bonita del feed
+  // principal vía VSSlidePretty). Si no se pasa, se usa el slide ligero VSSlideV2.
+  // Firma: renderSlide(poll, { isActive, distanceFromActive, index }) => ReactNode
+  renderSlide,
 }) {
   const swiperRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
@@ -114,18 +118,27 @@ export default function VSFeedSwiper({
       >
         {polls.map((poll, idx) => {
           const distance = Math.abs(idx - activeIndex);
+          const isActive = idx === activeIndex;
           return (
             <SwiperSlide
               key={poll.id || idx}
               virtualIndex={idx}
               style={{ height: '100dvh' }}
             >
-              <VSSlideV2
-                poll={poll}
-                isActive={idx === activeIndex}
-                isNear={distance <= 1}
-                muted={muted}
-              />
+              {renderSlide ? (
+                renderSlide(poll, {
+                  isActive,
+                  distanceFromActive: distance,
+                  index: idx,
+                })
+              ) : (
+                <VSSlideV2
+                  poll={poll}
+                  isActive={isActive}
+                  isNear={distance <= 1}
+                  muted={muted}
+                />
+              )}
             </SwiperSlide>
           );
         })}

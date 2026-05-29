@@ -1710,6 +1710,11 @@ const TikTokPollCardInner = ({
 const TikTokPollCard = React.memo(TikTokPollCardInner);
 TikTokPollCard.displayName = 'TikTokPollCard';
 
+// 🔁 Named export para reutilizar la MISMA UI bonita de VS en otros motores
+// de scroll (ej. Feed V2 / Swiper Virtual) sin duplicar código. El feed
+// principal sigue usando el `export default TikTokScrollView` intacto.
+export { TikTokPollCard };
+
 // — TikTokPollCard y helpers internos se mantienen igual que en tu versión original —
 // (No se modifican: renderActionButtons, UserButton, renderTextWithHashtags, etc.)
 // Solo se exporta TikTokScrollView con los cambios de fluidez.
