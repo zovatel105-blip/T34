@@ -77,9 +77,18 @@ export default function FeedV2Page() {
     if (!list || list.length === 0) return;
     const VIDEO_AHEAD = 3; // nº de vídeos a calentar por delante
     const THUMB_AHEAD = 6; // nº de pósters a precargar por delante
-    try { thumbnailPrefetch.prefetchAroundIndex(list, index, THUMB_AHEAD); } catch (_) {}
-    try { feedMediaPrefetcher.prefetchVideosAroundIndex(list, index, VIDEO_AHEAD); } catch (_) {}
-    try { feedMediaPrefetcher.cancelDistantPolls(index, 4); } catch (_) {}
+    // Diferir el trabajo de prefetch fuera del frame de la animación de snap
+    // (crear Image(), iniciar fetch...) → scroll más fluido, sin micro-jank.
+    const run = () => {
+      try { thumbnailPrefetch.prefetchAroundIndex(list, index, THUMB_AHEAD); } catch (_) {}
+      try { feedMediaPrefetcher.prefetchVideosAroundIndex(list, index, VIDEO_AHEAD); } catch (_) {}
+      try { feedMediaPrefetcher.cancelDistantPolls(index, 4); } catch (_) {}
+    };
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 500 });
+    } else {
+      setTimeout(run, 60);
+    }
   }, []);
 
   // ── Carga (offset pagination) ────────────────────────────────────────────

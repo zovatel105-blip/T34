@@ -17,8 +17,14 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Mousewheel, Keyboard } from 'swiper/modules';
 import VSSlideV2 from './VSSlideV2';
+import feedMediaPrefetcher from '../../services/feedMediaPrefetcher';
 import 'swiper/css';
 import 'swiper/css/virtual';
+
+// Ventana de renderizado de CONTENIDO: solo los slides a distancia <= este
+// valor montan el árbol pesado (TikTokPollCard). El resto = placeholder negro.
+// Esto evita que, al paginar, 40+ tarjetas pesadas estén montadas a la vez.
+const RENDER_WINDOW = 3;
 
 export default function VSFeedSwiper({
   polls,
@@ -48,14 +54,13 @@ export default function VSFeedSwiper({
     }
   }, [polls.length, onReachEnd, onActiveIndexChange, hasMore, isLoadingMore]);
 
-  // Eager prefetch del slide +1 al iniciar swipe (touchstart)
+  // Eager prefetch del slide +1 al iniciar swipe (touchstart). Import estático
+  // → sin coste de promesa/resolución de módulo en cada toque.
   const handleTouchStart = useCallback((swiper) => {
     const next = swiper.activeIndex + 1;
     if (next >= polls.length) return;
     try {
-      import('../../services/feedMediaPrefetcher').then(({ default: prefetcher }) => {
-        prefetcher?.prefetchVideosAroundIndex?.(polls, next, 0);
-      }).catch(() => {});
+      feedMediaPrefetcher?.prefetchVideosAroundIndex?.(polls, next, 0);
     } catch (_) {}
   }, [polls]);
 
@@ -120,13 +125,19 @@ export default function VSFeedSwiper({
         {polls.map((poll, idx) => {
           const distance = Math.abs(idx - activeIndex);
           const isActive = idx === activeIndex;
+          // Windowing de contenido: fuera de la ventana montamos un placeholder
+          // negro barato en lugar del árbol pesado. Al entrar en la ventana, el
+          // contenido monta y muestra el póster (ya prefetcheado) al instante.
+          const withinWindow = distance <= RENDER_WINDOW;
           return (
             <SwiperSlide
               key={poll.id || idx}
               virtualIndex={idx}
               style={{ height: '100dvh' }}
             >
-              {renderSlide ? (
+              {!withinWindow ? (
+                <div className="w-full h-full bg-black" data-testid="vs-slide-placeholder" />
+              ) : renderSlide ? (
                 renderSlide(poll, {
                   isActive,
                   distanceFromActive: distance,
