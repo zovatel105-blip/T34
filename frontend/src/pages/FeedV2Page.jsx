@@ -1,11 +1,25 @@
 /**
  * FeedV2Page — página de prueba del Feed V2 (sólo VS).
  *
- * Carga inicial: 20 publicaciones VS via pollService (MVP_VS_ONLY=true ya
- * filtra a sólo VS). Paginación incremental con limit/offset cuando el
- * usuario se acerca al final.
+ * Ruta: /feed-v2 — accesible desde Settings ("Probar Feed V2 (beta)").
  *
- * Ruta: /feed-v2 — accesible desde Settings (botón "Probar Feed V2 (beta)").
+ * Arquitectura (UI vs Core):
+ *   - Motor fluido: VSFeedSwiper (Swiper Virtual) controla virtualización,
+ *     scroll e infinite-scroll.
+ *   - UI bonita: se reutiliza `TikTokPollCard` (del feed principal) vía
+ *     `VSSlidePretty`, inyectada con el render-prop `renderSlide`.
+ *
+ * Optimizaciones de fluidez:
+ *   - Handlers estables (no dependen de `polls`; leen vía `pollsRef`) →
+ *     `renderSlide` permanece estable entre renders.
+ *   - Interacciones (guardados/comentados/compartidos) en FeedInteractionContext
+ *     → no recrean `renderSlide`.
+ *   - Protección de carreras por pollId (pendingActionsRef).
+ *   - Guard anti-stale (reqIdRef) + abort en unmount → sin setState tras
+ *     desmontar.
+ *
+ * Paginación: offset/limit (el backend ordena por created_at DESC con
+ * .skip().limit(); no soporta cursor `before`).
  */
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,13 +27,14 @@ import { Loader2 } from 'lucide-react';
 import VSFeedSwiper from '../components/feedV2/VSFeedSwiper';
 import VSFeedTopBar from '../components/feedV2/VSFeedTopBar';
 import VSSlidePretty from '../components/feedV2/VSSlidePretty';
+import { FeedInteractionProvider } from '../contexts/FeedInteractionContext';
 import pollService from '../services/pollService';
+import feedMediaPrefetcher from '../services/feedMediaPrefetcher';
+import thumbnailPrefetch from '../services/thumbnailPrefetchService';
 import { useTikTok } from '../contexts/TikTokContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { useAddiction } from '../contexts/AddictionContext';
-import { useTranslation } from '../hooks/useTranslation';
-import { isVSPost } from '../utils/postFilters';
 
 const PAGE_SIZE = 20;
 
@@ -29,36 +44,118 @@ export default function FeedV2Page() {
   const [polls, setPolls] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  // 🔇 Audio global del feed. Arranca muted=true (autoplay permite muted).
-  // Tras la PRIMERA interacción (pointerdown), se desmutea automáticamente.
-  // El usuario puede togglear con el botón del TopBar.
   const [muted, setMuted] = useState(true);
-  const loadingRef = useRef(false);
 
-  // ── Pegamento para reutilizar la UI bonita (TikTokPollCard) ──────────────
-  // TikTokPollCard maneja internamente sus modales (comentarios/compartir) y
-  // los Sets de guardados/comentados/compartidos. Estos handlers solo hacen
-  // persistencia en backend + update optimista del estado `polls`.
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const { trackAction } = useAddiction();
-  const { t } = useTranslation();
-  const [savedPolls, setSavedPolls] = useState(() => new Set());
-  const [commentedPolls, setCommentedPolls] = useState(() => new Set());
-  const [sharedPolls, setSharedPolls] = useState(() => new Set());
 
+  // Refs de control (no provocan re-render)
+  const loadingRef = useRef(false);       // evita load-more concurrente
+  const offsetRef = useRef(0);            // offset de paginación
+  const pollsRef = useRef([]);            // espejo de `polls` para handlers estables
+  const pendingActionsRef = useRef(new Set()); // protección de carreras por pollId
+  const reqIdRef = useRef(0);             // token para descartar respuestas obsoletas
+  const mountedRef = useRef(true);        // ignora setState tras desmontar
+
+  // Mantener pollsRef sincronizado
+  useEffect(() => {
+    pollsRef.current = polls;
+  }, [polls]);
+
+  // ── Prefetch para carga INSTANTÁNEA al hacer scroll ───────────────────────
+  // Estrategia (combinación barata + agresiva):
+  //   1) Pósters/thumbnails de los próximos slides → aparición visual instantánea.
+  //   2) Primeros bytes (hasta 25MB) de los próximos vídeos → reproducción
+  //      inmediata cuando el slide se vuelve activo (PollOptionMedia lee de
+  //      mediaCache vía useCachedSrc).
+  //   3) Cancela prefetches de slides lejanos → libera ancho de banda.
+  const prefetchAround = useCallback((index) => {
+    const list = pollsRef.current;
+    if (!list || list.length === 0) return;
+    const VIDEO_AHEAD = 3; // nº de vídeos a calentar por delante
+    const THUMB_AHEAD = 6; // nº de pósters a precargar por delante
+    try { thumbnailPrefetch.prefetchAroundIndex(list, index, THUMB_AHEAD); } catch (_) {}
+    try { feedMediaPrefetcher.prefetchVideosAroundIndex(list, index, VIDEO_AHEAD); } catch (_) {}
+    try { feedMediaPrefetcher.cancelDistantPolls(index, 4); } catch (_) {}
+  }, []);
+
+  // ── Carga (offset pagination) ────────────────────────────────────────────
+  const loadPolls = useCallback(async (isInitial) => {
+    if (isInitial) {
+      setIsLoading(true);
+      offsetRef.current = 0;
+    } else {
+      setIsLoadingMore(true);
+    }
+    const reqId = ++reqIdRef.current;
+    try {
+      const data = await pollService.getPollsForFrontend({
+        limit: PAGE_SIZE,
+        offset: isInitial ? 0 : offsetRef.current,
+      });
+      // Descartar si llegó una petición más nueva o el componente se desmontó
+      if (!mountedRef.current || reqId !== reqIdRef.current) return;
+
+      const vsOnly = (data || []).filter((p) => p?.layout === 'vs' || p?.vs_id);
+
+      if (isInitial) {
+        setPolls(vsOnly);
+        offsetRef.current = vsOnly.length;
+        setHasMore(vsOnly.length >= PAGE_SIZE);
+        setError(null);
+        // Prefetch inmediato del contenido inicial (póster + vídeos delante)
+        pollsRef.current = vsOnly;
+        prefetchAround(0);
+      } else if (vsOnly.length === 0) {
+        setHasMore(false);
+      } else {
+        setPolls((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          const fresh = vsOnly.filter((p) => !seen.has(p.id));
+          const merged = [...prev, ...fresh];
+          // Pósters de la nueva página listos al instante (barato, deduplicado)
+          pollsRef.current = merged;
+          try { feedMediaPrefetcher.prefetchLightweightForAll?.(merged); } catch (_) {}
+          return merged;
+        });
+        offsetRef.current += vsOnly.length;
+        if (vsOnly.length < PAGE_SIZE) setHasMore(false);
+      }
+    } catch (err) {
+      if (!mountedRef.current || reqId !== reqIdRef.current) return;
+      console.error('[FeedV2Page] load failed:', err);
+      if (isInitial) setError(err.message || 'Error al cargar el feed');
+    } finally {
+      if (mountedRef.current && reqId === reqIdRef.current) {
+        if (isInitial) setIsLoading(false);
+        else setIsLoadingMore(false);
+      }
+    }
+  }, [prefetchAround]);
+
+  const handleLoadMore = useCallback(() => {
+    if (loadingRef.current || !hasMore) return;
+    loadingRef.current = true;
+    loadPolls(false).finally(() => {
+      loadingRef.current = false;
+    });
+  }, [hasMore, loadPolls]);
+
+  // ── Handlers de interacción (estables: leen pollsRef, no `polls`) ──────────
   const handleVote = useCallback(async (pollId, optionId) => {
     if (!isAuthenticated) {
-      toast?.({ title: t('feed.toast.loginRequired'), description: t('feed.toast.loginToVote'), variant: 'destructive' });
+      toast?.({ title: 'Inicia sesión', description: 'Necesitas una cuenta para votar', variant: 'destructive' });
       return;
     }
+    if (pendingActionsRef.current.has(pollId)) return;
+    pendingActionsRef.current.add(pollId);
+    const targetPoll = pollsRef.current.find((p) => p.id === pollId);
+    const isChallenge = targetPoll?.is_challenge && targetPoll?.challenge_id;
+    const isVS = targetPoll?.layout === 'vs' || !!targetPoll?.vs_id;
     try {
-      const targetPoll = polls.find((p) => p.id === pollId);
-      const isChallenge = targetPoll?.is_challenge && targetPoll?.challenge_id;
-      const isVS = isVSPost(targetPoll);
       // Optimistic update
       setPolls((prev) => prev.map((poll) => {
         if (poll.id === pollId) {
@@ -72,20 +169,25 @@ export default function FeedV2Page() {
         }
         return poll;
       }));
-      // VS: el voto ya se persiste desde la capa VS; no re-votamos ni refrescamos
-      // (refrescar desmontaría los <video> y "ralentizaría" el post).
+
       if (isChallenge) {
         await pollService.voteOnChallenge(targetPoll.challenge_id, optionId);
       } else if (!isVS) {
+        // VS: el voto ya se persiste en la capa VS; no re-votamos ni refrescamos
+        // (refrescar desmontaría los <video> y "ralentizaría" el post).
         await pollService.voteOnPoll(pollId, optionId, { optimistic: { option_id: optionId, queued: true } });
       }
       trackAction?.('vote');
+
       if (!isChallenge && !isVS) {
         const updatedPoll = await pollService.refreshPoll(pollId);
-        if (updatedPoll) setPolls((prev) => prev.map((p) => (p.id === pollId ? updatedPoll : p)));
+        if (mountedRef.current && updatedPoll) {
+          setPolls((prev) => prev.map((p) => (p.id === pollId ? updatedPoll : p)));
+        }
       }
-    } catch (error) {
-      console.error('[FeedV2] vote failed:', error);
+    } catch (err) {
+      console.error('[FeedV2] vote failed:', err);
+      // Rollback optimista
       setPolls((prev) => prev.map((poll) => {
         if (poll.id === pollId && poll.userVote === optionId) {
           return {
@@ -97,14 +199,19 @@ export default function FeedV2Page() {
         }
         return poll;
       }));
+    } finally {
+      pendingActionsRef.current.delete(pollId);
     }
-  }, [isAuthenticated, polls, toast, t, trackAction]);
+  }, [isAuthenticated, toast, trackAction]);
 
   const handleLike = useCallback(async (pollId) => {
     if (!isAuthenticated) {
-      toast?.({ title: t('feed.toast.loginRequired'), description: t('feed.toast.loginToLike'), variant: 'destructive' });
+      toast?.({ title: 'Inicia sesión', description: 'Necesitas una cuenta para dar like', variant: 'destructive' });
       return;
     }
+    const likeKey = `like:${pollId}`;
+    if (pendingActionsRef.current.has(likeKey)) return;
+    pendingActionsRef.current.add(likeKey);
     let wasLiked = false;
     let optimisticLikes = 0;
     try {
@@ -118,25 +225,31 @@ export default function FeedV2Page() {
       }));
       const result = await pollService.toggleLike(pollId, { optimistic: { liked: !wasLiked, likes: optimisticLikes } });
       trackAction?.('like');
-      setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, userLiked: result.liked, likes: result.likes } : poll)));
-    } catch (error) {
-      console.error('[FeedV2] like failed:', error);
+      if (mountedRef.current) {
+        setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, userLiked: result.liked, likes: result.likes } : poll)));
+      }
+    } catch (err) {
+      console.error('[FeedV2] like failed:', err);
       setPolls((prev) => prev.map((poll) => {
         if (poll.id === pollId) {
           return { ...poll, userLiked: !poll.userLiked, likes: poll.userLiked ? poll.likes + 1 : poll.likes - 1 };
         }
         return poll;
       }));
+    } finally {
+      pendingActionsRef.current.delete(likeKey);
     }
-  }, [isAuthenticated, toast, t, trackAction]);
+  }, [isAuthenticated, toast, trackAction]);
 
   const handleShare = useCallback(async (pollId) => {
     try {
       const result = await pollService.sharePoll(pollId);
-      setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, shares: result.shares } : poll)));
+      if (mountedRef.current) {
+        setPolls((prev) => prev.map((poll) => (poll.id === pollId ? { ...poll, shares: result.shares } : poll)));
+      }
       trackAction?.('share');
-    } catch (error) {
-      console.warn('[FeedV2] share persist failed:', error);
+    } catch (err) {
+      console.warn('[FeedV2] share persist failed:', err);
     }
   }, [trackAction]);
 
@@ -145,44 +258,57 @@ export default function FeedV2Page() {
     try {
       const token = localStorage.getItem('token');
       const baseUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-      await fetch(`${baseUrl}/api/polls/${pollId}/save`, {
+      const response = await fetch(`${baseUrl}/api/polls/${pollId}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
-    } catch (error) {
-      console.warn('[FeedV2] save persist failed:', error);
+      if (!response.ok) throw new Error(`save failed: ${response.status}`);
+    } catch (err) {
+      console.warn('[FeedV2] save persist failed:', err);
+      toast?.({ title: 'Error', description: 'No se pudo guardar la publicación', variant: 'destructive' });
     }
-  }, []);
+  }, [toast]);
 
   const handleComment = useCallback(() => {
     trackAction?.('create');
   }, [trackAction]);
 
-  // Render-prop: inyecta la UI bonita (TikTokPollCard) en cada slide del motor
-  // fluido. Memo + callbacks estables → sin re-renders durante el swipe.
+  // Cambio de slide activo → prefetch proactivo del contenido siguiente.
+  const handleActiveIndexChange = useCallback((idx) => {
+    prefetchAround(idx);
+  }, [prefetchAround]);
+
+  // ── renderSlide estable: solo depende de handlers estables + user ─────────
   const renderSlide = useCallback((poll, { isActive, distanceFromActive, index }) => (
     <VSSlidePretty
       poll={poll}
       isActive={isActive}
       distanceFromActive={distanceFromActive}
       index={index}
-      total={polls.length}
+      total={pollsRef.current.length}
       currentUser={user}
-      savedPolls={savedPolls}
-      setSavedPolls={setSavedPolls}
-      commentedPolls={commentedPolls}
-      setCommentedPolls={setCommentedPolls}
-      sharedPolls={sharedPolls}
-      setSharedPolls={setSharedPolls}
       onVote={handleVote}
       onLike={handleLike}
       onShare={handleShare}
       onComment={handleComment}
       onSave={handleSave}
     />
-  ), [polls.length, user, savedPolls, commentedPolls, sharedPolls, handleVote, handleLike, handleShare, handleComment, handleSave]);
+  ), [user, handleVote, handleLike, handleShare, handleComment, handleSave]);
 
-  // Activar modo TikTok inmersivo (oculta navegación lateral/bottom global)
+  // ── Ciclo de vida ─────────────────────────────────────────────────────────
+  // Efecto SOLO de montaje/desmontaje (corre una única vez). El reqIdRef se
+  // invalida únicamente al desmontar de verdad — NO en cada re-run del efecto
+  // del modo TikTok (cuyas deps pueden cambiar de identidad entre renders).
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      reqIdRef.current++; // invalida respuestas en vuelo solo al desmontar
+      try { feedMediaPrefetcher.cancelAll?.(); } catch (_) {} // libera prefetches
+    };
+  }, []);
+
+  // Modo TikTok inmersivo (independiente del ciclo de vida de las peticiones)
   useEffect(() => {
     enterTikTokMode?.();
     hideRightNavigationBar?.();
@@ -192,104 +318,56 @@ export default function FeedV2Page() {
     };
   }, [enterTikTokMode, exitTikTokMode, hideRightNavigationBar, showRightNavigationBar]);
 
-  // Carga inicial
+  // Carga inicial (una sola vez)
   useEffect(() => {
-    let cancelled = false;
-    async function loadInitial() {
-      try {
-        setIsLoading(true);
-        const data = await pollService.getPollsForFrontend({ limit: PAGE_SIZE, offset: 0 });
-        if (cancelled) return;
-        const vsOnly = (data || []).filter((p) => p?.layout === 'vs' || p?.vs_id);
-        setPolls(vsOnly);
-        setOffset(vsOnly.length);
-        setHasMore(vsOnly.length >= PAGE_SIZE);
-      } catch (err) {
-        if (cancelled) return;
-        console.error('[FeedV2Page] initial load failed:', err);
-        setError(err.message || 'Error al cargar el feed');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    loadInitial();
-    return () => { cancelled = true; };
+    loadPolls(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLoadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMore) return;
-    loadingRef.current = true;
-    setIsLoadingMore(true);
-    try {
-      const data = await pollService.getPollsForFrontend({
-        limit: PAGE_SIZE,
-        offset,
-      });
-      const vsOnly = (data || []).filter((p) => p?.layout === 'vs' || p?.vs_id);
-      if (vsOnly.length === 0) {
-        setHasMore(false);
-      } else {
-        setPolls((prev) => {
-          // Dedup por id
-          const seen = new Set(prev.map((p) => p.id));
-          const fresh = vsOnly.filter((p) => !seen.has(p.id));
-          return [...prev, ...fresh];
-        });
-        setOffset((o) => o + vsOnly.length);
-        if (vsOnly.length < PAGE_SIZE) setHasMore(false);
-      }
-    } catch (err) {
-      console.warn('[FeedV2Page] load-more failed:', err);
-    } finally {
-      setIsLoadingMore(false);
-      loadingRef.current = false;
-    }
-  }, [offset, hasMore]);
-
-  const handleFirstInteraction = useCallback(() => {
-    if (muted) setMuted(false);
+  const handleFirstInteraction = useCallback((event) => {
+    // No desmutear si el tap fue en el botón de mute del TopBar
+    const isMuteBtn = event.target?.closest?.('[data-testid="feed-v2-mute-btn"]');
+    if (!isMuteBtn && muted) setMuted(false);
   }, [muted]);
 
-  // Estado de carga inicial
+  // ── Estados de UI ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div
-        className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4"
-        data-testid="feed-v2-loading"
-      >
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4" data-testid="feed-v2-loading">
         <Loader2 className="w-10 h-10 text-white animate-spin" />
         <div className="text-white/60 text-sm">Cargando Feed V2…</div>
       </div>
     );
   }
 
-  // Estado de error
   if (error) {
     return (
-      <div
-        className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 px-6 text-center"
-        data-testid="feed-v2-error"
-      >
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 px-6 text-center" data-testid="feed-v2-error">
         <div className="text-white text-base">No se pudo cargar el feed</div>
         <div className="text-white/50 text-sm">{error}</div>
-        <button
-          onClick={() => navigate('/feed')}
-          className="mt-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm"
-          data-testid="feed-v2-error-back"
-        >
-          Volver al feed normal
-        </button>
+        <div className="flex gap-3 mt-2">
+          <button
+            onClick={() => loadPolls(true)}
+            className="px-4 py-2 rounded-full bg-white/15 text-white text-sm"
+            data-testid="feed-v2-error-retry"
+          >
+            Reintentar
+          </button>
+          <button
+            onClick={() => navigate('/feed')}
+            className="px-4 py-2 rounded-full bg-white/10 text-white text-sm"
+            data-testid="feed-v2-error-back"
+          >
+            Volver al feed normal
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Estado vacío
   if (polls.length === 0) {
     return (
-      <div
-        className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 px-6 text-center"
-        data-testid="feed-v2-empty"
-      >
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center gap-4 px-6 text-center" data-testid="feed-v2-empty">
         <div className="text-white text-base">No hay publicaciones VS</div>
         <div className="text-white/50 text-sm">Crea un VS para verlo aquí</div>
         <button
@@ -304,26 +382,29 @@ export default function FeedV2Page() {
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black"
-      data-testid="feed-v2-page"
-      onPointerDown={muted ? handleFirstInteraction : undefined}
-    >
-      <VSFeedSwiper
-        polls={polls}
-        initialIndex={0}
-        muted={muted}
-        hasMore={hasMore}
-        isLoadingMore={isLoadingMore}
-        onReachEnd={handleLoadMore}
-        renderSlide={renderSlide}
-      />
+    <FeedInteractionProvider>
+      <div
+        className="fixed inset-0 bg-black"
+        data-testid="feed-v2-page"
+        onPointerDown={muted ? handleFirstInteraction : undefined}
+      >
+        <VSFeedSwiper
+          polls={polls}
+          initialIndex={0}
+          muted={muted}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onReachEnd={handleLoadMore}
+          onActiveIndexChange={handleActiveIndexChange}
+          renderSlide={renderSlide}
+        />
 
-      <VSFeedTopBar
-        muted={muted}
-        onToggleMute={() => setMuted((m) => !m)}
-        onBack={() => navigate('/feed')}
-      />
-    </div>
+        <VSFeedTopBar
+          muted={muted}
+          onToggleMute={() => setMuted((m) => !m)}
+          onBack={() => navigate('/feed')}
+        />
+      </div>
+    </FeedInteractionProvider>
   );
 }

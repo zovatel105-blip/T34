@@ -6,15 +6,18 @@
  * PRINCIPIO (UI vs Core):
  *   - El motor (VSFeedSwiper) controla virtualización, scroll, infinite-scroll
  *     y calcula `isActive` / `distanceFromActive` por slide.
- *   - Este componente SOLO recibe props y handlers (componente puro) y los
- *     reenvía a `TikTokPollCard`. No tiene fetch ni estado de datos propio.
+ *   - Este componente SOLO recibe props/handlers y los reenvía a
+ *     `TikTokPollCard`. No tiene fetch ni estado de datos propio.
+ *   - Los Sets de interacción (guardados/comentados/compartidos) se leen del
+ *     `FeedInteractionContext` para que `renderSlide` permanezca estable.
  *
- * Está memoizado con un comparador estricto: solo re-renderiza cuando cambia
- * algo que realmente afecta a este slide (active, distancia, id del poll o el
- * Set de guardados). Esto preserva la fluidez del swipe.
+ * Memoizado con comparador estricto: solo re-renderiza cuando cambia algo que
+ * afecta a este slide (active, distancia, id del poll o usuario). Esto preserva
+ * la fluidez del swipe.
  */
 import React, { memo } from 'react';
 import { TikTokPollCard } from '../TikTokScrollView';
+import { useFeedInteraction } from '../../contexts/FeedInteractionContext';
 
 function VSSlidePrettyImpl({
   poll,
@@ -23,18 +26,21 @@ function VSSlidePrettyImpl({
   index,
   total,
   currentUser,
-  savedPolls,
-  setSavedPolls,
-  commentedPolls,
-  setCommentedPolls,
-  sharedPolls,
-  setSharedPolls,
   onVote,
   onLike,
   onShare,
   onComment,
   onSave,
 }) {
+  const {
+    savedPolls,
+    setSavedPolls,
+    commentedPolls,
+    setCommentedPolls,
+    sharedPolls,
+    setSharedPolls,
+  } = useFeedInteraction();
+
   return (
     <div
       className="relative w-full h-full bg-black overflow-hidden"
@@ -80,8 +86,8 @@ const VSSlidePretty = memo(VSSlidePrettyImpl, (prev, next) => {
     prev.isActive === next.isActive &&
     prev.distanceFromActive === next.distanceFromActive &&
     prev.poll?.id === next.poll?.id &&
-    prev.savedPolls === next.savedPolls &&
-    prev.currentUser === next.currentUser
+    prev.currentUser === next.currentUser &&
+    prev.total === next.total
   );
 });
 

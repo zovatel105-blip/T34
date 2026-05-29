@@ -41,8 +41,9 @@ export default function VSFeedSwiper({
     setActiveIndex(idx);
     onActiveIndexChange?.(idx);
 
-    // Trigger load-more cuando quedan 3 slides para el final (VT3-style)
-    if (hasMore && !isLoadingMore && idx >= polls.length - 3) {
+    // Trigger load-more anticipado: cuando quedan 5 slides para el final, para
+    // que la siguiente página ya esté cargada antes de llegar (sin esperas).
+    if (hasMore && !isLoadingMore && idx >= polls.length - 5) {
       onReachEnd?.();
     }
   }, [polls.length, onReachEnd, onActiveIndexChange, hasMore, isLoadingMore]);
@@ -95,7 +96,7 @@ export default function VSFeedSwiper({
         virtual={{
           enabled: true,
           addSlidesBefore: 1,
-          addSlidesAfter: 2,
+          addSlidesAfter: 3,
           cache: true,
         }}
         mousewheel={{
